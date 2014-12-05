@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+    <head>
+        <title>WebCrypto GOST: PFX Key Store</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
+        <script src="scripts/prettify/prettify.js"></script>
+        <script src="scripts/prettify/lang-css.js"></script>
+        <script src="scripts/gost/gostCrypto.js"></script>
+        <script src="scripts/gost/gostCoding.js"></script>
+        <script src="scripts/gost/gostObject.js"></script>
+        <script src="scripts/gost/gostSyntax.js"></script>
+        <script src="scripts/gost/gostPKIX.js"></script>
+        <script src="scripts/filesaver/FileSaver.js"></script>
+        <script src="scripts/gost/gostViewer.js"></script>
+        <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+        <link type="text/css" rel="stylesheet" href="styles/main.css">
+    </head>
+    <body>
+        <div class="page art02">
+            <h1><a href="index.html">WebCrypto GOST</a>: PFX Key Store</h1>
+            <p class="note">The tool is intended for experimentation with data processing</p>
+            <article>
+                <h2>Export & import key store</h2>
+                <section>
+                    <label for="provider"><strong>Algorithm</strong> parameters for selected provider</label>
+                    <select class="value" id="provider">
+                        <option value="TC-256" selected>GOST R 34.10-2012 256 TC26</option>
+                        <option value="TC-512">GOST R 34.10-2012 512 TC26</option>
+                        <option value="CP-01">GOST R 34.10-2001 CryptoPro</option>
+                        <option value="SC-01">GOST R 34.10-2001 SignalCom</option>
+                        <option value="RSA-2048">RSASSA PKCS#1 v1.5 2048/SHA256</option>
+                        <option value="ECDSA-256">ECDSA secp256r1/SHA256</option>
+                    </select>
+                    <label for="storeType">Choice Key Store <strong>Save mode</strong></label>
+                    <select class="value" id="storeType">
+                        <option value="CLEAR" selected>Store and Keys decrypted</option>
+                        <option value="KEYS">Store decrypted, Keys encrypted</option>
+                        <option value="STORE">Store encrypted, Key decrypted</option>
+                        <option value="STOREANDKEYS">Keys and Store encrypted</option>
+                    </select>
+                    <div id="storePasswordBlock" hidden>
+                        <label for="storePassword"><strong>Store Password</strong> for MAC calculation and encrypt</label>
+                        <input class="value" id="storePassword" value="Pétri de vanité il avait encore plus de cette espèce d'orgueil qui fait avouer avec la même indifférence les bonnes comme les mauvaises actions, suite d'un sentiment de supériorité, peut-être imaginaire."/>
+                    </div>
+                    <div id="keyPasswordBlock" hidden>
+                        <label for="keyPassword"><strong>Key Password</strong></label>
+                        <input class="value" id="keyPassword" value="Проникнутый тщеславием, он обладал сверх того еще особенной гордостью, которая побуждает признаваться с одинаковым равнодушием как в своих добрых, так и дурных поступках, - следствие чувства превосходства, быть может мнимого."/>
+                    </div>
+                    <button onclick="(new Function(addRandom.textContent))()">Add random certificate, key and CRL</button>
+                    <div class="fileButton">
+                        <button id="loadButton">Append KeyStore from file</button>
+                        <input type="file" onchange="
+                                    var reader = new FileReader();
+                                    reader.onload = function(e) {
+                                        keyStore.textContent = e.target.result;
+                                    };
+                                    reader.readAsText(this.files[0]);"/>
+                    </div>
+                    <span class="label"><strong>Key Store</strong> exported in Base-64 encoding</span>
+                    <pre contenteditable id="keyStore" class="encoded"></pre>
+                    <button onclick="
+                            saveAs(new Blob([gostCoding.Chars.decode(keyStore.textContent, 'ascii')], {type: 'text/plain'}), 'keystore.pfx');
+                            ">Save KeyStore to file</button>
+                    <button onclick="keyStore.innerHTML = ''">Clear</button>
+                    <button onclick="gostViewer.openASN1(keyStore)">View ASN.1</button>
+                    <button onclick="gostViewer.openSyntax(keyStore, 'PFX')">View JSON</button>
+                    <span class="label">Add Certificate method</span>
+                    <pre contenteditable id="addRandom" class="procedure prettyprint">
+// Generate random certificate
+var pki = new GostPKIX(provider.value, 'PEM');
+var seed = new ArrayBuffer(100);
+gostCrypto.getRandomValues(new Uint8Array(seed));
+var alias = gostCoding.Hex.encode(new Uint8Array(seed, 0, 10));
+var keypswd =  storeType.value.indexOf('KEYS') >= 0 ? keyPassword.value : undefined;
+var storepswd = storePassword.value;
+var storeMode = storeType.value.indexOf('STORE') >= 0 ? 'ENCRYPT' : 'MAC';
+pki.createCertificate({
+    subject: {
+        countryName: 'RU',
+        stateOrProvinceName: gostCoding.Hex.encode(new Uint8Array(seed, 10, 10)),
+        organizationName: gostCoding.Hex.encode(new Uint8Array(seed, 20, 10)),
+        organizationalUnitName: gostCoding.Hex.encode(new Uint8Array(seed, 30, 10)),
+        title: gostCoding.Hex.encode(new Uint8Array(seed, 40, 10)),
+        commonName: gostCoding.Hex.encode(new Uint8Array(seed, 50, 10))
+    }
+}, alias, keypswd).then(function() {
+
+    // Create new random CRL
+    return pki.updateCRL({
+        thisUpdate: new Date(),
+        revokedCertificates: [{
+                userCertificate: gostCoding.Hex.encode(new Uint8Array(seed, 60, 10)),
+                revocationDate: new Date(),
+                crlEntryExtensions: {
+                    invalidityDate: new Date(),
+                    cRLReason: 'keyCompromise'}}],
+        crlExtensions: {cRLNumber: 1}}, alias, keypswd);
+}).then(function() {
+
+    // Import key store
+    if (keyStore.textContent) 
+        return pki.importKeyStore(keyStore.textContent, storepswd);
+    
+}).then(function() {
+
+    // Export key store with new certificate
+    return pki.exportKeyStore(storepswd, storeMode);
+}).then(function(data) {
+
+    // View exported key store
+    keyStore.textContent = data;
+
+}, function(reason) {
+    alert(reason.message);
+});</pre>
+                </section>
+            </article>
+        </div>
+        <script> prettyPrint();</script>
+    </body>
+</html>

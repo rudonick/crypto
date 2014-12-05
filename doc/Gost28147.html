@@ -1,0 +1,3818 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>WebCrypto GOST: Class: Gost28147</title>
+
+    <script src="../scripts/prettify/prettify.js"> </script>
+    <script src="../scripts/prettify/lang-css.js"> </script>
+    <link type="text/css" rel="stylesheet" href="../styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="../styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div class="page">
+
+<div id="main">
+
+    <h1 class="page-title"><a href="../index.html">WebCrypto GOST</a> Class: Gost28147</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+        Gost28147
+        </h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+<dt>
+    
+        
+        <h2>Constructor</h2>
+        
+
+        <h4 class="name" id="Gost28147"><span class="type-signature"></span>new Gost28147<span class="signature">(algorithm)</span><span class="type-signature"></span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        GOST 28147-89 Encryption Algorithm<br><br> 
+
+References <a href="http://tools.ietf.org/html/rfc5830">http://tools.ietf.org/html/rfc5830</a><br><br>
+
+When keys and initialization vectors are converted to/from byte arrays, 
+little-endian byte order is assumed.<br><br>
+
+Normalized algorithm identifier common parameters:
+
+ <ul>
+     <li><b>name</b> Algorithm name 'GOST 28147'</li>
+     <li><b>version</b> Algorithm version, number
+         <ul>
+             <li><b>1989</b> Current version of standard</li>
+             <li><b>2014</b> New planned version of standard. Now not supported</li>
+         </ul>
+     </li>
+     <li><b>length</b> Key length, number. Block length = key length / 4
+         <ul>
+             <li><b>256</b> 256 bits digest (default)</li>
+             <li><b>512</b> 512 bits digest. Now not supported</li>
+         </ul>
+     </li>
+     <li><b>mode</b> Algorithm mode, string
+         <ul>
+             <li><b>ES</b> Encryption mode (default)</li>
+             <li><b>MAC</b> "imitovstavka" (MAC) mode</li>
+             <li><b>KW</b> Key wrapping mode</li>
+         </ul>
+     </li>
+     <li><b>sBox</b> Paramset sBox for GOST 28147-89, string. Used only if version = 1989</li>
+ </ul>
+ 
+Supported algorithms, modes and parameters:
+
+ <ul>
+     <li>Encript/Decrypt mode (ES)
+         <ul>
+             <li><b>block</b> Block mode, string. Default ECB</li>
+             <li><b>keyMeshing</b> Key meshing mode, string. Default NO</li>
+             <li><b>padding</b> Padding mode, string. Default NO for CFB and CNT modes, or ZERO for others</li>
+             <li><b>iv</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Initial vector with length of block. Default - zero block</li>
+         </ul>
+     </li>
+     <li>Sign/Verify mode (MAC)
+         <ul>
+             <li><b>macLength</b> Length of mac in bits (default - 32 bits)</li>
+             <li><b>iv</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Initial vector with length of block. Default - zero block</li>
+         </ul>
+     </li>
+     <li>Wrap/Unwrap key mode (KW)
+         <ul>
+             <li><b>keyWrapping</b> Mode of keywrapping, string. Default NO - standard GOST key wrapping</li>
+             <li><b>ukm</b> <a href="CryptoOperationData.html">CryptoOperationData</a> User key material. Default - random generated value</li>
+         </ul>
+     </li>
+ </ul>
+     
+Supported paramters values:
+     
+ <ul>
+     <li>Block modes (parameter 'block')
+         <ul>
+             <li><b>ECB</b> "prostaya zamena" (ECB) mode (default)</li>
+             <li><b>CFB</b> "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode</li>
+             <li><b>CNT</b> "gammirovanie" (counter) mode</li>
+             <li><b>CBC</b> Cipher-Block-Chaining (CBC) mode</li>
+         </ul>
+     </li>
+     <li>Key meshing modes (parameter 'keyMeshing')
+         <ul>
+             <li><b>NO</b> No key wrapping (default)</li>
+             <li><b>CP</b> CryptoPor Key key meshing</li>
+         </ul>
+     </li>
+     <li>Padding modes (parameter 'padding')
+         <ul>
+             <li><b>NO</b> No padding only for CFB and CNT modes</li>
+             <li><b>PKCS5</b> PKCS#5 padding mode</li>
+             <li><b>ZERO</b> Zero bits padding mode</li>
+             <li><b>RANDOM</b> Random bits padding mode</li>
+         </ul>
+     </li>
+     <li>Wrapping key modes (parameter 'keyWrapping')
+         <ul>
+             <li><b>NO</b> Ref. rfc4357 6.1 GOST 28147-89 Key wrapping</li>
+             <li><b>CP</b> CryptoPro Key wrapping mode</li>
+             <li><b>SC</b> SignalCom Key wrapping mode</li>
+         </ul>
+     </li>
+ </ul>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">AlgorithmIndentifier</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">WebCryptoAPI algorithm identifier</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1235">line 1235</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        <dl>
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="decrypt"><span class="type-signature"></span>decrypt<span class="signature">(k, d)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-ECB<br><br>
+
+decryptECB (K, D) is D, decrypted with key K using GOST 28147-89 in   
+ECB mode.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>k</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x32 bits key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>d</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8 bits message</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line339">line 339</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="decrypt"><span class="type-signature"></span>decrypt<span class="signature">(k, d, iv)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-CFB<br><br>
+
+decryptCFB (IV, K, D) is D, decrypted with key K using GOST 28147-89   
+in "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode, and IV is   
+used as the initialization vector.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>k</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x32 bits key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>d</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8 bits array with data</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>iv</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x8 optional bits initial vector</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line425">line 425</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="decrypt"><span class="type-signature"></span>decrypt<span class="signature">(k, d, iv)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-CNT<br><br>
+
+encryptCNT/decryptCNT (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+in "gammirovanie" (counter) mode, and IV is used as the   
+initialization vector.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>k</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x32 bits key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>d</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8 bits array with data</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>iv</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x8 optional bits initial vector</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line505">line 505</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="decrypt"><span class="type-signature"></span>decrypt<span class="signature">(k, d, iv)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-CBC<br><br>
+
+decryptCBC (IV, K, D) is D, decrypted with key K using GOST 28147-89   
+in Cipher-Block-Chaining (CBC) mode and IV is used as the initialization 
+vector.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>k</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x32 bits key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>d</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8 bits array with data</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>iv</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x8 optional bits initial vector</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line599">line 599</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="encrypt"><span class="type-signature"></span>encrypt<span class="signature">(k, d, iv)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-CNT<br><br>
+
+encryptCNT/decryptCNT (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+in "gammirovanie" (counter) mode, and IV is used as the   
+initialization vector.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>k</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x32 bits key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>d</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8 bits array with data</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>iv</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x8 optional bits initial vector</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line491">line 491</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="encrypt"><span class="type-signature"></span>encrypt<span class="signature">(k, d)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-ECB<br><br>
+
+encryptECB (K, D) is D, encrypted with key k using GOST 28147-89 in 
+"prostaya zamena" (ECB) mode.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>k</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x32 bit key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>d</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8 bits message</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line314">line 314</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="encrypt"><span class="type-signature"></span>encrypt<span class="signature">(k, d, iv)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-CFB<br><br>
+
+encryptCFB (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+in "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode, and IV is   
+used as the initialization vector.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>k</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x32 bits key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>d</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8 bits array with data</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>iv</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x8 optional bits initial vector</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line365">line 365</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="encrypt"><span class="type-signature"></span>encrypt<span class="signature">(k, d, iv)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-CBC<br><br>
+
+encryptCBC (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+in Cipher-Block-Chaining (CBC) mode and IV is used as the initialization 
+vector.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>k</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x32 bits key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>d</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8 bits array with data</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>iv</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x8 optional bits initial vector</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line560">line 560</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="generateKey"><span class="type-signature"></span>generateKey<span class="signature">()</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        The generateKey method returns a new generated key.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line642">line 642</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="generateKey"><span class="type-signature"></span>generateKey<span class="signature">()</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-SCKW<br><br>
+
+SignalCom master key generation for wrapping
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1111">line 1111</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="sign"><span class="type-signature"></span>sign<span class="signature">(k, d, iv)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        makeIMIT (K, D) is the 32-bit result of the GOST 28147-89 in   
+"imitovstavka" (MAC) mode, used with D as plaintext, K as key and IV   
+as initialization vector.  Note that the standard specifies its use   
+in this mode only with an initialization vector of zero.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>k</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x32 bits key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>d</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8 bits array with data</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>iv</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x8 optional bits initial vector</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line659">line 659</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="unwrapKey"><span class="type-signature"></span>unwrapKey<span class="signature">(kek, data)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-KW<br><br>
+
+ This algorithm decrypts GOST 28147-89 CEK with a GOST 28147-89 KEK.
+ Ref. rfc4357 6.2 GOST 28147-89 Key Unwrap
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>kek</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">type</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key encryption key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>data</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">type</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Content encryption key</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line781">line 781</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="unwrapKey"><span class="type-signature"></span>unwrapKey<span class="signature">(kek, data)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-CPKW<br><br>
+
+This algorithm encrypts GOST 28147-89 CEK with a GOST 28147-89 KEK. 
+Ref. rfc4357 6.4 CryptoPro Key Unwrap
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>kek</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key encryption key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>data</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Encrypted content encryption keu</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line916">line 916</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result Decrypted content encryption keu
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="unwrapKey"><span class="type-signature"></span>unwrapKey<span class="signature">(kek, cek)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-SCKW<br><br>
+
+SignalCom Key UnWrapping algorithm
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>kek</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">type</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">concatination of files mk.db3 + masks.db3 or clear kek</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>cek</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">type</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">wrapping key - file kek.opq</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1085">line 1085</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="verify"><span class="type-signature"></span>verify<span class="signature">(k, m, d, iv)</span><span class="type-signature"> &rarr; {boolen}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        verifyIMIT (K, D) is the 32-bit result of the GOST 28147-89 in   
+"imitovstavka" (MAC) mode, used with D as plaintext, K as key and IV   
+as initialization vector.  Note that the standard specifies its use   
+in this mode only with an initialization vector of zero.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>k</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x32 bits key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>m</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8 bits array with signature</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>d</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8 bits array with data</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>iv</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x8 optional bits initial vector</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line712">line 712</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    MAC verified = true
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolen</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="wrapKey"><span class="type-signature"></span>wrapKey<span class="signature">(kek, cek, ukm)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-KW<br><br>
+
+This algorithm encrypts GOST 28147-89 CEK with a GOST 28147-89 KEK.
+Ref. rfc4357 6.1 GOST 28147-89 Key Wrap
+Note: This algorithm MUST NOT be used with a KEK produced by VKO GOST   
+R 34.10-94, because such a KEK is constant for every sender-recipient   
+pair.  Encrypting many different content encryption keys on the same   
+constant KEK may reveal that KEK.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>kek</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key encryption key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>cek</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Content encryption key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>ukm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Random generated value</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line739">line 739</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Encrypted cek
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="wrapKey"><span class="type-signature"></span>wrapKey<span class="signature">(kek, cek, ukm)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-CPKW<br><br>
+
+This algorithm encrypts GOST 28147-89 CEK with a GOST 28147-89 KEK.   
+It can be used with any KEK (e.g., produced by VKO GOST R 34.10-94 or   
+VKO GOST R 34.10-2001) because a unique UKM is used to diversify the KEK.
+Ref. rfc4357 6.3  CryptoPro Key Wrap
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>kek</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key encryption key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>cek</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Content encryption key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>ukm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Random generated value</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line871">line 871</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Encrypted cek
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="wrapKey"><span class="type-signature"></span>wrapKey<span class="signature">(kek, cek)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-SCKW<br><br>
+
+SignalCom Key Wrapping algorithm
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>kek</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">type</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">clear kek or concatination of mk.db3 + masks.db3</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>cek</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">type</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">key for wrapping</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1059">line 1059</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    wrapped key - file kek.opq
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        </dl>
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav id="nav">
+    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCoding.html">gostCoding</a></li><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li><li><a href="gostObject.html">gostObject</a></li><li><a href="gostRandom.html">gostRandom</a></li><li><a href="gostSyntax.html">gostSyntax</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="Gost28147.html">Gost28147</a></li><li><a href="gostCoding.Base64.html">Base64</a></li><li><a href="gostCoding.BER.html">BER</a></li><li><a href="gostCoding.Chars.html">Chars</a></li><li><a href="gostCoding.Hex.html">Hex</a></li><li><a href="gostCoding.Int16.html">Int16</a></li><li><a href="gostCoding.PEM.html">PEM</a></li><li><a href="GostPKIX.html">GostPKIX</a></li><li><a href="GostR3410.html">GostR3410</a></li><li><a href="GostR3411.html">GostR3411</a></li><li><a href="gostSyntax.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="gostSyntax.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="gostSyntax.CanocicalName.html">CanocicalName</a></li><li><a href="gostSyntax.Certificate.html">Certificate</a></li><li><a href="gostSyntax.CertificateList.html">CertificateList</a></li><li><a href="gostSyntax.CertificationRequest.html">CertificationRequest</a></li><li><a href="gostSyntax.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="gostSyntax.ContentInfo.html">ContentInfo</a></li><li><a href="gostSyntax.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="gostSyntax.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="gostSyntax.GostSignature.html">GostSignature</a></li><li><a href="gostSyntax.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="gostSyntax.PFX.html">PFX</a></li><li><a href="gostSyntax.PKIData.html">PKIData</a></li><li><a href="gostSyntax.PKIResponse.html">PKIResponse</a></li><li><a href="gostSyntax.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="gostSyntax.SafeContents.html">SafeContents</a></li><li><a href="gostSyntax.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="gostSyntax.TBSCertificate.html">TBSCertificate</a></li><li><a href="gostSyntax.TBSCertList.html">TBSCertList</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyStore.html">KeyStore</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Name.html">Name</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Dec 05 2014 22:08:56 GMT+0300 (GMT+03:00)
+</footer>
+
+</div>
+
+<script> prettyPrint(); </script>
+<script src="../scripts/prettify/linenumber.js"> </script>
+</body>
+</html>

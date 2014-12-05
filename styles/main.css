@@ -1,0 +1,318 @@
+html {
+    font-family: 'Arial', sans-serif; 
+    color: #333;
+}
+body {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+button {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+}
+
+.procedure, .results, .encoded, input, textarea, select, pre, code  {
+    font-family: Consolas, Monaco, 'Andale Mono',  monospace; 
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.results, .encoded, input, textarea, select {
+    color: #333;
+}
+
+h1, h2, h3, h4 {
+    font-weight: 200;
+}
+
+
+.content {
+    font-family: 'Arial', sans-serif;
+    font-size: 14px;
+    color: #555;
+    line-height: 1.5;
+}
+
+.page {
+    padding: 15px;
+    width: 1000px;
+    margin: 0 auto;
+    position: relative;
+    background-repeat: no-repeat;
+    background-position: top right;
+}
+
+article {
+
+}
+
+section {
+    margin-top: -10px;
+    padding-top: 10px;
+    margin-bottom: 50px;
+    box-sizing: border-box;
+    border-top: 1px solid #ccc;
+}
+
+a {
+    text-decoration: none;
+    color: #33b;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+li {
+    margin-bottom: 10px;
+}
+
+label, .label {
+    display: block;
+}
+
+button, input[type="button"] {
+    display: inline;
+    margin: 5px 0 15px 0;
+    padding: 4px 16px;
+    outline: none;
+    border: 1px solid #999;
+    border-radius: 2px;
+    box-sizing: border-box;
+    background: rgb(245,245,245); /* Old browsers */
+    background: -moz-linear-gradient(top, rgba(240,240,240,1) 0%, rgba(215,215,215,1) 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(240,240,240,1)), color-stop(100%,rgba(215,215,215,1))); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top, rgba(240,240,240,1) 0%,rgba(215,215,215,1) 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top, rgba(240,240,240,1) 0%,rgba(215,215,215,1) 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top, rgba(240,240,240,1) 0%,rgba(215,215,215,1) 100%); /* IE10+ */
+    background: linear-gradient(to bottom, rgba(240,240,240,1) 0%,rgba(215,215,215,1) 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f0f0f0', endColorstr='#d7d7d7',GradientType=0 ); /* IE6-9 */
+}
+
+button:hover, button:focus, input[type="button"]:hover, input[type="button"]:focus {
+    border-color: #777;
+    background: rgb(255,255,255); /* Old browsers */
+    background: -moz-linear-gradient(top, rgba(255,255,255,1) 0%, rgba(229,229,229,1) 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,1)), color-stop(100%,rgba(229,229,229,1))); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top, rgba(255,255,255,1) 0%,rgba(229,229,229,1) 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top, rgba(255,255,255,1) 0%,rgba(229,229,229,1) 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top, rgba(255,255,255,1) 0%,rgba(229,229,229,1) 100%); /* IE10+ */
+    background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(229,229,229,1) 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#e5e5e5',GradientType=0 ); /* IE6-9 */
+}
+
+button:active, input[type="button"]:active {
+    background: rgb(234,234,234); /* Old browsers */
+    background: -moz-linear-gradient(top, rgba(234,234,234,1) 0%, rgba(200,200,200,1) 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(234,234,234,1)), color-stop(100%,rgba(200,200,200,1))); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top, rgba(234,234,234,1) 0%,rgba(200,200,200,1) 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top, rgba(234,234,234,1) 0%,rgba(200,200,200,1) 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top, rgba(234,234,234,1) 0%,rgba(200,200,200,1) 100%); /* IE10+ */
+    background: linear-gradient(to bottom, rgba(234,234,234,1) 0%,rgba(200,200,200,1) 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eaeaea', endColorstr='#c8c8c8',GradientType=0 ); /* IE6-9 */
+}
+
+button:disabled, input[type="button"]:active {
+    color: #999;
+    border: 1px solid #999;
+    background: rgb(245,245,245); /* Old browsers */
+    background: -moz-linear-gradient(top, rgba(240,240,240,1) 0%, rgba(215,215,215,1) 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(240,240,240,1)), color-stop(100%,rgba(215,215,215,1))); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top, rgba(240,240,240,1) 0%,rgba(215,215,215,1) 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top, rgba(240,240,240,1) 0%,rgba(215,215,215,1) 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top, rgba(240,240,240,1) 0%,rgba(215,215,215,1) 100%); /* IE10+ */
+    background: linear-gradient(to bottom, rgba(240,240,240,1) 0%,rgba(215,215,215,1) 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f0f0f0', endColorstr='#d7d7d7',GradientType=0 ); /* IE6-9 */
+}
+
+input, textarea, select, .content, .encoded, .procedure, .fileInput  {
+    border: solid 1px #ccc;
+    border-radius: 2px;
+    margin: 8px 0 16px 0;
+    padding: 6px 12px;
+    outline: none;
+    box-sizing: border-box;
+    background: none;
+}
+
+.content:hover, .encoded:hover, .procedure:hover, input:hover, select:hover, textarea:hover, .fileInput:hover,
+.content:focus, .encoded:focus, .procedure:focus, input:focus, select:focus, textarea:focus, .fileInput:focus {
+    border-color: #777;
+}
+
+input[type="checkbox"] {
+    display: inline-block;
+}
+
+.fileInput {
+    position: relative;
+    overflow: hidden;
+}
+
+.fileInput > input {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.fileInput > input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    cursor: pointer;
+    outline: none;
+    opacity: 0;
+    filter: alpha(opacity=0);
+}
+
+.fileButton {
+    position: relative;
+    overflow: hidden;
+    display: inline;
+    margin: 5px 0 15px 0;
+}
+
+.fileButton > input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    cursor: pointer;
+    outline: none;
+    opacity: 0;
+    filter: alpha(opacity=0);
+}
+
+.fileButton > button {
+    margin: 0;
+}
+
+textarea.value {
+    height: 54px;
+    overflow: hidden;
+    resize: none;
+}
+
+.value, .content, .encoded, .procedure  {
+    width: 100%;
+    display: block;
+    height: auto;
+}
+
+.select-test {
+    width: 50%;
+}
+
+.hidden {
+    display: none;
+}
+
+.content {
+    /*    -webkit-column-width: 200px;
+        -moz-column-width: 200px;
+        column-width: 200px;*/
+    -webkit-column-count: 3;
+    -moz-column-count: 3;
+    column-count: 3;
+    -webkit-column-gap: 30px;
+    -moz-column-gap: 30px;
+    column-gap: 30px;
+    -webkit-column-rule: 1px solid #ccc;
+    -moz-column-rule: 1px solid #ccc;
+    column-rule: 1px solid #ccc;
+}
+
+.encoded {
+    max-height: 800px;
+    overflow: auto;
+}
+
+.logo {
+    position: absolute;
+    right: 0;
+    top: 0px;
+    z-index: -20;
+}
+
+.note {
+    width: 700px;
+}
+
+.art00 {
+    background-image: url(../images/00.png);
+} 
+
+.art01 {
+    background-image: url(../images/01.png);
+}
+
+.art02 {
+    background-image: url(../images/02.png);
+}
+
+.art03 {
+    background-image: url(../images/03.png);
+}
+
+.art04 {
+    background-image: url(../images/04.png);
+}
+
+.art05 {
+    background-image: url(../images/05.png);
+}
+
+.art06 {
+    background-image: url(../images/06.png);
+}
+
+.art07 {
+    background-image: url(../images/07.png);
+}
+
+.art08 {
+    background-image: url(../images/08.png);
+}
+
+.art09 {
+    background-image: url(../images/09.png);
+}
+
+.art10 {
+    background-image: url(../images/10.png);
+}
+
+.art11 {
+    background-image: url(../images/11.png);
+}
+
+.art12 {
+    background-image: url(../images/12.png);
+}
+
+.art13 {
+    background-image: url(../images/13.png);
+}
+
+.art14 {
+    background-image: url(../images/14.png);
+}
+
+.art15 {
+    background-image: url(../images/15.png);
+}
+
+.art16 {
+    background-image: url(../images/16.png);
+}
+
+.prettyprint {}
+

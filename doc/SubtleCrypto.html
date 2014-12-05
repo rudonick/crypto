@@ -1,0 +1,2934 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>WebCrypto GOST: Class: SubtleCrypto</title>
+
+    <script src="../scripts/prettify/prettify.js"> </script>
+    <script src="../scripts/prettify/lang-css.js"> </script>
+    <link type="text/css" rel="stylesheet" href="../styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="../styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div class="page">
+
+<div id="main">
+
+    <h1 class="page-title"><a href="../index.html">WebCrypto GOST</a> Class: SubtleCrypto</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+        SubtleCrypto
+        </h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+<dt>
+    
+        
+        <h2>Constructor</h2>
+        
+
+        <h4 class="name" id="SubtleCrypto"><span class="type-signature"></span>new SubtleCrypto<span class="signature">()</span><span class="type-signature"></span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        The SubtleCrypto class provides low-level cryptographic primitives and algorithms.
+WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#subtlecrypto-interface">http://www.w3.org/TR/WebCryptoAPI/#subtlecrypto-interface</a>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line834">line 834</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        <dl>
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="decrypt"><span class="type-signature"></span>decrypt<span class="signature">(algorithm, key, data)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        The decrypt method returns a new Promise object that will decrypt data 
+using the specified algorithm identifier with the supplied Key. 
+WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-decrypt">http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-decrypt</a><br><br>
+
+Supported algorithm names:
+ <ul>
+     <li><b>GOST 28147-ECB</b> "prostaya zamena" (ECB) mode (default)</li>
+     <li><b>GOST 28147-CNT</b> "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode</li>
+     <li><b>GOST 28147-CFB</b> "gammirovanie" (counter) mode</li>
+     <li><b>GOST 28147-CBC</b> Cipher-Block-Chaining (CBC) mode</li>
+ </ul>
+ For additional modes see <a href="Gost28147.html">Gost28147</a>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Algorithm identifier</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>key</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Key.html">Key</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key object</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>data</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="CryptoOperationData.html">CryptoOperationData</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Operation data</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line877">line 877</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise that resolves with <a href="CryptoOperationData.html">CryptoOperationData</a>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="deriveBits"><span class="type-signature"></span>deriveBits<span class="signature">(algorithm, baseKey, length)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        The deriveBits method returns length bits on baseKey using the 
+specified algorithm identifier. 
+WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-deriveBits">http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-deriveBits</a><br><br>
+
+Supported algorithm names:
+ <ul>
+     <li><b>GOST R 34.10-DH</b> ECDH Key Agreement mode</li>
+     <li><b>GOST R 34.11-KDF</b> Key for Derivation Algorithm</li>
+     <li><b>GOST R 34.11-PBKDF2</b> Password Based Key for Derivation Algorithm</li>
+ </ul>
+ For additional modes see <a href="GostR3410.html">GostR3410</a> and <a href="GostR3411.html">GostR3411</a>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Algorithm identifier</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>baseKey</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Key.html">Key</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Derivation key object</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>length</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Length bits</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1102">line 1102</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise that resolves with <a href="CryptoOperationData.html">CryptoOperationData</a>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="deriveKey"><span class="type-signature"></span>deriveKey<span class="signature">(algorithm, baseKey, derivedKeyType, extractable, keyUsages)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        The deriveKey method returns a new Promise object that will key(s) using
+the specified algorithm identifier. Key can be used in according with
+KeyUsage sequence. The recognized key usage values are "encrypt", "decrypt", 
+"sign", "verify", "deriveKey", "deriveBits", "wrapKey" and "unwrapKey".
+WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-deriveKey">http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-deriveKey</a><br><br>
+
+Supported algorithm names:
+ <ul>
+     <li><b>GOST R 34.10-DH</b> ECDH Key Agreement mode</li>
+     <li><b>GOST R 34.11-KDF</b> Key for Derivation Algorithm</li>
+     <li><b>GOST R 34.11-PBKDF2</b> Password Based Key for Derivation Algorithm</li>
+ </ul>
+ For additional modes see <a href="GostR3410.html">GostR3410</a> and <a href="GostR3411.html">GostR3411</a>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Algorithm identifier</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>baseKey</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Key.html">Key</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Derivation key object</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>derivedKeyType</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Derived key algorithm identifier</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>extractable</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Whether or not the raw keying material may be exported by the application</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>keyUsages</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="KeyUsages.html">KeyUsages</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key usage array: type of operation that may be performed using a key</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1057">line 1057</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise that resolves with <a href="Key.html">Key</a>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="digest"><span class="type-signature"></span>digest<span class="signature">(algorithm, data)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        The digest method returns a new Promise object that will digest data 
+using the specified algorithm identifier. 
+WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-digest">http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-digest</a><br><br>
+
+Supported algorithm names:
+ <ul>
+     <li><b>GOST R 34.11-94</b> Old-Style GOST Hash</li>
+     <li><b>GOST R 34.11</b> GOST Streebog Hash</li>
+ </ul>
+ For additional modes see <a href="GostR3411.html">GostR3411</a>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Algorithm identifier</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>data</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="CryptoOperationData.html">CryptoOperationData</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Operation data</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line986">line 986</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise that resolves with <a href="CryptoOperationData.html">CryptoOperationData</a>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="encrypt"><span class="type-signature"></span>encrypt<span class="signature">(algorithm, key, data)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        The encrypt method returns a new Promise object that will encrypt data 
+using the specified algorithm identifier with the supplied Key.
+WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-encrypt">http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-encrypt</a><br><br>
+
+Supported algorithm names:
+ <ul>
+     <li><b>GOST 28147-ECB</b> "prostaya zamena" (ECB) mode (default)</li>
+     <li><b>GOST 28147-CNT</b> "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode</li>
+     <li><b>GOST 28147-CFB</b> "gammirovanie" (counter) mode</li>
+     <li><b>GOST 28147-CBC</b> Cipher-Block-Chaining (CBC) mode</li>
+ </ul>
+ For more information see <a href="Gost28147.html">Gost28147</a>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Algorithm identifier</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>key</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Key.html">Key</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key object</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>data</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="CryptoOperationData.html">CryptoOperationData</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Operation data</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line843">line 843</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise that resolves with <a href="CryptoOperationData.html">CryptoOperationData</a>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="exportKey"><span class="type-signature"></span>exportKey<span class="signature">(format, key)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        The exportKey method returns a new Promise object that will key data in
+defined format. <br><br>
+The suppored key format values are:
+ <ul>
+     <li>'raw' - An unformatted sequence of bytes. Intended for secret keys.</li>
+     <li>'pkcs8' - The DER encoding of the PrivateKeyInfo structure from RFC 5208.</li>
+     <li>'spki' - The DER encoding of the SubjectPublicKeyInfo structure from RFC 5280.</li>
+ </ul>
+WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-exportKey">http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-exportKey</a><br><br>
+
+Supported algorithm names:
+ <ul>
+     <li><b>GOST R 34.10-94</b> GOST Private and Public keys</li>
+     <li><b>GOST R 34.10</b> ECGOST Private and Public keys</li>
+     <li><b>GOST 28147</b> Key for encryption GOST 28147 modes</li>
+     <li><b>GOST 28147-KW</b> Key for key wrapping GOST 28147 modes</li>
+     <li><b>GOST R 34.11-KDF</b> Key for Derivation Algorithm</li>
+     <li><b>GOST R 34.11-PBKDF2</b> Import Password for Key for Derivation Algorithm</li>
+ </ul>
+ For additional modes see <a href="GostR3410.html">GostR3410</a>, <a href="GostR3411.html">GostR3411</a> and <a href="Gost28147.html">Gost28147</a><br>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>format</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="KeyFormat.html">KeyFormat</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Format specifies a serialization format for a key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>key</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Key.html">Key</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key object</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1214">line 1214</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise that resolves with <a href="CryptoOperationData.html">CryptoOperationData</a>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="generateKey"><span class="type-signature"></span>generateKey<span class="signature">(algorithm, extractable, keyUsages)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        The generateKey method returns a new Promise object that will key(s) using
+the specified algorithm identifier. Key can be used in according with
+KeyUsages sequence. The recognized key usage values are "encrypt", "decrypt", 
+"sign", "verify", "deriveKey", "deriveBits", "wrapKey" and "unwrapKey".
+WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-generateKey">http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-generateKey</a><br><br>
+
+Supported algorithm names:
+ <ul>
+     <li><b>GOST R 34.10</b> ECGOST Key Pairs</li>
+     <li><b>GOST 28147</b> Key for encryption GOST 28147 modes</li>
+     <li><b>GOST 28147-KW</b> Key for wrapping GOST 28147 modes</li>
+     <li><b>GOST R 34.11-KDF</b> Key for Derivation Algorithm</li>
+ </ul>
+ For additional modes see <a href="GostR3410.html">GostR3410</a>, <a href="GostR3411.html">GostR3411</a> and <a href="Gost28147.html">Gost28147</a><br>
+ Note: Generation key for GOST R 34.10-94 not supported.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key algorithm identifier</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>extractable</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Whether or not the raw keying material may be exported by the application</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>keyUsages</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="KeyUsages.html">KeyUsages</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key usage array: type of operation that may be performed using a key</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1016">line 1016</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise that resolves with <a href="Key.html">Key</a> or <a href="KeyPair.html">KeyPair</a> in according to key algorithm
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="importKey"><span class="type-signature"></span>importKey<span class="signature">(format, keyData, algorithm, extractable, keyUsages)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        The importKey method returns a new Promise object that will key(s) using
+the specified algorithm identifier. Key can be used in according with
+KeyUsage sequence. The recognized key usage values are "encrypt", "decrypt", 
+"sign", "verify", "deriveKey", "deriveBits", "wrapKey" and "unwrapKey".<br><br>
+Parameter keyData contains data in defined format.
+The suppored key format values are:
+ <ul>
+     <li>'raw' - An unformatted sequence of bytes. Intended for secret keys.</li>
+     <li>'pkcs8' - The DER encoding of the PrivateKeyInfo structure from RFC 5208.</li>
+     <li>'spki' - The DER encoding of the SubjectPublicKeyInfo structure from RFC 5280.</li>
+ </ul>
+WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-importKey">http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-importKey</a><br><br>
+
+Supported algorithm names:
+ <ul>
+     <li><b>GOST R 34.10-94</b> GOST Private and Public keys</li>
+     <li><b>GOST R 34.10</b> ECGOST Private and Public keys</li>
+     <li><b>GOST 28147</b> Key for encryption GOST 28147 modes</li>
+     <li><b>GOST 28147-KW</b> Key for key wrapping GOST 28147 modes</li>
+     <li><b>GOST R 34.11-KDF</b> Key for Derivation Algorithm</li>
+ </ul>
+ For additional modes see <a href="GostR3410.html">GostR3410</a>, <a href="GostR3411.html">GostR3411</a> and <a href="Gost28147.html">Gost28147</a><br>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>format</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="KeyFormat.html">KeyFormat</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key format Format specifies a serialization format for a key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>keyData</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="CryptoOperationData.html">CryptoOperationData</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key algorithm identifier</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>extractable</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Whether or not the raw keying material may be exported by the application</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>keyUsages</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="KeyUsages.html">KeyUsages</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key usage array: type of operation that may be performed using a key</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1136">line 1136</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise that resolves with <a href="Key.html">Key</a>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="sign"><span class="type-signature"></span>sign<span class="signature">(algorithm, key, data)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        The sign method returns a new Promise object that will sign data using 
+the specified algorithm identifier with the supplied Key.
+WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-sign">http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-sign</a><br><br>
+
+Supported algorithm names:
+ <ul>
+     <li><b>GOST R 34.10-94</b> GOST Signature</li>
+     <li><b>GOST R 34.10-94/GOST R 34.11-94</b> GOST Signature with Hash</li>
+     <li><b>GOST R 34.10</b> ECGOST Signature</li>
+     <li><b>GOST R 34.10/GOST R 34.11-94</b> ECGOST Signature with Old-Style Hash</li>
+     <li><b>GOST R 34.10/GOST R 34.11</b> ECGOST Signature with Streebog Hash</li>
+     <li><b>GOST 28147-MAC</b> MAC base on GOST 28147</li>
+     <li><b>GOST R 34.11-HMAC</b> HMAC base on GOST 34.11</li>
+ </ul>
+ For additional modes see <a href="GostR3410.html">GostR3410</a>, <a href="GostR3411.html">GostR3411</a> and <a href="Gost28147.html">Gost28147</a>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Algorithm identifier</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>key</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Key.html">Key</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key object</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>data</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="CryptoOperationData.html">CryptoOperationData</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Operation data</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line911">line 911</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise that resolves with <a href="CryptoOperationData.html">CryptoOperationData</a>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="unwrapKey"><span class="type-signature"></span>unwrapKey<span class="signature">(format, wrappedKey, unwrappingKey, unwrapAlgorithm, unwrappedKeyAlgorithm, extractable, keyUsages)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        The unwrapKey method returns a new Promise object that will unwrapped key(s).
+WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-unwrapKey">http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-unwrapKey</a><br><br>
+
+Supported algorithm names:
+ <ul>
+     <li><b>GOST 28147-KW</b> Key Wrapping GOST 28147 modes</li>
+ </ul>
+ For additional modes see <a href="Gost28147.html">Gost28147</a><br>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>format</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="KeyFormat.html">KeyFormat</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Format specifies a serialization format for a key. Now suppored only 'raw' key format.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>wrappedKey</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="CryptoOperationData.html">CryptoOperationData</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Wrapped key data</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>unwrappingKey</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Key.html">Key</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Unwrapping key object</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>unwrapAlgorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Algorithm identifier</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>unwrappedKeyAlgorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key algorithm identifier</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>extractable</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Whether or not the raw keying material may be exported by the application</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>keyUsages</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="KeyUsages.html">KeyUsages</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key usage array: type of operation that may be performed using a key</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1300">line 1300</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise that resolves with <a href="Key.html">Key</a>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="verify"><span class="type-signature"></span>verify<span class="signature">(algorithm, key, signature, data)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        The verify method returns a new Promise object that will verify data 
+using the specified algorithm identifier with the supplied Key.
+WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-verify">http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-verify</a><br><br>
+
+Supported algorithm names:
+ <ul>
+     <li><b>GOST R 34.10-94</b> GOST Signature</li>
+     <li><b>GOST R 34.10-94/GOST R 34.11-94</b> GOST Signature with Hash</li>
+     <li><b>GOST R 34.10</b> ECGOST Signature</li>
+     <li><b>GOST R 34.10/GOST R 34.11-94</b> ECGOST Signature with Old-Style Hash</li>
+     <li><b>GOST R 34.10/GOST R 34.11</b> ECGOST Signature with Streebog Hash</li>
+     <li><b>GOST 28147-MAC</b> MAC base on GOST 28147</li>
+     <li><b>GOST R 34.11-HMAC</b> HMAC base on GOST 34.11</li>
+ </ul>
+ For additional modes see <a href="GostR3410.html">GostR3410</a>, <a href="GostR3411.html">GostR3411</a> and <a href="Gost28147.html">Gost28147</a>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Algorithm identifier</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>key</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Key.html">Key</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key object</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>signature</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="CryptoOperationData.html">CryptoOperationData</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Signature data</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>data</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="CryptoOperationData.html">CryptoOperationData</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Operation data</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line948">line 948</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise that resolves with boolean value of verification result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="wrapKey"><span class="type-signature"></span>wrapKey<span class="signature">(format, key, wrappingKey, wrapAlgorithm)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        The wrapKey method returns a new Promise object that will wrapped key(s).
+WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-wrapKey">http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-wrapKey</a><br><br>
+
+Supported algorithm names:
+ <ul>
+     <li><b>GOST 28147-KW</b> Key Wrapping GOST 28147 modes</li>
+ </ul>
+ For additional modes see <a href="Gost28147.html">Gost28147</a><br>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>format</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="KeyFormat.html">KeyFormat</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Format specifies a serialization format for a key. Now suppored only 'raw' key format.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>key</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Key.html">Key</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key object</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>wrappingKey</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Key.html">Key</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Wrapping key object</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>wrapAlgorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Algorithm identifier</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1264">line 1264</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise that resolves with <a href="CryptoOperationData.html">CryptoOperationData</a>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        </dl>
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav id="nav">
+    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCoding.html">gostCoding</a></li><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li><li><a href="gostObject.html">gostObject</a></li><li><a href="gostRandom.html">gostRandom</a></li><li><a href="gostSyntax.html">gostSyntax</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="Gost28147.html">Gost28147</a></li><li><a href="gostCoding.Base64.html">Base64</a></li><li><a href="gostCoding.BER.html">BER</a></li><li><a href="gostCoding.Chars.html">Chars</a></li><li><a href="gostCoding.Hex.html">Hex</a></li><li><a href="gostCoding.Int16.html">Int16</a></li><li><a href="gostCoding.PEM.html">PEM</a></li><li><a href="GostPKIX.html">GostPKIX</a></li><li><a href="GostR3410.html">GostR3410</a></li><li><a href="GostR3411.html">GostR3411</a></li><li><a href="gostSyntax.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="gostSyntax.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="gostSyntax.CanocicalName.html">CanocicalName</a></li><li><a href="gostSyntax.Certificate.html">Certificate</a></li><li><a href="gostSyntax.CertificateList.html">CertificateList</a></li><li><a href="gostSyntax.CertificationRequest.html">CertificationRequest</a></li><li><a href="gostSyntax.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="gostSyntax.ContentInfo.html">ContentInfo</a></li><li><a href="gostSyntax.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="gostSyntax.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="gostSyntax.GostSignature.html">GostSignature</a></li><li><a href="gostSyntax.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="gostSyntax.PFX.html">PFX</a></li><li><a href="gostSyntax.PKIData.html">PKIData</a></li><li><a href="gostSyntax.PKIResponse.html">PKIResponse</a></li><li><a href="gostSyntax.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="gostSyntax.SafeContents.html">SafeContents</a></li><li><a href="gostSyntax.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="gostSyntax.TBSCertificate.html">TBSCertificate</a></li><li><a href="gostSyntax.TBSCertList.html">TBSCertList</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyStore.html">KeyStore</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Name.html">Name</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Dec 05 2014 22:08:58 GMT+0300 (GMT+03:00)
+</footer>
+
+</div>
+
+<script> prettyPrint(); </script>
+<script src="../scripts/prettify/linenumber.js"> </script>
+</body>
+</html>

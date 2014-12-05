@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+    <head>
+        <title>GOST WebCrypto: Eugene's encrypted Letter</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
+        <script src="scripts/prettify/prettify.js"></script>
+        <script src="scripts/prettify/lang-css.js"></script>
+        <script src="scripts/gost/gostCrypto.js"></script>
+        <script src="scripts/gost/gostCoding.js"></script>
+        <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+        <link type="text/css" rel="stylesheet" href="styles/main.css">
+    </head>
+    <body>
+        <div class="page art08">
+            <h1><a href="index.html">WebCrypto GOST</a>: Eugene's encrypted Letter</h1>
+            <p class="note">This is a live example. All buttons execute appropriate javascript algorithms with values from the page. For experimentation directly on the page you can change the text or ciphertext, the values ​​of digital signatures, secret keys and passwords, make changes in the javascript algorithms, their settings.</p>
+            <article>
+                <h2>Encryption message for delivery through open channel</h2>
+                <section>
+                    <p>Eugene has own generated private key and Tatiana's public key. To encrypt the Letters he needs to create a secret key, which also could easily get Tatiana. He uses derive key function based on asymmetric algorithm for generation KEK (Key Encryption Key) with pseudo random UDM. When Eugene has written Letter to Tatiana, he generates one-time secret CEK (Content Encryption Key) and encrypt message. After Eugene uses generated KEK and UDM for wrapping CEK. Wrapped CEK has (UDM | Encrypted CEK | HMAC) and will send to Tatiana with encrypted message.</p>
+                    <label for="privateEugeneKey"><strong>Eugene's private key</strong> stored in a secure repository</label>
+                    <input class="value" id="privateEugeneKey" value="373bc8564d5b4d9fccdd2eab8b242345d7c61dc93653134741feafb5beba8894"/>
+                    <label for="publicTatianaKey"><strong>Tatiana's public key</strong> that Eugene took along for the trip</label>
+                    <textarea class="value" id="publicTatianaKey">552c1a67513beaeb4e3a46826b830c4683b534821c192fd5f0c3df7466b16932
+0008fa147540bb4d97018c6e5044d0d389b79925b92a836cd6bd2928357cd744</textarea>
+                    <span class="label">Eugene's <strong>Letter</strong> to Tatiana</span>
+                    <pre contenteditable class="content" id="message">
+Предвижу все: вас оскорбит
+Печальной тайны объясненье.
+Какое горькое презренье
+Ваш гордый взгляд изобразит!
+Чего хочу? с какою целью
+Открою душу вам свою?
+Какому злобному веселью,
+Быть может, повод подаю!
+Случайно вас когда-то встретя,
+В вас искру нежности заметя,
+Я ей поверить не посмел:
+Привычке милой не дал ходу;
+Свою постылую свободу
+Я потерять не захотел.
+Еще одно нас разлучило...
+Несчастной жертвой Ленский пал...
+Ото всего, что сердцу мило,
+Тогда я сердце оторвал;
+Чужой для всех, ничем не связан,
+Я думал: вольность и покой
+Замена счастью. Боже мой!
+Как я ошибся, как наказан.
+Нет, поминутно видеть вас,
+Повсюду следовать за вами,
+Улыбку уст, движенье глаз
+Ловить влюбленными глазами,
+Внимать вам долго, понимать
+Душой все ваше совершенство,
+Пред вами в муках замирать,
+Бледнеть и гаснуть... вот блаженство!
+И я лишен того: для вас
+Тащусь повсюду наудачу;
+Мне дорог день, мне дорог час:
+А я в напрасной скуке трачу
+Судьбой отсчитанные дни.
+И так уж тягостны они.
+Я знаю: век уж мой измерен;
+Но чтоб продлилась жизнь моя,
+Я утром должен быть уверен,
+Что с вами днем увижусь я...
+Боюсь: в мольбе моей смиренной
+Увидит ваш суровый взор
+Затеи хитрости презренной —
+И слышу гневный ваш укор.
+Когда б вы знали, как ужасно
+Томиться жаждою любви,
+Пылать — и разумом всечасно
+Смирять волнение в крови;
+Желать обнять у вас колени
+И, зарыдав, у ваших ног
+Излить мольбы, признанья, пени,
+Все, все, что выразить бы мог,
+А между тем притворным хладом
+Вооружать и речь и взор,
+Вести спокойный разговор,
+Глядеть на вас веселым взглядом!..
+Но так и быть: я сам себе
+Противиться не в силах боле;
+Все решено: я в вашей воле
+И предаюсь моей судьбе.</pre>
+                    <button onclick="(new Function(encryptMethod.textContent))()">Encrypt message</button>
+                    <button onclick="encrypted.textContent = wrappedKey.value = decrypted.textContent = '';
+                            decryptButton.setAttribute('disabled', true)">Clear</button>
+                    <label for="wrappedKey"><strong>Wrapped CEK</strong> (Content Encryption Key) that Eugene send to Tatiana with Letter.</label>
+                    <input class="value" id="wrappedKey"/>
+                    <span class="label"><strong>Encrypted</strong> by using CEK Eugene's <strong>Letter</strong> to Tatiana</span>
+                    <pre contenteditable class="encoded" id="encrypted"></pre>
+                    <span class="label">Encrypt channel procedure</span>
+                    <pre class="procedure prettyprint" contenteditable id="encryptMethod">
+// Get private key from secure repository
+gostCrypto.subtle.importKey('raw', gostCoding.Hex.decode(privateEugeneKey.value),
+        {name: 'GOSTR3410'}, true, ['deriveKey', 'sign']).then(function(baseKey) {
+
+    // Get peer's public key
+    return gostCrypto.subtle.importKey('raw', gostCoding.Hex.decode(publicTatianaKey.value),
+            {name: 'GOSTR3410'}, true, ['deriveKey', 'verify']).then(function(pubKey) {
+        var UDM = new Uint8Array(8); gostCrypto.getRandomValues(UDM);
+
+        // Use peer's public, own private key and seed for create derive key
+        return gostCrypto.subtle.deriveKey({name: 'GOSTR3410', hash: {name: 'GOSTR3411'}, ukm: UDM,
+            public: pubKey}, baseKey, {name: 'GOST28147'}, false, ['wrapKey']).then(function(KEK) {
+            
+            // Generate CEK (Conten Encryption Key)
+            return gostCrypto.subtle.generateKey({name: 'GOST28147'}, false, ['encrypt']).then(function(CEK) {
+
+                // Encrypt message by using CEK. Encrypted message will send with wrapped CEK
+                return gostCrypto.subtle.encrypt({name: 'GOST28147-CFB'}, CEK,
+                        gostCoding.Chars.decode(message.textContent, 'win1251')).then(function(data) {
+                    encrypted.textContent = gostCoding.Base64.encode(data);
+
+                    // Wrap CEK by using KEK and UDM pseudo random
+                    return gostCrypto.subtle.wrapKey('raw', CEK, KEK, {name: 'GOST28147', ukm: UDM});
+                }).then(function(data) {
+                    wrappedKey.value = gostCoding.Hex.encode(data);
+                    decryptButton.removeAttribute('disabled');
+                });
+            });
+        });
+    });
+}).catch(function(error) {
+    alert(error.message);
+});</pre>
+                </section>
+                <h2>Decryption message that delivered through open channel</h2>
+                <section>
+                    <p>Tatiana unwrap one-time CEK (Content Encryption Key) using own private key and Eugene's public key to derive KEK (Key Encryption Key). Then Tatiana decrypt Letter from Eugene.</p>
+                    <label for="privateTatianaKey"><strong>Tatiana's private key</strong> stored in a secretaire or other secluded place</label>
+                    <input class="value" id="privateTatianaKey" value="5276e50a64d17195563bd2bae495e2b168df6413f79bbf27f2603e0a9e39ef74"/>
+                    <label for="publicEugeneKey"><strong>Eugene's public key</strong> which she keeps in her heart</label>
+                    <textarea class="value" id="publicEugeneKey">44ff13a12ebe699cc52dad28b625ce95805d00a489465dece9e0247746519cab
+b6e9d2ae01f3a8cc55fa5698ca49d62c892b2b62e99c90bb74faac8797847137</textarea>
+                    <button id="decryptButton" onclick="(new Function(decryptMethod.textContent))()" disabled>Decrypt message</button>
+                    <button onclick="decrypted.textContent = ''">Clear</button>
+                    <span class="label">Now Tatiana can read <strong>decrypted Letter</strong> from Eugene. Produced and used keys (KEK, UDM and CEK) she burned. She will receive new keys in every packages that contains next messages.</span>
+                    <pre contenteditable id="decrypted" class="content"></pre>
+                    <p>It's not full implementation because message can be changed in the channel. Use Digital signatures as in previous examples for ensure data immutability.</p>
+                    <span class="label">Decrypt channel procedure</span>
+                    <pre contenteditable class="procedure prettyprint" id="decryptMethod">
+// Get private key from secluded place
+gostCrypto.subtle.importKey('raw', gostCoding.Hex.decode(privateTatianaKey.value),
+        {name: 'GOSTR3410'}, true, ['deriveKey', 'sign']).then(function(baseKey) {
+
+    // Get peer's public key
+    return gostCrypto.subtle.importKey('raw', gostCoding.Hex.decode(publicEugeneKey.value),
+            {name: 'GOSTR3410'}, true, ['deriveKey', 'verify']).then(function(pubKey) {
+        
+        // Get UDM - first 8 bytes in wrapped CEK
+        var wrappedCEK = gostCoding.Hex.decode(wrappedKey.value), UDM = new Uint8Array(8);
+        UDM.set(new Uint8Array(wrappedCEK, 0, 8));
+
+        // Use peer's public, own private key and seed for create derive key
+        return gostCrypto.subtle.deriveKey({name: 'GOSTR3410', hash: {name: 'GOSTR3411'}, ukm: UDM,
+            public: pubKey}, baseKey, {name: 'GOST28147'}, true, ['unwrapKey']).then(function(KEK) {
+
+            // Unwrap CEK using KEK
+            return gostCrypto.subtle.unwrapKey('raw', wrappedCEK, KEK, {name: 'GOST28147', ukm: UDM},
+                {name: 'GOST28147'}, false, ['decrypt']);
+        }).then(function(CEK) {
+
+            // Decrypt message
+            return gostCrypto.subtle.decrypt({name: 'GOST28147-CFB'}, CEK,
+                    gostCoding.Base64.decode(encrypted.textContent));
+        }).then(function(data) {
+            decrypted.textContent = gostCoding.Chars.encode(data, 'win1251');
+        });
+    });
+}).catch(function(error) {
+    alert(error.message);
+});</pre>
+                </section>
+            </article>
+        </div>
+        <script> prettyPrint();</script>
+    </body>
+</html>

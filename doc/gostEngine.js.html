@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>WebCrypto GOST: Source: gostEngine.js</title>
+
+    <script src="../scripts/prettify/prettify.js"> </script>
+    <script src="../scripts/prettify/lang-css.js"> </script>
+    <link type="text/css" rel="stylesheet" href="../styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="../styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div class="page">
+
+<div id="main">
+
+    <h1 class="page-title"><a href="../index.html">WebCrypto GOST</a> Source: gostEngine.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file GOST 34.10-2012 signature function with 1024/512 bits digest
+ * @version 0.99
+ * @copyright 2014, Rudolf Nickolaev. All rights reserved.
+ */
+
+/*
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ */
+
+(function(root, factory) {
+
+    /*
+     * Module imports and exports
+     * 
+     */ // &lt;editor-fold defaultstate="collapsed">
+    if (typeof define === 'function' &amp;&amp; define.amd) {
+        define(['gostRandom', 'gost28147', 'gostR3411', 'gostR3410'], factory);
+    } else if (typeof exports === 'object') {
+        module.exports = factory(require('gostRandom'), require('gost28147'), require('gostR3411'), require('gostR3410'));
+    } else {
+        if (typeof importScripts !== 'undefined') {
+            if (!(root.gostRandom &amp;&amp; root.Gost28147 &amp;&amp; root.GostR3411 &amp;&amp; root.GostR3410))
+                importScripts('gostRandom.js', 'gost28147.js', 'gostR3411.js', 'gostR3410.js');
+        }
+        root.gostEngine = factory(root.gostRandom, root.Gost28147, root.GostR3411, root.GostR3410);
+    }
+    // &lt;/editor-fold>
+
+}(this, function(gostRandom, Gost28147, GostR3411, GostR3410) {
+
+    /*
+     * Engine definition base on normalized algorithm identifier
+     * 
+     */ // &lt;editor-fold defaultstate="collapsed">
+
+    var root = this;
+
+    // Define engine
+    function defineEngine(method, algorithm) {
+        if (!algorithm)
+            throw new (root.SyntaxError || Error)('Algorithm not defined');
+
+        if (!algorithm.name)
+            throw new (root.SyntaxError || Error)('Algorithm name not defined');
+
+        var name = algorithm.name, mode = algorithm.mode;
+        if (name === 'GOST 28147' &amp;&amp; (method === 'generateKey' ||
+                (mode === 'MAC' &amp;&amp; (method === 'sign' || method === 'verify')) ||
+                (mode === 'KW' &amp;&amp; (method === 'wrapKey' || method === 'unwrapKey')) ||
+                ((!mode || mode === 'ES') &amp;&amp; (method === 'encrypt' || method === 'decrypt')))) {
+            return 'Gost28147';
+
+        } else if (name === 'GOST R 34.11' &amp;&amp; (method === 'digest' ||
+                (mode === 'HMAC' &amp;&amp; (method === 'sign' || method === 'verify' || method === 'generateKey')) ||
+                (mode === 'PBKDF2' &amp;&amp; (method === 'deriveKey' || method === 'deriveBits' || method === 'generateKey')))) {
+            return 'GostR3411';
+
+        } else if (name === 'GOST R 34.10' &amp;&amp; (method === 'generateKey' ||
+                ((!mode || mode === 'SIGN') &amp;&amp; (method === 'sign' || method === 'verify')) ||
+                (mode === 'DH' || (method === 'deriveKey' || method === 'deriveBits')))) {
+
+            return 'GostR3410';
+        } else
+            throw new (root.NotSupportedError || Error)('Algorithm ' + name + '-' + mode + ' is not valid for ' + method);
+    } // &lt;/editor-fold>
+
+    /**
+     * Object implements dedicated Web Workers and provide a simple way to create 
+     * and run GOST cryptographic algorithms in background thread. 
+     * 
+     * Object provide interface to GOST low-level cryptogric classes:
+     *  &lt;ul>
+     *      &lt;li>Gost28147 - implementation of GOST 28147 Encryption algorithms. Reference {@link http://tools.ietf.org/html/rfc5830}&lt;/li>
+     *      &lt;li>GostR3411 - implementation of GOST R 34.11 Hash Function algorithms. References {@link http://tools.ietf.org/html/rfc5831} and {@link http://tools.ietf.org/html/rfc6986}&lt;/li>
+     *      &lt;li>GostR3410 - implementation of GOST R 34.10 Digital Signature algorithms. References {@link http://tools.ietf.org/html/rfc5832} and {@link http://tools.ietf.org/html/rfc7091}&lt;/li>
+     *  &lt;/ul>
+     * @namespace gostEngine
+     */
+    var gostEngine = {
+        /**
+         * gostEngine.execute(algorithm, method, args) Entry point to execution 
+         * all low-level GOST cryptographic methods
+         * 
+         *  &lt;ul>
+         *      &lt;li>Determine the appropriate engine for a given execution method&lt;/li>
+         *      &lt;li>Create cipher object for determineted engine&lt;/li>
+         *      &lt;li>Execute method of cipher with given args&lt;/li>
+         *  &lt;/ul>
+         * 
+         * @memberOf gostEngine
+         * @param {AlgorithmIndentifier} algorithm Algorithm identifier
+         * @param {string} method Crypto method for execution
+         * @param {Array} args Method arguments (keys, data, additional parameters)
+         * @returns {(CryptoOperationData|Key|KeyPair|boolean)} Result of method execution
+         */
+        execute: function(algorithm, method, args) // &lt;editor-fold defaultstate="collapsed">
+        {
+            // Define engine for GOST algorithms
+            var engine = defineEngine(method, algorithm);
+            // Create cipher 
+            var cipher = this['get' + engine](algorithm);
+            // Execute method
+            return cipher[method].apply(cipher, args);
+        }, // &lt;/editor-fold>
+        /**
+         * gostEngine.getGost28147(algorithm) returns GOST 28147 cipher instance&lt;br>&lt;br>
+         * 
+         * GOST 28147-89 Encryption Algorithm&lt;br>&lt;br> 
+         * When keys and initialization vectors are converted to/from byte arrays, 
+         * little-endian byte order is assumed.&lt;br>&lt;br>
+         * 
+         * Normalized algorithm identifier common parameters:
+         * 
+         *  &lt;ul>
+         *      &lt;li>&lt;b>name&lt;/b> Algorithm name 'GOST 28147'&lt;/li>
+         *      &lt;li>&lt;b>version&lt;/b> Algorithm version, number
+         *          &lt;ul>
+         *              &lt;li>&lt;b>1989&lt;/b> Current version of standard&lt;/li>
+         *              &lt;li>&lt;b>2014&lt;/b> New planned version of standard. Now not supported&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>&lt;b>length&lt;/b> Key length, number. Block length = key length / 4
+         *          &lt;ul>
+         *              &lt;li>&lt;b>256&lt;/b> 256 bits digest (default)&lt;/li>
+         *              &lt;li>&lt;b>512&lt;/b> 512 bits digest. Now not supported&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>&lt;b>mode&lt;/b> Algorithm mode, string
+         *          &lt;ul>
+         *              &lt;li>&lt;b>ES&lt;/b> Encryption mode (default)&lt;/li>
+         *              &lt;li>&lt;b>MAC&lt;/b> "imitovstavka" (MAC) mode&lt;/li>
+         *              &lt;li>&lt;b>KW&lt;/b> Key wrapping mode&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>&lt;b>sBox&lt;/b> Paramset sBox for GOST 28147-89, string. Used only if version = 1989&lt;/li>
+         *  &lt;/ul>
+         *  
+         * Supported algorithms, modes and parameters:
+         * 
+         *  &lt;ul>
+         *      &lt;li>Encript/Decrypt mode (ES)
+         *          &lt;ul>
+         *              &lt;li>&lt;b>block&lt;/b> Block mode, string. Default ECB&lt;/li>
+         *              &lt;li>&lt;b>keyMeshing&lt;/b> Key meshing mode, string. Default NO&lt;/li>
+         *              &lt;li>&lt;b>padding&lt;/b> Padding mode, string. Default NO for CFB and CNT modes, or ZERO for others&lt;/li>
+         *              &lt;li>&lt;b>iv&lt;/b> {@link CryptoOperationData} Initial vector with length of block. Default - zero block&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>Sign/Verify mode (MAC)
+         *          &lt;ul>
+         *              &lt;li>&lt;b>macLength&lt;/b> Length of mac in bits (default - 32 bits)&lt;/li>
+         *              &lt;li>&lt;b>iv&lt;/b> {@link CryptoOperationData} Initial vector with length of block. Default - zero block&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>Wrap/Unwrap key mode (KW)
+         *          &lt;ul>
+         *              &lt;li>&lt;b>keyWrapping&lt;/b> Mode of keywrapping, string. Default NO - standard GOST key wrapping&lt;/li>
+         *              &lt;li>&lt;b>ukm&lt;/b> {@link CryptoOperationData} User key material. Default - random generated value&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *  &lt;/ul>
+         *      
+         * Supported paramters values:
+         *      
+         *  &lt;ul>
+         *      &lt;li>Block modes (parameter 'block')
+         *          &lt;ul>
+         *              &lt;li>&lt;b>ECB&lt;/b> "prostaya zamena" (ECB) mode (default)&lt;/li>
+         *              &lt;li>&lt;b>CFB&lt;/b> "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode&lt;/li>
+         *              &lt;li>&lt;b>CNT&lt;/b> "gammirovanie" (counter) mode&lt;/li>
+         *              &lt;li>&lt;b>CBC&lt;/b> Cipher-Block-Chaining (CBC) mode&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>Key meshing modes (parameter 'keyMeshing')
+         *          &lt;ul>
+         *              &lt;li>&lt;b>NO&lt;/b> No key wrapping (default)&lt;/li>
+         *              &lt;li>&lt;b>CP&lt;/b> CryptoPor Key key meshing&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>Padding modes (parameter 'padding')
+         *          &lt;ul>
+         *              &lt;li>&lt;b>NO&lt;/b> No padding only for CFB and CNT modes&lt;/li>
+         *              &lt;li>&lt;b>PKCS5&lt;/b> PKCS#5 padding mode&lt;/li>
+         *              &lt;li>&lt;b>ZERO&lt;/b> Zero bits padding mode&lt;/li>
+         *              &lt;li>&lt;b>RANDOM&lt;/b> Random bits padding mode&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>Wrapping key modes (parameter 'keyWrapping')
+         *          &lt;ul>
+         *              &lt;li>&lt;b>NO&lt;/b> Ref. rfc4357 6.1 GOST 28147-89 Key wrapping&lt;/li>
+         *              &lt;li>&lt;b>CP&lt;/b> CryptoPro Key wrapping mode&lt;/li>
+         *              &lt;li>&lt;b>SC&lt;/b> SignalCom Key wrapping mode&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *  &lt;/ul>
+         * 
+         * @memberOf gostEngine
+         * @param {AlgorithmIndentifier} algorithm Algorithm identifier
+         * @returns {Gost28147} Instance of Gost28147
+         */
+        getGost28147: function(algorithm) // &lt;editor-fold defaultstate="collapsed">
+        {
+            return new (Gost28147 || (Gost28147 = root.Gost28147))(algorithm);
+        }, // &lt;/editor-fold>
+        /**
+         * gostEngine.getGostR3411(algorithm) returns GOST R 34.11 cipher instance&lt;br>&lt;br>
+         * 
+         * Normalized algorithm identifier common parameters:
+         * 
+         *  &lt;ul>
+         *      &lt;li>&lt;b>name&lt;/b> Algorithm name 'GOST R 34.11'&lt;/li>
+         *      &lt;li>&lt;b>version&lt;/b> Algorithm version
+         *          &lt;ul>
+         *              &lt;li>&lt;b>1994&lt;/b> old-style 256 bits digest based on GOST 28147-89&lt;/li>
+         *              &lt;li>&lt;b>2012&lt;/b> 256 ro 512 bits digest algorithm "Streebog" GOST R 34.11-2012 (default)&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>&lt;b>length&lt;/b> Digest length
+         *          &lt;ul>
+         *              &lt;li>&lt;b>256&lt;/b> 256 bits digest&lt;/li>
+         *              &lt;li>&lt;b>512&lt;/b> 512 bits digest, valid only for algorithm "Streebog"&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>&lt;b>mode&lt;/b> Algorithm mode
+         *          &lt;ul>
+         *              &lt;li>&lt;b>HASH&lt;/b> simple digest mode (default)&lt;/li>
+         *              &lt;li>&lt;b>HMAC&lt;/b> HMAC algorithm based on GOST R 34.11&lt;/li>
+         *              &lt;li>&lt;b>KDF&lt;/b> Derive bits for KEK deversification&lt;/li>
+         *              &lt;li>&lt;b>PBKDF2&lt;/b> Password based key dirivation algorithms PBKDF2 (based on HMAC)&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>&lt;b>sBox&lt;/b> Paramset sBox for GOST 28147-89. Used only if version = 1994&lt;/li>
+         *  &lt;/ul>
+         * 
+         * Supported algorithms, modes and parameters:
+         * 
+         *  &lt;ul>
+         *      &lt;li>Digest HASH mode (default)&lt;/li>
+         *      &lt;li>Sign/Verify HMAC modes parameters depends on version and length
+         *          &lt;ul>
+         *              &lt;li>&lt;b>version: 1994&lt;/b> HMAC parameters (B = 32, L = 32)&lt;/li>
+         *              &lt;li>&lt;b>version: 2012, length: 256&lt;/b> HMAC parameters (B = 64, L = 32)&lt;/li>
+         *              &lt;li>&lt;b>version: 2012, length: 512&lt;/b> HMAC parameters  (B = 64, L = 64)&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>DeriveBits/DeriveKey KDF mode
+         *          &lt;ul>
+         *              &lt;li>&lt;b>context&lt;/b> {@link CryptoOperationData} Context of the key derivation&lt;/li>
+         *              &lt;li>&lt;b>label&lt;/b> {@link CryptoOperationData} Label that identifies the purpose for the derived keying material&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>DeriveBits/DeriveKey PBKDF2 mode
+         *          &lt;ul>
+         *              &lt;li>&lt;b>salt&lt;/b> {@link CryptoOperationData} Random salt as input for HMAC algorithm&lt;/li>
+         *              &lt;li>&lt;b>iterations&lt;/b> Iteration count. GOST recomended value 1000 (default) or 2000&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *  &lt;/ul>
+         * 
+         * @memberOf gostEngine
+         * @param {AlgorithmIndentifier} algorithm Algorithm identifier
+         * @returns {GostR3411} Instance of GostR3411
+         */
+        getGostR3411: function(algorithm) // &lt;editor-fold defaultstate="collapsed">
+        {
+            return new (GostR3411 || (GostR3411 = root.GostR3411))(algorithm);
+        }, // &lt;/editor-fold>
+        /**
+         * gostEngine.getGostR3410(algorithm) returns GOST R 34.10 cipher instance&lt;br>&lt;br>
+         * 
+         * Normalized algorithm identifier common parameters:
+         * 
+         *  &lt;ul>
+         *      &lt;li>&lt;b>name&lt;/b> Algorithm name 'GOST R 34.10'&lt;/li>
+         *      &lt;li>&lt;b>version&lt;/b> Algorithm version
+         *          &lt;ul>
+         *              &lt;li>&lt;b>1994&lt;/b> - Old-style GOST R 34.10-94 ExpMod algorithm with GOST R 34.11-94 hash&lt;/li>
+         *              &lt;li>&lt;b>2001&lt;/b> - GOST R 34.10-2001 Eliptic curve algorithm with old GOST R 34.11-94 hash&lt;/li>
+         *              &lt;li>&lt;b>2012&lt;/b> - GOST R 34.10-2012 Eliptic curve algorithm with GOST R 34.11-12 hash, default mode&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>&lt;b>length&lt;/b> Length of hash and signature. Key length == hash length for EC algorithms and 2 * hash length for ExpMod algorithm
+         *          &lt;ul>
+         *              &lt;li>&lt;b>GOST R 34.10-256&lt;/b> - 256 bits digest, default mode&lt;/li>
+         *              &lt;li>&lt;b>GOST R 34.10-512&lt;/b> - 512 bits digest only for GOST R 34.11-2012 hash&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>&lt;b>mode&lt;/b> Algorithm mode
+         *          &lt;ul>
+         *              &lt;li>&lt;b>SIGN&lt;/b> Digital signature mode (default)&lt;/li>
+         *              &lt;li>&lt;b>DH&lt;/b> Diffie-Hellman key generation and key agreement mode&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>&lt;b>sBox&lt;/b> Paramset sBox for GOST 34.11-94. Used only if version = 1994 or 2001&lt;/li>
+         *  &lt;/ul>
+         *  
+         * Supported algorithms, modes and parameters:
+         * 
+         *  &lt;ul>
+         *      &lt;li>Sign/Verify mode (SIGN)&lt;/li>
+         *      &lt;li>DeriveKey/DeriveBits mode (DH)
+         *          &lt;ul>
+         *              &lt;li>{@link CryptoOperationData} &lt;b>ukm&lt;/b> User key material. Default - random generated value&lt;/li>
+         *              &lt;li>{@link CryptoOperationData} &lt;b>public&lt;/b> The peer's EC public key data&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>GenerateKey mode (SIGN and DH) version = 1994
+         *          &lt;ul>
+         *              &lt;li>&lt;b>namedParam&lt;/b> Paramset for key generation algorithm. If specified no additianal parameters required&lt;/li>
+         *          &lt;/ul>
+         *          Additional parameters, if namedParam not specified
+         *          &lt;ul>
+         *              &lt;li>&lt;b>modulusLength&lt;/b> Bit length of p (512 or 1024 bits). Default = 1024&lt;/li>
+         *              &lt;li>&lt;b>p&lt;/b> {@link CryptoOperationData} Modulus, prime number, 2^(t-1)&lt;p&lt;2^t&lt;/li>
+         *              &lt;li>&lt;b>q&lt;/b> {@link CryptoOperationData} Order of cyclic group, prime number, 2^254&lt;q&lt;2^256, q is a factor of p-1&lt;/li>
+         *              &lt;li>&lt;b>a&lt;/b> {@link CryptoOperationData} Generator, integer, 1&lt;a&lt;p-1, at that aq (mod p) = 1&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>GenerateKey mode (SIGN and DH) version = 2001 or 2012
+         *          &lt;ul>
+         *              &lt;li>&lt;b>namedCurve&lt;/b> Paramset for key generation algorithm. If specified no additianal parameters required&lt;/li>
+         *          &lt;/ul>
+         *          Additional EC parameters, if namedCurve not specified
+         *          &lt;ul>
+         *              &lt;li>&lt;b>p&lt;/b> {@link CryptoOperationData} Prime number - elliptic curve modulus&lt;/li>
+         *              &lt;li>&lt;b>a&lt;/b> {@link CryptoOperationData} Coefficients a of the elliptic curve E&lt;/li>
+         *              &lt;li>&lt;b>b&lt;/b> {@link CryptoOperationData} Coefficients b of the elliptic curve E&lt;/li>
+         *              &lt;li>&lt;b>q&lt;/b> {@link CryptoOperationData} Prime number - order of cyclic group&lt;/li>
+         *              &lt;li>&lt;b>x&lt;/b> {@link CryptoOperationData} Base point p x-coordinate&lt;/li>
+         *              &lt;li>&lt;b>y&lt;/b> {@link CryptoOperationData} Base point p y-coordinate&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *  &lt;/ul>
+         *  
+         * @memberOf gostEngine
+         * @param {AlgorithmIndentifier} algorithm Algorithm identifier
+         * @returns {GostR3410} Instance of GostR3410
+         */
+        getGostR3410: function(algorithm) // &lt;editor-fold defaultstate="collapsed">
+        {
+            return new (GostR3410 || (GostR3410 = root.GostR3410))(algorithm);
+        } // &lt;/editor-fold>
+    };
+
+    /*
+     * Worker method execution
+     * 
+     */ // &lt;editor-fold defaultstate="collapsed">
+
+    // Worker for gostCripto method execution
+    if (root.importScripts) {
+
+        /**
+         * Method called when {@link SubtleCrypto} calls its own postMessage() 
+         * method with data parameter: algorithm, method and arg.&lt;br>
+         * Call method execute and postMessage() results to onmessage event handler 
+         * in the main process.&lt;br>
+         * If error occured onerror event handler executed in main process.
+         * 
+         * @memberOf gostEngine
+         * @name onmessage
+         * @param {MessageEvent} event Message event with data {algorithm, method, args}
+         */
+        root.onmessage = function(event) {
+            try {
+                postMessage({
+                    id: event.data.id,
+                    result: gostEngine.execute(event.data.algorithm,
+                            event.data.method, event.data.args)});
+            } catch (e) {
+                postMessage({
+                    id: event.data.id,
+                    error: e.message
+                });
+            }
+        };
+    } else {
+
+        // Load dependens
+        var baseUrl = '', nameSuffix = '';
+        // Try to define from DOM model
+        if (typeof document !== 'undefined') {
+            (function() {
+                var regs = /^(.*)gostCrypto(.*)\.js$/i;
+                var list = document.querySelectorAll('script');
+                for (var i = 0, n = list.length; i &lt; n; i++) {
+                    var value = list[i].getAttribute('src');
+                    var test = regs.exec(value);
+                    if (test) {
+                        baseUrl = test[1];
+                        nameSuffix = test[2];
+                    }
+                }
+            })();
+        }
+
+        // Local importScripts procedure for include dependens
+        var importScripts = function() {
+            for (var i = 0, n = arguments.length; i &lt; n; i++) {
+                var name = arguments[i].split('.'),
+                        src = baseUrl + name[0] + nameSuffix + '.' + name[1];
+                var el = document.querySelector('script[src="' + src + '"]');
+                if (!el) {
+                    el = document.createElement('script');
+                    el.setAttribute('src', src);
+                    document.head.appendChild(el);
+                }
+            }
+        };
+
+        // Import engines
+        if (!gostRandom)
+            importScripts('gostRandom.js');
+        if (!Gost28147)
+            importScripts('gost28147.js');
+        if (!GostR3411)
+            importScripts('gostR3411.js');
+        if (!GostR3410)
+            importScripts('gostR3410.js');
+    } // &lt;/editor-fold>
+
+    return gostEngine;
+
+}));
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav id="nav">
+    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCoding.html">gostCoding</a></li><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li><li><a href="gostObject.html">gostObject</a></li><li><a href="gostRandom.html">gostRandom</a></li><li><a href="gostSyntax.html">gostSyntax</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="Gost28147.html">Gost28147</a></li><li><a href="gostCoding.Base64.html">Base64</a></li><li><a href="gostCoding.BER.html">BER</a></li><li><a href="gostCoding.Chars.html">Chars</a></li><li><a href="gostCoding.Hex.html">Hex</a></li><li><a href="gostCoding.Int16.html">Int16</a></li><li><a href="gostCoding.PEM.html">PEM</a></li><li><a href="GostPKIX.html">GostPKIX</a></li><li><a href="GostR3410.html">GostR3410</a></li><li><a href="GostR3411.html">GostR3411</a></li><li><a href="gostSyntax.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="gostSyntax.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="gostSyntax.CanocicalName.html">CanocicalName</a></li><li><a href="gostSyntax.Certificate.html">Certificate</a></li><li><a href="gostSyntax.CertificateList.html">CertificateList</a></li><li><a href="gostSyntax.CertificationRequest.html">CertificationRequest</a></li><li><a href="gostSyntax.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="gostSyntax.ContentInfo.html">ContentInfo</a></li><li><a href="gostSyntax.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="gostSyntax.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="gostSyntax.GostSignature.html">GostSignature</a></li><li><a href="gostSyntax.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="gostSyntax.PFX.html">PFX</a></li><li><a href="gostSyntax.PKIData.html">PKIData</a></li><li><a href="gostSyntax.PKIResponse.html">PKIResponse</a></li><li><a href="gostSyntax.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="gostSyntax.SafeContents.html">SafeContents</a></li><li><a href="gostSyntax.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="gostSyntax.TBSCertificate.html">TBSCertificate</a></li><li><a href="gostSyntax.TBSCertList.html">TBSCertList</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyStore.html">KeyStore</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Name.html">Name</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Dec 05 2014 22:08:55 GMT+0300 (GMT+03:00)
+</footer>
+
+</div>
+
+<script> prettyPrint(); </script>
+<script src="../scripts/prettify/linenumber.js"> </script>
+</body>
+</html>

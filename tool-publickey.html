@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+    <head>
+        <title>WebCrypto GOST: Generate private and public keys</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
+        <script src="scripts/prettify/prettify.js"></script>
+        <script src="scripts/prettify/lang-css.js"></script>
+        <script src="scripts/gost/gostCrypto.js"></script>
+        <script src="scripts/gost/gostCoding.js"></script>
+        <script src="scripts/gost/gostRandom.js"></script>
+        <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+        <link type="text/css" rel="stylesheet" href="styles/main.css">
+    </head>
+    <body>
+        <div class="page art07">
+            <h1><a href="index.html">WebCrypto GOST</a>: Generation key tools</h1>
+            <p class="note">This is a live on-line tool. All buttons execute appropriate javascript algorithms with values from the page. The tool is intended for experimentation with data processing. Feel free to make changes in the javascript algorithms, their settings..</p>
+            <article>
+                <h2>Generate private and calculate public keys</h2>
+                <section>
+                    <p>For elliptic curves algorithms used in GOST 34.10-2012 it's possible to split generation key procedure on two stages. In the first step we obtain the private key using the random number generator or by manual entry. In the second step procedure calculates an open key for the selected private key.</p>
+                    <p>In different sources we can find different hex view of keys - in Big-endian or in Little-endial. It's a common error for first stages of study. Feel free to use swap procedure</p>
+                    <label for="namedCurve">Select <strong>Named curve</strong> or enter algorithm parameters</label>
+                    <select class="value" id="namedCurve" onchange="
+                            if (this.value === 'Other') {
+                                manual.classList.remove('hidden');
+                            } else {
+                                manual.classList.add('hidden');
+                            }
+                            ">
+                        <option selected value="S-256-TEST">id-GostR3410-2001-TestParamSet</option>
+                        <option value="S-256-A">id-GostR3410-2001-CryptoPro-A-ParamSet</option>
+                        <option value="S-256-B">id-GostR3410-2001-CryptoPro-B-ParamSet</option>
+                        <option value="S-256-C">id-GostR3410-2001-CryptoPro-C-ParamSet</option>
+                        <option value="X-256-A">id-GostR3410-2001-CryptoPro-XchA-ParamSet</option>
+                        <option value="X-256-B">id-GostR3410-2001-CryptoPro-XchA-ParamSet</option>
+                        <option value="P-256">id-GostR3410-2001-SignalCom-ParamSet</option>
+                        <option value="Other">Enter parameters manualy</option>
+                    </select>
+                    <div id="manual" class="hidden">
+                        <label for="paramA">Coefficient <strong><i>a</i></strong> of the elliptic curve E</label>
+                        <input class="value" id="paramA"/>
+                        <label for="paramB">Coefficient <strong><i>b</i></strong> of the elliptic curve E</label>
+                        <input class="value" id="paramB"/>
+                        <label for="paramP">Elliptic curve modulus <strong><i>p</i></strong> - prime number</label>
+                        <input class="value" id="paramP"/>
+                        <label for="paramQ">Elliptic curve modulus <strong><i>q</i></strong> - Prime number</label>
+                        <input class="value" id="paramQ"/>
+                        <label for="paramX">Base point p coordinate <strong><i>x</i></strong></label>
+                        <input class="value" id="paramX"/>
+                        <label for="paramY">Base point p coordinate <strong><i>y</i></strong></label>
+                        <input class="value" id="paramY"/>
+                    </div>
+
+                    <label for="privateKey"><strong>Private key</strong>. Note: private key should be less then parameter <i>q</i> -  order of cyclic group</label>
+                    <input class="value" id="privateKey"/>
+                    <label for="publicKey"><strong>Public key</strong></label>
+                    <textarea class="value" id="publicKey"></textarea>
+                    <button id="randomButton" onclick="(new Function(randomMethod.textContent))()">Generate private key</button>
+                    <button id="publicButton" onclick="(new Function(publicMethod.textContent))()">Calculate public key</button>
+                    <button id="endianButton" onclick="(new Function(swapMethod.textContent))()">Swap bytes in keys</button>
+                    <button onclick="privateKey.value = publicKey.value = ''">Clear</button>
+
+                    <span class="label">Generate random key procedure</span>
+                    <pre contenteditable class="procedure prettyprint" id="randomMethod">
+// Generate random
+var random = new Uint8Array(32); gostCrypto.getRandomValues(random);
+privateKey.value = gostCoding.Hex.encode(random);
+                    </pre>
+                    <span class="label">Calculate keys procedure</span>
+                    <pre class="procedure prettyprint" contenteditable id="publicMethod">
+// Generate public key
+var algorithm = {name: 'GOST R 34.10'};
+
+// Preset if private key already defined
+if (privateKey.value)
+    algorithm.ukm = gostCoding.Hex.decode(privateKey.value);
+
+// Set curve parameters
+if (namedCurve.value === 'Other') {
+    algorithm.namedCurve = {
+        a: gostCoding.Hex.decode(paramA.value, 'BigEndian'),
+        b: gostCoding.Hex.decode(paramB.value, 'BigEndian'),
+        p: gostCoding.Hex.decode(paramP.value, 'BigEndian'),
+        q: gostCoding.Hex.decode(paramQ.value, 'BigEndian'),
+        x: gostCoding.Hex.decode(paramX.value, 'BigEndian'),
+        y: gostCoding.Hex.decode(paramY.value, 'BigEndian'),
+    }
+} else
+    algorithm.namedCurve = namedCurve.value;
+
+// Generate keys
+gostCrypto.subtle.generateKey(algorithm, true, ['sign', 'verify']).then(function(keyPair) {
+
+    // Store key in secluded place
+    return gostCrypto.subtle.exportKey('raw', keyPair.privateKey).then(function(result) {
+        privateKey.value = gostCoding.Hex.encode(result);
+
+        // Provide the public key to recepient
+        return gostCrypto.subtle.exportKey('raw', keyPair.publicKey).then(function(result) {
+            publicKey.value = gostCoding.Hex.encode(result);
+            signButton.removeAttribute('disabled');
+        });
+    });
+});</pre>
+                    <span class="label">Swap bytes procedure</span>
+                    <pre contenteditable class="procedure prettyprint" id="swapMethod">
+// Swap bytes in keys
+if (privateKey.value)
+    privateKey.value = gostCoding.Hex.encode(gostCoding.Hex.decode(privateKey.value, true));
+if (publicKey.value)
+    publicKey.value = gostCoding.Hex.encode(gostCoding.Hex.decode(publicKey.value, true));</pre>
+                </section>
+            </article>
+        </div>
+        <script> prettyPrint();</script>
+    </body>
+</html>

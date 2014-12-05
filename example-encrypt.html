@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+    <head>
+        <title>WebCrypto GOST: Olga's secret vault</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
+        <script src="scripts/prettify/prettify.js"></script>
+        <script src="scripts/prettify/lang-css.js"></script>
+        <script src="scripts/gost/gostCrypto.js"></script>
+        <script src="scripts/gost/gostCoding.js"></script>
+        <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+        <link type="text/css" rel="stylesheet" href="styles/main.css">
+    </head>
+    <body>
+        <div class="page art12">
+            <h1><a href="index.html">WebCrypto GOST</a>: Olga's secret vault</h1>
+            <p class="note">This is a live example. All buttons execute appropriate javascript algorithms with values from the page. For experimentation directly on the page you can change the text or ciphertext, the values ​​of digital signatures, secret keys and passwords, make changes in the javascript algorithms, their settings.</p>
+            <article>
+                <h2>Content encryption</h2>
+                <section>
+                    <p>Olga uses a secret vault for safe keeping secrets young lady. She does not allow outsiders to look or write into her album. As the key to the secret vault Olga uses the phrase from the favorite poem.</p>
+                    <label for="password"><strong>Olga's password</strong> to the secret vault</label>
+                    <input class="value" id="password" value="Мой дядя самых честных правил, когда не в шутку занемог, он уважать себя заставил и лучше выдумать не мог."/>
+                    <span><strong>The contents</strong> of the Olga's album, which must be kept secret from outsiders. The text has French and Cyrillic characters, so we use UTF-8 encoding.</span>
+                    <pre contenteditable id="content" class="content">
+Конечно, вы не раз видали
+Уездной барышни альбом,
+Что все подружки измарали
+С конца, с начала и кругом.
+Сюда, назло правописанью,
+Стихи без меры, по преданью
+В знак дружбы верной внесены,
+Уменьшены, продолжены.
+На первом листике встречаешь
+Qu’écrirez-vous sur ces tablettes,
+И подпись: t. à v. Annеttе;
+А на последнем прочитаешь:
+«Кто любит более тебя,
+Пусть пишет далее меня».
+Тут непременно вы найдете
+Два сердца, факел и цветки;
+Тут верно клятвы вы прочтете
+В любви до гробовой доски;
+Какой-нибудь пиит армейский
+Тут подмахнул стишок злодейский.
+В такой альбом, мои друзья,
+Признаться, рад писать и я,
+Уверен будучи душою,
+Что всякий мой усердный вздор
+Заслужит благосклонный взор
+И что потом с улыбкой злою
+Не станут важно разбирать,
+Остро иль нет я мог соврать.
+Но вы, разрозненные томы
+Из библиотеки чертей,
+Великолепные альбомы,
+Мученье модных рифмачей,
+Вы, украшенные проворно
+Толстого кистью чудотворной
+Иль Баратынского пером,
+Пускай сожжет вас божий гром!
+Когда блистательная дама
+Мне свой in-quarto подает,
+И дрожь и злость меня берет,
+И шевелится эпиграмма
+Во глубине моей души,
+А мадригалы им пиши!</pre>
+                    <button id="encryptButton" onclick="(new Function(encryptMethod.textContent))()">Encrypt content</button>
+                    <button onclick="decrypted.textContent = encrypted.textContent = SALTfield.value = HMACfield.value = '';
+                            decryptButton.setAttribute('disabled', true)">Clear</button>
+                    <span class="label"><strong>Encrypted contents</strong> of Olga's album. Only one who knows the secret words can read and write to album</span>
+                    <pre contenteditable class="encoded" id="encrypted"></pre>
+                    <label for="SALTfield">Pseudo random <strong>Salt</strong> for password based key generation</label>
+                    <input class="value" id="SALTfield"/>
+                    <label for="HMACfield"><strong>Digital signature</strong> that ensures data immutability</label>
+                    <input class="value" id="HMACfield"/>
+                    <span class="label">Encrypt procedure</span>
+                    <pre contenteditable class="procedure prettyprint" id="encryptMethod">
+// Import password for key generation
+gostCrypto.subtle.importKey('raw', gostCoding.Chars.decode(password.value, 'utf8'), 
+    'GOST R 34.11-PBKDF2', true, ['deriveKey']).then(function(passwordKey) {
+
+    // Generate random value as salt for password based CEK generation
+    var salt = new Uint8Array(32); gostCrypto.getRandomValues(salt);
+    SALTfield.value = gostCoding.Hex.encode(salt);
+
+    // Generate key from password. Algorithm PKCS#5 PBKDF2 based on HMAC(GOST R 34.11)
+    return gostCrypto.subtle.deriveKey({name: 'GOST R 34.11-PBKDF2', salt: salt, iterations: 1000}, passwordKey, 
+            'GOST 28147', true, ['encrypt', 'sign']);
+}).then(function(CEK) {
+
+    // Encrypt content with CEK. Algorithm PKCS#5 PBSE2 based on GOST 28147
+    return gostCrypto.subtle.encrypt('GOST 28147-CFB', CEK, 
+        gostCoding.Chars.decode(content.textContent, 'utf8')).then(function(data) {
+        encrypted.textContent = gostCoding.Base64.encode(data);
+
+        // Calculate HMAC prevent to do any changes. Algorithm PKCS#5 PBMAC1 based on HMAC(GOST R 34.11)
+        return gostCrypto.subtle.sign('GOST R 34.11-HMAC', CEK, data);
+    }).then(function(data) {
+        HMACfield.value = gostCoding.Hex.encode(data);
+        decryptButton.removeAttribute('disabled');
+    });
+}).catch(function(error) {
+    alert(error.message);
+});</pre>
+                </section>
+                <h2>Content decryption</h2>
+                <section>
+                    <p>When Olga wants to read or write something into the album, she uses a secret password and last initialization vector for decryption procedure. Before it will decrypted, Olga verifies that the package has not been modified.</p>
+                    <button id="decryptButton" onclick="(new Function(decryptMethod.textContent))()" disabled>Decrypt content</button>
+                    <button onclick="decrypted.textContent = notchanged.value = ''">Clear</button>
+                    <label for="notchanged">Result of digital signature <strong>verification</strong>. Is encrypted content not changed?</label>
+                    <input class="value" id="notchanged"/>
+                    <span class="label"><strong>Decrypted contents</strong> of Olga's album</span>
+                    <pre contenteditable id="decrypted" class="content"></pre>
+                    <span class="label">Decrypt procedure</span>
+                    <pre contenteditable class="procedure prettyprint" id="decryptMethod">
+// Import password for key generation
+gostCrypto.subtle.importKey('raw', gostCoding.Chars.decode(password.value, 'utf8'), 
+    'GOST R 34.11-PBKDF2', true, ['deriveKey']).then(function(passwordKey) {
+
+    // Generate key from password. Algorithm PKCS#5 PBKDF2 based on HMAC(GOST R 34.11)
+    var salt = gostCoding.Hex.decode(SALTfield.value);
+    return gostCrypto.subtle.deriveKey({name: 'GOST R 34.11-PBKDF2', salt: salt, iterations: 1000}, passwordKey, 
+            'GOST 28147', true, ['decrypt', 'verify']);
+}).then(function(CEK) {
+
+    // Get saved digital signature for verification
+    var HMAC = gostCoding.Hex.decode(HMACfield.value);
+    // Get source of encripted content
+    var source = gostCoding.Base64.decode(encrypted.textContent);
+
+    // Verify HMAC to ensure that content not changed
+    return gostCrypto.subtle.verify('GOST R 34.11-HMAC', CEK, HMAC, source).then(function(check) {
+        if (check) {
+            notchanged.value = 'Yes';
+
+            // Decrypt encrypted content with CEK
+            return gostCrypto.subtle.decrypt('GOST 28147-CFB', CEK, source).then(function(data) {
+                decrypted.textContent = gostCoding.Chars.encode(data, 'utf8');
+            });
+        } else
+            notchanged.value = 'No';
+    });
+}).catch(function(error) {
+    alert(error.message);
+});</pre>
+                </section>
+            </article>
+        </div>
+        <script> prettyPrint();</script>
+    </body>
+</html>

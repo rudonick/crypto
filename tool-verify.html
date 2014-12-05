@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+    <head>
+        <title>WebCrypto GOST: Sirnature verification tool</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
+        <script src="scripts/prettify/prettify.js"></script>
+        <script src="scripts/prettify/lang-css.js"></script>
+        <script src="scripts/gost/gostCrypto.js"></script>
+        <script src="scripts/gost/gostCoding.js"></script>
+        <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+        <link type="text/css" rel="stylesheet" href="styles/main.css">
+    </head>
+    <body>
+        <div class="page art16">
+            <h1><a href="index.html">WebCrypto GOST</a>: Signature verification tool</h1>
+            <p class="note">This is a live on-line tool. All buttons execute appropriate javascript algorithms with values from the page. The tool is intended for experimentation with data processing. Feel free to make changes in the javascript algorithms, their settings..</p>
+            <article>
+                <h2>Algorithm parameters</h2>
+                <section>
+                    <p>GOST do not regulate the parameters of digital signature algorithms and hash functions. Different manufacturers use their sets. If the set is known, you can select otherwise enter the parameters of the algorithm manually.</p>
+                    <label for="namedCurve">Select <strong>Named curve</strong> or enter algorithm parameters</label>
+                    <select class="value" id="namedCurve" onchange="
+                            verified.value = '';
+                            if (this.value === 'Other') {
+                                manual.classList.remove('hidden');
+                            } else {
+                                manual.classList.add('hidden');
+                            }
+                            ">
+                        <option selected value="S-TEST">id-GostR3410-2001-TestParamSet</option>
+                        <option value="S-256-A">id-GostR3410-2001-CryptoPro-A-ParamSet</option>
+                        <option value="S-256-B">id-GostR3410-2001-CryptoPro-B-ParamSet</option>
+                        <option value="S-256-C">id-GostR3410-2001-CryptoPro-C-ParamSet</option>
+                        <option value="X-256-A">id-GostR3410-2001-CryptoPro-XchA-ParamSet</option>
+                        <option value="X-256-B">id-GostR3410-2001-CryptoPro-XchA-ParamSet</option>
+                        <option value="P-256">id-GostR3410-2001-SignalCom-ParamSet</option>
+                        <option value="Other">Enter parameters manualy</option>
+                    </select>
+                    <div id="manual" class="hidden">
+                        <label for="paramA">Coefficient <strong><i>a</i></strong> of the elliptic curve E</label>
+                        <input class="value" id="paramA"/>
+                        <label for="paramB">Coefficient <strong><i>b</i></strong> of the elliptic curve E</label>
+                        <input class="value" id="paramB"/>
+                        <label for="paramP">Elliptic curve modulus <strong><i>p</i></strong> - prime number</label>
+                        <input class="value" id="paramP"/>
+                        <label for="paramQ">Elliptic curve modulus <strong><i>q</i></strong> - Prime number</label>
+                        <input class="value" id="paramQ"/>
+                        <label for="paramX">Base point p coordinate <strong><i>x</i></strong></label>
+                        <input class="value" id="paramX"/>
+                        <label for="paramY">Base point p coordinate <strong><i>y</i></strong></label>
+                        <input class="value" id="paramY"/>
+                    </div>
+                    <label for="hashParam">Select <strong>Hash algorithm</strong></label>
+                    <select class="value" id="hashParam" onchange="verified.value = ''">
+                        <option selected value="GOSTR3411">id-GostR3411-2012-ParamSet</option>
+                        <option value="GOSTR3411-94/D-TEST">id-GostR3411-94-TestParamSet</option>
+                        <option value="GOSTR3411-94/D-A">id-Gost3491-94-CryptoPro-ParamSet</option>
+                        <option value="GOSTR3411-94/D-SC">id-Gost3491-94-SignalCom-ParamSet</option>
+                        <option value="GOSTR3411-94/E-TEST">id-Gost28147-89-TestParamSet</option>
+                        <option value="GOSTR3411-94/E-A">id-Gost28147-89-CryptoPro-A-ParamSet</option>
+                        <option value="GOSTR3411-94/E-B">id-Gost28147-89-CryptoPro-B-ParamSet</option>
+                        <option value="GOSTR3411-94/E-C">id-Gost28147-89-CryptoPro-C-ParamSet</option>
+                        <option value="GOSTR3411-94/E-D">id-Gost28147-89-CryptoPro-D-ParamSet</option>
+                    </select>
+                </section>
+                <h2>Public key & signature</h2>
+                <section>
+                    <p>In this example public key and singnature must be present as Big-endian Integer values. Some implementations of algorithm show data in machine Little-endian order - uses swap bytes button.</p>
+                    <label for="publicKey"><strong>Public key</strong> contents in HEX format</label>
+                    <textarea id="publicKey" class="value" onchange="verified.value = ''"></textarea>
+                    <div class="fileButton">
+                        <button>Load from file</button>
+                        <input type="file" onchange="
+                                var reader = new FileReader();
+                                reader.onload = function(e) {
+                                    publicKey.value = e.target.result;
+                                };
+                                reader.readAsText(this.files[0]);"/>
+                    </div>
+                    <button onclick="publicKey.value = gostCoding.Hex.encode(gostCoding.Hex.decode(publicKey.value), true)">Swap bytes</button>
+                    <button onclick="publicKey.value = ''">Clear</button>
+
+                    <label for="signature"><strong>Signature contents</strong> in HEX format</label>
+                    <textarea id="signature" class="value" onchange="verified.value = ''"></textarea>
+                    <div class="fileButton">
+                        <button>Load from file</button>
+                        <input type="file" onchange="
+                                var reader = new FileReader();
+                                reader.onload = function(e) {
+                                    signature.value = e.target.result;
+                                };
+                                reader.readAsText(this.files[0]);"/>
+                    </div>
+                    <button onclick="signature.value = gostCoding.Hex.encode(gostCoding.Hex.decode(signature.value), true)">Swap bytes</button>
+                    <button onclick="signature.value = ''">Clear</button>
+
+                </section>
+                <h2>Signed data verification</h2>
+                <section>
+                    <p>Preferably use a binary file, HEX or BASE64 encoding to verify the signature. The source plain text can be changed implicity, for example, because of the various options new line (CR, LFCR, CRLF) or char encoding mistmatch. In this case verification may fail.</p>
+                    <label for="fromtype">Select <strong>source data format</strong></label>
+                    <select id="fromtype" class="value" onchange="
+                            verified.value = '';
+                            if (this.value === 'Binary') {
+                                fileSource.classList.remove('hidden');
+                                contentSource.classList.add('hidden');
+                            } else {
+                                fileSource.classList.add('hidden');
+                                contentSource.classList.remove('hidden');
+                            }">
+                        <option value="Chars/UTF8">Character data in UTF-8 encoding</option>
+                        <option value="Chars/WIN1251">Character data in WIN-1251 encoding</option>
+                        <option value="Chars/ASCII">Character data in ASCII encoding</option>
+                        <option value="Hex/LittleEndian">Hexadecimal data in Little-endian</option>
+                        <option value="Hex/BigEndian">Hexadecimal data in Big-endian</option>
+                        <option value="Base64">Base64 encoded data</option>
+                        <option selected value="Binary">Binary data in local file</option>
+                    </select>
+                    <div id="contentSource" class="hidden">
+                        <span class="label"><strong>Source data</strong> contents</span>
+                        <pre contenteditable id="source" class="encoded" onchange="verified.value = ''"></pre>
+                        <button onclick="(new Function(verifyMethod.textContent))()">Verify signature</button>
+                        <div class="fileButton">
+                            <button>Load contents from file</button>
+                            <input type="file" onchange="
+                                    var reader = new FileReader();
+                                    reader.onload = function(e) {
+                                        source.textContent = e.target.result;
+                                    };
+                                    reader.readAsText(this.files[0]);"/>
+                        </div>
+                        <button onclick="source.textContent = '';
+                                verified.value = ''">Clear</button>
+                    </div>
+                    <div id="fileSource">
+                        <span class="label"><strong>Source data</strong> file</span>
+                        <div class="fileInput">
+                            <input id="fileSourceView" placeholder="Select the file" value=""/>
+                            <input id="fileSourceSelect" type="file" onchange="fileSourceView.value = this.files[0].name;
+                                    verified.value = ''"/>
+                        </div>
+                        <button onclick="(new Function(verifyMethod.textContent))()">Verify signature</button>
+                    </div>
+
+                    <label for="verified">Is signature verified?</label>
+                    <input class="value" id="verified"/>
+
+                    <span class="label">Verify procedure</span>
+                    <pre contenteditable class="procedure prettyprint" id="verifyMethod">
+// Decode data from source
+function decode(ondata) {
+    var format = fromtype.value.split('/');
+    if (format[0] === 'Binary') { 
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            ondata(e.target.result);
+        }
+        reader.readAsArrayBuffer(fileSourceSelect.files[0]);
+    } else {
+        ondata(gostCoding[format[0]].decode(source.textContent, format[1]));
+    }
+}
+
+// Verify signature
+function verify(publicKey, signature, message) {
+    var algorithm = {name: 'GOSTR3410'};
+
+    // Set curve parameters
+    if (namedCurve.value === 'Other') {
+        algorithm.namedCurve = {
+            a: gostCoding.Hex.decode(paramA.value, 'BigEndian'),
+            b: gostCoding.Hex.decode(paramB.value, 'BigEndian'),
+            p: gostCoding.Hex.decode(paramP.value, 'BigEndian'),
+            q: gostCoding.Hex.decode(paramQ.value, 'BigEndian'),
+            x: gostCoding.Hex.decode(paramX.value, 'BigEndian'),
+            y: gostCoding.Hex.decode(paramY.value, 'BigEndian'),
+        }
+    } else
+        algorithm.namedCurve = namedCurve.value; 
+
+    var modes = hashParam.value.split('/');
+    algorithm.hash = {name: modes[0], sBox: modes[1]};
+
+    // Get public key from trusted source
+    gostCrypto.subtle.importKey('raw', publicKey,
+            algorithm, true, ['verify']).then(function(key) {
+
+        // Use public key for verify message signature
+        return gostCrypto.subtle.verify(algorithm, key, signature, message);
+    }).then(function(result) {
+
+        // Check result
+        verified.value = result ? 'Yes' : 'No';
+    });
+}
+
+// Execute procedure
+decode(function(message) {
+    
+    verify(gostCoding.Hex.decode(publicKey.value, 'BigEndian'), 
+        gostCoding.Hex.decode(signature.value, 'BigEndian'), message);
+});</pre>
+                </section>
+            </article>
+        </div>
+        <script> prettyPrint();</script>
+    </body>
+</html>

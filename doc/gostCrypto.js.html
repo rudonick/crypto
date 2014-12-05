@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>WebCrypto GOST: Source: gostCrypto.js</title>
+
+    <script src="../scripts/prettify/prettify.js"> </script>
+    <script src="../scripts/prettify/lang-css.js"> </script>
+    <link type="text/css" rel="stylesheet" href="../styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="../styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div class="page">
+
+<div id="main">
+
+    <h1 class="page-title"><a href="../index.html">WebCrypto GOST</a> Source: gostCrypto.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file Implementation Web Crypto interfaces for GOST algorithms
+ * @version 0.99
+ * @copyright 2014, Rudolf Nickolaev. All rights reserved.
+ */
+
+/* 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ */
+
+(function(root, factory) {
+
+    /*
+     * Module imports and exports
+     * 
+     */ // &lt;editor-fold defaultstate="collapsed">
+    if (typeof define === 'function' &amp;&amp; define.amd) {
+        define(['gostRandom'], factory);
+    } else if (typeof exports === 'object') {
+        module.exports = factory(require('gostRandom'));
+    } else {
+        root.gostCrypto = factory(root.gostRandom);
+    }
+    // &lt;/editor-fold>
+
+}(this, function(gostRandom) {
+
+
+    /*
+     * Algorithm normalization
+     * 
+     */ // &lt;editor-fold defaultstate="collapsed">
+
+    var root = this;
+    var rootCrypto = root.crypto || root.msCrypto;
+
+    var SyntaxError = root.SyntaxError || Error,
+            DataError = root.DataError || Error,
+            NotSupportedError = root.NotSupportedError || Error,
+            OperationError = root.OperationError || Error,
+            InvalidStateError = root.InvalidAccessError || Error,
+            InvalidAccessError = root.InvalidAccessError || Error;
+
+    // Normalize algorithm
+    function normalize(algorithm, method) {
+        if (typeof algorithm === 'string' || algorithm instanceof String)
+            algorithm = {name: algorithm};
+        var name = algorithm.name;
+        if (!name)
+            throw new SyntaxError('Algorithm name not defined');
+        // Extract algorithm modes from name
+        var modes = name.split('/'), modes = modes[0].split('-').concat(modes.slice(1));
+        // Normalize the name with default modes
+        var na = {};
+        name = modes[0].replace(/[\.\s]/g, '');
+        modes = modes.slice(1);
+        if (name.indexOf('GOST') >= 0 &amp;&amp; name.indexOf('28147') >= 0) {
+            na = {
+                name: 'GOST 28147',
+                version: 1989, // 2014
+                mode: (algorithm.mode || (// ES, MAC, KW
+                        (method === 'sign' || method === 'verify') ? 'MAC' :
+                        (method === 'wrapKey' || method === 'unwrapKey') ? 'KW' : 'ES')).toUpperCase(),
+                length: algorithm.length || 256 // 512
+            };
+        } else if (name.indexOf('GOST') >= 0 &amp;&amp; name.indexOf('3411') >= 0) {
+            na = {
+                name: 'GOST R 34.11',
+                version: 2012, // 1994
+                mode: (algorithm.mode || (// HASH, KDF, HMAC, PBKDF2
+                        (method === 'deriveKey' || method === 'deriveBits') ? 'KDF' :
+                        (method === 'sign' || method === 'verify') ? 'HMAC' : 'HASH')).toUpperCase(),
+                length: algorithm.length || 256 // 512
+            };
+        } else if (name.indexOf('GOST') >= 0 &amp;&amp; name.indexOf('3410') >= 0) {
+            na = {
+                name: 'GOST R 34.10',
+                version: 2012, // 1994, 2001
+                mode: (algorithm.mode || (// SIGN, DH
+                        (method === 'deriveKey' || method === 'deriveBits') ? 'DH' : 'SIGN')).toUpperCase(),
+                length: algorithm.length || 256 // 512
+            };
+        } else
+            throw new NotSupportedError('Algorithm not supported');
+
+        // Compile modes
+        modes.forEach(function(mode) {
+            mode = mode.toUpperCase();
+            if (/^[0-9]+$/.test(mode)) {
+                if (['8', '16', '32', '64'].indexOf(mode) >= 0) {
+                    if (na.mode === 'ES' &amp;&amp; na.block === 'CFB')
+                        na.shiftBits = parseInt(mode);
+                    else if (na.mode === 'MAC')
+                        na.macLength = parseInt(mode);
+                    else
+                        throw new NotSupportedError('Algorithm ' + na.name + ' mode ' + mode + ' not supported');
+                } else if (['89', '94', '01', '12', '14', '1989', '1994', '2001', '2012', '2014'].indexOf(mode) >= 0) {
+                    var version = parseInt(mode);
+                    version = version &lt; 1900 ? (version &lt; 80 ? 2000 + version : 1900 + version) : version;
+                    na.version = version;
+                } else if (['256', '512'].indexOf(mode) >= 0)
+                    na.length = parseInt(mode);
+                else if (['1000', '2000'].indexOf(mode) >= 0)
+                    na.iterations = parseInt(mode);
+                // Named Paramsets
+            } else if (['E-DEFAULT', 'E-TEST', 'E-A', 'E-B', 'E-C', 'E-D', 'E-SC', 'E-Z', 'D-TEST', 'D-A', 'D-SC'].indexOf(mode) >= 0) {
+                na.sBox = mode;
+            } else if (['S-TEST', 'S-A', 'S-B', 'S-C', 'S-D', 'X-A', 'X-B', 'X-C'].indexOf(mode) >= 0) {
+                na.namedParam = mode;
+            } else if (['S-256-TEST', 'S-256-A', 'S-256-B', 'S-256-C', 'P-256', 'T-512-TEST', 'T-512-A',
+                'T-512-B', 'X-256-A', 'X-256-B', 'T-256-TEST', 'T-256-A', 'T-256-B', 'S-256-B', 'T-256-C', 'S-256-C'].indexOf(mode) >= 0) {
+                na.namedCurve = mode;
+
+                // Encription GOST 28147
+            } else if (na.name === 'GOST 28147') {
+                if (['ES', 'MAC', 'KW'].indexOf(mode) >= 0) {
+                    na.mode = mode;
+                } else if (['ECB', 'CFB', 'CNT', 'CBC'].indexOf(mode) >= 0) {
+                    na.mode = 'ES';
+                    na.block = mode;
+                } else if (['CPKW', 'NOKW', 'SCKW'].indexOf(mode) >= 0) {
+                    na.mode = 'KW';
+                    na.keyWrapping = mode.replace('KW', '');
+                } else if (['ZEROPADDING', 'PKCS5PADDING', 'NOPADDING', 'RANDOMPADDING'].indexOf(mode) >= 0) {
+                    na.padding = mode.replace('PADDING', '');
+                } else if (['NOKM', 'CPKM'].indexOf(mode) >= 0) {
+                    na.keyMeshing = mode.replace('KM', '');
+                } else
+                    throw new NotSupportedError('Algorithm ' + na.name + ' mode ' + mode + ' not supported');
+
+                // Digesting GOST 34.11
+            } else if (na.name === 'GOST R 34.11') {
+                if (['HASH', 'KDF', 'HMAC', 'PBKDF2'].indexOf(mode) >= 0)
+                    na.mode = mode;
+                else
+                    throw new NotSupportedError('Algorithm ' + na.name + ' mode ' + mode + ' not supported');
+
+                // Signing GOST 34.10
+            } else if (na.name === 'GOST R 34.10') {
+                var hash = mode.replace(/[\.\s]/g, '');
+                if (hash.indexOf('GOST') >= 0 &amp;&amp; hash.indexOf('3411') >= 0)
+                    na.hash = mode;
+                else if (['SIGN', 'DH'].indexOf(mode))
+                    na.mode = mode;
+                else
+                    throw new NotSupportedError('Algorithm ' + na.name + ' mode ' + mode + ' not supported');
+            }
+        });
+
+        // Encrypt additional modes 
+        if (na.mode === 'ES' &amp;&amp; method !== 'generateKey') {
+            na.block = algorithm.block || na.block || 'ECB'; // ECB, CFB, CNT, CBC
+            na.padding = algorithm.padding || na.padding || // NO, ZERO, PKCS5, RANDOM
+                    (na.block === 'CBC' || na.block === 'ECB' ? 'ZERO' : 'NO');
+            if (na.block === 'CFB')
+                na.shiftBits = algorithm.shiftBits || na.shiftBits || 64; // 8
+            na.keyMeshing = (algorithm.keyMeshing || na.keyMeshing || 'NO').toUpperCase(); // NO, CP
+        }
+        if (na.mode === 'KW') {
+            na.keyWrapping = (algorithm.keyWrapping || na.keyWrapping || 'NO').toUpperCase(); // NO, CP, SC
+        }
+
+        // Paramsets
+        if (na.name === 'GOST 28147' &amp;&amp; na.version === 1989) {
+            na.sBox = algorithm.sBox || na.sBox || 'E-DEFAULT'; // 'E-A', 'E-B', 'E-C', 'E-D', 'E-SC'
+        } else if (na.name === 'GOST R 34.11' &amp;&amp; na.version === 1994) {
+            na.sBox = algorithm.sBox || na.sBox || 'D-A'; // 'D-SC'
+        } else if (na.name === 'GOST R 34.10' &amp;&amp; na.version === 1994) {
+            na.sBox = algorithm.sBox || na.sBox || 'D-A'; // 'D-SC'
+            na.namedParam = algorithm.namedParam || na.namedParam || (na.mode === 'EC-DH' ? 'X-A' : 'S-A'); // 'S-B', 'S-C', 'S-D', 'X-B', 'X-C'
+        } else if (na.name === 'GOST R 34.10' &amp;&amp; na.version === 2001) {
+            na.sBox = algorithm.sBox || na.sBox || 'D-A'; // 'D-SC'
+            na.namedCurve = algorithm.namedCurve || na.namedCurve || (na.length === 256 ?
+                    na.mode === 'EC-DH' ? 'X-256-A' : 'S-256-A' : // 'S-256-B', 'S-256-C', 'X-256-B', 'T-256-A', 'T-256-B', 'T-256-C', 'P-256'
+                    na.mode === 'T-512-A'); // 'T-512-B', 'T-512-C'
+        } else if (na.name === 'GOST R 34.10' &amp;&amp; na.version === 2012) {
+            na.namedCurve = algorithm.namedCurve || na.namedCurve || (na.length === 256 ?
+                    na.mode === 'EC-DH' ? 'X-256-A' : 'S-256-A' : // 'S-256-B', 'S-256-C', 'X-256-B', 'T-256-A', 'T-256-B', 'T-256-C', 'P-256'
+                    na.mode === 'T-512-A'); // 'T-512-B', 'T-512-C'
+        }
+
+        // Vectors
+        switch (na.mode) {
+            case 'DH':
+                algorithm.ukm &amp;&amp; (na.ukm = algorithm.ukm);
+                algorithm['public'] &amp;&amp; (na['public'] = algorithm['public']);
+                break;
+            case 'SIGN':
+            case 'KW':
+                algorithm.ukm &amp;&amp; (na.ukm = algorithm.ukm);
+                break;
+            case 'ES':
+            case 'MAC':
+                algorithm.iv &amp;&amp; (na.iv = algorithm.iv);
+                break;
+            case 'PBKDF2':
+                algorithm.salt &amp;&amp; (na.salt = algorithm.salt);
+                algorithm.iterations &amp;&amp; (na.iterations = algorithm.iterations);
+                break;
+            case 'KDF':
+                algorithm.label &amp;&amp; (na.label = algorithm.label);
+                algorithm.contex &amp;&amp; (na.context = algorithm.contex);
+                break;
+        }
+
+        // Verification method and modes
+        if (method &amp;&amp; (
+                ((na.mode !== 'ES' &amp;&amp; na.mode !== 'SIGN' &amp;&amp; na.mode !== 'MAC' &amp;&amp; na.mode !== 'HMAC' &amp;&amp; na.mode !== 'KW') &amp;&amp;
+                        (method === 'generateKey')) ||
+                ((na.mode !== 'ES') &amp;&amp;
+                        (method === 'encrypt' || method === 'decrypt')) ||
+                ((na.mode !== 'SIGN' &amp;&amp; na.mode !== 'MAC' &amp;&amp; na.mode !== 'HMAC') &amp;&amp;
+                        (method === 'sign' || method === 'verify')) ||
+                ((na.mode !== 'HASH') &amp;&amp;
+                        (method === 'digest')) ||
+                ((na.mode !== 'KW') &amp;&amp;
+                        (method === 'wrapKey' || method === 'unwrapKey')) ||
+                ((na.mode !== 'DH' &amp;&amp; na.mode !== 'PBKDF2' &amp;&amp; na.mode !== 'KDF') &amp;&amp;
+                        (method === 'deriveKey' || method === 'deriveBits'))))
+            throw new NotSupportedError('Algorithm mode ' + na.mode + ' not valid for method ' + method);
+
+        // Normalize hash algorithm
+        algorithm.hash &amp;&amp; (na.hash = algorithm.hash);
+        if (na.hash)
+            na.hash = normalize(na.hash, 'digest');
+
+        // Algorithm object identirifer
+        algorithm.id &amp;&amp; (na.id = algorithm.id);
+
+        return na;
+    }
+
+    // Check for possibility use native crypto.subtle
+    function checkNative(algorithm) {
+        return rootCrypto &amp;&amp; rootCrypto.subtle &amp;&amp; algorithm &amp;&amp; (
+                ((typeof algorithm === 'string' || algorithm instanceof String) &amp;&amp;
+                        algorithm.toUpperCase().indexOf('GOST') === -1) ||
+                (algorithm.name &amp;&amp; algorithm.name.toUpperCase().indexOf('GOST') === -1) ||
+                (algorithm.hash &amp;&amp; algorithm.hash.name &amp;&amp;
+                        algorithm.hash.name.toUpperCase().indexOf('GOST') === -1));
+    }
+    // &lt;/editor-fold>
+
+    /*
+     * Key conversion methods
+     * 
+     */ // &lt;editor-fold defaultstate="collapsed">
+
+    // Check key parameter
+    function checkKey(key, method, algorithm) {
+        if (!key.algorithm)
+            throw new SyntaxError('Key algorithm not defined');
+
+        if (!key.algorithm.name)
+            throw new SyntaxError('Key algorithm name not defined');
+
+        var name = key.algorithm.name,
+                gost28147 = name === 'GOST 28147',
+                gostR3411 = name === 'GOST R 34.11',
+                gostR3410 = name === 'GOST R 34.10';
+
+        if (!gost28147 &amp;&amp; !gostR3410 &amp;&amp; !gostR3411)
+            throw new NotSupportedError('Key algorithm ' + name + ' is unsupproted');
+
+        var version = key.algorithm.version;
+        if (algorithm &amp;&amp; (name !== algorithm.name &amp;&amp; version !== algorithm.version))
+            throw new SyntaxError('Key algorithm ' + name + '-' + version +
+                    ' not compatible with algorithm ' + algorithm.name + '-' + algorithm.version);
+
+        if (!key.type)
+            throw new SyntaxError('Key type not defined');
+
+        if (((gost28147 || gostR3411) &amp;&amp; key.type !== 'secret') ||
+                (gostR3410 &amp;&amp; !(key.type === 'public' || key.type === 'private')))
+            throw new DataError('Key type ' + key.type + ' is not valid for algorithm ' + name);
+
+        if (!key.usages || !key.usages.indexOf)
+            throw new SyntaxError('Key usages not defined');
+
+        for (var i = 0, n = key.usages.length; i &lt; n; i++) {
+            var md = key.usages[i];
+            if (((md === 'wrapKey' || md === 'unwrapKey' ||
+                    md === 'encrypt' || md === 'decrypt') &amp;&amp; key.type !== 'secret') ||
+                    (md === 'sign' &amp;&amp; key.type === 'public') ||
+                    (md === 'verify' &amp;&amp; key.type === 'private'))
+                throw new InvalidStateError('Key type ' + key.type + ' is not valid for ' + md);
+        }
+
+
+        if (method)
+            if (key.usages.indexOf(method) === -1)
+                throw new InvalidAccessError('Key usages is not contain method ' + method);
+
+        if (!key.buffer)
+            throw new SyntaxError('Key buffer is not defined');
+
+        var size = key.buffer.byteLength * 8;
+        if ((key.type === 'secret' &amp;&amp; size !== 256 &amp;&amp;
+                (key.usages.indexOf('encrypt') >= 0 || key.usages.indexOf('decrypt') >= 0)) ||
+                (key.type === 'private' &amp;&amp; !(size === 256 || size === 512)) ||
+                (key.type === 'public' &amp;&amp; !(size === 512 || size === 1024)))
+            throw new SyntaxError('Key buffer has wrong size ' + size + ' bit');
+    }
+
+    // Extract key and enrich cipher algorithm
+    function extractKey(method, algorithm, key) {
+        checkKey(key, method, algorithm);
+        if (algorithm) {
+            var params;
+            switch (algorithm.mode) {
+                case 'ES':
+                    params = ['sBox', 'keyMeshing', 'padding', 'block'];
+                    break;
+                case 'SIGN':
+                    params = ['namedCurve', 'namedParam', 'sBox'];
+                    break;
+                case 'MAC':
+                    params = ['sBox'];
+                    break;
+                case 'KW':
+                    params = ['keyWrapping', 'ukm'];
+                    break;
+                case 'DH':
+                    params = ['namedCurve', 'namedParam', 'sBox', 'ukm'];
+                    break;
+                case 'PBKDF2':
+                    params = ['sBox', 'iterations', 'salt'];
+                    break;
+                case 'KDF':
+                    params = ['context', 'label'];
+                    break;
+            }
+            if (params)
+                params.forEach(function(name) {
+                    key.algorithm[name] &amp;&amp; (algorithm[name] = key.algorithm[name]);
+                });
+        }
+        return key.buffer;
+    }
+
+    // Make key definition
+    function convertKey(algorithm, extractable, keyUsages, keyData, keyType) {
+        var key = {
+            type: keyType || 'secret',
+            extractable: extractable || 'false',
+            algorithm: algorithm,
+            usages: keyUsages || [],
+            buffer: keyData
+        };
+        checkKey(key);
+        return key;
+    }
+
+    function convertKeyPair(algorithm, extractable, keyUsages, publicBuffer, privateBuffer) {
+
+        if (!keyUsages || !keyUsages.indexOf)
+            throw new SyntaxError('Key usages not defined');
+
+        var publicUsages = keyUsages.filter(function(value) {
+            return value !== 'sign';
+        });
+        var privateUsages = keyUsages.filter(function(value) {
+            return value !== 'verify';
+        });
+
+        return {
+            publicKey: convertKey(algorithm, extractable, publicUsages, publicBuffer, 'public'),
+            privateKey: convertKey(algorithm, extractable, privateUsages, privateBuffer, 'private')
+        };
+    }
+    // &lt;/editor-fold>
+
+    /**
+     * Promise stub object (not fulfill specification, only for internal use)
+     * Class not defined if Promise class already defined in root context&lt;br>&lt;br>
+     * 
+     * The Promise object is used for deferred and asynchronous computations. A Promise is in one of the three states:
+     *  &lt;ul>
+     *      &lt;li>pending: initial state, not fulfilled or rejected.&lt;/li>
+     *      &lt;li>fulfilled: successful operation&lt;/li>
+     *      &lt;li>rejected: failed operation.&lt;/li>
+     *  &lt;/ul>
+     * Another term describing the state is settled: the Promise is either fulfilled or rejected, but not pending.&lt;br>&lt;br>
+     * @class Promise
+     * @global
+     * @param {function} executor Function object with two arguments resolve and reject. 
+     * The first argument fulfills the promise, the second argument rejects it. 
+     * We can call these functions, once our operation is completed.
+     */ // &lt;editor-fold defaultstate="collapsed">
+    if (!root.Promise) {
+
+        root.Promise = (function() {
+
+            function mswrap(value) {
+                if (value &amp;&amp; value.oncomplete === null &amp;&amp; value.onerror === null) {
+                    return new Promise(function(resolve, reject) {
+                        value.oncomplete = function() {
+                            resolve(value.result);
+                        };
+                        value.onerror = function() {
+                            reject(new OperationError(value.toString()));
+                        };
+                    });
+                } else
+                    return value;
+            }
+
+            function Promise(executor) {
+
+                var state = 'pending', result,
+                        resolveQueue = [], rejectQueue = [];
+
+                function call(callback) {
+                    try {
+                        callback();
+                    } catch (e) {
+                    }
+                }
+
+                try {
+                    executor(function(value) {
+                        if (state === 'pending') {
+                            state = 'fulfilled';
+                            result = value;
+                            resolveQueue.forEach(call);
+                        }
+                    }, function(reason) {
+                        if (state === 'pending') {
+                            state = 'rejected';
+                            result = reason;
+                            rejectQueue.forEach(call);
+                        }
+                    });
+                } catch (error) {
+                    if (state === 'pending') {
+                        state = 'rejected';
+                        result = error;
+                        rejectQueue.forEach(call);
+                    }
+                }
+                /**
+                 * The then() method returns a Promise. It takes two arguments, both are 
+                 * callback functions for the success and failure cases of the Promise.
+                 * 
+                 * @method then
+                 * @memberOf Promise
+                 * @instance
+                 * @param {function} onFulfilled A Function called when the Promise is fulfilled. This function has one argument, the fulfillment value.
+                 * @param {function} onRejected A Function called when the Promise is rejected. This function has one argument, the rejection reason.
+                 * @returns {Promise} 
+                 */
+                this.then = function(onFulfilled, onRejected) {
+
+                    return new Promise(function(resolve, reject) {
+
+                        function asyncOnFulfilled() {
+                            var value;
+                            try {
+                                value = onFulfilled ? onFulfilled(result) : result;
+                            } catch (error) {
+                                reject(error);
+                                return;
+                            }
+                            value = mswrap(value);
+                            if (value &amp;&amp; value.then &amp;&amp; value.then.call) {
+                                value.then(resolve, reject);
+                            } else {
+                                resolve(value);
+                            }
+                        }
+
+                        function asyncOnRejected() {
+                            var reason;
+                            try {
+                                reason = onRejected ? onRejected(result) : result;
+                            } catch (error) {
+                                reject(error);
+                                return;
+                            }
+                            reason = mswrap(reason);
+                            if (reason &amp;&amp; reason.then &amp;&amp; reason.then.call) {
+                                reason.then(resolve, reject);
+                            } else {
+                                reject(reason);
+                            }
+                        }
+
+                        if (state === 'fulfilled') {
+                            asyncOnFulfilled();
+                        } else if (state === 'rejected') {
+                            asyncOnRejected();
+                        } else {
+                            resolveQueue.push(asyncOnFulfilled);
+                            rejectQueue.push(asyncOnRejected);
+                        }
+
+                    });
+
+                };
+                /**
+                 * The catch() method returns a Promise and deals with rejected cases only. 
+                 * It behaves the same as calling Promise.prototype.then(undefined, onRejected).
+                 * 
+                 * @method catch
+                 * @memberOf Promise
+                 * @instance
+                 * @param {function} onRejected A Function called when the Promise is rejected. This function has one argument, the rejection reason.
+                 * @returns {Promise} 
+                 */
+                this['catch'] = function(onRejected) {
+                    return this.then(undefined, onRejected);
+                };
+            }
+
+            /**
+             * The Promise.all(iterable) method returns a promise that resolves when all 
+             * of the promises in the iterable argument have resolved.&lt;br>&lt;br>
+             * 
+             * The result is passed as an array of values from all the promises. 
+             * If something passed in the iterable array is not a promise, it's converted to 
+             * one by Promise.resolve. If any of the passed in promises rejects, the 
+             * all Promise immediately rejects with the value of the promise that rejected, 
+             * discarding all the other promises whether or not they have resolved.
+             * 
+             * @method all
+             * @memberOf Promise
+             * @static
+             * @param {KeyUsages} promises Array with promises.
+             * @returns {Promise}
+             */
+            Promise.all = function(promises) {
+                return new Promise(function(resolve, reject) {
+                    var result = [], count = 0;
+                    function asyncResolve(k) {
+                        count++;
+                        return function(data) {
+                            result[k] = data;
+                            count--;
+                            if (count === 0)
+                                resolve(result);
+                        };
+                    }
+
+                    function asyncReject(reason) {
+                        if (count > 0)
+                            reject(reason);
+                        count = 0;
+                    }
+
+                    for (var i = 0, n = promises.length; i &lt; n; i++) {
+                        var data = promises[i];
+                        if (data.then &amp;&amp; data.then.call)
+                            data.then(asyncResolve(i), asyncReject);
+                        else
+                            result[i] = data;
+                    }
+
+                    if (count === 0)
+                        resolve(result);
+                });
+            };
+
+            return Promise;
+        })();
+    } // &lt;/editor-fold>
+
+    /*
+     * Worker executor
+     * 
+     */ // &lt;editor-fold defaultstate="collapsed">
+
+    var baseUrl = '', nameSuffix = '';
+    // Try to define from DOM model
+    if (typeof document !== 'undefined') {
+        (function() {
+            var regs = /^(.*)gostCrypto(.*)\.js$/i;
+            var list = document.querySelectorAll('script');
+            for (var i = 0, n = list.length; i &lt; n; i++) {
+                var value = list[i].getAttribute('src');
+                var test = regs.exec(value);
+                if (test) {
+                    baseUrl = test[1];
+                    nameSuffix = test[2];
+                }
+            }
+        })();
+    }
+
+    // Local importScripts procedure for include dependens
+    function importScripts() {
+        for (var i = 0, n = arguments.length; i &lt; n; i++) {
+            var name = arguments[i].split('.'),
+                    src = baseUrl + name[0] + nameSuffix + '.' + name[1];
+            var el = document.querySelector('script[src="' + src + '"]');
+            if (!el) {
+                el = document.createElement('script');
+                el.setAttribute('src', src);
+                document.head.appendChild(el);
+            }
+        }
+    }
+
+    // Create Worker
+    var worker, tasks = [], sequence = 0;
+    // Worker will create only for first child process and
+    // Gost implementation libraries not yet loaded
+    if (!root.importScripts &amp;&amp; !root.gostEngine) {
+
+        try {
+            worker = new Worker(baseUrl + 'gostEngine' + nameSuffix + '.js');
+
+            // Result of opertion
+            worker.onmessage = function(event) {
+                // Find task
+                var id = event.data.id;
+                for (var i = 0, n = tasks.length; i &lt; n; i++)
+                    if (tasks[i].id === id)
+                        break;
+                if (i &lt; n) {
+                    var task = tasks[i];
+                    tasks.splice(i, 1);
+                    // Reject if error or resolve with result
+                    if (event.data.error)
+                        task.reject(new OperationError(event.data.error));
+                    else
+                        task.resolve(event.data.result);
+                }
+            };
+
+            // Worker error - reject all waiting tasks
+            worker.onerror = function(event) {
+                for (var i = 0, n = tasks.length; i &lt; n; i++)
+                    tasks[i].reject(event.error);
+                tasks = [];
+            };
+
+        } catch (e) {
+            // Worker is't supported
+            worker = false;
+        }
+    }
+
+    if (!root.importScripts) {
+        // This procedure emulate load dependents as in Worker
+        root.importScripts = importScripts;
+
+    }
+
+    if (!worker) {
+        // Import main module
+        // Reason: we are already in worker process or Worker interface is not 
+        // yet supported
+        root.gostEngine || importScripts('gostEngine.js');
+    }
+
+    // Executor for any method
+    function execute(algorithm, method, args) {
+        return new Promise(function(resolve, reject) {
+            try {
+                if (worker) {
+                    var id = ++sequence;
+                    tasks.push({
+                        id: id,
+                        resolve: resolve,
+                        reject: reject
+                    });
+                    worker.postMessage({
+                        id: id, algorithm: algorithm,
+                        method: method, args: args
+                    });
+                } else {
+                    if (root.gostEngine)
+                        resolve(root.gostEngine.execute(algorithm, method, args));
+                    else
+                        reject(new OperationError('Module gostEngine not found'));
+                }
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+    
+    // Self resolver
+    function call(callback) {
+        try {
+            callback();
+        } catch (e) {
+        }
+    }
+    // &lt;/editor-fold>
+
+    /*
+     * WebCrypto common class references
+     * 
+     */ // &lt;editor-fold defaultstate="collapsed">
+    /**
+     * The Algorithm object is a dictionary object [WebIDL] which is used to 
+     * specify an algorithm and any additional parameters required to fully 
+     * specify the desired operation.&lt;br>
+     * &lt;pre>
+     *  dictionary Algorithm {
+     *      DOMString name;
+     *  };
+     * &lt;/pre>
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#algorithm-dictionary}
+     * @class Algorithm
+     * @param {DOMString} name The name of the registered algorithm to use.
+     */
+
+    /**
+     * AlgorithmIdentifier - Algorithm or DOMString name of algorithm&lt;br>
+     * &lt;pre>
+     *  typedef (Algorithm or DOMString) AlgorithmIdentifier;
+     * &lt;/pre>
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#algorithm-dictionary}
+     * @class AlgorithmIdentifier
+     */
+
+    /**
+     * The KeyAlgorithm interface represents information about the contents of a 
+     * given Key object.
+     * &lt;pre>
+     *  interface KeyAlgorithm {
+     *      readonly attribute DOMString name
+     *  };
+     * &lt;/pre>
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#key-algorithm-interface}
+     * @class KeyAlgorithm 
+     * @param {DOMString} name The name of the algorithm used to generate the Key
+     */
+
+    /**
+     * The type of a key. The recognized key type values are "public", "private" 
+     * and "secret". Opaque keying material, including that used for symmetric 
+     * algorithms, is represented by "secret", while keys used as part of asymmetric 
+     * algorithms composed of public/private keypairs will be either "public" or "private".
+     * &lt;pre>
+     *  typedef DOMString KeyType;
+     * &lt;/pre>
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#key-interface}
+     * @class KeyType
+     */
+
+    /**
+     * Sequence of operation type that may be performed using a key. The recognized 
+     * key usage values are "encrypt", "decrypt", "sign", "verify", "deriveKey", 
+     * "deriveBits", "wrapKey" and "unwrapKey".
+     * &lt;pre>
+     *  typedef DOMString[] KeyUsages;
+     * &lt;/pre>
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#key-interface}
+     * @class KeyUsages
+     */
+
+    /**
+     * The Key object represents an opaque reference to keying material that is 
+     * managed by the user agent.&lt;br>
+     * This specification provides a uniform interface for many different kinds of 
+     * keying material managed by the user agent. This may include keys that have 
+     * been generated by the user agent, derived from other keys by the user agent, 
+     * imported to the user agent through user actions or using this API, 
+     * pre-provisioned within software or hardware to which the user agent has 
+     * access or made available to the user agent in other ways. The term key refers 
+     * broadly to any keying material including actual keys for cryptographic 
+     * operations and secret values obtained within key derivation or exchange operations.&lt;br>
+     * The Key object is not required to directly interface with the underlying key 
+     * storage mechanism, and may instead simply be a reference for the user agent 
+     * to understand how to obtain the keying material when needed, eg. when performing 
+     * a cryptographic operation.
+     * &lt;pre>
+     *  interface Key {
+     *      readonly attribute KeyType type;
+     *      readonly attribute boolean extractable;
+     *      readonly attribute KeyAlgorithm algorithm;
+     *      readonly attribute KeyUsages usages;
+     *  };     
+     * &lt;/pre>
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#key-interface}
+     * @class Key
+     * @param {KeyType} type The type of a key. The recognized key type values are "public", "private" and "secret".
+     * @param {boolean} extractable Whether or not the raw keying material may be exported by the application.
+     * @param {KeyAlgorithm} algorithm The Algorithm used to generate the key.
+     * @param {KeyUsages} usages Key usage array: type of operation that may be performed using a key. 
+     */
+
+    /**
+     * The KeyPair interface represents an asymmetric key pair that is comprised of both public and private keys.
+     * &lt;pre>
+     *  interface KeyPair {
+     *      readonly attribute Key publicKey;
+     *      readonly attribute Key privateKey;
+     *  };     
+     * &lt;/pre>
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#keypair}
+     * @class KeyPair
+     * @param {Key} privateKey Private key
+     * @param {Key} publicKey Public key
+     */
+
+    /**
+     * Specifies a serialization format for a key. The recognized key format values are:
+     *  &lt;ul>
+     *      &lt;li>'raw' - An unformatted sequence of bytes. Intended for secret keys.&lt;/li>
+     *      &lt;li>'pkcs8' - The DER encoding of the PrivateKeyInfo structure from RFC 5208.&lt;/li>
+     *      &lt;li>'spki' - The DER encoding of the SubjectPublicKeyInfo structure from RFC 5280.&lt;/li>
+     *      &lt;li>'jwk' - The key is represented as JSON according to the JSON Web Key format.&lt;/li>
+     *  &lt;/ul>
+     *  &lt;pre>
+     *  typedef DOMString KeyFormat;
+     *  &lt;/pre>
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#key-interface}
+     *  @class KeyFormat
+     */
+
+    /**
+     * Binary data 
+     *  &lt;pre>
+     *  typedef (ArrayBuffer or ArrayBufferView) CryptoOperationData;
+     *  &lt;/pre>
+     * @class CryptoOperationData
+     */
+    // &lt;/editor-fold>
+
+    /**
+     * The SubtleCrypto class provides low-level cryptographic primitives and algorithms.
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#subtlecrypto-interface}
+     * 
+     * @class SubtleCrypto
+     */ // &lt;editor-fold>
+    function SubtleCrypto() {
+    }
+
+    /**
+     * The encrypt method returns a new Promise object that will encrypt data 
+     * using the specified algorithm identifier with the supplied Key.
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-encrypt}&lt;br>&lt;br>
+     * 
+     * Supported algorithm names:
+     *  &lt;ul>
+     *      &lt;li>&lt;b>GOST 28147-ECB&lt;/b> "prostaya zamena" (ECB) mode (default)&lt;/li>
+     *      &lt;li>&lt;b>GOST 28147-CNT&lt;/b> "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode&lt;/li>
+     *      &lt;li>&lt;b>GOST 28147-CFB&lt;/b> "gammirovanie" (counter) mode&lt;/li>
+     *      &lt;li>&lt;b>GOST 28147-CBC&lt;/b> Cipher-Block-Chaining (CBC) mode&lt;/li>
+     *  &lt;/ul>
+     *  For more information see {@link Gost28147} 
+     * 
+     * @memberOf SubtleCrypto
+     * @method encrypt
+     * @instance
+     * @param {AlgorithmIdentifier} algorithm Algorithm identifier
+     * @param {Key} key Key object
+     * @param {CryptoOperationData} data Operation data
+     * @returns {Promise} Promise that resolves with {@link CryptoOperationData}
+     */
+    SubtleCrypto.prototype.encrypt = function(algorithm, key, data) // &lt;editor-fold defaultstate="collapsed">
+    {
+        return new Promise(call).then(function() {
+            if (checkNative(algorithm))
+                return rootCrypto.subtle.encrypt(algorithm, key, data);
+
+            algorithm = normalize(algorithm, 'encrypt');
+            return execute(algorithm, 'encrypt',
+                    [extractKey('encrypt', algorithm, key), data]);
+        });
+    }; // &lt;/editor-fold>
+
+    /**
+     * The decrypt method returns a new Promise object that will decrypt data 
+     * using the specified algorithm identifier with the supplied Key. 
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-decrypt}&lt;br>&lt;br>
+     * 
+     * Supported algorithm names:
+     *  &lt;ul>
+     *      &lt;li>&lt;b>GOST 28147-ECB&lt;/b> "prostaya zamena" (ECB) mode (default)&lt;/li>
+     *      &lt;li>&lt;b>GOST 28147-CNT&lt;/b> "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode&lt;/li>
+     *      &lt;li>&lt;b>GOST 28147-CFB&lt;/b> "gammirovanie" (counter) mode&lt;/li>
+     *      &lt;li>&lt;b>GOST 28147-CBC&lt;/b> Cipher-Block-Chaining (CBC) mode&lt;/li>
+     *  &lt;/ul>
+     *  For additional modes see {@link Gost28147} 
+     * 
+     * @memberOf SubtleCrypto
+     * @method decrypt
+     * @instance
+     * @param {AlgorithmIdentifier} algorithm Algorithm identifier
+     * @param {Key} key Key object
+     * @param {CryptoOperationData} data Operation data
+     * @returns {Promise} Promise that resolves with {@link CryptoOperationData}
+     */
+    SubtleCrypto.prototype.decrypt = function(algorithm, key, data) // &lt;editor-fold defaultstate="collapsed">
+    {
+        return new Promise(call).then(function() {
+            if (checkNative(algorithm))
+                return rootCrypto.subtle.decrypt(algorithm, key, data);
+
+            algorithm = normalize(algorithm, 'decrypt');
+            return execute(algorithm, 'decrypt',
+                    [extractKey('decrypt', algorithm, key), data]);
+        });
+    }; // &lt;/editor-fold>
+
+    /**
+     * The sign method returns a new Promise object that will sign data using 
+     * the specified algorithm identifier with the supplied Key.
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-sign}&lt;br>&lt;br>
+     * 
+     * Supported algorithm names:
+     *  &lt;ul>
+     *      &lt;li>&lt;b>GOST R 34.10-94&lt;/b> GOST Signature&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.10-94/GOST R 34.11-94&lt;/b> GOST Signature with Hash&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.10&lt;/b> ECGOST Signature&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.10/GOST R 34.11-94&lt;/b> ECGOST Signature with Old-Style Hash&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.10/GOST R 34.11&lt;/b> ECGOST Signature with Streebog Hash&lt;/li>
+     *      &lt;li>&lt;b>GOST 28147-MAC&lt;/b> MAC base on GOST 28147&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.11-HMAC&lt;/b> HMAC base on GOST 34.11&lt;/li>
+     *  &lt;/ul>
+     *  For additional modes see {@link GostR3410}, {@link GostR3411} and {@link Gost28147}
+     * 
+     * @memberOf SubtleCrypto
+     * @method sign
+     * @instance
+     * @param {AlgorithmIdentifier} algorithm Algorithm identifier
+     * @param {Key} key Key object 
+     * @param {CryptoOperationData} data Operation data
+     * @returns {Promise} Promise that resolves with {@link CryptoOperationData}
+     */
+    SubtleCrypto.prototype.sign = function(algorithm, key, data) // &lt;editor-fold defaultstate="collapsed">
+    {
+        return new Promise(call).then(function() {
+            if (checkNative(algorithm))
+                return rootCrypto.subtle.sign(algorithm, key, data);
+
+            algorithm = normalize(algorithm, 'sign');
+            return execute(algorithm, 'sign',
+                    [extractKey('sign', algorithm, key), data]);
+        });
+    }; // &lt;/editor-fold>
+
+    /**
+     * The verify method returns a new Promise object that will verify data 
+     * using the specified algorithm identifier with the supplied Key.
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-verify}&lt;br>&lt;br>
+     * 
+     * Supported algorithm names:
+     *  &lt;ul>
+     *      &lt;li>&lt;b>GOST R 34.10-94&lt;/b> GOST Signature&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.10-94/GOST R 34.11-94&lt;/b> GOST Signature with Hash&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.10&lt;/b> ECGOST Signature&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.10/GOST R 34.11-94&lt;/b> ECGOST Signature with Old-Style Hash&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.10/GOST R 34.11&lt;/b> ECGOST Signature with Streebog Hash&lt;/li>
+     *      &lt;li>&lt;b>GOST 28147-MAC&lt;/b> MAC base on GOST 28147&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.11-HMAC&lt;/b> HMAC base on GOST 34.11&lt;/li>
+     *  &lt;/ul>
+     *  For additional modes see {@link GostR3410}, {@link GostR3411} and {@link Gost28147}
+     * 
+     * @memberOf SubtleCrypto
+     * @method verify
+     * @instance
+     * @param {AlgorithmIdentifier} algorithm Algorithm identifier
+     * @param {Key} key Key object
+     * @param {CryptoOperationData} signature Signature data
+     * @param {CryptoOperationData} data Operation data
+     * @returns {Promise} Promise that resolves with boolean value of verification result
+     */
+    SubtleCrypto.prototype.verify = function(algorithm, key, signature, data) // &lt;editor-fold defaultstate="collapsed">
+    {
+        return new Promise(call).then(function() {
+            if (checkNative(algorithm))
+                return rootCrypto.subtle.verify(algorithm, key, signature, data);
+
+            algorithm = normalize(algorithm, 'verify');
+            return execute(algorithm, 'verify',
+                    [extractKey('verify', algorithm, key), signature, data]);
+        });
+    }; // &lt;/editor-fold>
+
+    /**
+     * The digest method returns a new Promise object that will digest data 
+     * using the specified algorithm identifier. 
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-digest}&lt;br>&lt;br>
+     * 
+     * Supported algorithm names:
+     *  &lt;ul>
+     *      &lt;li>&lt;b>GOST R 34.11-94&lt;/b> Old-Style GOST Hash&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.11&lt;/b> GOST Streebog Hash&lt;/li>
+     *  &lt;/ul>
+     *  For additional modes see {@link GostR3411}
+     * 
+     * @memberOf SubtleCrypto
+     * @method digest
+     * @instance
+     * @param {AlgorithmIdentifier} algorithm Algorithm identifier
+     * @param {CryptoOperationData} data Operation data
+     * @returns {Promise} Promise that resolves with {@link CryptoOperationData}
+     */
+    SubtleCrypto.prototype.digest = function(algorithm, data) // &lt;editor-fold defaultstate="collapsed">
+    {
+        return new Promise(call).then(function() {
+            if (checkNative(algorithm))
+                return rootCrypto.subtle.digest(algorithm, data);
+
+            algorithm = normalize(algorithm, 'digest');
+            return execute(algorithm, 'digest', [data]);
+        });
+    }; // &lt;/editor-fold>
+
+    /**
+     * The generateKey method returns a new Promise object that will key(s) using
+     * the specified algorithm identifier. Key can be used in according with
+     * KeyUsages sequence. The recognized key usage values are "encrypt", "decrypt", 
+     * "sign", "verify", "deriveKey", "deriveBits", "wrapKey" and "unwrapKey".
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-generateKey}&lt;br>&lt;br>
+     * 
+     * Supported algorithm names:
+     *  &lt;ul>
+     *      &lt;li>&lt;b>GOST R 34.10&lt;/b> ECGOST Key Pairs&lt;/li>
+     *      &lt;li>&lt;b>GOST 28147&lt;/b> Key for encryption GOST 28147 modes&lt;/li>
+     *      &lt;li>&lt;b>GOST 28147-KW&lt;/b> Key for wrapping GOST 28147 modes&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.11-KDF&lt;/b> Key for Derivation Algorithm&lt;/li>
+     *  &lt;/ul>
+     *  For additional modes see {@link GostR3410}, {@link GostR3411} and {@link Gost28147}&lt;br>
+     *  Note: Generation key for GOST R 34.10-94 not supported.
+     * 
+     * @memberOf SubtleCrypto
+     * @method generateKey
+     * @instance
+     * @param {AlgorithmIdentifier} algorithm Key algorithm identifier
+     * @param {boolean} extractable Whether or not the raw keying material may be exported by the application
+     * @param {KeyUsages} keyUsages Key usage array: type of operation that may be performed using a key
+     * @returns {Promise} Promise that resolves with {@link Key} or {@link KeyPair} in according to key algorithm
+     */
+    SubtleCrypto.prototype.generateKey = function(algorithm, extractable, keyUsages) // &lt;editor-fold defaultstate="collapsed">
+    {
+        return new Promise(call).then(function() {
+            if (checkNative(algorithm))
+                return rootCrypto.subtle.generateKey(algorithm, extractable, keyUsages);
+
+            algorithm = normalize(algorithm, 'generateKey');
+            return execute(algorithm, 'generateKey', []).then(function(data) {
+                if (data.publicKey &amp;&amp; data.privateKey)
+                    return convertKeyPair(algorithm, extractable, keyUsages, data.publicKey, data.privateKey);
+                else
+                    return convertKey(algorithm, extractable, keyUsages, data);
+            });
+        });
+    }; // &lt;/editor-fold>
+
+    /**
+     * The deriveKey method returns a new Promise object that will key(s) using
+     * the specified algorithm identifier. Key can be used in according with
+     * KeyUsage sequence. The recognized key usage values are "encrypt", "decrypt", 
+     * "sign", "verify", "deriveKey", "deriveBits", "wrapKey" and "unwrapKey".
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-deriveKey}&lt;br>&lt;br>
+     * 
+     * Supported algorithm names:
+     *  &lt;ul>
+     *      &lt;li>&lt;b>GOST R 34.10-DH&lt;/b> ECDH Key Agreement mode&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.11-KDF&lt;/b> Key for Derivation Algorithm&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.11-PBKDF2&lt;/b> Password Based Key for Derivation Algorithm&lt;/li>
+     *  &lt;/ul>
+     *  For additional modes see {@link GostR3410} and {@link GostR3411}
+     * 
+     * @memberOf SubtleCrypto
+     * @method deriveKey
+     * @instance
+     * @param {AlgorithmIdentifier} algorithm Algorithm identifier
+     * @param {Key} baseKey Derivation key object
+     * @param {AlgorithmIdentifier} derivedKeyType Derived key algorithm identifier
+     * @param {boolean} extractable Whether or not the raw keying material may be exported by the application
+     * @param {KeyUsages} keyUsages Key usage array: type of operation that may be performed using a key 
+     * @returns {Promise} Promise that resolves with {@link Key}
+     */
+    SubtleCrypto.prototype.deriveKey = function(algorithm, baseKey,
+            derivedKeyType, extractable, keyUsages) // &lt;editor-fold defaultstate="collapsed">
+    {
+        return new Promise(call).then(function() {
+            if (checkNative(algorithm))
+                return rootCrypto.subtle.deriveKey(algorithm, baseKey,
+                        derivedKeyType, extractable, keyUsages);
+
+            algorithm = normalize(algorithm, 'deriveKey');
+            derivedKeyType = normalize(derivedKeyType, 'generateKey');
+            if (algorithm['public']) {
+                algorithm['public'].algorithm = normalize(algorithm['public'].algorithm);
+                algorithm['public'] = extractKey('deriveKey', algorithm, algorithm['public']);
+            }
+            return execute(algorithm, 'deriveKey', [extractKey('deriveKey', algorithm, baseKey)]).then(function(data) {
+                return convertKey(derivedKeyType, extractable, keyUsages, data);
+            });
+        });
+    }; // &lt;/editor-fold>
+
+    /**
+     * The deriveBits method returns length bits on baseKey using the 
+     * specified algorithm identifier. 
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-deriveBits}&lt;br>&lt;br>
+     * 
+     * Supported algorithm names:
+     *  &lt;ul>
+     *      &lt;li>&lt;b>GOST R 34.10-DH&lt;/b> ECDH Key Agreement mode&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.11-KDF&lt;/b> Key for Derivation Algorithm&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.11-PBKDF2&lt;/b> Password Based Key for Derivation Algorithm&lt;/li>
+     *  &lt;/ul>
+     *  For additional modes see {@link GostR3410} and {@link GostR3411}
+     * 
+     * @memberOf SubtleCrypto
+     * @method deriveBits
+     * @instance
+     * @param {AlgorithmIdentifier} algorithm Algorithm identifier
+     * @param {Key} baseKey Derivation key object
+     * @param {number} length Length bits
+     * @returns {Promise} Promise that resolves with {@link CryptoOperationData}
+     */
+    SubtleCrypto.prototype.deriveBits = function(algorithm, baseKey, length) // &lt;editor-fold defaultstate="collapsed">
+    {
+        return new Promise(call).then(function() {
+            if (checkNative(algorithm))
+                return rootCrypto.subtle.deriveBits(algorithm, baseKey, length);
+
+            algorithm = normalize(algorithm, 'deriveBits');
+            if (algorithm['public'])
+                algorithm['public'] = extractKey('deriveBits', algorithm, algorithm['public']);
+            return execute(algorithm, 'deriveBits', [extractKey('deriveBits', algorithm, baseKey), length]);
+        });
+    }; // &lt;/editor-fold>
+
+    /**
+     * The importKey method returns a new Promise object that will key(s) using
+     * the specified algorithm identifier. Key can be used in according with
+     * KeyUsage sequence. The recognized key usage values are "encrypt", "decrypt", 
+     * "sign", "verify", "deriveKey", "deriveBits", "wrapKey" and "unwrapKey".&lt;br>&lt;br>
+     * Parameter keyData contains data in defined format.
+     * The suppored key format values are:
+     *  &lt;ul>
+     *      &lt;li>'raw' - An unformatted sequence of bytes. Intended for secret keys.&lt;/li>
+     *      &lt;li>'pkcs8' - The DER encoding of the PrivateKeyInfo structure from RFC 5208.&lt;/li>
+     *      &lt;li>'spki' - The DER encoding of the SubjectPublicKeyInfo structure from RFC 5280.&lt;/li>
+     *  &lt;/ul>
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-importKey}&lt;br>&lt;br>
+     * 
+     * Supported algorithm names:
+     *  &lt;ul>
+     *      &lt;li>&lt;b>GOST R 34.10-94&lt;/b> GOST Private and Public keys&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.10&lt;/b> ECGOST Private and Public keys&lt;/li>
+     *      &lt;li>&lt;b>GOST 28147&lt;/b> Key for encryption GOST 28147 modes&lt;/li>
+     *      &lt;li>&lt;b>GOST 28147-KW&lt;/b> Key for key wrapping GOST 28147 modes&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.11-KDF&lt;/b> Key for Derivation Algorithm&lt;/li>
+     *  &lt;/ul>
+     *  For additional modes see {@link GostR3410}, {@link GostR3411} and {@link Gost28147}&lt;br>
+     * 
+     * @memberOf SubtleCrypto
+     * @method importKey
+     * @instance
+     * @param {KeyFormat} format Key format Format specifies a serialization format for a key
+     * @param {CryptoOperationData} keyData
+     * @param {AlgorithmIdentifier} algorithm Key algorithm identifier
+     * @param {boolean} extractable Whether or not the raw keying material may be exported by the application
+     * @param {KeyUsages} keyUsages Key usage array: type of operation that may be performed using a key
+     * @returns {Promise} Promise that resolves with {@link Key}
+     */
+    SubtleCrypto.prototype.importKey = function(format, keyData, algorithm, extractable, keyUsages) // &lt;editor-fold defaultstate="collapsed">
+    {
+        return new Promise(call).then(function() {
+            if (checkNative(algorithm))
+                return rootCrypto.subtle.importKey(format, keyData, algorithm, extractable, keyUsages);
+
+
+            var type, key, data;
+            if (format === 'raw') {
+                algorithm = normalize(algorithm, 'importKey');
+                data = keyData;
+                if (keyUsages &amp;&amp; keyUsages.indexOf) {
+                    var name = algorithm.name.toUpperCase().replace(/[\.\s]/g, '');
+                    if (name.indexOf('3410') >= 0 &amp;&amp; keyUsages.indexOf('sign') >= 0)
+                        type = 'private';
+                    else if (name.indexOf('3410') >= 0 &amp;&amp; keyUsages.indexOf('verify') >= 0)
+                        type = 'public';
+                }
+            } else {
+
+                if (format === 'pkcs8' &amp;&amp; root.gostSyntax &amp;&amp; root.gostCoding)
+                    key = root.gostSyntax.GostPrivateKeyInfo.decode(keyData);
+                else if (format === 'spki' &amp;&amp; root.gostSyntax &amp;&amp; root.gostCoding)
+                    key = root.gostSyntax.GostSubjectPublicKeyInfo.decode(keyData);
+                else
+                    throw new NotSupportedError('Key format not supported');
+
+                algorithm = normalize(key.algorithm, 'importKey');
+                data = key.buffer;
+                type = key.type;
+                extractable = extractable || key.extractable;
+                if (keyUsages) {
+                    for (var i = 0; i &lt; keyUsages.length; i++) {
+                        if (key.usages.indexOf(keyUsages[i]) &lt; 0)
+                            throw DataError('Key usage not valid for this key');
+                    }
+                } else
+                    keyUsages = key.usages;
+            }
+
+            return convertKey(algorithm, extractable, keyUsages, data, type);
+        });
+    }; // &lt;/editor-fold>
+
+    /**
+     * The exportKey method returns a new Promise object that will key data in
+     * defined format. &lt;br>&lt;br>
+     * The suppored key format values are:
+     *  &lt;ul>
+     *      &lt;li>'raw' - An unformatted sequence of bytes. Intended for secret keys.&lt;/li>
+     *      &lt;li>'pkcs8' - The DER encoding of the PrivateKeyInfo structure from RFC 5208.&lt;/li>
+     *      &lt;li>'spki' - The DER encoding of the SubjectPublicKeyInfo structure from RFC 5280.&lt;/li>
+     *  &lt;/ul>
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-exportKey}&lt;br>&lt;br>
+     * 
+     * Supported algorithm names:
+     *  &lt;ul>
+     *      &lt;li>&lt;b>GOST R 34.10-94&lt;/b> GOST Private and Public keys&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.10&lt;/b> ECGOST Private and Public keys&lt;/li>
+     *      &lt;li>&lt;b>GOST 28147&lt;/b> Key for encryption GOST 28147 modes&lt;/li>
+     *      &lt;li>&lt;b>GOST 28147-KW&lt;/b> Key for key wrapping GOST 28147 modes&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.11-KDF&lt;/b> Key for Derivation Algorithm&lt;/li>
+     *      &lt;li>&lt;b>GOST R 34.11-PBKDF2&lt;/b> Import Password for Key for Derivation Algorithm&lt;/li>
+     *  &lt;/ul>
+     *  For additional modes see {@link GostR3410}, {@link GostR3411} and {@link Gost28147}&lt;br>
+     * 
+     * @memberOf SubtleCrypto
+     * @method exportKey
+     * @instance
+     * @param {KeyFormat} format Format specifies a serialization format for a key
+     * @param {Key} key Key object
+     * @returns {Promise} Promise that resolves with {@link CryptoOperationData}
+     */
+    SubtleCrypto.prototype.exportKey = function(format, key) // &lt;editor-fold defaultstate="collapsed">
+    {
+        return new Promise(call).then(function() {
+            if (key &amp;&amp; checkNative(key.algorithm))
+                return rootCrypto.subtle.exportKey(format, key);
+
+            if (!key.extractable)
+                throw new InvalidAccessError('Key not extractable');
+
+            var raw = extractKey(null, null, key);
+            if (format === 'raw')
+                return raw;
+            else if (format === 'pkcs8' &amp;&amp; key.algorithm &amp;&amp; key.algorithm.id &amp;&amp; root.gostSyntax &amp;&amp; root.gostCoding)
+                return root.gostSyntax.GostPrivateKeyInfo.encode(key);
+            else if (format === 'spki' &amp;&amp; key.algorithm &amp;&amp; key.algorithm.id &amp;&amp; root.gostSyntax &amp;&amp; root.gostCoding)
+                return root.gostSyntax.GostSubjectPublicKeyInfo.encode(key);
+            else
+                throw new NotSupportedError('Key format not supported');
+        });
+    }; // &lt;/editor-fold>
+
+    /**
+     * The wrapKey method returns a new Promise object that will wrapped key(s).
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-wrapKey}&lt;br>&lt;br>
+     * 
+     * Supported algorithm names:
+     *  &lt;ul>
+     *      &lt;li>&lt;b>GOST 28147-KW&lt;/b> Key Wrapping GOST 28147 modes&lt;/li>
+     *  &lt;/ul>
+     *  For additional modes see {@link Gost28147}&lt;br>
+     * 
+     * @memberOf SubtleCrypto
+     * @method wrapKey
+     * @instance
+     * @param {KeyFormat} format Format specifies a serialization format for a key. Now suppored only 'raw' key format.
+     * @param {Key} key Key object
+     * @param {Key} wrappingKey Wrapping key object
+     * @param {AlgorithmIdentifier} wrapAlgorithm Algorithm identifier
+     * @returns {Promise} Promise that resolves with {@link CryptoOperationData}
+     */
+    SubtleCrypto.prototype.wrapKey = function(format, key, wrappingKey, wrapAlgorithm) // &lt;editor-fold defaultstate="collapsed">
+    {
+        return new Promise(call).then(function() {
+            if (checkNative(wrapAlgorithm))
+                return rootCrypto.subtle.wrapKey(format, key, wrappingKey, wrapAlgorithm);
+
+            wrapAlgorithm = normalize(wrapAlgorithm, 'wrapKey');
+            return execute(wrapAlgorithm, 'wrapKey',
+                    [extractKey('wrapKey', wrapAlgorithm, wrappingKey), extractKey(null, null, key)]).then(function(data) {
+                if (format === 'raw')
+                    return data;
+                else
+                    throw new NotSupportedError('Key format not supported');
+            });
+        });
+    }; // &lt;/editor-fold>
+
+    /**
+     * The unwrapKey method returns a new Promise object that will unwrapped key(s).
+     * WebCrypto API reference {@link http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-unwrapKey}&lt;br>&lt;br>
+     * 
+     * Supported algorithm names:
+     *  &lt;ul>
+     *      &lt;li>&lt;b>GOST 28147-KW&lt;/b> Key Wrapping GOST 28147 modes&lt;/li>
+     *  &lt;/ul>
+     *  For additional modes see {@link Gost28147}&lt;br>
+     * 
+     * @memberOf SubtleCrypto
+     * @method unwrapKey
+     * @instance
+     * @param {KeyFormat} format Format specifies a serialization format for a key. Now suppored only 'raw' key format.
+     * @param {CryptoOperationData} wrappedKey Wrapped key data
+     * @param {Key} unwrappingKey Unwrapping key object
+     * @param {AlgorithmIdentifier} unwrapAlgorithm Algorithm identifier
+     * @param {AlgorithmIdentifier} unwrappedKeyAlgorithm Key algorithm identifier
+     * @param {boolean} extractable Whether or not the raw keying material may be exported by the application
+     * @param {KeyUsages} keyUsages Key usage array: type of operation that may be performed using a key
+     * @returns {Promise} Promise that resolves with {@link Key}
+     */
+    SubtleCrypto.prototype.unwrapKey = function(format, wrappedKey, unwrappingKey,
+            unwrapAlgorithm, unwrappedKeyAlgorithm, extractable, keyUsages) // &lt;editor-fold defaultstate="collapsed">
+    {
+        return new Promise(call).then(function() {
+            if (checkNative(unwrapAlgorithm))
+                return rootCrypto.subtle.unwrapKey(format, wrappedKey, unwrappingKey,
+                        unwrapAlgorithm, unwrappedKeyAlgorithm, extractable, keyUsages);
+
+            unwrapAlgorithm = normalize(unwrapAlgorithm, 'unwrapKey');
+            unwrappedKeyAlgorithm = normalize(unwrappedKeyAlgorithm, 'importKey');
+            if (format !== 'raw')
+                throw new NotSupportedError('Key format not supported');
+
+            return execute(unwrapAlgorithm, 'unwrapKey', [extractKey('unwrapKey', unwrapAlgorithm, unwrappingKey), wrappedKey]).then(function(data) {
+                var type;
+                if (unwrappedKeyAlgorithm &amp;&amp; unwrappedKeyAlgorithm.name) {
+                    var name = unwrappedKeyAlgorithm.name.toUpperCase().replace(/[\.\s]/g, '');
+                    if (name.indexOf('3410') >= 0 &amp;&amp; keyUsages.indexOf('sign') >= 0)
+                        type = 'private';
+                    else if (name.indexOf('3410') >= 0 &amp;&amp; keyUsages.indexOf('verify') >= 0)
+                        type = 'public';
+                }
+                return convertKey(unwrappedKeyAlgorithm, extractable, keyUsages, data, type);
+            });
+        });
+    }; // &lt;/editor-fold>
+
+    /**
+     * The gostCrypto provide general purpose cryptographic functionality for
+     * GOST standards including a cryptographically strong pseudo-random number 
+     * generator seeded with truly random values.
+     * 
+     * @namespace gostCrypto
+     */
+    var gostCrypto = {};
+
+    /**
+     * The subtle attribute provides an instance of the SubtleCrypto 
+     * interface which provides low-level cryptographic primitives and 
+     * algorithms.
+     * 
+     * @memberOf gostCrypto
+     * @type SubtleCrypto
+     */
+    gostCrypto.subtle = new SubtleCrypto();
+
+
+    // Check import randomizer
+    gostRandom || (rootCrypto &amp;&amp; rootCrypto.getRandomValues) || importScripts('gostRandom.js');
+
+    /**
+     * The getRandomValues method generates cryptographically random values. 
+     * 
+     * First try to use Web Crypto random genereator. Next make random
+     * bytes based on standart Math.random mixed with time and mouse pointer
+     * 
+     * @memberOf gostCrypto
+     * @param {(CryptoOperationData)} array Destination buffer for random data
+     */
+    gostCrypto.getRandomValues = function(array) // &lt;editor-fold defaultstate="collapsed">
+    {
+        // Execute randomizer
+        gostRandom = gostRandom || root.gostRandom;
+        if (!gostRandom &amp;&amp; rootCrypto &amp;&amp; rootCrypto.getRandomValues)
+            gostRandom = rootCrypto;
+        if (gostRandom)
+            gostRandom.getRandomValues(array);
+        else
+            throw new NotSupportedError('Random generator not found');
+    }; // &lt;/editor-fold>
+    // &lt;/editor-fold>
+
+    return gostCrypto;
+
+}));
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav id="nav">
+    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCoding.html">gostCoding</a></li><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li><li><a href="gostObject.html">gostObject</a></li><li><a href="gostRandom.html">gostRandom</a></li><li><a href="gostSyntax.html">gostSyntax</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="Gost28147.html">Gost28147</a></li><li><a href="gostCoding.Base64.html">Base64</a></li><li><a href="gostCoding.BER.html">BER</a></li><li><a href="gostCoding.Chars.html">Chars</a></li><li><a href="gostCoding.Hex.html">Hex</a></li><li><a href="gostCoding.Int16.html">Int16</a></li><li><a href="gostCoding.PEM.html">PEM</a></li><li><a href="GostPKIX.html">GostPKIX</a></li><li><a href="GostR3410.html">GostR3410</a></li><li><a href="GostR3411.html">GostR3411</a></li><li><a href="gostSyntax.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="gostSyntax.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="gostSyntax.CanocicalName.html">CanocicalName</a></li><li><a href="gostSyntax.Certificate.html">Certificate</a></li><li><a href="gostSyntax.CertificateList.html">CertificateList</a></li><li><a href="gostSyntax.CertificationRequest.html">CertificationRequest</a></li><li><a href="gostSyntax.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="gostSyntax.ContentInfo.html">ContentInfo</a></li><li><a href="gostSyntax.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="gostSyntax.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="gostSyntax.GostSignature.html">GostSignature</a></li><li><a href="gostSyntax.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="gostSyntax.PFX.html">PFX</a></li><li><a href="gostSyntax.PKIData.html">PKIData</a></li><li><a href="gostSyntax.PKIResponse.html">PKIResponse</a></li><li><a href="gostSyntax.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="gostSyntax.SafeContents.html">SafeContents</a></li><li><a href="gostSyntax.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="gostSyntax.TBSCertificate.html">TBSCertificate</a></li><li><a href="gostSyntax.TBSCertList.html">TBSCertList</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyStore.html">KeyStore</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Name.html">Name</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Dec 05 2014 22:08:55 GMT+0300 (GMT+03:00)
+</footer>
+
+</div>
+
+<script> prettyPrint(); </script>
+<script src="../scripts/prettify/linenumber.js"> </script>
+</body>
+</html>

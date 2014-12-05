@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+    <head>
+        <title>WebCrypto GOST: Encoding/Decoding data tool</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
+        <script src="scripts/prettify/prettify.js"></script>
+        <script src="scripts/prettify/lang-css.js"></script>
+        <script src="scripts/gost/gostCrypto.js"></script>
+        <script src="scripts/gost/gostCoding.js"></script>
+        <script src="scripts/filesaver/FileSaver.js"></script>
+        <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+        <link type="text/css" rel="stylesheet" href="styles/main.css">
+    </head>
+    <body>
+        <div class="page art10">
+            <h1><a href="index.html">WebCrypto GOST</a>: Encoding/Decoding data tool</h1>
+            <p class="note">This is a live on-line tool. All buttons execute appropriate javascript algorithms with values from the page. The tool is intended for experimentation with data processing. Feel free to make changes in the javascript algorithms, their settings..</p>
+            <article>
+                <h2>Conversion of data formats</h2>
+                <section>
+                    <p>Select source and destination data format.</p>
+                    <label for="fromtype"><strong>Source data format</strong></label>
+                    <select id="fromtype" class="value" onchange="
+                            if (this.value === 'Binary') {
+                                fileSource.classList.remove('hidden');
+                                contentSource.classList.add('hidden');
+                            } else {
+                                fileSource.classList.add('hidden');
+                                contentSource.classList.remove('hidden');
+                            }">
+                        <option selected value="Chars/UTF8">Character data in UTF-8 encoding</option>
+                        <option value="Chars/WIN1251">Character data in WIN-1251 encoding</option>
+                        <option value="Chars/ASCII">Character data in ASCII encoding</option>
+                        <option value="Hex/LittleEndian">Hexadecimal data in Little-endian</option>
+                        <option value="Hex/BigEndian">Hexadecimal data in Big-endian</option>
+                        <option value="Base64">Base64 encoded data</option>
+                        <option value="Binary">Binary data in local file</option>
+                    </select>
+                    <div id="contentSource">
+                        <span class="label"><strong>Source contents</strong></span>
+                        <pre contenteditable id="source" class="encoded"></pre>
+                        <div class="fileButton">
+                            <button id="loadButton">Load contents from file</button>
+                            <input type="file" onchange="
+                                    var reader = new FileReader();
+                                    reader.onload = function(e) {
+                                        source.textContent = e.target.result;
+                                    };
+                                    reader.readAsText(this.files[0]);"/>
+                        </div>
+                        <button onclick="source.textContent = ''">Clear</button>
+                    </div>
+                    <div id="fileSource" class="hidden">
+                        <span class="label"><strong>Source file</strong></span>
+                        <div class="fileInput">
+                            <input id="fileSourceView" placeholder="Select the file" value=""/>
+                            <input id="fileSourceSelect" type="file" onchange="fileSourceView.value = this.files[0].name"/>
+                        </div>
+                    </div>
+                    <label for="totype"><strong>Destination data format</strong></label>
+                    <select id="totype" class="value" onchange="
+                            if (this.value === 'Binary') {
+                                fileDest.classList.remove('hidden');
+                                contentDest.classList.add('hidden');
+                            } else {
+                                fileDest.classList.add('hidden');
+                                contentDest.classList.remove('hidden');
+                            }">
+                        <option selected value="Chars/UTF8">Character data in UTF-8 encoding</option>
+                        <option value="Chars/WIN1251">Character data in WIN-1251 encoding</option>
+                        <option value="Chars/ASCII">Character data in ASCII encoding</option>
+                        <option value="Hex/LittleEndian">Hexadecimal data in Little-endian</option>
+                        <option value="Hex/BigEndian">Hexadecimal data in Big-endian</option>
+                        <option value="Base64">Base64 encoded data</option>
+                        <option value="Binary">Binary data in local file</option>
+                    </select>
+                    <div id="fileDest" class="hidden">
+                        <label for="destFileName"><strong>Destination file name</strong></label>
+                        <input class="value" id="destFileName" value="result.bin"/>
+                    </div>
+                    <button id="convertButton" onclick="(new Function(convertMethod.textContent))()">Convert data</button>
+                    <div id="contentDest">
+                        <span class="label"><strong>Destination contents</strong></span>
+                        <pre contenteditable id="dest" class="encoded"></pre>
+                        <button id="saveButton" onclick="
+                                saveAs(new Blob([gostCoding.Chars.decode(dest.textContent, 'utf8')], {type: 'text/plain;charset=utf8'}), 'result.txt');
+                                ">Save contents to file</button>
+                        <button onclick="dest.textContent = ''">Clear</button>
+                    </div>
+                    <span class="label">Convert procedure</span>
+                    <pre contenteditable class="procedure prettyprint" id="convertMethod">
+// Prepare convert parameters
+function args(type, next) {
+    var format = type.value.split('/');
+    format[2] = next;
+    return format;
+}
+
+// Decode data from source
+function decode(format, param, ondata) {
+    if (format === 'Binary') { 
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            ondata(e.target.result);
+        }
+        reader.readAsArrayBuffer(fileSourceSelect.files[0]);
+    } else {
+        ondata(gostCoding[format].decode(source.textContent, param));
+    }
+}
+
+// Encode data to destination
+function encode(format, param, data) {
+    if (format === 'Binary') { 
+        saveAs(new Blob([data], {type: 'application/octet-stream'}), destFileName.value);
+    } else {
+        dest.textContent = gostCoding[format].encode(data, param);
+    }
+}
+
+// Execute procedure
+decode.apply(this, args(fromtype, function(data) {
+    encode.apply(this, args(totype, data));
+}));</pre>
+                </section>
+            </article>
+        </div>
+        <script> prettyPrint();</script>
+    </body>
+</html>

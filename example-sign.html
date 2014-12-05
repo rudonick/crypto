@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+    <head>
+        <title>WebCrypto GOST: Tatiana's Letter to Eugene</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
+        <script src="scripts/prettify/prettify.js"></script>
+        <script src="scripts/prettify/lang-css.js"></script>
+        <script src="scripts/gost/gostCrypto.js"></script>
+        <script src="scripts/gost/gostCoding.js"></script>
+        <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+        <link type="text/css" rel="stylesheet" href="styles/main.css">
+    </head>
+    <body>
+        <div class="page art01">
+            <h1><a href="index.html">WebCrypto GOST</a>: Tatiana's Letter to Eugene</h1>
+            <p class="note">This is a live example. All buttons execute appropriate javascript algorithms with values from the page. For experimentation directly on the page you can change the text or ciphertext, the values ​​of digital signatures, secret keys and passwords, make changes in the javascript algorithms, their settings.</p>
+            <article>
+                <h2>Key pair generation</h2>
+                <section>
+                    <p>Tatiana generate the key pair and provide the public key to Eugene personally or though trusted channel.</p>
+                    <button onclick="(new Function(generateMethod.textContent))()">Generate key pair</button>
+                    <button onclick="privateKey.value = publicKey.value = signature.value = verified.value = '';
+                            verifyButton.setAttribute('disabled', true);
+                            signButton.setAttribute('disabled', true)">Clear</button>
+                    <label for="privateKey"><strong>Tatiana's private key</strong> stored in a secretaire or other secluded place</label>
+                    <input class="value" id="privateKey"/>
+                    <label for="publicKey"><strong>Tatiana's public key</strong> that Eugene took along for the trip</label>
+                    <textarea class="value" id="publicKey"></textarea>
+                    <span class="label">Generate key pair procedure</span>
+                    <pre class="procedure prettyprint" contenteditable id="generateMethod">
+// Generate key pair
+gostCrypto.subtle.generateKey('GOST R 34.10', true, ['sign', 'verify']).then(function(keyPair) {
+
+    // Store key in secluded place
+    return gostCrypto.subtle.exportKey('raw', keyPair.privateKey).then(function(result) {
+        privateKey.value = gostCoding.Hex.encode(result);
+
+        // Provide the public key to recepient
+        return gostCrypto.subtle.exportKey('raw', keyPair.publicKey).then(function(result) {
+            publicKey.value = gostCoding.Hex.encode(result);
+            signButton.removeAttribute('disabled');
+        });
+    });
+}).catch(function(error) {
+    alert(error.message);
+});</pre>
+                </section>
+                <h2>Message signing</h2>
+                <section>
+                    <p>Tatiana wrote a Letter to Eugene and signed by using the private key.</p>
+                    <span class="label">Tatiana's <strong>Letter</strong> to Eugene. In according to specific aristocracy Tatiana fluently parler français and difficulty по-русски. But in the original Letter given на русском языке, so we use WIN-1251 encoding.</span>
+                    <pre contenteditable id="message" class="content">
+Я к вам пишу — чего же боле?
+Что я могу еще сказать?
+Теперь, я знаю, в вашей воле
+Меня презреньем наказать.
+Но вы, к моей несчастной доле
+Хоть каплю жалости храня,
+Вы не оставите меня.
+Сначала я молчать хотела;
+Поверьте: моего стыда
+Вы не узнали б никогда,
+Когда б надежду я имела
+Хоть редко, хоть в неделю раз
+В деревне нашей видеть вас,
+Чтоб только слышать ваши речи,
+Вам слово молвить, и потом
+Все думать, думать об одном
+И день и ночь до новой встречи.
+Но, говорят, вы нелюдим;
+В глуши, в деревне все вам скучно,
+А мы... ничем мы не блестим,
+Хоть вам и рады простодушно.
+Зачем вы посетили нас?
+В глуши забытого селенья
+Я никогда не знала б вас,
+Не знала б горького мученья.
+Души неопытной волненья
+Смирив со временем (как знать?),
+По сердцу я нашла бы друга,
+Была бы верная супруга
+И добродетельная мать.
+Другой!.. Нет, никому на свете
+Не отдала бы сердца я!
+То в вышнем суждено совете...
+То воля неба: я твоя;
+Вся жизнь моя была залогом
+Свиданья верного с тобой;
+Я знаю, ты мне послан богом,
+До гроба ты хранитель мой...
+Ты в сновиденьях мне являлся
+Незримый, ты мне был уж мил,
+Твой чудный взгляд меня томил,
+В душе твой голос раздавался
+Давно... нет, это был не сон!
+Ты чуть вошел, я вмиг узнала,
+Вся обомлела, запылала
+И в мыслях молвила: вот он!
+Не правда ль? я тебя слыхала:
+Ты говорил со мной в тиши,
+Когда я бедным помогала
+Или молитвой услаждала
+Тоску волнуемой души?
+И в это самое мгновенье
+Не ты ли, милое виденье,
+В прозрачной темноте мелькнул,
+Приникнул тихо к изголовью?
+Не ты ль, с отрадой и любовью,
+Слова надежды мне шепнул?
+Кто ты, мой ангел ли хранитель,
+Или коварный искуситель:
+Мои сомненья разреши.
+Быть может, это все пустое,
+Обман неопытной души!
+И суждено совсем иное...
+Но так и быть! Судьбу мою
+Отныне я тебе вручаю,
+Перед тобою слезы лью,
+Твоей защиты умоляю...
+Вообрази: я здесь одна,
+Никто меня не понимает,
+Рассудок мой изнемогает,
+И молча гибнуть я должна.
+Я жду тебя: единым взором
+Надежды сердца оживи
+Иль сон тяжелый перерви,
+Увы, заслуженным укором!
+Кончаю! Страшно перечесть...
+Стыдом и страхом замираю...
+Но мне порукой ваша честь,
+И смело ей себя вверяю...</pre>   
+                    <button id="signButton" onclick="(new Function(signMethod.textContent))()" disabled>Sign message</button>
+                    <button onclick="signature.value = verified.value = '';
+                            verifyButton.setAttribute('disabled', true)">Clear</button>
+                    <label for="signature"><strong>Signature</strong> certifies that the Letter was written by Tatiana</label>
+                    <textarea class="value" id="signature"></textarea>
+                    <span class="label">Sign message procedure</span>
+                    <pre contenteditable class="procedure  prettyprint" id="signMethod">
+// Get private key from secluded place
+gostCrypto.subtle.importKey('raw', gostCoding.Hex.decode(privateKey.value),
+        'GOST R 34.10', true, ['sign']).then(function(key) {
+
+    // Use private key for signing message
+    return gostCrypto.subtle.sign('GOST R 34.10/GOST R 34.11', key, 
+        gostCoding.Chars.decode(message.textContent));
+}).then(function(result) {
+
+    // Send signature with message
+    signature.value = gostCoding.Hex.encode(result);
+    verifyButton.removeAttribute('disabled');
+}).catch(function(error) {
+    alert(error.message);
+});</pre>
+                </section>
+                <h2>Signature verification</h2>
+                <section>
+                    <p>Eugene had read the Letter, can verify the signature by using the public key that it was really from Tatiana</p>
+                    <button id="verifyButton" onclick="(new Function(verifyMethod.textContent))()" disabled>Verify signature</button>
+                    <button onclick="verified.value = ''">Clear</button>
+                    <label for="verified">Is the Letter really from Tatiana and not changed?</label>
+                    <input class="value" id="verified"/>
+                    <span class="label">Verify signature procedure</span>
+                    <pre contenteditable class="procedure prettyprint" id="verifyMethod">
+// Get public key from trusted source
+gostCrypto.subtle.importKey('raw', gostCoding.Hex.decode(publicKey.value),
+        'GOST R 34.10', true, ['verify']).then(function(key) {
+
+    // Use public key for verify message signature
+    return gostCrypto.subtle.verify('GOST R 34.10/GOST R 34.11', key, 
+        gostCoding.Hex.decode(signature.value), gostCoding.Chars.decode(message.textContent));
+}).then(function(result) {
+
+    // Check result
+    verified.value = result ? 'Yes' : 'No';
+}).catch(function(error) {
+    alert(error.message);
+});</pre>
+                </section>
+            </article>
+        </div>
+        <script> prettyPrint(); </script>
+    </body>
+</html>

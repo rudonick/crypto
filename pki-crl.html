@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+    <head>
+        <title>WebCrypto GOST: Certificate request and issue</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
+        <script src="scripts/prettify/prettify.js"></script>
+        <script src="scripts/prettify/lang-css.js"></script>
+        <script src="scripts/gost/gostCrypto.js"></script>
+        <script src="scripts/gost/gostCoding.js"></script>
+        <script src="scripts/gost/gostObject.js"></script>
+        <script src="scripts/gost/gostSyntax.js"></script>
+        <script src="scripts/gost/gostPKIX.js"></script>
+        <script src="scripts/filesaver/FileSaver.js"></script>
+        <script src="scripts/gost/gostViewer.js"></script>
+        <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+        <link type="text/css" rel="stylesheet" href="styles/main.css">
+    </head>
+    <body>
+        <div class="page art04">
+            <h1><a href="index.html">WebCrypto GOST</a>: Certificate revocation</h1>
+            <p class="note">The tool is intended for experimentation with data processing</p>
+            <article>
+                <h2>Generate X.509 certificate revocation list</h2>
+                <section>
+                    <label for="provider"><strong>Algorithm</strong> parameters for selected provider</label>
+                    <select class="value" id="provider">
+                        <option value="TC-256" selected>GOST R 34.10-2012 256 TC26</option>
+                        <option value="TC-512">GOST R 34.10-2012 512 TC26</option>
+                        <option value="CP-01">GOST R 34.10-2001 CryptoPro</option>
+                        <option value="SC-01">GOST R 34.10-2001 SignalCom</option>
+                        <option value="RSA-2048">RSASSA PKCS#1 v1.5 2048/SHA256</option>
+                        <option value="ECDSA-256">ECDSA secp256r1/SHA256</option>
+                    </select>
+                    <span class="label"><strong>CA Certificate & Private key</strong> to sign CRL</span>
+                    <pre contenteditable id="certAndKeyCA" class="encoded"></pre>
+                    <div class="fileButton">
+                        <button id="loadButton">Load from file</button>
+                        <input type="file" onchange="
+                                    var reader = new FileReader();
+                                    reader.onload = function(e) {
+                                        certAndKeyCA.textContent = e.target.result;
+                                    };
+                                    reader.readAsText(this.files[0]);"/>
+                    </div>
+                    <button onclick="
+var pki = new GostPKIX(provider.value, 'PEM');
+pki.createCertificate({
+    subject: {
+        countryName: 'RU',
+        stateOrProvinceName: 'С.Питербургъ',
+        organizationName: 'Современник',
+        organizationalUnitName: 'Руководство',
+        title: 'Редактор',
+        commonName: 'Пушкин Александр Сергеевич'
+    }
+}, 'Pushkin').then(function(data) {
+    certAndKeyCA.textContent = data;
+    
+    return pki.exportKey('Pushkin');
+}).then(function(data) {
+    
+    certAndKeyCA.textContent += '\r\n\r\n' + data;
+}, function(reason) {
+    alert(reason.message);
+});">Generate new one</button>
+                    <button onclick="certAndKeyCA.innerHTML = ''">Clear</button>
+                    <label for="cRLReason"><strong>CRL Reason</strong></label>
+                    <select class="value" id="cRLReason">
+                        <option>unspecified</option>
+                        <option>keyCompromise</option>
+                        <option>cACompromise</option>
+                        <option>affiliationChanged</option>
+                        <option>superseded</option>
+                        <option>cessationOfOperation</option>
+                        <option>certificateHold</option>
+                        <option>removeFromCRL</option>
+                        <option>privilegeWithdrawn</option>
+                        <option>aACompromise</option>
+                    </select>
+                    <label for="serialNumber"><strong>Serial number</strong> of revoking certificate</label>
+                    <input class="value" id="serialNumber" value="0xab15f7a8"/>
+                    <button onclick="
+                        revocationList.textContent += serialNumber.value + ':' + cRLReason.value + '\r\n';
+                        serialNumber.value = '0x' + Math.floor(Math.random() * 4294967296).toString(16);
+                            ">Add certificate to list</button>
+                    <span class="label"><strong>Certificates</strong> that will be added to CRL</span>
+                    <pre contenteditable id="revocationList" class="encoded"></pre>
+                    <button onclick="(new Function(revokeMethod.textContent))()">Revoke certificates</button>
+                    <span class="label">X.509 <strong>CRL</strong> contents</span>
+                    <pre contenteditable id="CRL" class="encoded"></pre>
+                    <button onclick="
+                              saveAs(new Blob([gostCoding.Chars.decode(CRL.textContent, 'ascii')], {type: 'text/plain'}), 'crl.crl');
+                                                ">Save contents to file</button>
+                    <button onclick="CRL.innerHTML = ''">Clear</button>
+                    <button onclick="gostViewer.openASN1(CRL)">View ASN.1</button>
+                    <button onclick="gostViewer.openSyntax(CRL, 'CertificateList')">View JSON</button>
+                    <span class="label">Issue Certificate Revocation List method</span>
+                    <pre contenteditable id="revokeMethod" class="procedure prettyprint">
+<!-- script -->
+var pki = new GostPKIX(provider.value, 'PEM');
+pki.importCertificate(certAndKeyCA.textContent, 'Pushkin').then(function() {
+    
+    // Import root CA private key
+    return pki.importKey(certAndKeyCA.textContent, 'Pushkin');
+}).then(function() {
+
+    // Create list of certificates to add
+    revokedCertificates = [];
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var list = revocationList.textContent.split('\n');
+    for (var i = 0; i < list.length; i++) {
+        if (list[i]) {
+            s = list[i].replace(/[^a-zA-Z0-9\:]/g, '').split(':');
+            revokedCertificates.push({
+                userCertificate: s[0],
+                revocationDate: today,
+                crlEntryExtensions: {
+                    invalidityDate: today,
+                    cRLReason: s[1]
+                }
+            });
+        }
+    }
+
+    // Create new or update current CRL
+    return pki.updateCRL({
+        thisUpdate: today,
+        revokedCertificates: revokedCertificates,
+        crlExtensions: {cRLNumber: 1}
+        }, 'Pushkin');
+}).then(function(data) {
+
+    // Output ready CRL
+    CRL.textContent = data;
+
+    // Reimport issured CRL (for verification import procedure)
+    return pki.importCRL(data, 'Pushkin');
+}).catch(function(reason) {
+    alert(reason.message);
+});
+<!-- /script -->
+        </pre>
+                </section>
+            </article>
+        </div>
+        <script> prettyPrint();</script>
+    </body>
+</html>

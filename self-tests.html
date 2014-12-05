@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+    <head>
+        <title>WebCrypto GOST self tests</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
+        <link type="text/css" rel="stylesheet" href="styles/main.css">
+        <script>
+            var tasks = {
+                gost28147: {
+                    module: 'gost28147.test.js',
+                    method: 'Gost28147_test'
+                },
+                gostR3410: {
+                    module: 'gostR3410.test.js',
+                    method: 'GostR3410_test'
+                },
+                gostR3411: {
+                    module: 'gostR3411.test.js',
+                    method: 'GostR3411_test'
+                }
+            };
+
+            // Output test results and check test complete
+            function processData(data) {
+                if (data && data.log) {
+                    // Test log output
+                    var el = document.createElement('div');
+                    el.innerHTML = data.log;
+                    output.appendChild(el);
+                } else {
+                    var oncomplete = processData.stack.pop();
+                    // Complete data process
+                    if (oncomplete)
+                        oncomplete(data);
+                }
+            }
+            processData.stack = [];
+
+            // Test for support Worker
+            var workerSupported = (function testWorker() {
+                if (typeof Worker !== 'undefined')
+                    try {
+                        new Worker('scripts/gost/' + tasks.gost28147.module);
+                        return true;
+                    } catch (e) {
+                    }
+            })();
+
+            // Imports script with dependents if worker not supported
+            if (!workerSupported) {
+
+                // This procedure emulate load dependents as in Worker
+                var importScripts = function() {
+                    for (var i = 0, n = arguments.length; i < n; i++) {
+                        var name = importScripts.baseUrl + arguments[i];
+                        var el = document.querySelector('script[src="' + name + '"]');
+                        if (!el) {
+                            el = document.createElement('script');
+                            el.setAttribute('src', name);
+                            document.head.appendChild(el);
+                        }
+                    }
+                };
+                importScripts.baseUrl = 'scripts/gost/';
+
+                // Import main tasks
+                importScripts(tasks.gost28147.module, tasks.gostR3410.module, tasks.gostR3411.module);
+
+                var postMessage = processData;
+            }
+
+            // Execute task
+            function execute(task, oncomplete) {
+                // Push complete task to stack
+                processData.stack.push(oncomplete);
+                if (workerSupported) {
+                    // Start method from worker
+                    var worker = new Worker('scripts/gost/' + task.module);
+                    worker.postMessage({
+                        method: task.method,
+                        args: task.args
+                    });
+                    worker.onmessage = function(event) {
+                        processData(event.data);
+                    };
+                } else {
+                    // Start method in main thread
+                    setTimeout(function() {
+                        processData(window[task.method].apply(window, task.args));
+                    }, 50);
+                }
+            }
+
+            // Run selected test
+            function runTests(value) {
+                output.innerHTML = '';
+                loader.removeAttribute('hidden');
+                setTimeout(function() {
+                    if (value === 'all')
+                        execute(tasks.gostR3411, function() {
+                            execute(tasks.gostR3410, function() {
+                                execute(tasks.gost28147, function() {
+                                    loader.setAttribute('hidden', true);
+                                });
+                            });
+                        });
+                    else if (value === 'gostR3411perf')
+                        execute({
+                            module: tasks.gostR3411.module,
+                            method: tasks.gostR3411.method,
+                            args: [1]
+                        }, function() {
+                            loader.setAttribute('hidden', true);
+                        });
+                    else
+                        execute(tasks[value], function() {
+                            loader.setAttribute('hidden', true);
+                        });
+                    
+                }, 50);
+            }
+        </script>
+    </head>
+    <body>
+        <div class="page art15">
+            <h1><a href="index.html">WebCrypto GOST</a> self tests</h1>
+            <article>
+                <h2>Parameters</h2>
+                <section id="tests">
+                    <label>Select test type</label>
+                    <select class="select-test" id="selectedTest">
+                        <option value="all" selected>All GOST tests w/o performance</option>
+                        <option value="gost28147">GOST 28147-89 tests</option>
+                        <option value="gostR3410">GOST R 34.10-94/2001/2012 tests</option>
+                        <option value="gostR3411">GOST R 34.11-94/2012 tests</option>
+                        <option value="gostR3411perf">GOST R 34.11 performance tests</option>
+                    </select>
+                    <button onclick="runTests(selectedTest.value)">Run</button>
+                    <div style="display: inline-block; width: 48px; height: 12px; overflow: visible; position: relative">
+                        <img id="loader" hidden src="images/ajax-loader.gif" alt="Calculating..." style="position: absolute; top: -6px; right: 0px"/>
+                    </div>
+                </section>
+                <h2>Results</h2>
+                <section id="output" class="results">
+                </section>
+            </article>
+        </div>
+    </body>
+</html>

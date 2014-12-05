@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>WebCrypto GOST: Namespace: gostEngine</title>
+
+    <script src="../scripts/prettify/prettify.js"> </script>
+    <script src="../scripts/prettify/lang-css.js"> </script>
+    <link type="text/css" rel="stylesheet" href="../styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="../styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div class="page">
+
+<div id="main">
+
+    <h1 class="page-title"><a href="../index.html">WebCrypto GOST</a> Namespace: gostEngine</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+        gostEngine
+        </h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">Object implements dedicated Web Workers and provide a simple way to create 
+and run GOST cryptographic algorithms in background thread. 
+
+Object provide interface to GOST low-level cryptogric classes:
+ <ul>
+     <li>Gost28147 - implementation of GOST 28147 Encryption algorithms. Reference <a href="http://tools.ietf.org/html/rfc5830">http://tools.ietf.org/html/rfc5830</a></li>
+     <li>GostR3411 - implementation of GOST R 34.11 Hash Function algorithms. References <a href="http://tools.ietf.org/html/rfc5831">http://tools.ietf.org/html/rfc5831</a> and <a href="http://tools.ietf.org/html/rfc6986">http://tools.ietf.org/html/rfc6986</a></li>
+     <li>GostR3410 - implementation of GOST R 34.10 Digital Signature algorithms. References <a href="http://tools.ietf.org/html/rfc5832">http://tools.ietf.org/html/rfc5832</a> and <a href="http://tools.ietf.org/html/rfc7091">http://tools.ietf.org/html/rfc7091</a></li>
+ </ul></div>
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostEngine.js.html">gostEngine.js</a>, <a href="gostEngine.js.html#line78">line 78</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+     
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        <dl>
+            
+<dt>
+    <h4 class="name" id="onmessage"><span class="type-signature">(static) </span>onmessage<span class="type-signature"></span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        Method called when <a href="SubtleCrypto.html">SubtleCrypto</a> calls its own postMessage() 
+method with data parameter: algorithm, method and arg.<br>
+Call method execute and postMessage() results to onmessage event handler 
+in the main process.<br>
+If error occured onerror event handler executed in main process.
+    </div>
+    
+
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostEngine.js.html">gostEngine.js</a>, <a href="gostEngine.js.html#line364">line 364</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        </dl>
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        <dl>
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="execute"><span class="type-signature">(static) </span>execute<span class="signature">(algorithm, method, args)</span><span class="type-signature"> &rarr; {<a href="CryptoOperationData.html">CryptoOperationData</a>|<a href="Key.html">Key</a>|<a href="KeyPair.html">KeyPair</a>|boolean}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        gostEngine.execute(algorithm, method, args) Entry point to execution 
+all low-level GOST cryptographic methods
+
+ <ul>
+     <li>Determine the appropriate engine for a given execution method</li>
+     <li>Create cipher object for determineted engine</li>
+     <li>Execute method of cipher with given args</li>
+ </ul>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">AlgorithmIndentifier</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Algorithm identifier</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>method</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Crypto method for execution</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Method arguments (keys, data, additional parameters)</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostEngine.js.html">gostEngine.js</a>, <a href="gostEngine.js.html#line107">line 107</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Result of method execution
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="CryptoOperationData.html">CryptoOperationData</a></span>
+|
+
+<span class="param-type"><a href="Key.html">Key</a></span>
+|
+
+<span class="param-type"><a href="KeyPair.html">KeyPair</a></span>
+|
+
+<span class="param-type">boolean</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="getGost28147"><span class="type-signature">(static) </span>getGost28147<span class="signature">(algorithm)</span><span class="type-signature"> &rarr; {<a href="Gost28147.html">Gost28147</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        gostEngine.getGost28147(algorithm) returns GOST 28147 cipher instance<br><br>
+
+GOST 28147-89 Encryption Algorithm<br><br> 
+When keys and initialization vectors are converted to/from byte arrays, 
+little-endian byte order is assumed.<br><br>
+
+Normalized algorithm identifier common parameters:
+
+ <ul>
+     <li><b>name</b> Algorithm name 'GOST 28147'</li>
+     <li><b>version</b> Algorithm version, number
+         <ul>
+             <li><b>1989</b> Current version of standard</li>
+             <li><b>2014</b> New planned version of standard. Now not supported</li>
+         </ul>
+     </li>
+     <li><b>length</b> Key length, number. Block length = key length / 4
+         <ul>
+             <li><b>256</b> 256 bits digest (default)</li>
+             <li><b>512</b> 512 bits digest. Now not supported</li>
+         </ul>
+     </li>
+     <li><b>mode</b> Algorithm mode, string
+         <ul>
+             <li><b>ES</b> Encryption mode (default)</li>
+             <li><b>MAC</b> "imitovstavka" (MAC) mode</li>
+             <li><b>KW</b> Key wrapping mode</li>
+         </ul>
+     </li>
+     <li><b>sBox</b> Paramset sBox for GOST 28147-89, string. Used only if version = 1989</li>
+ </ul>
+ 
+Supported algorithms, modes and parameters:
+
+ <ul>
+     <li>Encript/Decrypt mode (ES)
+         <ul>
+             <li><b>block</b> Block mode, string. Default ECB</li>
+             <li><b>keyMeshing</b> Key meshing mode, string. Default NO</li>
+             <li><b>padding</b> Padding mode, string. Default NO for CFB and CNT modes, or ZERO for others</li>
+             <li><b>iv</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Initial vector with length of block. Default - zero block</li>
+         </ul>
+     </li>
+     <li>Sign/Verify mode (MAC)
+         <ul>
+             <li><b>macLength</b> Length of mac in bits (default - 32 bits)</li>
+             <li><b>iv</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Initial vector with length of block. Default - zero block</li>
+         </ul>
+     </li>
+     <li>Wrap/Unwrap key mode (KW)
+         <ul>
+             <li><b>keyWrapping</b> Mode of keywrapping, string. Default NO - standard GOST key wrapping</li>
+             <li><b>ukm</b> <a href="CryptoOperationData.html">CryptoOperationData</a> User key material. Default - random generated value</li>
+         </ul>
+     </li>
+ </ul>
+     
+Supported paramters values:
+     
+ <ul>
+     <li>Block modes (parameter 'block')
+         <ul>
+             <li><b>ECB</b> "prostaya zamena" (ECB) mode (default)</li>
+             <li><b>CFB</b> "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode</li>
+             <li><b>CNT</b> "gammirovanie" (counter) mode</li>
+             <li><b>CBC</b> Cipher-Block-Chaining (CBC) mode</li>
+         </ul>
+     </li>
+     <li>Key meshing modes (parameter 'keyMeshing')
+         <ul>
+             <li><b>NO</b> No key wrapping (default)</li>
+             <li><b>CP</b> CryptoPor Key key meshing</li>
+         </ul>
+     </li>
+     <li>Padding modes (parameter 'padding')
+         <ul>
+             <li><b>NO</b> No padding only for CFB and CNT modes</li>
+             <li><b>PKCS5</b> PKCS#5 padding mode</li>
+             <li><b>ZERO</b> Zero bits padding mode</li>
+             <li><b>RANDOM</b> Random bits padding mode</li>
+         </ul>
+     </li>
+     <li>Wrapping key modes (parameter 'keyWrapping')
+         <ul>
+             <li><b>NO</b> Ref. rfc4357 6.1 GOST 28147-89 Key wrapping</li>
+             <li><b>CP</b> CryptoPro Key wrapping mode</li>
+             <li><b>SC</b> SignalCom Key wrapping mode</li>
+         </ul>
+     </li>
+ </ul>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">AlgorithmIndentifier</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Algorithm identifier</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostEngine.js.html">gostEngine.js</a>, <a href="gostEngine.js.html#line212">line 212</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Instance of Gost28147
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Gost28147.html">Gost28147</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="getGostR3410"><span class="type-signature">(static) </span>getGostR3410<span class="signature">(algorithm)</span><span class="type-signature"> &rarr; {<a href="GostR3410.html">GostR3410</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        gostEngine.getGostR3410(algorithm) returns GOST R 34.10 cipher instance<br><br>
+
+Normalized algorithm identifier common parameters:
+
+ <ul>
+     <li><b>name</b> Algorithm name 'GOST R 34.10'</li>
+     <li><b>version</b> Algorithm version
+         <ul>
+             <li><b>1994</b> - Old-style GOST R 34.10-94 ExpMod algorithm with GOST R 34.11-94 hash</li>
+             <li><b>2001</b> - GOST R 34.10-2001 Eliptic curve algorithm with old GOST R 34.11-94 hash</li>
+             <li><b>2012</b> - GOST R 34.10-2012 Eliptic curve algorithm with GOST R 34.11-12 hash, default mode</li>
+         </ul>
+     </li>
+     <li><b>length</b> Length of hash and signature. Key length == hash length for EC algorithms and 2 * hash length for ExpMod algorithm
+         <ul>
+             <li><b>GOST R 34.10-256</b> - 256 bits digest, default mode</li>
+             <li><b>GOST R 34.10-512</b> - 512 bits digest only for GOST R 34.11-2012 hash</li>
+         </ul>
+     </li>
+     <li><b>mode</b> Algorithm mode
+         <ul>
+             <li><b>SIGN</b> Digital signature mode (default)</li>
+             <li><b>DH</b> Diffie-Hellman key generation and key agreement mode</li>
+         </ul>
+     </li>
+     <li><b>sBox</b> Paramset sBox for GOST 34.11-94. Used only if version = 1994 or 2001</li>
+ </ul>
+ 
+Supported algorithms, modes and parameters:
+
+ <ul>
+     <li>Sign/Verify mode (SIGN)</li>
+     <li>DeriveKey/DeriveBits mode (DH)
+         <ul>
+             <li><a href="CryptoOperationData.html">CryptoOperationData</a> <b>ukm</b> User key material. Default - random generated value</li>
+             <li><a href="CryptoOperationData.html">CryptoOperationData</a> <b>public</b> The peer's EC public key data</li>
+         </ul>
+     </li>
+     <li>GenerateKey mode (SIGN and DH) version = 1994
+         <ul>
+             <li><b>namedParam</b> Paramset for key generation algorithm. If specified no additianal parameters required</li>
+         </ul>
+         Additional parameters, if namedParam not specified
+         <ul>
+             <li><b>modulusLength</b> Bit length of p (512 or 1024 bits). Default = 1024</li>
+             <li><b>p</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Modulus, prime number, 2^(t-1)<p<2^t</li>
+             <li><b>q</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Order of cyclic group, prime number, 2^254<q<2^256, q is a factor of p-1</li>
+             <li><b>a</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Generator, integer, 1<a<p-1, at that aq (mod p) = 1</li>
+         </ul>
+     </li>
+     <li>GenerateKey mode (SIGN and DH) version = 2001 or 2012
+         <ul>
+             <li><b>namedCurve</b> Paramset for key generation algorithm. If specified no additianal parameters required</li>
+         </ul>
+         Additional EC parameters, if namedCurve not specified
+         <ul>
+             <li><b>p</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Prime number - elliptic curve modulus</li>
+             <li><b>a</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Coefficients a of the elliptic curve E</li>
+             <li><b>b</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Coefficients b of the elliptic curve E</li>
+             <li><b>q</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Prime number - order of cyclic group</li>
+             <li><b>x</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Base point p x-coordinate</li>
+             <li><b>y</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Base point p y-coordinate</li>
+         </ul>
+     </li>
+ </ul>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">AlgorithmIndentifier</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Algorithm identifier</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostEngine.js.html">gostEngine.js</a>, <a href="gostEngine.js.html#line350">line 350</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Instance of GostR3410
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="GostR3410.html">GostR3410</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="getGostR3411"><span class="type-signature">(static) </span>getGostR3411<span class="signature">(algorithm)</span><span class="type-signature"> &rarr; {<a href="GostR3411.html">GostR3411</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        gostEngine.getGostR3411(algorithm) returns GOST R 34.11 cipher instance<br><br>
+
+Normalized algorithm identifier common parameters:
+
+ <ul>
+     <li><b>name</b> Algorithm name 'GOST R 34.11'</li>
+     <li><b>version</b> Algorithm version
+         <ul>
+             <li><b>1994</b> old-style 256 bits digest based on GOST 28147-89</li>
+             <li><b>2012</b> 256 ro 512 bits digest algorithm "Streebog" GOST R 34.11-2012 (default)</li>
+         </ul>
+     </li>
+     <li><b>length</b> Digest length
+         <ul>
+             <li><b>256</b> 256 bits digest</li>
+             <li><b>512</b> 512 bits digest, valid only for algorithm "Streebog"</li>
+         </ul>
+     </li>
+     <li><b>mode</b> Algorithm mode
+         <ul>
+             <li><b>HASH</b> simple digest mode (default)</li>
+             <li><b>HMAC</b> HMAC algorithm based on GOST R 34.11</li>
+             <li><b>KDF</b> Derive bits for KEK deversification</li>
+             <li><b>PBKDF2</b> Password based key dirivation algorithms PBKDF2 (based on HMAC)</li>
+         </ul>
+     </li>
+     <li><b>sBox</b> Paramset sBox for GOST 28147-89. Used only if version = 1994</li>
+ </ul>
+
+Supported algorithms, modes and parameters:
+
+ <ul>
+     <li>Digest HASH mode (default)</li>
+     <li>Sign/Verify HMAC modes parameters depends on version and length
+         <ul>
+             <li><b>version: 1994</b> HMAC parameters (B = 32, L = 32)</li>
+             <li><b>version: 2012, length: 256</b> HMAC parameters (B = 64, L = 32)</li>
+             <li><b>version: 2012, length: 512</b> HMAC parameters  (B = 64, L = 64)</li>
+         </ul>
+     </li>
+     <li>DeriveBits/DeriveKey KDF mode
+         <ul>
+             <li><b>context</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Context of the key derivation</li>
+             <li><b>label</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Label that identifies the purpose for the derived keying material</li>
+         </ul>
+     </li>
+     <li>DeriveBits/DeriveKey PBKDF2 mode
+         <ul>
+             <li><b>salt</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Random salt as input for HMAC algorithm</li>
+             <li><b>iterations</b> Iteration count. GOST recomended value 1000 (default) or 2000</li>
+         </ul>
+     </li>
+ </ul>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>algorithm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">AlgorithmIndentifier</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Algorithm identifier</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostEngine.js.html">gostEngine.js</a>, <a href="gostEngine.js.html#line275">line 275</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Instance of GostR3411
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="GostR3411.html">GostR3411</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        </dl>
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav id="nav">
+    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCoding.html">gostCoding</a></li><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li><li><a href="gostObject.html">gostObject</a></li><li><a href="gostRandom.html">gostRandom</a></li><li><a href="gostSyntax.html">gostSyntax</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="Gost28147.html">Gost28147</a></li><li><a href="gostCoding.Base64.html">Base64</a></li><li><a href="gostCoding.BER.html">BER</a></li><li><a href="gostCoding.Chars.html">Chars</a></li><li><a href="gostCoding.Hex.html">Hex</a></li><li><a href="gostCoding.Int16.html">Int16</a></li><li><a href="gostCoding.PEM.html">PEM</a></li><li><a href="GostPKIX.html">GostPKIX</a></li><li><a href="GostR3410.html">GostR3410</a></li><li><a href="GostR3411.html">GostR3411</a></li><li><a href="gostSyntax.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="gostSyntax.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="gostSyntax.CanocicalName.html">CanocicalName</a></li><li><a href="gostSyntax.Certificate.html">Certificate</a></li><li><a href="gostSyntax.CertificateList.html">CertificateList</a></li><li><a href="gostSyntax.CertificationRequest.html">CertificationRequest</a></li><li><a href="gostSyntax.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="gostSyntax.ContentInfo.html">ContentInfo</a></li><li><a href="gostSyntax.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="gostSyntax.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="gostSyntax.GostSignature.html">GostSignature</a></li><li><a href="gostSyntax.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="gostSyntax.PFX.html">PFX</a></li><li><a href="gostSyntax.PKIData.html">PKIData</a></li><li><a href="gostSyntax.PKIResponse.html">PKIResponse</a></li><li><a href="gostSyntax.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="gostSyntax.SafeContents.html">SafeContents</a></li><li><a href="gostSyntax.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="gostSyntax.TBSCertificate.html">TBSCertificate</a></li><li><a href="gostSyntax.TBSCertList.html">TBSCertList</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyStore.html">KeyStore</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Name.html">Name</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Dec 05 2014 22:08:56 GMT+0300 (GMT+03:00)
+</footer>
+
+</div>
+
+<script> prettyPrint(); </script>
+<script src="../scripts/prettify/linenumber.js"> </script>
+</body>
+</html>

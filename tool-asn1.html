@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+    <head>
+        <title>WebCrypto GOST: ASN.1 viewer tool</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
+        <script src="scripts/gost/gostCrypto.js"></script>
+        <script src="scripts/gost/gostCoding.js"></script>
+        <script src="scripts/gost/gostObject.js"></script>
+        <script src="scripts/gost/gostViewer.js"></script>
+        <link type="text/css" rel="stylesheet" href="styles/main.css">
+        <script>
+
+            // Print from text Hex or Base64 encoded
+            function printText() {
+                if (inputtext.value) {
+                    try {
+                        inputtext.style.height = null;
+                        inputtext.style.height = (inputtext.scrollHeight + 10) + 'px';
+                        inputfile.value = '';
+                        result.innerHTML = '';
+                        result.innerHTML = gostViewer.printASN1(inputtext.value);
+                    } catch (error) {
+                        result.innerHTML = 'Error: ' + error.message;
+                    }
+                }
+            }
+
+            // Print from file Base64 or Binary
+            function printFile() {
+                if (inputfile.value) {
+                    try {
+                        inputtext.style.height = null;
+                        inputtext.value = '';
+                        result.innerHTML = '';
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                            try {
+                                result.innerHTML = gostViewer.printASN1(e.target.result);
+                            } catch (error) {
+                                result.innerHTML = 'Error: ' + error.message;
+                            }
+                        };
+                        reader.readAsArrayBuffer(inputfile.files[0]);
+                    } catch (error) {
+                        result.innerHTML = 'Error: ' + error.message;
+                    }
+                }
+            }
+        </script>
+    </head>
+    <body onload="inputfile.value = inputfileview.value = '';
+            printText();">
+        <div class="page art11">
+            <h1><a href="index.html">WebCrypto GOST</a>: ASN.1 viewer tool</h1>
+            <p class="note">The tool is intended for experimentation with data processing.</p>
+            <article>
+                <h2>View ASN.1 data contents</h2>
+                <section>
+                    <div>
+                        <span class="label"><strong>Select file</strong> in PEM or BER (CER, DER) encoding</span>
+                        <div class="fileInput">
+                            <input id="inputfileview" placeholder="Select the file" value=""/>
+                            <input id="inputfile" type="file" onchange="inputfileview.value = this.files[0] ? this.files[0].name : '';
+                                    printFile();"/>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="label"><strong>Paste text</strong> in BASE64 or HEX encoding</span>
+                        <textarea id="inputtext" class="encoded" onchange="printText();">
+-----BEGIN CERTIFICATE-----
+MIIEdjCCBCOgAwIBAgIBATAKBggqhQMHAQEDAjCB8TELMAkGA1UEBhMCUlUxKjAoBgNVBAgMIdCh0LDQvdC60YLRii3Qn9C1
+0YLQtdGA0LHRg9GA0LPRijEuMCwGA1UECgwl0JbRg9GA0L3QsNC7ICLQodC+0LLRgNC10LzQtdC90L3QuNC6IjEfMB0GA1UE
+CwwW0KDRg9C60L7QstC+0LTRgdGC0LLQvjEoMCYGA1UEDAwf0JPQu9Cw0LLQvdGL0Lkg0YDQtdC00LDQutGC0L7RgDE7MDkG
+A1UEAwwy0JDQu9C10LrRgdCw0L3QtNGAINCh0LXRgNCz0LXQtdCy0LjRhyDQn9GD0YjQutC40L0wHhcNMTQxMjA0MjEwMDAw
+WhcNMzQxMjA0MjEwMDAwWjCB8TELMAkGA1UEBhMCUlUxKjAoBgNVBAgMIdCh0LDQvdC60YLRii3Qn9C10YLQtdGA0LHRg9GA
+0LPRijEuMCwGA1UECgwl0JbRg9GA0L3QsNC7ICLQodC+0LLRgNC10LzQtdC90L3QuNC6IjEfMB0GA1UECwwW0KDRg9C60L7Q
+stC+0LTRgdGC0LLQvjEoMCYGA1UEDAwf0JPQu9Cw0LLQvdGL0Lkg0YDQtdC00LDQutGC0L7RgDE7MDkGA1UEAwwy0JDQu9C1
+0LrRgdCw0L3QtNGAINCh0LXRgNCz0LXQtdCy0LjRhyDQn9GD0YjQutC40L0wZjAfBggqhQMHAQEBATATBgcqhQMCAiQABggq
+hQMHAQECAgNDAARAQUCQNg5eYYIcxtaREQRxu/DjXzHflHl+6V0k62fEOKHFqiPC/zO6lSd5Nm6an8Z28owrasJdYX/B8xBQ
+NDVnG6OCAZswggGXMA4GA1UdDwEBAQQEAwIB/jAxBgNVHSUEKjAoBggrBgEFBQcDAQYIKwYBBQUHAwIGCCsGAQUFBwMDBggr
+BgEFBQcDBDAPBgNVHRMBAQEEBTADAQEBMB0GA1UdDgQWBBSdYVnKqBWdaajYbstN3tOx3IvQszCCASAGA1UdIwSCARcwggET
+gBSdYVnKqBWdaajYbstN3tOx3IvQs6GB96SB9DCB8TELMAkGA1UEBhMCUlUxKjAoBgNVBAgMIdCh0LDQvdC60YLRii3Qn9C1
+0YLQtdGA0LHRg9GA0LPRijEuMCwGA1UECgwl0JbRg9GA0L3QsNC7ICLQodC+0LLRgNC10LzQtdC90L3QuNC6IjEfMB0GA1UE
+CwwW0KDRg9C60L7QstC+0LTRgdGC0LLQvjEoMCYGA1UEDAwf0JPQu9Cw0LLQvdGL0Lkg0YDQtdC00LDQutGC0L7RgDE7MDkG
+A1UEAwwy0JDQu9C10LrRgdCw0L3QtNGAINCh0LXRgNCz0LXQtdCy0LjRhyDQn9GD0YjQutC40L2CAQEwCgYIKoUDBwEBAwID
+QQAEv5zJHKm0mhANAf+AtQ0c73VAvtldxhH2rUBxUBt5BDc2OZBpjsw7uFnK0W6EXRmrEVuVzcspeGIsjYOtTBNa
+-----END CERTIFICATE-----</textarea>
+                    </div>
+                </section>
+                <h2>Output result</h2>
+                <section>
+                    <pre id="result" class="results">
+                    </pre>
+                </section>
+            </article>
+        </div>
+    </body>
+</html>

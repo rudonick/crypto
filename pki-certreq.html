@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+    <head>
+        <title>WebCrypto GOST: Certification request and certificate issue</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
+        <script src="scripts/prettify/prettify.js"></script>
+        <script src="scripts/prettify/lang-css.js"></script>
+        <script src="scripts/gost/gostCrypto.js"></script>
+        <script src="scripts/gost/gostCoding.js"></script>
+        <script src="scripts/gost/gostObject.js"></script>
+        <script src="scripts/gost/gostSyntax.js"></script>
+        <script src="scripts/gost/gostPKIX.js"></script>
+        <script src="scripts/filesaver/FileSaver.js"></script>
+        <script src="scripts/gost/gostViewer.js"></script>
+        <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+        <link type="text/css" rel="stylesheet" href="styles/main.css">
+    </head>
+    <body>
+        <div class="page art13">
+            <h1><a href="index.html">WebCrypto GOST</a>: Request and certificate issue</h1>
+            <p class="note">The tool is intended for experimentation with data processing</p>
+            <article>
+                <h2>Generate PKCS#10 certificate request</h2>
+                <section>
+                    <label for="provider"><strong>Algorithm</strong> parameters for selected provider</label>
+                    <select class="value" id="provider">
+                        <option value="TC-256" selected>GOST R 34.10-2012 256 TC26</option>
+                        <option value="TC-512">GOST R 34.10-2012 512 TC26</option>
+                        <option value="CP-01">GOST R 34.10-2001 CryptoPro</option>
+                        <option value="SC-01">GOST R 34.10-2001 SignalCom</option>
+                        <option value="RSA-2048">RSASSA PKCS#1 v1.5 2048/SHA256</option>
+                        <option value="ECDSA-256">ECDSA secp256r1/SHA256</option>
+                    </select>
+                    <label for="countryName"><strong>Country name</strong></label>
+                    <input class="value" id="countryName" value="RU"/>
+                    <label for="stateOrProvinceName"><strong>State or Province name</strong></label>
+                    <input class="value" id="stateOrProvinceName" value="Санктъ-Петербургъ"/>
+                    <label for="organizationName"><strong>Organization name</strong></label>
+                    <input class="value" id="organizationName" value="Журнал &quot;Современник&quot;"/>
+                    <label for="organizationalUnitName"><strong>Organization unit name</strong></label>
+                    <input class="value" id="organizationalUnitName" value="Действующие лица"/>
+                    <label for="title"><strong>Title</strong></label>
+                    <input class="value" id="title" value="Филосов и публицист"/>
+                    <label for="commonName"><strong>Common name</strong></label>
+                    <input class="value" id="commonName" value="Евгеній Онѣгинъ"/>
+                    <button id="generateButton" onclick="(new Function(generateMethod.textContent))()">Generate request</button>
+                    <span class="label"><strong>Certificate Request</strong> contents PKCS#10 format</span>
+                    <pre contenteditable id="request" class="encoded"></pre>
+                    <button onclick="
+                            saveAs(new Blob([gostCoding.Chars.decode(request.textContent, 'ascii')], {type: 'text/plain'}), 'cert.req');
+                            ">Save contents to file</button>
+                    <button onclick="request.innerHTML = ''">Clear</button>
+                    <button onclick="gostViewer.openASN1(request)">View ASN.1</button>
+                    <button onclick="gostViewer.openSyntax(request, 'CertificationRequest')">View JSON</button>
+                    <span class="label"><strong>Private key</strong> contents PKCS#8 format</span>
+                    <pre contenteditable id="privateKey" class="encoded"></pre>
+                    <button onclick="
+                            saveAs(new Blob([gostCoding.Chars.decode(privateKey.textContent, 'ascii')], {type: 'text/plain'}), 'cert.key');
+                            ">Save contents to file</button>
+                    <button onclick="privateKey.innerHTML = ''">Clear</button>
+                    <button onclick="gostViewer.openASN1(privateKey)">View ASN.1</button>
+                    <button onclick="gostViewer.openSyntax(privateKey, 'PrivateKeyInfo')">View JSON</button>
+                    <span class="label">Generate request method</span>
+                    <pre contenteditable id="generateMethod" class="procedure prettyprint">
+// Create certificate request with parameters from this page
+var pki = new GostPKIX(provider.value, 'PEM');
+pki.createRequest({
+    subject: {
+        countryName: countryName.value,
+        stateOrProvinceName: stateOrProvinceName.value,
+        organizationalUnitName: organizationalUnitName.value,
+        organizationName: organizationName.value,
+        title: title.value,
+        commonName: commonName.value
+    }
+}, 'Onegin').then(function(data) {
+
+    // Output ready certificate
+    request.textContent = data;
+
+    // Output ready private key
+    return pki.exportKey('Onegin');
+}).then(function(data) {
+
+    privateKey.textContent = data;
+}, function(reason) {
+    alert(reason.message);
+});</pre>
+                </section>
+                <h2>Issue certificate</h2>
+                <section>
+                    <span class="label"><strong>CA Certificate & Private key</strong> from previous PKI example</span>
+                    <pre contenteditable id="certAndKeyCA" class="encoded"></pre>
+                    <div class="fileButton">
+                        <button id="loadButton">Load from file</button>
+                        <input type="file" onchange="
+                                    var reader = new FileReader();
+                                    reader.onload = function(e) {
+                                        certAndKeyCA.textContent = e.target.result;
+                                    };
+                                    reader.readAsText(this.files[0]);"/>
+                    </div>
+                    <button onclick="
+var pki = new GostPKIX(provider.value, 'PEM');
+pki.createCertificate({
+    subject: {
+        countryName: countryName.value,
+        stateOrProvinceName: stateOrProvinceName.value,
+        organizationName: organizationName.value,
+        organizationalUnitName: 'Руководство',
+        title: 'Редактор',
+        commonName: 'Пушкин Александр Сергеевич'
+    }
+}, 'Pushkin').then(function(data) {
+    certAndKeyCA.textContent = data;
+    
+    return pki.exportKey('Pushkin');
+}).then(function(data) {
+    
+     certAndKeyCA.textContent += '\r\n\r\n' + data;
+}, function(reason) {
+    alert(reason.message);
+});">Generate new one</button>
+                    <button onclick="certAndKeyCA.innerHTML = ''">Clear</button>
+                    <label for="days">The number of <strong>days</strong> to certify a certificate</label>
+                    <input class="value" id="days" value="365"/>
+                    <button onclick="(new Function(issueMethod.textContent))()">Issue certificate</button>
+                    <span class="label">X.509 <strong>Certificate</strong> contents</span>
+                    <pre contenteditable id="certificate" class="encoded"></pre>
+                    <button onclick="
+                              saveAs(new Blob([gostCoding.Chars.decode(certificate.textContent, 'ascii')], {type: 'text/plain'}), 'cert.cer');
+                                                ">Save contents to file</button>
+                    <button onclick="certificate.innerHTML = ''">Clear</button>
+                    <button onclick="gostViewer.openASN1(certificate)">View ASN.1</button>
+                    <button onclick="gostViewer.openSyntax(certificate, 'Certificate')">View JSON</button>
+                    <span class="label">Issue certificate method</span>
+                    <pre contenteditable id="issueMethod" class="procedure prettyprint">
+// Import root CA certificate
+var pki = new GostPKIX(provider.value, 'PEM');
+pki.importCertificate(certAndKeyCA.textContent, 'Pushkin').then(function() {
+    
+    // Import root CA private key
+    return pki.importKey(certAndKeyCA.textContent, 'Pushkin');
+}).then(function() {
+
+    // Import certificate request
+    return pki.importRequest(request.textContent, 'Onegin');
+}).then(function() {
+
+    // Validity period
+    var validity = {};
+    validity.notBefore = new Date();
+    validity.notBefore.setHours(0, 0, 0, 0);
+    validity.notAfter = new Date(validity.notBefore);
+    validity.notAfter.setDate(validity.notAfter.getDate() + parseInt(days.value || '365'));
+
+    // Issue certificate
+    return pki.issueCertificate({validity: validity}, 'Onegin', 'Pushkin');
+}).then(function(data) {
+
+    // Output ready certificate
+    certificate.textContent = data + '\r\n\r\n' + privateKey.textContent;
+
+}).catch(function(reason) {
+    alert(reason.message);
+});</pre>
+                </section>
+            </article>
+        </div>
+        <script> prettyPrint();</script>
+    </body>
+</html>
