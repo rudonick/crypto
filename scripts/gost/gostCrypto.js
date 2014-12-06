@@ -98,7 +98,7 @@
             mode = mode.toUpperCase();
             if (/^[0-9]+$/.test(mode)) {
                 if (['8', '16', '32', '64'].indexOf(mode) >= 0) {
-                    if (na.mode === 'ES' && na.block === 'CFB')
+                    if (na.mode === 'ES')
                         na.shiftBits = parseInt(mode);
                     else if (na.mode === 'MAC')
                         na.macLength = parseInt(mode);
@@ -158,17 +158,37 @@
         });
 
         // Encrypt additional modes 
-        if (na.mode === 'ES' && method !== 'generateKey') {
-            na.block = algorithm.block || na.block || 'ECB'; // ECB, CFB, CNT, CBC
-            na.padding = algorithm.padding || na.padding || // NO, ZERO, PKCS5, RANDOM
-                    (na.block === 'CBC' || na.block === 'ECB' ? 'ZERO' : 'NO');
-            if (na.block === 'CFB')
-                na.shiftBits = algorithm.shiftBits || na.shiftBits || 64; // 8
-            na.keyMeshing = (algorithm.keyMeshing || na.keyMeshing || 'NO').toUpperCase(); // NO, CP
+        if (na.mode === 'ES') {
+            if (algorithm.block)
+                na.block = algorithm.block; // ECB, ECB, CFB, CNT, CBC
+            if (algorithm.padding)
+                na.padding = algorithm.padding; // NO, ZERO, PKCS5, RANDOM
+            if (na.padding)
+                na.padding = na.padding.toUpperCase();
+            if (algorithm.shiftBits)
+                na.shiftBits = algorithm.shiftBits; // 8, 16, 32, 64
+            if (algorithm.keyMeshing)
+            na.keyMeshing = algorithm.keyMeshing; // NO, CP
+            if (na.keyMeshing)
+                na.keyMeshing = na.keyMeshing.toUpperCase();
+            // Default values
+            if (method !== 'importKey' && method !== 'generateKey') {
+                na.block = na.block || 'ECB';
+                na.padding = na.padding || (na.block === 'CBC' || na.block === 'ECB' ? 'ZERO' : 'NO');
+                if (na.block === 'CFB')
+                    na.shiftBits = na.shiftBits || 64; 
+                na.keyMeshing = na.keyMeshing || 'NO';
+            }
         }
         if (na.mode === 'KW') {
-            na.keyWrapping = (algorithm.keyWrapping || na.keyWrapping || 'NO').toUpperCase(); // NO, CP, SC
+            if (algorithm.keyWrapping)
+                na.keyWrapping = algorithm.keyWrapping; // NO, CP, SC
+                if (na.keyWrapping)
+                    na.keyWrapping = na.keyWrapping.toUpperCase();
+                if (method !== 'importKey' && method !== 'generateKey') 
+                    na.keyWrapping = na.keyWrapping || 'NO';
         }
+        
 
         // Paramsets
         if (na.name === 'GOST 28147' && na.version === 1989) {

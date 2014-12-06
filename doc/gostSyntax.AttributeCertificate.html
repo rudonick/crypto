@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>WebCrypto GOST: Namespace: gostSyntax</title>
+    <title>WebCrypto GOST: Class: AttributeCertificate</title>
 
     <script src="../scripts/prettify/prettify.js"> </script>
     <script src="../scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title"><a href="../index.html">WebCrypto GOST</a> Namespace: gostSyntax</h1>
+    <h1 class="page-title"><a href="../index.html">WebCrypto GOST</a> Class: AttributeCertificate</h1>
 
     
 
@@ -29,7 +29,9 @@
 <header>
     
         <h2>
-        gostSyntax
+            <span class="ancestors"><a href="gostSyntax.html">gostSyntax</a>.</span>
+        
+        AttributeCertificate
         </h2>
         
     
@@ -39,10 +41,52 @@
     <div class="container-overview">
     
         
-            <div class="description">ASN.1 syntax definitions</div>
+<dt>
+    
+        
+        <h2>Constructor</h2>
         
 
+        <h4 class="name" id="AttributeCertificate"><span class="type-signature"></span>new AttributeCertificate<span class="signature">()</span><span class="type-signature"></span></h4>
+
         
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Attribute Certificate Profile<br></br>
+
+ACs may be used in a wide range of applications and environments
+covering a broad spectrum of interoperability goals and a broader
+spectrum of operational and assurance requirements.  The goal of this
+document is to establish a common baseline for generic applications
+requiring broad interoperability and limited special purpose
+requirements.  In particular, the emphasis will be on supporting the
+use of attribute certificates for informal Internet electronic mail,
+IPSec, and WWW applications.
+<pre>
+          AttributeCertificate ::= SEQUENCE {
+               acinfo               AttributeCertificateInfo,
+               signatureAlgorithm   AlgorithmIdentifier,
+               signatureValue       BIT STRING
+          }
+</pre>
+See <a href="gostSyntax.AttributeCertificateInfo.html">gostSyntax.AttributeCertificateInfo</a><br><br>
+RFC 3281 references <a href="http://tools.ietf.org/html/rfc3281">http://tools.ietf.org/html/rfc3281</a>
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 
 
 <dl class="details">
@@ -60,6 +104,14 @@
     
 
     
+        <dt class="mixes">Mixes In:</dt>
+
+        <dd class="mixes"><ul>
+        
+            <li><a href="gostSyntax.GostSignature.html">gostSyntax.GostSignature</a></li>
+        
+        </ul></dd>
+    
 
     
 
@@ -74,7 +126,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostSyntax.js.html">gostSyntax.js</a>, <a href="gostSyntax.js.html#line3741">line 3741</a>
+        <a href="gostSyntax.js.html">gostSyntax.js</a>, <a href="gostSyntax.js.html#line2494">line 2494</a>
     </li></ul></dd>
     
 
@@ -86,7 +138,21 @@
 </dl>
 
 
-        
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
     
     </div>
 
@@ -96,73 +162,6 @@
 
     
 
-    
-        <h3 class="subsection-title">Classes</h3>
-
-        <dl>
-            <dt><a href="gostSyntax.AttributeCertificate.html">AttributeCertificate</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.AttributeCertificateInfo.html">AttributeCertificateInfo</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.AuthenticatedSafe.html">AuthenticatedSafe</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.CanocicalName.html">CanocicalName</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.Certificate.html">Certificate</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.CertificateList.html">CertificateList</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.CertificationRequest.html">CertificationRequest</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.CertificationRequestInfo.html">CertificationRequestInfo</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.ContentInfo.html">ContentInfo</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.GostSignature.html">GostSignature</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.PFX.html">PFX</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.PKIData.html">PKIData</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.PKIResponse.html">PKIResponse</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.PrivateKeyInfo.html">PrivateKeyInfo</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.SafeContents.html">SafeContents</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.TBSCertificate.html">TBSCertificate</a></dt>
-            <dd></dd>
-        
-            <dt><a href="gostSyntax.TBSCertList.html">TBSCertList</a></dt>
-            <dd></dd>
-        </dl>
     
 
      

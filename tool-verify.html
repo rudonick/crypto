@@ -35,7 +35,7 @@
                         <option value="S-256-C">id-GostR3410-2001-CryptoPro-C-ParamSet</option>
                         <option value="X-256-A">id-GostR3410-2001-CryptoPro-XchA-ParamSet</option>
                         <option value="X-256-B">id-GostR3410-2001-CryptoPro-XchA-ParamSet</option>
-                        <option value="P-256">id-GostR3410-2001-SignalCom-ParamSet</option>
+                        <option value="P-256">secp256r1 (SignalCom)</option>
                         <option value="Other">Enter parameters manualy</option>
                     </select>
                     <div id="manual" class="hidden">
@@ -169,14 +169,12 @@ function verify(publicKey, signature, message) {
 
     // Set curve parameters
     if (namedCurve.value === 'Other') {
-        algorithm.namedCurve = {
-            a: gostCoding.Hex.decode(paramA.value, 'BigEndian'),
-            b: gostCoding.Hex.decode(paramB.value, 'BigEndian'),
-            p: gostCoding.Hex.decode(paramP.value, 'BigEndian'),
-            q: gostCoding.Hex.decode(paramQ.value, 'BigEndian'),
-            x: gostCoding.Hex.decode(paramX.value, 'BigEndian'),
-            y: gostCoding.Hex.decode(paramY.value, 'BigEndian'),
-        }
+        algorithm.a = gostCoding.Hex.decode(paramA.value, 'BigEndian');
+        algorithm.b = gostCoding.Hex.decode(paramB.value, 'BigEndian');
+        algorithm.p = gostCoding.Hex.decode(paramP.value, 'BigEndian');
+        algorithm.q = gostCoding.Hex.decode(paramQ.value, 'BigEndian');
+        algorithm.x = gostCoding.Hex.decode(paramX.value, 'BigEndian');
+        algorithm.y = gostCoding.Hex.decode(paramY.value, 'BigEndian');
     } else
         algorithm.namedCurve = namedCurve.value; 
 

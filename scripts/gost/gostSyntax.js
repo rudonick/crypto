@@ -2512,7 +2512,7 @@
      * See {@link gostSyntax.AttributeCertificateInfo}<br><br>
      * RFC 3281 references {@link http://tools.ietf.org/html/rfc3281} 
      * 
-     * @class gostSyntax.AttributeCertificateInfo
+     * @class gostSyntax.AttributeCertificate
      * @mixes gostSyntax.GostSignature
      */
     var AttributeCertificate = GostSignature(SEQUENCE({

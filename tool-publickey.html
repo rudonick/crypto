@@ -36,7 +36,10 @@
                         <option value="S-256-C">id-GostR3410-2001-CryptoPro-C-ParamSet</option>
                         <option value="X-256-A">id-GostR3410-2001-CryptoPro-XchA-ParamSet</option>
                         <option value="X-256-B">id-GostR3410-2001-CryptoPro-XchA-ParamSet</option>
-                        <option value="P-256">id-GostR3410-2001-SignalCom-ParamSet</option>
+                        <option value="T-512-TEST">id-tc26-gost-3410-12-512-paramSetTest</option>
+                        <option value="T-512-A">id-tc26-gost-3410-12-512-paramSetA</option>
+                        <option value="T-512-B">id-tc26-gost-3410-12-512-paramSetB</option>
+                        <option value="P-256">secp256r1 (SignalCom)</option>
                         <option value="Other">Enter parameters manualy</option>
                     </select>
                     <div id="manual" class="hidden">
@@ -54,40 +57,43 @@
                         <input class="value" id="paramY"/>
                     </div>
 
-                    <label for="privateKey"><strong>Private key</strong>. Note: private key should be less then parameter <i>q</i> -  order of cyclic group</label>
-                    <input class="value" id="privateKey"/>
-                    <label for="publicKey"><strong>Public key</strong></label>
-                    <textarea class="value" id="publicKey"></textarea>
+                    <span class="label"><strong>Private key</strong>. Note: private key should be less then parameter <i>q</i> -  order of cyclic group</span>
+                    <pre contenteditable class="encoded" id="privateKey">
+                    </pre>
+                    <span class="label"><strong>Public key</strong></span>
+                    <pre contenteditable class="encoded" id="publicKey">
+                    </pre>
                     <button id="randomButton" onclick="(new Function(randomMethod.textContent))()">Generate private key</button>
                     <button id="publicButton" onclick="(new Function(publicMethod.textContent))()">Calculate public key</button>
                     <button id="endianButton" onclick="(new Function(swapMethod.textContent))()">Swap bytes in keys</button>
-                    <button onclick="privateKey.value = publicKey.value = ''">Clear</button>
+                    <button onclick="privateKey.innerHTML = publicKey.innerHTML = ''">Clear</button>
 
                     <span class="label">Generate random key procedure</span>
                     <pre contenteditable class="procedure prettyprint" id="randomMethod">
 // Generate random
-var random = new Uint8Array(32); gostCrypto.getRandomValues(random);
-privateKey.value = gostCoding.Hex.encode(random);
+var random = new Uint8Array(namedCurve.value.indexOf('512') >=0 ? 64 : 32); 
+gostCrypto.getRandomValues(random);
+privateKey.textContent = gostCoding.Hex.encode(random);
                     </pre>
                     <span class="label">Calculate keys procedure</span>
                     <pre class="procedure prettyprint" contenteditable id="publicMethod">
 // Generate public key
 var algorithm = {name: 'GOST R 34.10'};
+if (namedCurve.value.indexOf('512') >= 0) 
+    algorithm.name = algorithm.name + '-512';
 
 // Preset if private key already defined
-if (privateKey.value)
-    algorithm.ukm = gostCoding.Hex.decode(privateKey.value);
+if (privateKey.textContent)
+    algorithm.ukm = gostCoding.Hex.decode(privateKey.textContent);
 
 // Set curve parameters
 if (namedCurve.value === 'Other') {
-    algorithm.namedCurve = {
-        a: gostCoding.Hex.decode(paramA.value, 'BigEndian'),
-        b: gostCoding.Hex.decode(paramB.value, 'BigEndian'),
-        p: gostCoding.Hex.decode(paramP.value, 'BigEndian'),
-        q: gostCoding.Hex.decode(paramQ.value, 'BigEndian'),
-        x: gostCoding.Hex.decode(paramX.value, 'BigEndian'),
-        y: gostCoding.Hex.decode(paramY.value, 'BigEndian'),
-    }
+    algorithm.a = gostCoding.Hex.decode(paramA.value, 'BigEndian');
+    algorithm.b = gostCoding.Hex.decode(paramB.value, 'BigEndian');
+    algorithm.p = gostCoding.Hex.decode(paramP.value, 'BigEndian');
+    algorithm.q = gostCoding.Hex.decode(paramQ.value, 'BigEndian');
+    algorithm.x = gostCoding.Hex.decode(paramX.value, 'BigEndian');
+    algorithm.y = gostCoding.Hex.decode(paramY.value, 'BigEndian');
 } else
     algorithm.namedCurve = namedCurve.value;
 
@@ -96,11 +102,11 @@ gostCrypto.subtle.generateKey(algorithm, true, ['sign', 'verify']).then(function
 
     // Store key in secluded place
     return gostCrypto.subtle.exportKey('raw', keyPair.privateKey).then(function(result) {
-        privateKey.value = gostCoding.Hex.encode(result);
+        privateKey.textContent = gostCoding.Hex.encode(result);
 
         // Provide the public key to recepient
         return gostCrypto.subtle.exportKey('raw', keyPair.publicKey).then(function(result) {
-            publicKey.value = gostCoding.Hex.encode(result);
+            publicKey.textContent = gostCoding.Hex.encode(result);
             signButton.removeAttribute('disabled');
         });
     });
@@ -108,10 +114,10 @@ gostCrypto.subtle.generateKey(algorithm, true, ['sign', 'verify']).then(function
                     <span class="label">Swap bytes procedure</span>
                     <pre contenteditable class="procedure prettyprint" id="swapMethod">
 // Swap bytes in keys
-if (privateKey.value)
-    privateKey.value = gostCoding.Hex.encode(gostCoding.Hex.decode(privateKey.value, true));
-if (publicKey.value)
-    publicKey.value = gostCoding.Hex.encode(gostCoding.Hex.decode(publicKey.value, true));</pre>
+if (privateKey.textContent)
+    privateKey.textContent = gostCoding.Hex.encode(gostCoding.Hex.decode(privateKey.textContent, true));
+if (publicKey.textContent)
+    publicKey.textContent = gostCoding.Hex.encode(gostCoding.Hex.decode(publicKey.textContent, true));</pre>
                 </section>
             </article>
         </div>
