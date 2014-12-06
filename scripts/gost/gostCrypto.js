@@ -257,7 +257,7 @@
      */ // <editor-fold defaultstate="collapsed">
 
     // Check key parameter
-    function checkKey(key, method, algorithm) {
+    function checkKey(key, method) {
         if (!key.algorithm)
             throw new SyntaxError('Key algorithm not defined');
 
@@ -271,11 +271,6 @@
 
         if (!gost28147 && !gostR3410 && !gostR3411)
             throw new NotSupportedError('Key algorithm ' + name + ' is unsupproted');
-
-        var version = key.algorithm.version;
-        if (algorithm && (name !== algorithm.name && version !== algorithm.version))
-            throw new SyntaxError('Key algorithm ' + name + '-' + version +
-                    ' not compatible with algorithm ' + algorithm.name + '-' + algorithm.version);
 
         if (!key.type)
             throw new SyntaxError('Key type not defined');
@@ -296,7 +291,6 @@
                 throw new InvalidStateError('Key type ' + key.type + ' is not valid for ' + md);
         }
 
-
         if (method)
             if (key.usages.indexOf(method) === -1)
                 throw new InvalidAccessError('Key usages is not contain method ' + method);
@@ -314,7 +308,7 @@
 
     // Extract key and enrich cipher algorithm
     function extractKey(method, algorithm, key) {
-        checkKey(key, method, algorithm);
+        checkKey(key, method);
         if (algorithm) {
             var params;
             switch (algorithm.mode) {
