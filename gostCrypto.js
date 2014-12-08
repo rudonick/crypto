@@ -5,6 +5,18 @@
  */
 
 /* 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *    
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -98,7 +110,7 @@
             mode = mode.toUpperCase();
             if (/^[0-9]+$/.test(mode)) {
                 if (['8', '16', '32', '64'].indexOf(mode) >= 0) {
-                    if (na.mode === 'ES' && na.block === 'CFB')
+                    if (na.mode === 'ES')
                         na.shiftBits = parseInt(mode);
                     else if (na.mode === 'MAC')
                         na.macLength = parseInt(mode);
@@ -158,17 +170,37 @@
         });
 
         // Encrypt additional modes 
-        if (na.mode === 'ES' && method !== 'generateKey') {
-            na.block = algorithm.block || na.block || 'ECB'; // ECB, CFB, CNT, CBC
-            na.padding = algorithm.padding || na.padding || // NO, ZERO, PKCS5, RANDOM
-                    (na.block === 'CBC' || na.block === 'ECB' ? 'ZERO' : 'NO');
-            if (na.block === 'CFB')
-                na.shiftBits = algorithm.shiftBits || na.shiftBits || 64; // 8
-            na.keyMeshing = (algorithm.keyMeshing || na.keyMeshing || 'NO').toUpperCase(); // NO, CP
+        if (na.mode === 'ES') {
+            if (algorithm.block)
+                na.block = algorithm.block; // ECB, ECB, CFB, CNT, CBC
+            if (algorithm.padding)
+                na.padding = algorithm.padding; // NO, ZERO, PKCS5, RANDOM
+            if (na.padding)
+                na.padding = na.padding.toUpperCase();
+            if (algorithm.shiftBits)
+                na.shiftBits = algorithm.shiftBits; // 8, 16, 32, 64
+            if (algorithm.keyMeshing)
+            na.keyMeshing = algorithm.keyMeshing; // NO, CP
+            if (na.keyMeshing)
+                na.keyMeshing = na.keyMeshing.toUpperCase();
+            // Default values
+            if (method !== 'importKey' && method !== 'generateKey') {
+                na.block = na.block || 'ECB';
+                na.padding = na.padding || (na.block === 'CBC' || na.block === 'ECB' ? 'ZERO' : 'NO');
+                if (na.block === 'CFB')
+                    na.shiftBits = na.shiftBits || 64; 
+                na.keyMeshing = na.keyMeshing || 'NO';
+            }
         }
         if (na.mode === 'KW') {
-            na.keyWrapping = (algorithm.keyWrapping || na.keyWrapping || 'NO').toUpperCase(); // NO, CP, SC
+            if (algorithm.keyWrapping)
+                na.keyWrapping = algorithm.keyWrapping; // NO, CP, SC
+                if (na.keyWrapping)
+                    na.keyWrapping = na.keyWrapping.toUpperCase();
+                if (method !== 'importKey' && method !== 'generateKey') 
+                    na.keyWrapping = na.keyWrapping || 'NO';
         }
+        
 
         // Paramsets
         if (na.name === 'GOST 28147' && na.version === 1989) {
@@ -257,7 +289,7 @@
      */ // <editor-fold defaultstate="collapsed">
 
     // Check key parameter
-    function checkKey(key, method, algorithm) {
+    function checkKey(key, method) {
         if (!key.algorithm)
             throw new SyntaxError('Key algorithm not defined');
 
@@ -271,11 +303,6 @@
 
         if (!gost28147 && !gostR3410 && !gostR3411)
             throw new NotSupportedError('Key algorithm ' + name + ' is unsupproted');
-
-        var version = key.algorithm.version;
-        if (algorithm && (name !== algorithm.name && version !== algorithm.version))
-            throw new SyntaxError('Key algorithm ' + name + '-' + version +
-                    ' not compatible with algorithm ' + algorithm.name + '-' + algorithm.version);
 
         if (!key.type)
             throw new SyntaxError('Key type not defined');
@@ -296,7 +323,6 @@
                 throw new InvalidStateError('Key type ' + key.type + ' is not valid for ' + md);
         }
 
-
         if (method)
             if (key.usages.indexOf(method) === -1)
                 throw new InvalidAccessError('Key usages is not contain method ' + method);
@@ -314,7 +340,7 @@
 
     // Extract key and enrich cipher algorithm
     function extractKey(method, algorithm, key) {
-        checkKey(key, method, algorithm);
+        checkKey(key, method);
         if (algorithm) {
             var params;
             switch (algorithm.mode) {
