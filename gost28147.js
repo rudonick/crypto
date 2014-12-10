@@ -1,7 +1,7 @@
 /**
  * @file GOST 28147-89 Encryption Algorithm
  * @version 0.99
- * @copyright 2014, Rudolf Nickolaev. All rights reserved.
+ * @copyright 201-15, Rudolf Nickolaev. All rights reserved.
  */
 
 /*
@@ -238,10 +238,26 @@
         return new Uint8Array(buffer(d));
     }
 
+    // Clone byte array
+    function cloneArray(d) {
+        return new Uint8Array(byteArray(d));
+    }
+
+
     // Get int32 array
     function intArray(d) {
         return new Int32Array(buffer(d));
-    } // </editor-fold>
+    }
+
+    // Swap bytes for version 2015
+    function swap32(b) {
+        return ((b & 0xff) << 24)
+                | ((b & 0xff00) << 8)
+                | ((b >> 8) & 0xff00)
+                | ((b >> 24) & 0xff);
+    }
+
+    // </editor-fold>
 
     /**
      * One GOST encryption round
@@ -252,12 +268,16 @@
      * @method round
      * @param {Int8Array} S sBox
      * @param {Int32Array} m 2x32 bits cipher block 
-     * @param {Int32Array} k 8x32 bits key 
+     * @param {Int32Array} k 32 bits key[i] 
+     * @param {boolean} be Big-Endian mode (for new gost)
      */
-    function round(S, m, k) // <editor-fold defaultstate="collapsed">
+    function round(S, m, k, be) // <editor-fold defaultstate="collapsed">
     {
-
-        var cm = (m[0] + k) & 0xffffffff;
+        var cm;
+        if (be) // new gost require big endian mode
+            cm = (swap32(m[1]) + swap32(k)) & 0xffffffff;
+        else
+            cm = (m[0] + k) & 0xffffffff;
 
         var om = S[  0 + ((cm >> (0 * 4)) & 0xF)] << (0 * 4);
         om |= S[ 16 + ((cm >> (1 * 4)) & 0xF)] << (1 * 4);
@@ -270,10 +290,15 @@
 
         cm = om << 11 | om >>> (32 - 11);
 
-        cm ^= m[1];
-
-        m[1] = m[0];
-        m[0] = cm;
+        if (be) { // new gost back to little endian 
+            cm = swap32(cm) ^ m[0];
+            m[0] = m[1];
+            m[1] = cm;
+        } else {
+            cm ^= m[1];
+            m[1] = m[0];
+            m[0] = cm;
+        }
 
     } // </editor-fold>
 
@@ -284,28 +309,14 @@
      * @private
      * @instance
      * @method process
-     * @param e {boolean}  encrypt/decrypt
-     * @param s {Int8Array} sBox
      * @param k {Int32Array} 8x32 bits key 
      * @param d {Int32Array} 2x32 bits cipher block 
      */
-    function process(e, s, k, d) // <editor-fold defaultstate="collapsed">
+    function process89(k, d) // <editor-fold defaultstate="collapsed">
     {
+        var s = this.sBox;
 
-        for (var i = 0; i < 8; i++)
-            round(s, d, k[i]);
-        if (e) {
-            for (var i = 0; i < 8; i++)
-                round(s, d, k[i]);
-            for (var i = 0; i < 8; i++)
-                round(s, d, k[i]);
-        } else {
-            for (var i = 7; i >= 0; i--)
-                round(s, d, k[i]);
-            for (var i = 7; i >= 0; i--)
-                round(s, d, k[i]);
-        }
-        for (var i = 7; i >= 0; i--)
+        for (var i = 0; i < 32; i++)
             round(s, d, k[i]);
 
         var r = d[0];
@@ -314,10 +325,112 @@
     } // </editor-fold>
 
     /**
+     * Process encrypt/decrypt block with key K using GOST 28147-15 64bit block
+     * 
+     * @memberOf Gost28147
+     * @private
+     * @instance
+     * @method process
+     * @param k {Int32Array} 8x32 bits key 
+     * @param d {Int32Array} 2x32 bits cipher block 
+     */
+    function process15(k, d) // <editor-fold defaultstate="collapsed">
+    {
+        var s = this.sBox;
+
+        var r = swap32(d[0]);
+        d[0] = swap32(d[1]);
+        d[1] = r;
+
+        for (var i = 0; i < 32; i++)
+            round(s, d, k[i]);
+
+        d[0] = swap32(d[0]);
+        d[1] = swap32(d[1]);
+    }
+
+    /**
+     * Key keySchedule algorithm for 1989 64bit cipher
+     * 
+     * @memberOf Gost28147
+     * @private
+     * @instance
+     * @method process
+     * @param e {boolean}  encrypt/decrypt
+     * @param k {Uint8Array} 8 bit key array
+     * @returns {Int32Array} keyScheduled 32-bit key
+     */
+    function keySchedule89(e, k) {
+        var sch = new Int32Array(32),
+                key = new Int32Array(buffer(k));
+
+        for (var i = 0; i < 8; i++)
+            sch[i] = key[i];
+
+        if (e) {
+            for (var i = 0; i < 8; i++)
+                sch[i + 8] = sch[i];
+
+            for (var i = 0; i < 8; i++)
+                sch[i + 16] = sch[i];
+        } else {
+            for (var i = 0; i < 8; i++)
+                sch[i + 8] = sch[7 - i];
+
+            for (var i = 0; i < 8; i++)
+                sch[i + 16] = sch[7 - i];
+        }
+
+        for (var i = 0; i < 8; i++)
+            sch[i + 24] = sch[7 - i];
+
+        return sch;
+    }
+
+    /**
+     * Key keySchedule algorithm for 2015 64bit cipher
+     * 
+     * @memberOf Gost28147
+     * @private
+     * @instance
+     * @method process
+     * @param e {boolean}  encrypt/decrypt
+     * @param k {Uint8Array} 8 bit key array
+     * @returns {Int32Array} keyScheduled 32-bit key
+     */
+    function keySchedule15(e, k) {
+        var sch = new Int32Array(32),
+                key = new Int32Array(buffer(k));
+
+        for (var i = 0; i < 8; i++)
+            sch[i] = swap32(key[i]);
+
+        if (e) {
+            for (var i = 0; i < 8; i++)
+                sch[i + 8] = sch[i];
+
+            for (var i = 0; i < 8; i++)
+                sch[i + 16] = sch[i];
+        } else {
+            for (var i = 0; i < 8; i++)
+                sch[i + 8] = sch[7 - i];
+
+            for (var i = 0; i < 8; i++)
+                sch[i + 16] = sch[7 - i];
+        }
+
+        for (var i = 0; i < 8; i++)
+            sch[i + 24] = sch[7 - i];
+
+        return sch;
+    }
+    // </editor-fold>
+
+    /**
      * Algorithm name GOST 28147-ECB<br><br>
      * 
      * encryptECB (K, D) is D, encrypted with key k using GOST 28147-89 in 
-     * "prostaya zamena" (ECB) mode. 
+     * "prostaya zamena" (Electronic Codebook, ECB) mode. 
      * @memberOf Gost28147
      * @method encrypt
      * @instance
@@ -327,22 +440,24 @@
      */
     function encryptECB(k, d) // <editor-fold defaultstate="collapsed">
     {
-        var m = this.padding(d),
-                n = m.byteLength / 8,
-                key = new Int32Array(buffer(k));
+        var p = this.pad(byteArray(d)),
+                nb = this.blockLength >> 3,
+                n = nb >> 2,
+                b = p.byteLength / nb,
+                key = this.keySchedule(true, k);
 
-        for (var i = 0; i < n; i++) {
-            var msg = new Int32Array(m.buffer, 8 * i, 2);
-            process(true, this.sBox, key, msg);
+        for (var i = 0; i < b; i++) {
+            var msg = new Int32Array(p.buffer, nb * i, n);
+            this.process(key, msg);
         }
-        return m.buffer;
+        return p.buffer;
     } // </editor-fold>
 
     /**
      * Algorithm name GOST 28147-ECB<br><br>
      * 
      * decryptECB (K, D) is D, decrypted with key K using GOST 28147-89 in   
-     * ECB mode.
+     * "prostaya zamena"  (Electronic Codebook, ECB) mode.
      * 
      * @memberOf Gost28147
      * @method decrypt
@@ -353,22 +468,24 @@
      */
     function decryptECB(k, d) // <editor-fold defaultstate="collapsed">
     {
-        var m = this.padding(d),
-                n = m.byteLength / 8,
-                key = new Int32Array(buffer(k));
+        var p = cloneArray(d),
+                nb = this.blockLength >> 3,
+                n = nb >> 2,
+                b = p.byteLength / nb,
+                key = this.keySchedule(false, k);
 
-        for (var i = 0; i < n; i++) {
-            var msg = new Int32Array(m.buffer, 8 * i, 2);
-            process(false, this.sBox, key, msg);
+        for (var i = 0; i < b; i++) {
+            var msg = new Int32Array(p.buffer, nb * i, n);
+            this.process(key, msg);
         }
-        return m.buffer;
+        return this.unpad(p).buffer;
     } // </editor-fold>
 
     /**
      * Algorithm name GOST 28147-CFB<br><br>
      * 
      * encryptCFB (IV, K, D) is D, encrypted with key K using GOST 28147-89   
-     * in "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode, and IV is   
+     * in "gammirovanie s obratnoj svyaziyu" (Cipher Feedback, CFB) mode, and IV is   
      * used as the initialization vector.
      * 
      * @memberOf Gost28147
@@ -376,59 +493,70 @@
      * @instance
      * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
      * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv 8x8 optional bits initial vector
+     * @param {(ArrayBuffer|TypedArray)} iv initial vector
      * @return {ArrayBuffer} result
      */
     function encryptCFB(k, d, iv) // <editor-fold defaultstate="collapsed">
     {
-        var s = new Uint8Array(iv || this.iv || defaultIV),
-                m = this.padding(d),
-                b = Math.floor(this.shiftBits / 8) || 8,
-                n = m.length, r = n % b, q = (n - r) / b,
-                key = new Int32Array(intArray(k)),
+        var s = new Uint8Array(iv || this.iv),
+                c = cloneArray(d),
+                nb = this.blockLength >> 3, n = nb >> 2,
+                mb = s.length, m = mb >> 2,
+                t = new Uint8Array(mb),
+                b = this.shiftBits >> 3,
+                cb = c.length, r = cb % b, q = (cb - r) / b,
+                key = this.keySchedule(true, k),
                 syn = new Int32Array(s.buffer);
 
         for (var i = 0; i < q; i++) {
-            if (b === 8) {
-                process(true, this.sBox, key, syn);
+            if (b === nb) {
+                this.process(key, syn);
 
-                var msg = new Int32Array(m.buffer, i * b, 2);
-                msg[0] ^= syn[0];
-                msg[1] ^= syn[1];
+                var msg = new Int32Array(c.buffer, i * b, n);
+                for (var j = 0; j < n; j++)
+                    msg[j] ^= syn[j];
 
-                syn[0] = msg[0];
-                syn[1] = msg[1];
+                if (m !== n) {
+                    for (var j = 0; j < m - n; j++)
+                        syn[j] = syn[n + j];
+                }
+
+                for (var j = 0; j < n; j++)
+                    syn[j + m - n] = msg[j];
+
             } else {
-                var t = new Uint8Array(s);
+                for (var j = 0; j < mb; j++)
+                    t[j] = s[j];
 
-                process(true, this.sBox, key, syn);
+                this.process(key, syn);
 
                 for (var j = 0; j < b; j++)
-                    m[i * b + j] ^= s[j];
+                    c[i * b + j] ^= s[j];
 
-                for (var j = 0; j < 8 - b; j++)
+                for (var j = 0; j < mb - b; j++)
                     s[j] = t[b + j];
+
                 for (var j = 0; j < b; j++)
-                    s[8 - b + j] = m[i * b + j];
+                    s[mb - b + j] = c[i * b + j];
             }
 
-            this.keyMeshing && this.keyMeshing(key, syn, i);
+            k = this.keyMeshing(k, s, i, true, key);
         }
 
         if (r > 0) {
-            process(true, this.sBox, key, syn);
+            this.process(key, syn);
 
             for (var i = 0; i < r; i++)
-                m[q * b + i] ^= s[i];
+                c[q * b + i] ^= s[i];
         }
-        return m.buffer;
+        return c.buffer;
     } // </editor-fold>
 
     /**
      * Algorithm name GOST 28147-CFB<br><br>
      * 
      * decryptCFB (IV, K, D) is D, decrypted with key K using GOST 28147-89   
-     * in "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode, and IV is   
+     * in "gammirovanie s obratnoj svyaziyu po shifrotekstu" (Cipher Feedback, CFB) mode, and IV is   
      * used as the initialization vector.
      * 
      * @memberOf Gost28147
@@ -436,65 +564,170 @@
      * @instance
      * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
      * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv 8x8 optional bits initial vector
+     * @param {(ArrayBuffer|TypedArray)} iv initial vector
      * @return {ArrayBuffer} result
      */
     function decryptCFB(k, d, iv) // <editor-fold defaultstate="collapsed">
     {
-        var s = new Uint8Array(iv || this.iv || defaultIV),
-                m = this.padding(d),
-                tmp = new Int32Array(2),
-                b = Math.floor(this.shiftBits / 8) || 8,
-                n = m.length, r = n % b, q = (n - r) / b,
-                key = new Int32Array(intArray(k)),
+        var s = new Uint8Array(iv || this.iv),
+                c = cloneArray(d),
+                nb = this.blockLength >> 3, n = nb >> 2,
+                mb = s.length, m = mb >> 2,
+                t = new Uint8Array(mb),
+                b = this.shiftBits >> 3,
+                cb = c.length, r = cb % b, q = (cb - r) / b,
+                key = this.keySchedule(true, k),
                 syn = new Int32Array(s.buffer);
 
         for (var i = 0; i < q; i++) {
-            if (b === 8) {
-                process(true, this.sBox, key, syn);
+            if (b === nb) {
+                this.process(key, syn);
 
-                var msg = new Int32Array(m.buffer, i * b, 2);
-                tmp[0] = msg[0];
-                tmp[1] = msg[1];
+                var msg = new Int32Array(c.buffer, i * b, n);
+                var tmp = new Int32Array(t.buffer);
+                for (var j = 0; j < n; j++)
+                    tmp[j] = msg[j];
 
-                msg[0] ^= syn[0];
-                msg[1] ^= syn[1];
+                for (var j = 0; j < n; j++)
+                    msg[j] ^= syn[j];
 
-                syn[0] = tmp[0];
-                syn[1] = tmp[1];
-            } else {
-                var t = new Uint8Array(s);
-
-                process(true, this.sBox, key, syn);
-
-                for (var j = 0; j < b; j++) {
-                    t[j] = m[i * b + j];
-                    m[i * b + j] ^= s[j];
+                if (m !== n) {
+                    for (var j = 0; j < m - n; j++)
+                        syn[j] = syn[n + j];
                 }
 
-                for (var j = 0; j < 8 - b; j++)
+                for (var j = 0; j < n; j++)
+                    syn[j + m - n] = tmp[j];
+
+            } else {
+                for (var j = 0; j < mb; j++)
+                    t[j] = s[j];
+
+                this.process(key, syn);
+
+                for (var j = 0; j < b; j++) {
+                    t[j] = c[i * b + j];
+                    c[i * b + j] ^= s[j];
+                }
+
+                for (var j = 0; j < mb - b; j++)
                     s[j] = t[b + j];
+
                 for (var j = 0; j < b; j++)
-                    s[8 - b + j] = t[j];
+                    s[mb - b + j] = t[j];
             }
 
-            this.keyMeshing && this.keyMeshing(key, syn, i);
+            k = this.keyMeshing(k, s, i, true, key);
         }
 
         if (r > 0) {
-            process(true, this.sBox, key, syn);
+            this.process(key, syn);
 
             for (var i = 0; i < r; i++)
-                m[q * b + i] ^= s[i];
+                c[q * b + i] ^= s[i];
         }
-        return m.buffer;
+        return c.buffer;
     } // </editor-fold>
 
     /**
-     * Algorithm name GOST 28147-CNT<br><br>
+     * Algorithm name GOST 28147-OFB<br><br>
      * 
-     * encryptCNT/decryptCNT (IV, K, D) is D, encrypted with key K using GOST 28147-89   
-     * in "gammirovanie" (counter) mode, and IV is used as the   
+     * encryptOFB/decryptOFB (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+     * in "gammirovanie s obratnoj svyaziyu po vyhodu" (Output Feedback, OFB) mode, and IV is   
+     * used as the initialization vector.
+     * 
+     * @memberOf Gost28147
+     * @method encrypt
+     * @instance
+     * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
+     * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
+     * @param {(ArrayBuffer|TypedArray)} iv 8x8 optional bits initial vector
+     * @return {ArrayBuffer} result
+     */
+    /**
+     * Algorithm name GOST 28147-OFB<br><br>
+     * 
+     * encryptOFB/decryptOFB (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+     * in "gammirovanie s obratnoj svyaziyu po vyhodu" (Output Feedback, OFB) mode, and IV is   
+     * used as the initialization vector.
+     * 
+     * @memberOf Gost28147
+     * @method decrypt
+     * @instance
+     * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
+     * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
+     * @param {(ArrayBuffer|TypedArray)} iv initial vector
+     * @return {ArrayBuffer} result
+     */
+    function processOFB(k, d, iv) // <editor-fold defaultstate="collapsed">
+    {
+        var s = new Uint8Array(iv || this.iv),
+                c = cloneArray(d),
+                nb = this.blockLength >> 3, n = nb >> 2,
+                mb = s.length, m = mb >> 2,
+                t = new Uint8Array(mb),
+                b = this.shiftBits >> 3,
+                p = new Uint8Array(b),
+                cb = c.length, r = cb % b, q = (cb - r) / b,
+                key = this.keySchedule(true, k),
+                syn = new Int32Array(s.buffer);
+
+        for (var i = 0; i < q; i++) {
+            if (b === nb) {
+                this.process(key, syn);
+
+                var tmp = new Int32Array(t.buffer);
+                for (var j = 0; j < n; j++)
+                    tmp[j] = syn[j];
+
+                var msg = new Int32Array(c.buffer, i * b, n);
+                for (var j = 0; j < n; j++)
+                    msg[j] ^= syn[j];
+
+                if (m !== n) {
+                    for (var j = 0; j < m - n; j++)
+                        syn[j] = syn[n + j];
+                }
+
+                for (var j = 0; j < n; j++)
+                    syn[j + m - n] = tmp[j];
+
+            } else {
+                for (var j = 0; j < mb; j++)
+                    t[j] = s[j];
+
+                this.process(key, syn);
+
+                for (var j = 0; j < b; j++)
+                    p[j] = s[j];
+
+                for (var j = 0; j < b; j++)
+                    c[i * b + j] ^= s[j];
+
+                for (var j = 0; j < mb - b; j++)
+                    s[j] = t[b + j];
+
+                for (var j = 0; j < b; j++)
+                    s[mb - b + j] = p[j];
+            }
+
+            k = this.keyMeshing(k, s, i, true, key);
+        }
+
+        if (r > 0) {
+            this.process(key, syn);
+
+            for (var i = 0; i < r; i++)
+                c[q * b + i] ^= s[i];
+        }
+        return c.buffer;
+    } // </editor-fold>
+
+    /**
+     * Algorithm name GOST 28147-CTR<br><br>
+     * 
+     * encryptCTR/decryptCTR (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+     * in "gammirovanie" (Counter Mode-CTR) mode, and IV is used as the   
      * initialization vector.
      * @memberOf Gost28147
      * @method encrypt
@@ -505,65 +738,112 @@
      * @return {ArrayBuffer} result
      */
     /**
-     * Algorithm name GOST 28147-CNT<br><br>
+     * Algorithm name GOST 28147-CTR<br><br>
      * 
-     * encryptCNT/decryptCNT (IV, K, D) is D, encrypted with key K using GOST 28147-89   
-     * in "gammirovanie" (counter) mode, and IV is used as the   
+     * encryptCTR/decryptCTR (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+     * in "gammirovanie" (Counter Mode-CTR) mode, and IV is used as the   
      * initialization vector.
      * @memberOf Gost28147
      * @method decrypt
      * @instance
      * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
      * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv 8x8 optional bits initial vector
+     * @param {(ArrayBuffer|TypedArray)} iv initial vector
      * @return {ArrayBuffer} result
      */
-    function processCNT(k, d, iv) // <editor-fold defaultstate="collapsed">
+    function processCTR89(k, d, iv) // <editor-fold defaultstate="collapsed">
     {
-        var s = new Uint8Array(iv || this.iv || defaultIV),
-                m = new this.padding(d),
+        var s = new Uint8Array(iv || this.iv),
+                c = cloneArray(d),
                 tmp = new Int32Array(2),
-                n = m.length, r = n % 8, q = (n - r) / 8,
-                key = new Int32Array(intArray(k)),
+                nb = this.blockLength >> 3, n = nb >> 2,
+                cb = c.length, r = cb % nb, q = (cb - r) / nb,
+                key = this.keySchedule(true, k),
                 syn = new Int32Array(s.buffer);
 
-        process(true, this.sBox, key, syn);
+        this.process(key, syn);
 
         for (var i = 0; i < q; i++) {
-            var msg = new Int32Array(m.buffer, i * 8, 2);
+            var msg = new Int32Array(c.buffer, i * nb, n);
+
             syn[0] = (syn[0] + 0x1010101) & 0xffffffff;
             syn[1] = signed(unsigned((syn[1] + 0x1010104) & 0xffffffff) % 0xffffffff);
 
-            tmp[0] = syn[0];
-            tmp[1] = syn[1];
+            for (var j = 0; j < n; j++)
+                tmp[j] = syn[j];
 
-            process(true, this.sBox, key, syn);
+            this.process(key, syn);
 
-            msg[0] ^= syn[0];
-            msg[1] ^= syn[1];
+            for (var j = 0; j < n; j++)
+                msg[j] ^= syn[j];
 
-            syn[0] = tmp[0];
-            syn[1] = tmp[1];
+            for (var j = 0; j < n; j++)
+                syn[j] = tmp[j];
 
-            this.keyMeshing && this.keyMeshing(key, syn, i);
+            k = this.keyMeshing(k, s, i, true, key);
         }
         if (r > 0) {
             syn[0] = (syn[0] + 0x1010101) & 0xffffffff;
             syn[1] = signed(unsigned((syn[1] + 0x1010104) & 0xffffffff) % 0xffffffff);
 
-            process(true, this.sBox, key, syn);
+            this.process(key, syn);
 
             for (var i = 0; i < r; i++)
-                m[q * 8 + i] ^= s[i];
+                c[q * nb + i] ^= s[i];
         }
-        return m.buffer;
+        return c.buffer;
+    } // </editor-fold>
+
+    function processCTR15(k, d, iv) // <editor-fold defaultstate="collapsed">
+    {
+        var c = cloneArray(d),
+                nb = this.blockLength >> 3, n = nb >> 2,
+                b = this.shiftBits >> 3,
+                cb = c.length, r = cb % b, q = (cb - r) / b,
+                s = new Uint8Array(nb),
+                tmp = new Int32Array(n),
+                key = this.keySchedule(true, k),
+                syn = new Int32Array(s.buffer);
+
+        s.set(iv || this.iv);
+        for (var i = 0; i < q; i++) {
+
+            for (var j = 0; j < n; j++)
+                tmp[j] = syn[j];
+
+            this.process(key, syn);
+
+            for (var j = 0; j < b; j++)
+                c[b * i + j] ^= s[j];
+
+            for (var j = 0; j < n; j++)
+                syn[j] = tmp[j];
+
+            for (var j = nb - 1; i >= 0; --i) {
+                if (s[j] > 0xfe) {
+                    s[j] -= 0xfe;
+                } else {
+                    s[j]++;
+                    break;
+                }
+            }
+        }
+
+        if (r > 0) {
+            this.process(key, syn);
+
+            for (var j = 0; j < r; j++)
+                c[b * q + j] ^= s[j];
+        }
+
+        return c.buffer;
     } // </editor-fold>
 
     /**
      * Algorithm name GOST 28147-CBC<br><br>
      * 
      * encryptCBC (IV, K, D) is D, encrypted with key K using GOST 28147-89   
-     * in Cipher-Block-Chaining (CBC) mode and IV is used as the initialization 
+     * in "Prostaya zamena s zatsepleniem" (Cipher-Block-Chaining, CBC) mode and IV is used as the initialization 
      * vector.
      * 
      * @memberOf Gost28147
@@ -571,38 +851,48 @@
      * @instance
      * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
      * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv 8x8 optional bits initial vector
+     * @param {(ArrayBuffer|TypedArray)} iv initial vector
      * @return {ArrayBuffer} result
      */
     function encryptCBC(k, d, iv) // <editor-fold defaultstate="collapsed">
     {
-        var s = new Uint8Array(iv || this.iv || defaultIV),
-                m = this.padding(d),
-                key = new Int32Array(intArray(k)),
+        var s = new Uint8Array(iv || this.iv),
+                nb = this.blockLength >> 3,
+                m = s.length >> 2, n = nb >> 2,
+                c = this.pad(byteArray(d)),
+                key = this.keySchedule(true, k),
                 syn = new Int32Array(s.buffer);
 
-        for (var i = 0, n = m.length / 8; i < n; i++) {
-            var msg = new Int32Array(m.buffer, i * 8, 2);
+        for (var i = 0, b = c.length / nb; i < b; i++) {
+            var msg = new Int32Array(c.buffer, i * nb, n);
 
-            syn[0] ^= msg[0];
-            syn[1] ^= msg[1];
+            for (var j = 0; j < n; j++)
+                syn[j] ^= msg[j];
 
-            process(true, this.sBox, key, syn);
+            this.process(key, syn);
 
-            msg[0] = syn[0];
-            msg[1] = syn[1];
+            for (var j = 0; j < n; j++)
+                msg[j] = syn[j];
 
-            this.keyMeshing && this.keyMeshing(key, syn, i);
+            if (m !== n) {
+                for (var j = 0; j < m - n; j++)
+                    syn[j] = syn[n + j];
+
+                for (var j = 0; j < n; j++)
+                    syn[j + m - n] = msg[j];
+            }
+
+            k = this.keyMeshing(k, s, i, true, key);
         }
 
-        return m.buffer;
+        return c.buffer;
     } // </editor-fold>
 
     /**
      * Algorithm name GOST 28147-CBC<br><br>
      * 
      * decryptCBC (IV, K, D) is D, decrypted with key K using GOST 28147-89   
-     * in Cipher-Block-Chaining (CBC) mode and IV is used as the initialization 
+     * in "Prostaya zamena s zatsepleniem" (Cipher-Block-Chaining, CBC) mode and IV is used as the initialization 
      * vector.
      * 
      * @memberOf Gost28147
@@ -610,35 +900,42 @@
      * @instance
      * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
      * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv 8x8 optional bits initial vector
+     * @param {(ArrayBuffer|TypedArray)} iv initial vector
      * @return {ArrayBuffer} result
      */
     function decryptCBC(k, d, iv) // <editor-fold defaultstate="collapsed">
     {
-        var s = new Uint8Array(iv || this.iv || defaultIV),
-                m = this.padding(d),
+        var s = new Uint8Array(iv || this.iv),
+                nb = this.blockLength >> 3,
+                m = s.length >> 2, n = nb >> 2,
+                p = cloneArray(d),
                 next = new Int32Array(2),
-                key = new Int32Array(intArray(k)),
+                key = this.keySchedule(false, k),
                 syn = new Int32Array(s.buffer);
 
-        for (var i = 0, n = m.length / 8; i < n; i++) {
-            var msg = new Int32Array(m.buffer, i * 8, 2);
+        for (var i = 0, b = p.length / nb; i < b; i++) {
+            var msg = new Int32Array(p.buffer, i * nb, n);
 
-            next[0] = msg[0];
-            next[1] = msg[1];
+            for (var j = 0; j < n; j++)
+                next[j] = msg[j];
 
-            process(false, this.sBox, key, msg);
+            this.process(key, msg);
 
-            msg[0] ^= syn[0];
-            msg[1] ^= syn[1];
+            for (var j = 0; j < n; j++)
+                msg[j] ^= syn[j];
 
-            syn[0] = next[0];
-            syn[1] = next[1];
+            if (m !== n) {
+                for (var j = 0; j < m - n; j++)
+                    syn[j] = syn[n + j];
+            }
 
-            this.keyMeshing && this.keyMeshing(key, syn, i);
+            for (var j = 0; j < n; j++)
+                syn[j + m - n] = next[j];
+
+            k = this.keyMeshing(k, s, i, false, key);
         }
 
-        return m.buffer;
+        return this.unpad(p.buffer);
     } // </editor-fold>
 
     /**
@@ -658,8 +955,89 @@
         return k.buffer;
     } // </editor-fold>
 
+
     /**
      * makeIMIT (K, D) is the 32-bit result of the GOST 28147-89 in   
+     * "imitovstavka" (MAC) mode, used with D as plaintext, K as key and IV   
+     * as initialization vector.  Note that the standard specifies its use   
+     * in this mode only with an initialization vector of zero.
+     * 
+     * @memberOf Gost28147
+     * @method processMAC
+     * @private
+     * @instance
+     * @param {Int32Array} key 8x32 bits key 
+     * @param {Int32Array} sum 2x32 sum arrat
+     * @param {Uint8Array} d 8 bits array with data 
+     * @return {Uint8Array} result
+     */
+    function processMAC89(key, sum, d) // <editor-fold defaultstate="collapsed">
+    {
+        var c = zeroPad.call(this, byteArray(d)),
+                nb = this.blockLength >> 3, n = nb >> 2,
+                q = c.length / nb,
+                sBox = this.sBox;
+
+        for (var i = 0; i < q; i++) {
+            var msg = new Int32Array(c.buffer, i * nb, n);
+
+            for (var j = 0; j < n; j++)
+                sum[j] ^= msg[j];
+
+            for (var j = 0; j < 16; j++) // 1-16 steps
+                round(sBox, sum, key[j]);
+        }
+    } // </editor-fold>
+
+    function processKeyMAC15(r) // <editor-fold defaultstate="collapsed">
+    {
+        var t = 0, s = new Uint8Array(r.buffer), nb = s.length;
+        for (var i = nb - 1; i >= 0; --i) {
+            var t1 = s[i] >>> 7;
+            s[i] = (s[i] << 1) & 0xff | t;
+            t = t1;
+        }
+        if (t !== 0) {
+            if (nb === 16)
+                s[15] ^= 0x87;
+            else
+                s[7] ^= 0x1b;
+        }
+    } // </editor-fold>
+
+    function processMAC15(key, sum, d) // <editor-fold defaultstate="collapsed">
+    {
+        var nb = this.blockLength >> 3, n = nb >> 2,
+                sBox = this.sBox, c = byteArray(d),
+                r = new Int32Array(n);
+        
+        // R
+        this.process(key, r);
+        // K1
+        processKeyMAC15(r);
+
+        if (d.byteLength % nb !== 0) {
+            c = bitPad.call(this, byteArray(d));
+            // K2
+            processKeyMAC15(r);
+        }
+
+        for (var i = 0, q = c.length / nb; i < q; i++) {
+            var msg = new Int32Array(c.buffer, i * nb, n);
+
+            for (var j = 0; j < n; j++)
+                sum[j] ^= msg[j];
+
+            if (i === q - 1) // Last block
+                for (var j = 0; j < n; j++)
+                    sum[j] ^= r[j];
+
+            this.process(key, sum);
+        }
+    } // </editor-fold>
+
+    /**
+     * signMAC (K, D, IV) is the 32-bit result of the GOST 28147-89 in   
      * "imitovstavka" (MAC) mode, used with D as plaintext, K as key and IV   
      * as initialization vector.  Note that the standard specifies its use   
      * in this mode only with an initialization vector of zero.
@@ -669,50 +1047,27 @@
      * @instance
      * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
      * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv 8x8 optional bits initial vector
+     * @param {(ArrayBuffer|TypedArray)} iv initial vector
      * @return {ArrayBuffer} result
      */
-    function signIMIT(k, d, iv) // <editor-fold defaultstate="collapsed">
+    function signMAC(k, d, iv) // <editor-fold defaultstate="collapsed">
     {
-        var s = new Uint8Array(iv || this.iv || defaultIV), m = byteArray(d),
-                n = m.length, r = n % 8, q = (n - r) / 8,
-                key = new Int32Array(intArray(k)),
-                sum = new Int32Array(s.buffer),
-                sBox = this.sBox;
+        var key = this.keySchedule(true, k),
+                s = new Uint8Array(iv || this.iv),
+                nb = this.blockLength >> 3,
+                sum = new Int32Array(s.buffer);
 
-        // Complete block loop
-        for (var j = 0; j < q; j++) {
-            var msg = new Int32Array(m.buffer, j * 8, 2);
-            sum[0] = sum[0] ^ msg[0];
-            sum[1] = sum[1] ^ msg[1];
+        this.processMAC(key, sum, d);
 
-            for (var i = 0; i < 8; i++) // 1-16 steps
-                round(sBox, sum, key[i]);
-            for (var i = 0; i < 8; i++)
-                round(sBox, sum, key[i]);
-
-            this.keyMeshing && this.keyMeshing(key, sum, i);
-        }
-
-        // Remider with padding zero
-        if (r > 0) {
-            for (var i = 0; i < r; i++) {
-                s[i] = s[i] ^ m[q * 8 + i];
-            }
-            for (var i = 0; i < 8; i++) // 1-16 steps
-                round(sBox, sum, key[i]);
-            for (var i = 0; i < 8; i++)
-                round(sBox, sum, key[i]);
-        }
-
-        var len = Math.ceil(this.macLength / 8) || 4,
+        var len = Math.ceil(this.macLength / nb) || nb >> 1,
                 mac = new Uint8Array(len); // mac size
-        mac.set(new Uint8Array(s.buffer, 4 - len, len));
+        mac.set(new Uint8Array(s.buffer, 0, len));
         return mac.buffer;
+
     } // </editor-fold>
 
     /**
-     * verifyIMIT (K, D) is the 32-bit result of the GOST 28147-89 in   
+     * verifyMAC (K, M, D, IV) the 32-bit result verification of the GOST 28147-89 in   
      * "imitovstavka" (MAC) mode, used with D as plaintext, K as key and IV   
      * as initialization vector.  Note that the standard specifies its use   
      * in this mode only with an initialization vector of zero.
@@ -726,10 +1081,10 @@
      * @param {(ArrayBuffer|TypedArray)} iv 8x8 optional bits initial vector
      * @return {boolen} MAC verified = true
      */
-    function verifyIMIT(k, m, d, iv) // <editor-fold defaultstate="collapsed">
+    function verifyMAC(k, m, d, iv) // <editor-fold defaultstate="collapsed">
     {
-        var mac = new Uint8Array(signIMIT.call(this, k, d, iv)),
-                test = new byteArray(m);
+        var mac = new Uint8Array(signMAC.call(this, k, d, iv)),
+                test = byteArray(m);
         if (mac.length !== test.length)
             return false;
         for (var i = 0, n = mac.length; i < n; i++)
@@ -769,7 +1124,7 @@
         }
         // 2) Compute a 4-byte checksum value, gost28147IMIT (UKM, KEK, CEK).       
         // Call the result CEK_MAC. 
-        var mac = signIMIT.call(this, kek, cek, ukm);
+        var mac = signMAC.call(this, kek, cek, ukm);
         // 3) Encrypt the CEK in ECB mode using the KEK.  Call the ciphertext CEK_ENC.
         var enc = encryptECB.call(this, kek, cek);
         // 4) The wrapped content-encryption key is (UKM | CEK_ENC | CEK_MAC).
@@ -809,7 +1164,7 @@
         var cek = decryptECB.call(this, kek, enc);
         // 4) Compute a 4-byte checksum value, gost28147IMIT (UKM, KEK, CEK), 
         // compare the result with CEK_MAC.  If they are not equal, then error.
-        var check = verifyIMIT.call(this, kek, mac, cek, ukm);
+        var check = verifyMAC.call(this, kek, mac, cek, ukm);
         if (!check)
             throw new DataError('Error verify MAC of wrapping key');
 
@@ -863,7 +1218,7 @@
             }
             //     C) K[i+1] = encryptCFB (S[i], K[i], K[i])
             var iv = new Uint8Array(s.buffer);
-            k = encryptCFB.call(this, k, k, iv);
+            k = new Int32Array(encryptCFB.call(this, k, k, iv));
             //     D) i = i + 1
         }
         // 5) Let K(UKM) be K[8].
@@ -903,7 +1258,7 @@
         var dek = diversifyKEK.call(this, kek, ukm);
         // 3) Compute a 4-byte checksum value, gost28147IMIT (UKM, KEK(UKM),       
         // CEK).  Call the result CEK_MAC.    
-        var mac = signIMIT.call(this, kek, cek, ukm);
+        var mac = signMAC.call(this, kek, cek, ukm);
         // 4) Encrypt CEK in ECB mode using KEK(UKM).  Call the ciphertext       
         // CEK_ENC.    
         var enc = encryptECB.call(this, dek, cek);
@@ -949,7 +1304,7 @@
         // 5) Compute a 4-byte checksum value, gost28147IMIT (UKM, KEK(UKM),       
         // CEK), compare the result with CEK_MAC.  If they are not equal, 
         // then it is an error.
-        var check = verifyIMIT.call(this, kek, mac, cek, ukm);
+        var check = verifyMAC.call(this, kek, mac, cek, ukm);
         if (!check)
             throw new DataError('Error verify MAC of wrapping key');
         return cek;
@@ -998,7 +1353,7 @@
         var d = new Uint8Array(mcount * 32 + 6), b = mask.buffer;
         // Calculate MAC
         var zero32 = new Uint8Array(32);
-        var mac = signIMIT.call(this, key, zero32);
+        var mac = signMAC.call(this, key, zero32);
         d[0] = 0x22; // Magic code
         d[1] = mcount; // Count of masks
         d.set(mac, 2);
@@ -1042,13 +1397,13 @@
         }
         // Test MAC for packKey with default sBox on zero 32 bytes array
         var zero32 = new Uint8Array(32);
-        var test = verifyIMIT.call(this, key, mac, zero32);
+        var test = verifyMAC.call(this, key, mac, zero32);
         if (!test) {
             // Try to use different sBoxes
             var names = ['E-A', 'E-B', 'E-C', 'E-D', 'E-SC', 'D-A', 'D-SC', 'D-TEST', 'E-Z', 'E-DEFAULT', 'E-TEST'];
             for (var i = 0, n = names.length; i < n; i++) {
                 this.sBox = sBoxes[names[i]];
-                test = verifyIMIT.call(this, key, mac, zero32);
+                test = verifyMAC.call(this, key, mac, zero32);
                 if (test)
                     break;
             }
@@ -1077,7 +1432,7 @@
         if (k.byteLength !== 32)
             k = unpackKeySC.call(this, k);
         var enc = encryptECB.call(this, k, c);
-        var mac = signIMIT.call(this, k, c);
+        var mac = signMAC.call(this, k, c);
         var d = new Uint8Array(36);
         d.set(new Uint8Array(enc), 0);
         d.set(new Uint8Array(mac), 32);
@@ -1105,7 +1460,7 @@
         var enc = new Uint8Array(c, 0, 32); // Encrypted kek
         var mac = new Uint8Array(c, 32, 4); // MAC for clear kek
         var d = decryptECB.call(this, k, enc);
-        if (!verifyIMIT.call(this, k, mac, d))
+        if (!verifyMAC.call(this, k, mac, d))
             throw new DataError('Invalid key MAC');
         return d;
     } // </editor-fold>
@@ -1134,18 +1489,38 @@
      * @method keyMeshing
      * @instance
      * @private
-     * @param {(ArrayBuffer|TypedArray)} k 8x32 bit key array
-     * @param {(ArrayBuffer|TypedArray)} s 8x32 bit sync array (iv)
+     * @param {(Uint8Array|ArrayBuffer)} k 8x8 bit key 
+     * @param {Uint8Array} s 8x8 bit sync (iv)
      * @param {Integer} i block index
+     * @param {boolean} e encrypt/decrypt
+     * @param {Int32Array} key 8x32 bit key schedule 
+     * @returns ArrayBuffer next 8x8 bit key
      */
-    function keyMeshingCP(k, s, i) // <editor-fold defaultstate="collapsed">
+    function keyMeshingCP(k, s, i, e, key) // <editor-fold defaultstate="collapsed">
     {
-        if (i % 256 === 0) { // every 256 blocks
-            var k1 = new Int32Array(decryptECB.call(this, k, C));
-            var s1 = new Int32Array(encryptECB.call(this, k1, s));
-            k.set(k1);
-            s.set(s1);
+        if ((i + 1) % 256 === 0) { // every 256 blocks
+            // K[i+1] = decryptECB (K[i], C);
+            k = decryptECB.call(this, k, C);
+            // IV0[i+1] = encryptECB (K[i+1],IVn[i])
+            s.set(new Uint8Array(encryptECB.call(this, k, s)));
+            // restore key schedule
+            key.set(this.keySchedule(e, k));
         }
+        return k;
+    } // </editor-fold>
+
+    /**
+     *  Null Key Meshing in according to rfc4357 2.3.1
+     * 
+     * @memberOf Gost28147
+     * @method keyMeshing
+     * @instance
+     * @private
+     * @param {(Uint8Array|ArrayBuffer)} k 8x8 bit key 
+     */
+    function noKeyMeshing(k) // <editor-fold defaultstate="collapsed">
+    {
+        return k;
     } // </editor-fold>
 
     /**
@@ -1157,14 +1532,12 @@
      * @method padding
      * @instance
      * @private
-     * @param {(ArrayBuffer|TypedArray)} d array with source data
+     * @param {Uint8Array} d array with source data
      * @returns {Uint8Array} result
      */
-    function noPadding(d) // <editor-fold defaultstate="collapsed">
+    function noPad(d) // <editor-fold defaultstate="collapsed">
     {
-        var r = new Uint8Array(d.byteLength);
-        r.set(byteArray(d));
-        return r;
+        return new Uint8Array(d);
     } // </editor-fold>
 
     /**
@@ -1178,18 +1551,36 @@
      * @method padding
      * @instance
      * @private
-     * @param {(ArrayBuffer|TypedArray)} d array with source data
+     * @param {Uint8Array} d array with source data
      * @returns {Uint8Array} result
      */
-    function pkcs5Padding(d) // <editor-fold defaultstate="collapsed">
+    function pkcs5Pad(d) // <editor-fold defaultstate="collapsed">
     {
-        var n = d.byteLength, q = 8 - n % 8, m = Math.ceil(n / 8) * 8,
+        var n = d.byteLength,
+                nb = this.blockLength >> 3,
+                q = nb - n % nb,
+                m = Math.ceil((n + 1) / nb) * nb,
                 r = new Uint8Array(m);
-        r.set(byteArray(d));
+        r.set(d);
         for (var i = n; i < m; i++)
             r[i] = q;
         return r;
     } // </editor-fold>
+
+    function pkcs5Unpad(d) // <editor-fold defaultstate="collapsed">
+    {
+        var m = d.byteLength,
+                nb = this.blockLength >> 3,
+                q = d[m - 1],
+                n = m - q;
+        if (q > nb)
+            throw DataError('Invalid padding');
+        var r = new Uint8Array(n);
+        if (n > 0)
+            r.set(new Uint8Array(d.buffer, 0, n));
+        return r;
+    } // </editor-fold>
+
 
     /**
      * Algorithm name GOST 28147-ZeroPadding<br><br>
@@ -1200,15 +1591,60 @@
      * @method padding
      * @instance
      * @private
-     * @param {(ArrayBuffer|TypedArray)} d array with source data
+     * @param {Uint8Array} d array with source data
      * @returns {Uint8Array} result
      */
-    function zeroPadding(d) // <editor-fold defaultstate="collapsed">
+    function zeroPad(d) // <editor-fold defaultstate="collapsed">
     {
-        var n = d.byteLength, m = Math.ceil(n / 8) * 8, r = new Uint8Array(m);
-        r.set(byteArray(d));
+        var n = d.byteLength,
+                nb = this.blockLength >> 3,
+                m = Math.ceil(n / nb) * nb,
+                r = new Uint8Array(m);
+        r.set(d);
         for (var i = n; i < m; i++)
             r[i] = 0;
+        return r;
+    } // </editor-fold>
+
+
+    /**
+     * Algorithm name GOST 28147-BitPadding<br><br>
+     * 
+     * Bit padding: P* = P || 1 || 000...0 If there’s no incomplete block, 
+     * one extra block filled with 1 || 000...0
+     * 
+     * @memberOf Gost28147
+     * @method padding
+     * @instance
+     * @private
+     * @param {Uint8Array} d array with source data
+     * @returns {Uint8Array} result
+     */
+    function bitPad(d) // <editor-fold defaultstate="collapsed"> 
+    {
+        var n = d.byteLength,
+                nb = this.blockLength >> 3,
+                m = Math.ceil((n + 1) / nb) * nb,
+                r = new Uint8Array(m);
+        r.set(d);
+        r[n] = 1;
+        for (var i = n + 1; i < m; i++)
+            r[i] = 0;
+        return r;
+    } // </editor-fold>
+
+    function bitUnpad(d) // <editor-fold defaultstate="collapsed"> 
+    {
+        var m = d.byteLength,
+                n = m;
+        while (n > 1 && d[n - 1] === 0)
+            n--;
+        if (d[n - 1] !== 1)
+            throw DataError('Invalid padding');
+        n--;
+        var r = new Uint8Array(n);
+        if (n > 0)
+            r.set(new Uint8Array(d.buffer, 0, n));
         return r;
     } // </editor-fold>
 
@@ -1222,17 +1658,20 @@
      * @method padding
      * @instance
      * @private
-     * @param {(ArrayBuffer|TypedArray)} d array with source data
+     * @param {Uint8Array} d array with source data
      * @returns {Uint8Array} result
      */
-    function randomPadding(d) // <editor-fold defaultstate="collapsed">
+    function randomPad(d) // <editor-fold defaultstate="collapsed">
     {
-        var n = d.byteLength, q = 8 - n % 8, m = Math.ceil(n / 8) * 8,
+        var n = d.byteLength,
+                nb = this.blockLength >> 3,
+                q = nb - n % nb,
+                m = Math.ceil(n / nb) * nb,
                 r = new Uint8Array(m), e = new Uint8Array(r.buffer, n, q);
-        r.set(byteArray(d));
+        r.set(d);
         randomSeed(e);
         return r;
-    } // </editor-fold>
+    }
 
     /**
      * GOST 28147-89 Encryption Algorithm<br><br> 
@@ -1249,7 +1688,7 @@
      *      <li><b>version</b> Algorithm version, number
      *          <ul>
      *              <li><b>1989</b> Current version of standard</li>
-     *              <li><b>2014</b> New planned version of standard. Now not supported</li>
+     *              <li><b>2015</b> New planned version of standard. Now not supported</li>
      *          </ul>
      *      </li>
      *      <li><b>length</b> Key length, number. Block length = key length / 4
@@ -1275,7 +1714,7 @@
      *          <ul>
      *              <li><b>block</b> Block mode, string. Default ECB</li>
      *              <li><b>keyMeshing</b> Key meshing mode, string. Default NO</li>
-     *              <li><b>padding</b> Padding mode, string. Default NO for CFB and CNT modes, or ZERO for others</li>
+     *              <li><b>padding</b> Padding mode, string. Default NO for CFB and CTR modes, or ZERO for others</li>
      *              <li><b>iv</b> {@link CryptoOperationData} Initial vector with length of block. Default - zero block</li>
      *          </ul>
      *      </li>
@@ -1299,8 +1738,9 @@
      *      <li>Block modes (parameter 'block')
      *          <ul>
      *              <li><b>ECB</b> "prostaya zamena" (ECB) mode (default)</li>
-     *              <li><b>CFB</b> "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode</li>
-     *              <li><b>CNT</b> "gammirovanie" (counter) mode</li>
+     *              <li><b>CFB</b> "gammirovanie s obratnoj svyaziyu po shifrotekstu" (CFB) mode</li>
+     *              <li><b>OFB</b> "gammirovanie s obratnoj svyaziyu po vyhodu" (OFB) mode</li>
+     *              <li><b>CTR</b> "gammirovanie" (counter) mode</li>
      *              <li><b>CBC</b> Cipher-Block-Chaining (CBC) mode</li>
      *          </ul>
      *      </li>
@@ -1312,10 +1752,11 @@
      *      </li>
      *      <li>Padding modes (parameter 'padding')
      *          <ul>
-     *              <li><b>NO</b> No padding only for CFB and CNT modes</li>
+     *              <li><b>NO</b> No padding only for CFB, OFB and CTR modes</li>
      *              <li><b>PKCS5</b> PKCS#5 padding mode</li>
      *              <li><b>ZERO</b> Zero bits padding mode</li>
      *              <li><b>RANDOM</b> Random bits padding mode</li>
+     *              <li><b>BIT</b> One bit padding mode</li>
      *          </ul>
      *      </li>
      *      <li>Wrapping key modes (parameter 'keyWrapping')
@@ -1345,15 +1786,26 @@
                 ((algorithm.mode === 'MAC') ? 'MAC-' + (algorithm.macLength || this.bitLength / 8) :
                         (algorithm.mode === 'KW' || algorithm.keyWrapping) ?
                         ((algorithm.keyWrapping || 'NO') !== 'NO' ? algorithm.keyWrapping : '') + 'KW' :
-                        (algorithm.block || 'ECB') + (algorithm.block === 'CFB' ?
+                        (algorithm.block || 'ECB') + (algorithm.block === 'CFB' || algorithm.block === 'OFB' ||
+                        (algorithm.block === 'CTR' && algorithm.version === 2015) ?
                         ('-' + (algorithm.shiftBits || this.blockLength)) : '') +
-                        (algorithm.padding ? '-' + (algorithm.padding || (algorithm.block === 'CNT' ||
-                                algorithm.block === 'CFB' ? 'NO' : 'ZERO')) + 'PADDING' : '') +
+                        (algorithm.padding ? '-' + (algorithm.padding || (algorithm.block === 'CTR' ||
+                                algorithm.block === 'CFB' || algorithm.block === 'OFB' ? 'NO' : 'ZERO')) + 'PADDING' : '') +
                         ((algorithm.keyMeshing || 'NO') !== 'NO' ? '-CPKEYMESHING' : '')) +
                 (typeof algorithm.sBox === 'string' ? '/' + algorithm.sBox : '');
 
         switch (algorithm.version || 1989) {
+            case 2015:
+                this.version = 2015;
+                this.process = process15;
+                this.processMAC = processMAC15;
+                this.keySchedule = keySchedule15;
+                break;
             case 1989:
+                this.version = 1989;
+                this.process = process89;
+                this.processMAC = processMAC89;
+                this.keySchedule = keySchedule89;
                 break;
             default:
                 throw new NotSupportedError('Algorithm version ' + algorithm.version + ' not supported');
@@ -1367,9 +1819,15 @@
                         this.encrypt = encryptECB;
                         this.decrypt = decryptECB;
                         break;
-                    case 'CNT':
-                        this.encrypt = processCNT;
-                        this.decrypt = processCNT;
+                    case 'CTR':
+                        if (this.version === 1989) {
+                            this.encrypt = processCTR89;
+                            this.decrypt = processCTR89;
+                        } else {
+                            this.encrypt = processCTR15;
+                            this.decrypt = processCTR15;
+                            this.shiftBits = algorithm.shiftBits || this.blockLength;
+                        }
                         break
                     case 'CBC':
                         this.encrypt = encryptCBC;
@@ -1380,44 +1838,64 @@
                         this.decrypt = decryptCFB;
                         this.shiftBits = algorithm.shiftBits || this.blockLength;
                         break;
+                    case 'OFB':
+                        this.encrypt = processOFB;
+                        this.decrypt = processOFB;
+                        this.shiftBits = algorithm.shiftBits || this.blockLength;
+                        break;
                     default:
                         throw new NotSupportedError('Block mode ' + algorithm.block + ' not supported');
                 }
                 switch (algorithm.keyMeshing) {
                     case 'CP':
                         this.keyMeshing = keyMeshingCP;
-                }
-                switch (algorithm.padding) {
-                    case 'PKCS5P':
-                        this.padding = pkcs5Padding;
-                        break;
-                    case 'ZERO':
-                        this.padding = zeroPadding;
-                        break;
-                    case 'RANDOM':
-                        this.padding = randomPadding;
                         break;
                     default:
-                        if (this.encrypt === encryptCFB || this.encrypt === processCNT)
-                            this.padding = noPadding;
-                        else
-                            this.padding = zeroPadding;
+                        this.keyMeshing = noKeyMeshing;
+                }
+                if (this.encrypt === encryptECB || this.encrypt === encryptCBC) {
+                    switch (algorithm.padding) {
+                        case 'PKCS5P':
+                            this.pad = pkcs5Pad;
+                            this.unpad = pkcs5Unpad;
+                            break;
+                        case 'RANDOM':
+                            this.pad = randomPad;
+                            this.unpad = noPad;
+                            break;
+                        case 'BIT':
+                            this.pad = bitPad;
+                            this.unpad = bitUnpad;
+                            break;
+                        default:
+                            this.pad = zeroPad;
+                            this.unpad = noPad;
+                    }
+                } else {
+                    this.pad = noPad;
+                    this.unpad = noPad;
                 }
                 this.generateKey = generateKey;
                 break;
             case 'MAC':
-                this.sign = signIMIT;
-                this.verify = verifyIMIT;
+                this.sign = signMAC;
+                this.verify = verifyMAC;
                 this.generateKey = generateKey;
                 this.macLength = algorithm.macLength || (this.bitLength / 8);
+                this.pad = noPad;
+                this.unpad = noPad;
+                this.keyMeshing = noKeyMeshing;
                 break;
             case 'KW':
-                this.padding = noPadding;
+                this.pad = noPad;
+                this.unpad = noPad;
+                this.keyMeshing = noKeyMeshing;
                 switch (algorithm.keyWrapping) {
                     case 'CP':
                         this.wrapKey = wrapKeyCP;
                         this.unwrapKey = unwrapKeyCP;
                         this.generateKey = generateKey;
+                        this.shiftBits = algorithm.shiftBits || this.blockLength;
                         break;
                     case 'SC':
                         this.wrapKey = wrapKeySC;
@@ -1437,7 +1915,7 @@
         // Define sBox parameter
         var sBox = algorithm.sBox, sBoxName;
         if (!sBox)
-            sBox = sBoxes['E-DEFAULT'];
+            sBox = this.version === 2015 ? sBoxes['E-DEFAULT'] : sBoxes['E-A'];
         else if (typeof sBox === 'string') {
             sBoxName = sBox.toUpperCase();
             sBox = sBoxes[sBoxName];
@@ -1450,14 +1928,19 @@
         // Initial vector
         if (algorithm.iv) {
             this.iv = new Uint8Array(algorithm.iv);
-            if (this.iv.byteLength !== this.blockLength / 8)
+            if (this.iv.byteLength * 8 !== this.blockLength && this.version === 1989)
                 throw new SyntaxError('Length of iv must be ' + this.blockLength + ' bits');
-        }
+            else if (this.iv.byteLength * 16 !== this.blockLength && this.encrypt === processCTR15)
+                throw new SyntaxError('Length of iv must be ' + this.blockLength / 2 + ' bits');
+            else if (this.iv.byteLength * 8 % this.blockLength !== 0 && this.encrypt !== processCTR15)
+                throw new SyntaxError('Length of iv must be a multiple of ' + this.blockLength + ' bits');
+        } else
+            this.iv = defaultIV;
 
         // User key material
         if (algorithm.ukm) {
             this.ukm = new Uint8Array(algorithm.ukm);
-            if (this.ukm.byteLength !== this.blockLength / 8)
+            if (this.ukm.byteLength * 8 !== this.blockLength)
                 throw new SyntaxError('Length of ukm must be ' + this.blockLength + ' bits');
         }
     } // </editor-fold>

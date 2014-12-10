@@ -1,7 +1,7 @@
 /**
  * @file GOST 34.10-2012 signature function with 1024/512 bits digest
  * @version 0.99
- * @copyright 2014, Rudolf Nickolaev. All rights reserved.
+ * @copyright 201-15, Rudolf Nickolaev. All rights reserved.
  */
 
 /*
@@ -139,7 +139,7 @@
          *      <li><b>version</b> Algorithm version, number
          *          <ul>
          *              <li><b>1989</b> Current version of standard</li>
-         *              <li><b>2014</b> New planned version of standard. Now not supported</li>
+         *              <li><b>2015</b> New planned version of standard. Now not supported</li>
          *          </ul>
          *      </li>
          *      <li><b>length</b> Key length, number. Block length = key length / 4
@@ -165,7 +165,7 @@
          *          <ul>
          *              <li><b>block</b> Block mode, string. Default ECB</li>
          *              <li><b>keyMeshing</b> Key meshing mode, string. Default NO</li>
-         *              <li><b>padding</b> Padding mode, string. Default NO for CFB and CNT modes, or ZERO for others</li>
+         *              <li><b>padding</b> Padding mode, string. Default NO for CFB and CTR modes, or ZERO for others</li>
          *              <li><b>iv</b> {@link CryptoOperationData} Initial vector with length of block. Default - zero block</li>
          *          </ul>
          *      </li>
@@ -190,7 +190,7 @@
          *          <ul>
          *              <li><b>ECB</b> "prostaya zamena" (ECB) mode (default)</li>
          *              <li><b>CFB</b> "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode</li>
-         *              <li><b>CNT</b> "gammirovanie" (counter) mode</li>
+         *              <li><b>CTR</b> "gammirovanie" (counter) mode</li>
          *              <li><b>CBC</b> Cipher-Block-Chaining (CBC) mode</li>
          *          </ul>
          *      </li>
@@ -202,7 +202,7 @@
          *      </li>
          *      <li>Padding modes (parameter 'padding')
          *          <ul>
-         *              <li><b>NO</b> No padding only for CFB and CNT modes</li>
+         *              <li><b>NO</b> No padding only for CFB and CTR modes</li>
          *              <li><b>PKCS5</b> PKCS#5 padding mode</li>
          *              <li><b>ZERO</b> Zero bits padding mode</li>
          *              <li><b>RANDOM</b> Random bits padding mode</li>
