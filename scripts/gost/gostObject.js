@@ -1,7 +1,7 @@
 /**
  * @file Gost and common ASN.1 Object and Algorithm Identifiers 
  * @version 0.99
- * @copyright 2014, Rudolf Nickolaev. All rights reserved.
+ * @copyright 201-15, Rudolf Nickolaev. All rights reserved.
  */
 
 /*
@@ -631,7 +631,7 @@
         'id-tc26-agreement-gost-3410-12-512': 'GOST R 34.10-512-DH/GOST R 34.11-512',
         // SignalCom algorithms
         'id-sc-gost28147-ecb': 'GOST 28147-89-ECB/E-SC',
-        'id-sc-gost28147-gamma': 'GOST 28147-89-CNT/E-SC',
+        'id-sc-gost28147-gamma': 'GOST 28147-89-CTR/E-SC',
         'id-sc-gost28147-gfb': 'GOST 28147-89-CFB/E-SC',
         'id-sc-gost28147-mac': 'GOST 28147-89-MAC/E-SC',
         'id-sc-gostR3410-94': 'GOST R 34.10-94',
@@ -752,7 +752,7 @@
         'id-GostR3411-94-CryptoPro-A-ParamSet': {sBox: 'D-B'},
         'id-GostR3411-94-CryptoPro-B-ParamSet': {sBox: 'D-C'},
         'id-GostR3411-94-CryptoPro-C-ParamSet': {sBox: 'D-D'},
-        'id-Gost28147-89-TestParamSet': {block: 'CNT', sBox: 'E-TEST'},
+        'id-Gost28147-89-TestParamSet': {block: 'CTR', sBox: 'E-TEST'},
         'id-Gost28147-89-CryptoPro-A-ParamSet': {block: 'CFB', sBox: 'E-A', keyMeshing: 'CP'},
         'id-Gost28147-89-CryptoPro-B-ParamSet': {block: 'CFB', sBox: 'E-B', keyMeshing: 'CP'},
         'id-Gost28147-89-CryptoPro-C-ParamSet': {block: 'CFB', sBox: 'E-C', keyMeshing: 'CP'},

@@ -1,7 +1,7 @@
 /**
  * @file GOST R 34.11-94 implementation
  * @version 0.99
- * @copyright 2014, Rudolf Nickolaev. All rights reserved.
+ * @copyright 201-15, Rudolf Nickolaev. All rights reserved.
  */
 
 /*
@@ -489,7 +489,6 @@
             carry = sum >>> 8;
         }
     }
-
     
     // reset the chaining variables to the IV values.
     var C2 = new Uint8Array([

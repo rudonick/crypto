@@ -1,7 +1,7 @@
 /**
  * @file PKCS message syntax and converters
  * @version 0.99
- * @copyright 2014, Rudolf Nickolaev. All rights reserved.
+ * @copyright 201-15, Rudolf Nickolaev. All rights reserved.
  */
 
 /*

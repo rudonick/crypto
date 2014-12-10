@@ -3,16 +3,16 @@ Infrastructure for GOST algorithms (Russian Cryptographic Standards)
 
 Documentation, demonstartion, examples, references:
 
-    http://gostcrypto.com
+http://gostcrypto.com
 
-Copyright (c) 2014, Rudolf Nickolaev. 
+Copyright (c) 201-15, Rudolf Nickolaev. 
 All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,

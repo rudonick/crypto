@@ -1,7 +1,7 @@
 /**
  * @file Implementation Web Crypto interfaces for GOST algorithms
  * @version 0.99
- * @copyright 2014, Rudolf Nickolaev. All rights reserved.
+ * @copyright 201-15, Rudolf Nickolaev. All rights reserved.
  */
 
 /* 
@@ -79,7 +79,7 @@
         if (name.indexOf('GOST') >= 0 && name.indexOf('28147') >= 0) {
             na = {
                 name: 'GOST 28147',
-                version: 1989, // 2014
+                version: 1989, // 2015
                 mode: (algorithm.mode || (// ES, MAC, KW
                         (method === 'sign' || method === 'verify') ? 'MAC' :
                         (method === 'wrapKey' || method === 'unwrapKey') ? 'KW' : 'ES')).toUpperCase(),
@@ -116,7 +116,7 @@
                         na.macLength = parseInt(mode);
                     else
                         throw new NotSupportedError('Algorithm ' + na.name + ' mode ' + mode + ' not supported');
-                } else if (['89', '94', '01', '12', '14', '1989', '1994', '2001', '2012', '2014'].indexOf(mode) >= 0) {
+                } else if (['89', '94', '01', '12', '14', '1989', '1994', '2001', '2012', '2015'].indexOf(mode) >= 0) {
                     var version = parseInt(mode);
                     version = version < 1900 ? (version < 80 ? 2000 + version : 1900 + version) : version;
                     na.version = version;
@@ -137,13 +137,13 @@
             } else if (na.name === 'GOST 28147') {
                 if (['ES', 'MAC', 'KW'].indexOf(mode) >= 0) {
                     na.mode = mode;
-                } else if (['ECB', 'CFB', 'CNT', 'CBC'].indexOf(mode) >= 0) {
+                } else if (['ECB', 'CFB', 'OFB', 'CTR', 'CBC'].indexOf(mode) >= 0) {
                     na.mode = 'ES';
                     na.block = mode;
                 } else if (['CPKW', 'NOKW', 'SCKW'].indexOf(mode) >= 0) {
                     na.mode = 'KW';
                     na.keyWrapping = mode.replace('KW', '');
-                } else if (['ZEROPADDING', 'PKCS5PADDING', 'NOPADDING', 'RANDOMPADDING'].indexOf(mode) >= 0) {
+                } else if (['ZEROPADDING', 'PKCS5PADDING', 'NOPADDING', 'RANDOMPADDING', 'BITPADDING'].indexOf(mode) >= 0) {
                     na.padding = mode.replace('PADDING', '');
                 } else if (['NOKM', 'CPKM'].indexOf(mode) >= 0) {
                     na.keyMeshing = mode.replace('KM', '');
@@ -172,9 +172,11 @@
         // Encrypt additional modes 
         if (na.mode === 'ES') {
             if (algorithm.block)
-                na.block = algorithm.block; // ECB, ECB, CFB, CNT, CBC
+                na.block = algorithm.block; // ECB, CFB, OFB, CTR, CBC
+            if (na.block)
+                na.block = na.block.toUpperCase();
             if (algorithm.padding)
-                na.padding = algorithm.padding; // NO, ZERO, PKCS5, RANDOM
+                na.padding = algorithm.padding; // NO, ZERO, PKCS5, RANDOM, BIT
             if (na.padding)
                 na.padding = na.padding.toUpperCase();
             if (algorithm.shiftBits)
@@ -187,7 +189,7 @@
             if (method !== 'importKey' && method !== 'generateKey') {
                 na.block = na.block || 'ECB';
                 na.padding = na.padding || (na.block === 'CBC' || na.block === 'ECB' ? 'ZERO' : 'NO');
-                if (na.block === 'CFB')
+                if (na.block === 'CFB' || na.block === 'OFB')
                     na.shiftBits = na.shiftBits || 64; 
                 na.keyMeshing = na.keyMeshing || 'NO';
             }
@@ -204,7 +206,9 @@
 
         // Paramsets
         if (na.name === 'GOST 28147' && na.version === 1989) {
-            na.sBox = algorithm.sBox || na.sBox || 'E-DEFAULT'; // 'E-A', 'E-B', 'E-C', 'E-D', 'E-SC'
+            na.sBox = algorithm.sBox || na.sBox || 'E-A'; // 'E-A', 'E-B', 'E-C', 'E-D', 'E-SC'
+        } else if (na.name === 'GOST 28147' && na.version === 2015) {
+            na.sBox = 'E-DEFAULT'; 
         } else if (na.name === 'GOST R 34.11' && na.version === 1994) {
             na.sBox = algorithm.sBox || na.sBox || 'D-A'; // 'D-SC'
         } else if (na.name === 'GOST R 34.10' && na.version === 1994) {
@@ -874,8 +878,9 @@
      * Supported algorithm names:
      *  <ul>
      *      <li><b>GOST 28147-ECB</b> "prostaya zamena" (ECB) mode (default)</li>
-     *      <li><b>GOST 28147-CNT</b> "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode</li>
-     *      <li><b>GOST 28147-CFB</b> "gammirovanie" (counter) mode</li>
+     *      <li><b>GOST 28147-CFB</b> "gammirovanie s obratnoj svyaziyu po shifrotekstu" (CFB) mode</li>
+     *      <li><b>GOST 28147-OFB</b> "gammirovanie s obratnoj svyaziyu po vyhodu" (OFB) mode</li>
+     *      <li><b>GOST 28147-CTR</b> "gammirovanie" (counter) mode</li>
      *      <li><b>GOST 28147-CBC</b> Cipher-Block-Chaining (CBC) mode</li>
      *  </ul>
      *  For more information see {@link Gost28147} 
@@ -908,8 +913,9 @@
      * Supported algorithm names:
      *  <ul>
      *      <li><b>GOST 28147-ECB</b> "prostaya zamena" (ECB) mode (default)</li>
-     *      <li><b>GOST 28147-CNT</b> "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode</li>
-     *      <li><b>GOST 28147-CFB</b> "gammirovanie" (counter) mode</li>
+     *      <li><b>GOST 28147-CFB</b> "gammirovanie s obratnoj svyaziyu po shifrotekstu" (CFB) mode</li>
+     *      <li><b>GOST 28147-OFB</b> "gammirovanie s obratnoj svyaziyu po vyhodu" (OFB) mode</li>
+     *      <li><b>GOST 28147-CTR</b> "gammirovanie" (counter) mode</li>
      *      <li><b>GOST 28147-CBC</b> Cipher-Block-Chaining (CBC) mode</li>
      *  </ul>
      *  For additional modes see {@link Gost28147} 

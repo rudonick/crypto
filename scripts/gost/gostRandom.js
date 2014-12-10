@@ -1,7 +1,7 @@
 /** 
  * @file Implementation Web Crypto random generatore for GOST algorithms
  * @version 0.99
- * @copyright 2014, Rudolf Nickolaev. All rights reserved.
+ * @copyright 201-15, Rudolf Nickolaev. All rights reserved.
  */
 
 /*

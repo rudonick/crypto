@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2014, Rudolf Nickolaev.
+ * Copyright (c) 2015, Rudolf Nickolaev.
  * All rights reserved.
  *
  * GOST 28147-89 Encryption Algorithm
@@ -189,7 +189,7 @@
         '546d203368656c326973652073736e62206167796967747473656865202c3d73', input1, output1);
         tests += perform(++i, {name: 'GOST 28147', block:'CBC', iv: '1234567890abcdef', sBox: 'D-TEST'},
         '00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF', input2, output2);
-        tests += perform(++i, {name: 'GOST 28147', block: 'CNT', iv: '1234567890abcdef', sBox: 'D-TEST'},
+        tests += perform(++i, {name: 'GOST 28147', block: 'CTR', iv: '1234567890abcdef', sBox: 'D-TEST'},
         '0011223344556677889900112233445566778899001122334455667788990011', input3, output3);
         tests += perform(++i, {name: 'GOST 28147', block: 'CFB', iv: 'aafd12f659cae634', sBox: 'D-TEST'},
         'aafd12f659cae63489b479e5076ddec2f06cb58faafd12f659cae63489b479e5', input4, output4);
@@ -213,7 +213,7 @@
         '546d203368656c326973652073736e62206167796967747473656865202c3d73', '0000000000000000', '5bb0a31d218ed564');
         tests += perform(++i, {name: 'GOST 28147', block: 'CFB', shiftBits: 8, iv: '1234567890abcdef', sBox: TestSBox},
         '546d203368656c326973652073736e62206167796967747473656865202c3d73', '0000000000000000', 'c3af96ef788667c5');
-        tests += perform(++i, {name: 'GOST 28147', block: 'CNT', iv: '1234567890abcdef', sBox: 'E-A'},
+        tests += perform(++i, {name: 'GOST 28147', block: 'CTR', iv: '1234567890abcdef', sBox: 'E-A'},
         '4ef72b778f0b0bebeef4f077551cb74a927b470ad7d7f2513454569a247e989d', 'bc350e71aa11345709acde', '1bcc2282707c676fb656dc');
 
         var gkeyBytes5 = "6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49";
@@ -225,11 +225,26 @@
         var output5 = "93468a46";
         var output6 = "93468a46";
 
+        // MAC
         println();
         println('MAC sing/verify');
         tests += performMac(++i, {name: 'GOST 28147', mode: 'MAC', sBox: 'E-A'}, gkeyBytes5, input5, output5);
         tests += performMac(++i, {name: 'GOST 28147', mode: 'MAC', sBox: 'E-A'}, gkeyBytes6, input6, output6);
 
+        // Padding
+        println();
+        println('Padding');
+        tests += perform(++i, {name: 'GOST 28147', sBox: 'D-TEST', padding: 'BIT'},
+        '546d203368656c326973652073736e62206167796967747473656865202c3d73', 'fedcba98765432');
+        tests += perform(++i, {name: 'GOST 28147', sBox: 'D-TEST', padding: 'BIT'},
+        '546d203368656c326973652073736e62206167796967747473656865202c3d73', 'fedcba9876543210');
+        tests += perform(++i, {name: 'GOST 28147', sBox: 'D-TEST', padding: 'PKCS5P'},
+        '546d203368656c326973652073736e62206167796967747473656865202c3d73', 'fedcba98765432');
+        tests += perform(++i, {name: 'GOST 28147', sBox: 'D-TEST', padding: 'PKCS5P'},
+        '546d203368656c326973652073736e62206167796967747473656865202c3d73', 'fedcba9876543210');
+        tests += perform(++i, {name: 'GOST 28147', sBox: 'D-TEST', padding: 'ZERO'},
+        '546d203368656c326973652073736e62206167796967747473656865202c3d73', 'fedcba9876543210');
+        
         // Key meshing
         println();
         println('Key meshing');
@@ -238,7 +253,7 @@
         '4ef72b778f0b0bebeef4f077551cb74a927b470ad7d7f2513454569a247e989d', input);
         tests += perform(++i, {name: 'GOST 28147', block: 'CBC', keyMeshing: 'CP', iv: '1234567890abcdef', sBox: 'E-A'},
         '4ef72b778f0b0bebeef4f077551cb74a927b470ad7d7f2513454569a247e989d', input);
-        tests += perform(++i, {name: 'GOST 28147', block: 'CNT', keyMeshing: 'CP', iv: '1234567890abcdef', sBox: 'E-A'},
+        tests += perform(++i, {name: 'GOST 28147', block: 'CTR', keyMeshing: 'CP', iv: '1234567890abcdef', sBox: 'E-A'},
         '4ef72b778f0b0bebeef4f077551cb74a927b470ad7d7f2513454569a247e989d', input);
         tests += performMac(++i, {name: 'GOST 28147', mode: 'MAC', keyMeshing: 'CP', iv: '1234567890abcdef', sBox: 'E-A'},
         '4ef72b778f0b0bebeef4f077551cb74a927b470ad7d7f2513454569a247e989d', input);
@@ -253,10 +268,12 @@
         tests += performWrap(++i, {name: 'GOST 28147', mode: 'KW', sBox: 'E-A'}, // Wrapping with random seed
         'aafd12f659cae63489b479e5076ddec2f06cb58faafd12f659cae63489b479e5',
                 '6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49');
+
         tests += performWrap(++i, {name: 'GOST 28147', sBox: 'D-TEST', ukm: '1234567890abcdef', keyWrapping: 'CP'}, // CryptoPro. Initial UKM seed
         'aafd12f659cae63489b479e5076ddec2f06cb58faafd12f659cae63489b479e5',
                 '6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49',
-                '1234567890abcdefc5883ce7bb8ea082ab1d9046a0fc43519c5f170b39c54729ecc855562c26a69d022a90c7');
+                '1234567890abcdef16256f060dd3b3d8734a9fcc9ab4c3d04e777dc5c46a2f4c3e411e3597a5bfc3022a90c7');
+
         tests += performWrap(++i, {name: 'GOST 28147', mode: 'KW', keyWrapping: 'CP', sBox: 'E-A'}, // Wrapping with random seed
         'aafd12f659cae63489b479e5076ddec2f06cb58faafd12f659cae63489b479e5',
                 '6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49');
@@ -273,6 +290,37 @@
                 '5d6f4f794c0f584718252fb2d9ffffe6d2adc4c86616466fe032ed28790e6af6', // masks.db3
                 '5a7145b0ee4c080e0fcf689e5222c25876ac9d2b25a68fb3357eea8f849d6272',
                 '7c34bf4e03d0bc120768164f355cf6180b32851e2ad6fc22b386bbea17fa1d5f1789eb95'); // kek.opq
+
+        // Tests for new GOST 2015
+        println();
+        println('New GOST 2015');
+        tests += perform(++i, {name: 'GOST 28147', version: 2015},
+        'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff', 'fedcba9876543210', '4ee901e5c2d8ca3d');
+        tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'ECB'},
+        'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff', 
+        '92def06b3c130a59db54c704f8189d204a98fb2e67a8024c8912409b17b57e41', 
+        '2b073f0494f372a0de70e715d3556e4811d8d9e9eacfbc1e7c68260996c67efb');
+        tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'CTR', iv: '12345678'},
+        'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff', 
+        '92def06b3c130a59db54c704f8189d204a98fb2e67a8024c8912409b17b57e41', 
+        '4e98110c97b7b93c3e250d93d6e85d69136d868807b2dbef568eb680ab52a12d');
+        tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'CBC', iv: '1234567890abcdef234567890abcdef134567890abcdef12'},
+        'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff', 
+        '92def06b3c130a59db54c704f8189d204a98fb2e67a8024c8912409b17b57e41', 
+        '96d1b05eea683919aff76129abb937b95058b4a1c4bc001920b78b1a7cd7e667');
+        tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'CFB', iv: '1234567890abcdef234567890abcdef1'},
+        'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff', 
+        '92def06b3c130a59db54c704f8189d204a98fb2e67a8024c8912409b17b57e41', 
+        'db37e0e266903c830d46644c1f9a089c24bdd2035315d38bbcc0321421075505');
+        tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'OFB', iv: '1234567890abcdef234567890abcdef1'},
+        'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff', 
+        '92def06b3c130a59db54c704f8189d204a98fb2e67a8024c8912409b17b57e41', 
+        'db37e0e266903c830d46644c1f9a089ca0f83062430e327ec824efb8bd4fdb05');
+        tests += performMac(++i, {name: 'GOST 28147', version: 2015, mode: 'MAC'},
+        'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff', 
+        '92def06b3c130a59db54c704f8189d204a98fb2e67a8024c8912409b17b57e41',
+        '154e7210');
+
 
         println();
 

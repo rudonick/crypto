@@ -68,7 +68,7 @@ Normalized algorithm identifier common parameters:
      <li><b>version</b> Algorithm version, number
          <ul>
              <li><b>1989</b> Current version of standard</li>
-             <li><b>2014</b> New planned version of standard. Now not supported</li>
+             <li><b>2015</b> New planned version of standard. Now not supported</li>
          </ul>
      </li>
      <li><b>length</b> Key length, number. Block length = key length / 4
@@ -94,7 +94,7 @@ Supported algorithms, modes and parameters:
          <ul>
              <li><b>block</b> Block mode, string. Default ECB</li>
              <li><b>keyMeshing</b> Key meshing mode, string. Default NO</li>
-             <li><b>padding</b> Padding mode, string. Default NO for CFB and CNT modes, or ZERO for others</li>
+             <li><b>padding</b> Padding mode, string. Default NO for CFB and CTR modes, or ZERO for others</li>
              <li><b>iv</b> <a href="CryptoOperationData.html">CryptoOperationData</a> Initial vector with length of block. Default - zero block</li>
          </ul>
      </li>
@@ -118,8 +118,9 @@ Supported paramters values:
      <li>Block modes (parameter 'block')
          <ul>
              <li><b>ECB</b> "prostaya zamena" (ECB) mode (default)</li>
-             <li><b>CFB</b> "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode</li>
-             <li><b>CNT</b> "gammirovanie" (counter) mode</li>
+             <li><b>CFB</b> "gammirovanie s obratnoj svyaziyu po shifrotekstu" (CFB) mode</li>
+             <li><b>OFB</b> "gammirovanie s obratnoj svyaziyu po vyhodu" (OFB) mode</li>
+             <li><b>CTR</b> "gammirovanie" (counter) mode</li>
              <li><b>CBC</b> Cipher-Block-Chaining (CBC) mode</li>
          </ul>
      </li>
@@ -131,10 +132,11 @@ Supported paramters values:
      </li>
      <li>Padding modes (parameter 'padding')
          <ul>
-             <li><b>NO</b> No padding only for CFB and CNT modes</li>
+             <li><b>NO</b> No padding only for CFB, OFB and CTR modes</li>
              <li><b>PKCS5</b> PKCS#5 padding mode</li>
              <li><b>ZERO</b> Zero bits padding mode</li>
              <li><b>RANDOM</b> Random bits padding mode</li>
+             <li><b>BIT</b> One bit padding mode</li>
          </ul>
      </li>
      <li>Wrapping key modes (parameter 'keyWrapping')
@@ -236,7 +238,7 @@ Supported paramters values:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1237">line 1237</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1676">line 1676</a>
     </li></ul></dd>
     
 
@@ -299,7 +301,7 @@ Supported paramters values:
         Algorithm name GOST 28147-ECB<br><br>
 
 decryptECB (K, D) is D, decrypted with key K using GOST 28147-89 in   
-ECB mode.
+"prostaya zamena"  (Electronic Codebook, ECB) mode.
     </div>
     
 
@@ -420,7 +422,7 @@ ECB mode.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line341">line 341</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line456">line 456</a>
     </li></ul></dd>
     
 
@@ -487,7 +489,867 @@ ECB mode.
         Algorithm name GOST 28147-CFB<br><br>
 
 decryptCFB (IV, K, D) is D, decrypted with key K using GOST 28147-89   
-in "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode, and IV is   
+in "gammirovanie s obratnoj svyaziyu po shifrotekstu" (Cipher Feedback, CFB) mode, and IV is   
+used as the initialization vector.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>k</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x32 bits key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>d</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8 bits array with data</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>iv</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">initial vector</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line555">line 555</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="decrypt"><span class="type-signature"></span>decrypt<span class="signature">(k, d, iv)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-OFB<br><br>
+
+encryptOFB/decryptOFB (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+in "gammirovanie s obratnoj svyaziyu po vyhodu" (Output Feedback, OFB) mode, and IV is   
+used as the initialization vector.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>k</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x32 bits key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>d</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8 bits array with data</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>iv</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">initial vector</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line647">line 647</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="decrypt"><span class="type-signature"></span>decrypt<span class="signature">(k, d, iv)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-CTR<br><br>
+
+encryptCTR/decryptCTR (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+in "gammirovanie" (Counter Mode-CTR) mode, and IV is used as the   
+initialization vector.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>k</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x32 bits key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>d</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8 bits array with data</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>iv</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">initial vector</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line740">line 740</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="decrypt"><span class="type-signature"></span>decrypt<span class="signature">(k, d, iv)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-CBC<br><br>
+
+decryptCBC (IV, K, D) is D, decrypted with key K using GOST 28147-89   
+in "Prostaya zamena s zatsepleniem" (Cipher-Block-Chaining, CBC) mode and IV is used as the initialization 
+vector.
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>k</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8x32 bits key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>d</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">8 bits array with data</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>iv</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ArrayBuffer</span>
+|
+
+<span class="param-type">TypedArray</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">initial vector</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line891">line 891</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    result
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="encrypt"><span class="type-signature"></span>encrypt<span class="signature">(k, d, iv)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Algorithm name GOST 28147-OFB<br><br>
+
+encryptOFB/decryptOFB (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+in "gammirovanie s obratnoj svyaziyu po vyhodu" (Output Feedback, OFB) mode, and IV is   
 used as the initialization vector.
     </div>
     
@@ -635,437 +1497,7 @@ used as the initialization vector.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line427">line 427</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    result
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">ArrayBuffer</span>
-
-
-    </dd>
-</dl>
-
-        
-
-    
-</dd>
-
-        
-            
-<dt>
-    
-        
-
-        <h4 class="name" id="decrypt"><span class="type-signature"></span>decrypt<span class="signature">(k, d, iv)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
-
-        
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        Algorithm name GOST 28147-CNT<br><br>
-
-encryptCNT/decryptCNT (IV, K, D) is D, encrypted with key K using GOST 28147-89   
-in "gammirovanie" (counter) mode, and IV is used as the   
-initialization vector.
-    </div>
-    
-
-    
-
-    
-
-    
-
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>k</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">ArrayBuffer</span>
-|
-
-<span class="param-type">TypedArray</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">8x32 bits key</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>d</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">ArrayBuffer</span>
-|
-
-<span class="param-type">TypedArray</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">8 bits array with data</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>iv</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">ArrayBuffer</span>
-|
-
-<span class="param-type">TypedArray</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">8x8 optional bits initial vector</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-    
-
-    
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line507">line 507</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    result
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">ArrayBuffer</span>
-
-
-    </dd>
-</dl>
-
-        
-
-    
-</dd>
-
-        
-            
-<dt>
-    
-        
-
-        <h4 class="name" id="decrypt"><span class="type-signature"></span>decrypt<span class="signature">(k, d, iv)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
-
-        
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        Algorithm name GOST 28147-CBC<br><br>
-
-decryptCBC (IV, K, D) is D, decrypted with key K using GOST 28147-89   
-in Cipher-Block-Chaining (CBC) mode and IV is used as the initialization 
-vector.
-    </div>
-    
-
-    
-
-    
-
-    
-
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>k</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">ArrayBuffer</span>
-|
-
-<span class="param-type">TypedArray</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">8x32 bits key</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>d</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">ArrayBuffer</span>
-|
-
-<span class="param-type">TypedArray</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">8 bits array with data</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>iv</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">ArrayBuffer</span>
-|
-
-<span class="param-type">TypedArray</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">8x8 optional bits initial vector</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-    
-
-    
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line601">line 601</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line632">line 632</a>
     </li></ul></dd>
     
 
@@ -1129,10 +1561,10 @@ vector.
 
     
     <div class="description">
-        Algorithm name GOST 28147-CNT<br><br>
+        Algorithm name GOST 28147-CTR<br><br>
 
-encryptCNT/decryptCNT (IV, K, D) is D, encrypted with key K using GOST 28147-89   
-in "gammirovanie" (counter) mode, and IV is used as the   
+encryptCTR/decryptCTR (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+in "gammirovanie" (Counter Mode-CTR) mode, and IV is used as the   
 initialization vector.
     </div>
     
@@ -1280,7 +1712,7 @@ initialization vector.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line493">line 493</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line726">line 726</a>
     </li></ul></dd>
     
 
@@ -1347,7 +1779,7 @@ initialization vector.
         Algorithm name GOST 28147-ECB<br><br>
 
 encryptECB (K, D) is D, encrypted with key k using GOST 28147-89 in 
-"prostaya zamena" (ECB) mode.
+"prostaya zamena" (Electronic Codebook, ECB) mode.
     </div>
     
 
@@ -1468,7 +1900,7 @@ encryptECB (K, D) is D, encrypted with key k using GOST 28147-89 in
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line316">line 316</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line429">line 429</a>
     </li></ul></dd>
     
 
@@ -1535,7 +1967,7 @@ encryptECB (K, D) is D, encrypted with key k using GOST 28147-89 in
         Algorithm name GOST 28147-CFB<br><br>
 
 encryptCFB (IV, K, D) is D, encrypted with key K using GOST 28147-89   
-in "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode, and IV is   
+in "gammirovanie s obratnoj svyaziyu" (Cipher Feedback, CFB) mode, and IV is   
 used as the initialization vector.
     </div>
     
@@ -1643,7 +2075,7 @@ used as the initialization vector.
 
             
 
-            <td class="description last">8x8 optional bits initial vector</td>
+            <td class="description last">initial vector</td>
         </tr>
 
     
@@ -1683,7 +2115,7 @@ used as the initialization vector.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line367">line 367</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line484">line 484</a>
     </li></ul></dd>
     
 
@@ -1750,7 +2182,7 @@ used as the initialization vector.
         Algorithm name GOST 28147-CBC<br><br>
 
 encryptCBC (IV, K, D) is D, encrypted with key K using GOST 28147-89   
-in Cipher-Block-Chaining (CBC) mode and IV is used as the initialization 
+in "Prostaya zamena s zatsepleniem" (Cipher-Block-Chaining, CBC) mode and IV is used as the initialization 
 vector.
     </div>
     
@@ -1858,7 +2290,7 @@ vector.
 
             
 
-            <td class="description last">8x8 optional bits initial vector</td>
+            <td class="description last">initial vector</td>
         </tr>
 
     
@@ -1898,7 +2330,7 @@ vector.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line562">line 562</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line842">line 842</a>
     </li></ul></dd>
     
 
@@ -2006,7 +2438,7 @@ vector.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line644">line 644</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line941">line 941</a>
     </li></ul></dd>
     
 
@@ -2116,7 +2548,7 @@ SignalCom master key generation for wrapping
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1113">line 1113</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1468">line 1468</a>
     </li></ul></dd>
     
 
@@ -2180,7 +2612,7 @@ SignalCom master key generation for wrapping
 
     
     <div class="description">
-        makeIMIT (K, D) is the 32-bit result of the GOST 28147-89 in   
+        signMAC (K, D, IV) is the 32-bit result of the GOST 28147-89 in   
 "imitovstavka" (MAC) mode, used with D as plaintext, K as key and IV   
 as initialization vector.  Note that the standard specifies its use   
 in this mode only with an initialization vector of zero.
@@ -2290,7 +2722,7 @@ in this mode only with an initialization vector of zero.
 
             
 
-            <td class="description last">8x8 optional bits initial vector</td>
+            <td class="description last">initial vector</td>
         </tr>
 
     
@@ -2330,7 +2762,7 @@ in this mode only with an initialization vector of zero.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line661">line 661</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1039">line 1039</a>
     </li></ul></dd>
     
 
@@ -2512,7 +2944,7 @@ in this mode only with an initialization vector of zero.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line783">line 783</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1138">line 1138</a>
     </li></ul></dd>
     
 
@@ -2700,7 +3132,7 @@ Ref. rfc4357 6.4 CryptoPro Key Unwrap
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line918">line 918</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1273">line 1273</a>
     </li></ul></dd>
     
 
@@ -2881,7 +3313,7 @@ SignalCom Key UnWrapping algorithm
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1087">line 1087</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1442">line 1442</a>
     </li></ul></dd>
     
 
@@ -2945,7 +3377,7 @@ SignalCom Key UnWrapping algorithm
 
     
     <div class="description">
-        verifyIMIT (K, D) is the 32-bit result of the GOST 28147-89 in   
+        verifyMAC (K, M, D, IV) the 32-bit result verification of the GOST 28147-89 in   
 "imitovstavka" (MAC) mode, used with D as plaintext, K as key and IV   
 as initialization vector.  Note that the standard specifies its use   
 in this mode only with an initialization vector of zero.
@@ -3121,7 +3553,7 @@ in this mode only with an initialization vector of zero.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line714">line 714</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1069">line 1069</a>
     </li></ul></dd>
     
 
@@ -3339,7 +3771,7 @@ constant KEK may reveal that KEK.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line741">line 741</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1096">line 1096</a>
     </li></ul></dd>
     
 
@@ -3555,7 +3987,7 @@ Ref. rfc4357 6.3  CryptoPro Key Wrap
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line873">line 873</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1228">line 1228</a>
     </li></ul></dd>
     
 
@@ -3736,7 +4168,7 @@ SignalCom Key Wrapping algorithm
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1061">line 1061</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1416">line 1416</a>
     </li></ul></dd>
     
 
@@ -3807,7 +4239,7 @@ SignalCom Key Wrapping algorithm
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Mon Dec 08 2014 14:52:11 GMT+0300 (GMT+03:00)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Wed Dec 10 2014 22:49:23 GMT+0300 (GMT+03:00)
 </footer>
 
 </div>
