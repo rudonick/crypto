@@ -1,7 +1,7 @@
 /**
  * @file Coding algorithms: Base64, Hex, Chars, BER, PEM
  * @version 0.99
- * @copyright 201-15, Rudolf Nickolaev. All rights reserved.
+ * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
 /*

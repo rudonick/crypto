@@ -1,7 +1,7 @@
 /**
  * @file Implementation Web Crypto interfaces for GOST algorithms
  * @version 0.99
- * @copyright 201-15, Rudolf Nickolaev. All rights reserved.
+ * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
 /* 
@@ -83,7 +83,7 @@
                 mode: (algorithm.mode || (// ES, MAC, KW
                         (method === 'sign' || method === 'verify') ? 'MAC' :
                         (method === 'wrapKey' || method === 'unwrapKey') ? 'KW' : 'ES')).toUpperCase(),
-                length: algorithm.length || 256 // 512
+                length: algorithm.length || 64 // 128
             };
         } else if (name.indexOf('GOST') >= 0 && name.indexOf('3411') >= 0) {
             na = {
@@ -109,18 +109,18 @@
         modes.forEach(function(mode) {
             mode = mode.toUpperCase();
             if (/^[0-9]+$/.test(mode)) {
-                if (['8', '16', '32', '64'].indexOf(mode) >= 0) {
+                if ((['8', '16', '32'].indexOf(mode) >= 0) || (na.length === '128' && mode === '64')) {
                     if (na.mode === 'ES')
                         na.shiftBits = parseInt(mode);
                     else if (na.mode === 'MAC')
                         na.macLength = parseInt(mode);
                     else
                         throw new NotSupportedError('Algorithm ' + na.name + ' mode ' + mode + ' not supported');
-                } else if (['89', '94', '01', '12', '14', '1989', '1994', '2001', '2012', '2015'].indexOf(mode) >= 0) {
+                } else if (['89', '94', '01', '12', '15', '1989', '1994', '2001', '2012', '2015'].indexOf(mode) >= 0) {
                     var version = parseInt(mode);
                     version = version < 1900 ? (version < 80 ? 2000 + version : 1900 + version) : version;
                     na.version = version;
-                } else if (['256', '512'].indexOf(mode) >= 0)
+                } else if (['64', '128', '256', '512'].indexOf(mode) >= 0)
                     na.length = parseInt(mode);
                 else if (['1000', '2000'].indexOf(mode) >= 0)
                     na.iterations = parseInt(mode);
@@ -190,7 +190,7 @@
                 na.block = na.block || 'ECB';
                 na.padding = na.padding || (na.block === 'CBC' || na.block === 'ECB' ? 'ZERO' : 'NO');
                 if (na.block === 'CFB' || na.block === 'OFB')
-                    na.shiftBits = na.shiftBits || 64; 
+                    na.shiftBits = na.shiftBits || na.length; 
                 na.keyMeshing = na.keyMeshing || 'NO';
             }
         }

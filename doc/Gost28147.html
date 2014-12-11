@@ -68,13 +68,13 @@ Normalized algorithm identifier common parameters:
      <li><b>version</b> Algorithm version, number
          <ul>
              <li><b>1989</b> Current version of standard</li>
-             <li><b>2015</b> New planned version of standard. Now not supported</li>
+             <li><b>2015</b> New draft version of standard</li>
          </ul>
      </li>
-     <li><b>length</b> Key length, number. Block length = key length / 4
+     <li><b>length</b> Block length
          <ul>
-             <li><b>256</b> 256 bits digest (default)</li>
-             <li><b>512</b> 512 bits digest. Now not supported</li>
+             <li><b>64</b> 64 bits length (default)</li>
+             <li><b>128</b> 128 bits length (only for version 2015)</li>
          </ul>
      </li>
      <li><b>mode</b> Algorithm mode, string
@@ -238,7 +238,7 @@ Supported paramters values:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1676">line 1676</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1798">line 1798</a>
     </li></ul></dd>
     
 
@@ -300,7 +300,7 @@ Supported paramters values:
     <div class="description">
         Algorithm name GOST 28147-ECB<br><br>
 
-decryptECB (K, D) is D, decrypted with key K using GOST 28147-89 in   
+decryptECB (K, D) is D, decrypted with key K using GOST 28147 in   
 "prostaya zamena"  (Electronic Codebook, ECB) mode.
     </div>
     
@@ -422,7 +422,7 @@ decryptECB (K, D) is D, decrypted with key K using GOST 28147-89 in
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line456">line 456</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line647">line 647</a>
     </li></ul></dd>
     
 
@@ -488,7 +488,7 @@ decryptECB (K, D) is D, decrypted with key K using GOST 28147-89 in
     <div class="description">
         Algorithm name GOST 28147-CFB<br><br>
 
-decryptCFB (IV, K, D) is D, decrypted with key K using GOST 28147-89   
+decryptCFB (IV, K, D) is D, decrypted with key K using GOST 28147   
 in "gammirovanie s obratnoj svyaziyu po shifrotekstu" (Cipher Feedback, CFB) mode, and IV is   
 used as the initialization vector.
     </div>
@@ -637,7 +637,7 @@ used as the initialization vector.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line555">line 555</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line726">line 726</a>
     </li></ul></dd>
     
 
@@ -703,7 +703,7 @@ used as the initialization vector.
     <div class="description">
         Algorithm name GOST 28147-OFB<br><br>
 
-encryptOFB/decryptOFB (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+encryptOFB/decryptOFB (IV, K, D) is D, encrypted with key K using GOST 28147   
 in "gammirovanie s obratnoj svyaziyu po vyhodu" (Output Feedback, OFB) mode, and IV is   
 used as the initialization vector.
     </div>
@@ -852,7 +852,7 @@ used as the initialization vector.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line647">line 647</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line796">line 796</a>
     </li></ul></dd>
     
 
@@ -918,7 +918,7 @@ used as the initialization vector.
     <div class="description">
         Algorithm name GOST 28147-CTR<br><br>
 
-encryptCTR/decryptCTR (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+encryptCTR/decryptCTR (IV, K, D) is D, encrypted with key K using GOST 28147   
 in "gammirovanie" (Counter Mode-CTR) mode, and IV is used as the   
 initialization vector.
     </div>
@@ -1067,7 +1067,7 @@ initialization vector.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line740">line 740</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line867">line 867</a>
     </li></ul></dd>
     
 
@@ -1133,7 +1133,7 @@ initialization vector.
     <div class="description">
         Algorithm name GOST 28147-CBC<br><br>
 
-decryptCBC (IV, K, D) is D, decrypted with key K using GOST 28147-89   
+decryptCBC (IV, K, D) is D, decrypted with key K using GOST 28147   
 in "Prostaya zamena s zatsepleniem" (Cipher-Block-Chaining, CBC) mode and IV is used as the initialization 
 vector.
     </div>
@@ -1282,7 +1282,7 @@ vector.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line891">line 891</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1012">line 1012</a>
     </li></ul></dd>
     
 
@@ -1348,7 +1348,7 @@ vector.
     <div class="description">
         Algorithm name GOST 28147-OFB<br><br>
 
-encryptOFB/decryptOFB (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+encryptOFB/decryptOFB (IV, K, D) is D, encrypted with key K using GOST 28147   
 in "gammirovanie s obratnoj svyaziyu po vyhodu" (Output Feedback, OFB) mode, and IV is   
 used as the initialization vector.
     </div>
@@ -1497,7 +1497,7 @@ used as the initialization vector.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line632">line 632</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line781">line 781</a>
     </li></ul></dd>
     
 
@@ -1563,7 +1563,7 @@ used as the initialization vector.
     <div class="description">
         Algorithm name GOST 28147-CTR<br><br>
 
-encryptCTR/decryptCTR (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+encryptCTR/decryptCTR (IV, K, D) is D, encrypted with key K using GOST 28147   
 in "gammirovanie" (Counter Mode-CTR) mode, and IV is used as the   
 initialization vector.
     </div>
@@ -1712,7 +1712,7 @@ initialization vector.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line726">line 726</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line853">line 853</a>
     </li></ul></dd>
     
 
@@ -1778,7 +1778,7 @@ initialization vector.
     <div class="description">
         Algorithm name GOST 28147-ECB<br><br>
 
-encryptECB (K, D) is D, encrypted with key k using GOST 28147-89 in 
+encryptECB (K, D) is D, encrypted with key k using GOST 28147 in 
 "prostaya zamena" (Electronic Codebook, ECB) mode.
     </div>
     
@@ -1900,7 +1900,7 @@ encryptECB (K, D) is D, encrypted with key k using GOST 28147-89 in
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line429">line 429</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line622">line 622</a>
     </li></ul></dd>
     
 
@@ -1966,7 +1966,7 @@ encryptECB (K, D) is D, encrypted with key k using GOST 28147-89 in
     <div class="description">
         Algorithm name GOST 28147-CFB<br><br>
 
-encryptCFB (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+encryptCFB (IV, K, D) is D, encrypted with key K using GOST 28147   
 in "gammirovanie s obratnoj svyaziyu" (Cipher Feedback, CFB) mode, and IV is   
 used as the initialization vector.
     </div>
@@ -2115,7 +2115,7 @@ used as the initialization vector.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line484">line 484</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line673">line 673</a>
     </li></ul></dd>
     
 
@@ -2181,7 +2181,7 @@ used as the initialization vector.
     <div class="description">
         Algorithm name GOST 28147-CBC<br><br>
 
-encryptCBC (IV, K, D) is D, encrypted with key K using GOST 28147-89   
+encryptCBC (IV, K, D) is D, encrypted with key K using GOST 28147   
 in "Prostaya zamena s zatsepleniem" (Cipher-Block-Chaining, CBC) mode and IV is used as the initialization 
 vector.
     </div>
@@ -2330,7 +2330,7 @@ vector.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line842">line 842</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line965">line 965</a>
     </li></ul></dd>
     
 
@@ -2438,7 +2438,7 @@ vector.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line941">line 941</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1060">line 1060</a>
     </li></ul></dd>
     
 
@@ -2548,7 +2548,7 @@ SignalCom master key generation for wrapping
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1468">line 1468</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1590">line 1590</a>
     </li></ul></dd>
     
 
@@ -2612,7 +2612,7 @@ SignalCom master key generation for wrapping
 
     
     <div class="description">
-        signMAC (K, D, IV) is the 32-bit result of the GOST 28147-89 in   
+        signMAC (K, D, IV) is the 32-bit result of the GOST 28147 in   
 "imitovstavka" (MAC) mode, used with D as plaintext, K as key and IV   
 as initialization vector.  Note that the standard specifies its use   
 in this mode only with an initialization vector of zero.
@@ -2762,7 +2762,7 @@ in this mode only with an initialization vector of zero.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1039">line 1039</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1156">line 1156</a>
     </li></ul></dd>
     
 
@@ -2828,7 +2828,7 @@ in this mode only with an initialization vector of zero.
     <div class="description">
         Algorithm name GOST 28147-KW<br><br>
 
- This algorithm decrypts GOST 28147-89 CEK with a GOST 28147-89 KEK.
+ This algorithm decrypts GOST 28147-89 CEK with a GOST 28147 KEK.
  Ref. rfc4357 6.2 GOST 28147-89 Key Unwrap
     </div>
     
@@ -2944,7 +2944,7 @@ in this mode only with an initialization vector of zero.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1138">line 1138</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1253">line 1253</a>
     </li></ul></dd>
     
 
@@ -3010,7 +3010,7 @@ in this mode only with an initialization vector of zero.
     <div class="description">
         Algorithm name GOST 28147-CPKW<br><br>
 
-This algorithm encrypts GOST 28147-89 CEK with a GOST 28147-89 KEK. 
+This algorithm encrypts GOST 28147-89 CEK with a GOST 28147 KEK. 
 Ref. rfc4357 6.4 CryptoPro Key Unwrap
     </div>
     
@@ -3132,7 +3132,7 @@ Ref. rfc4357 6.4 CryptoPro Key Unwrap
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1273">line 1273</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1390">line 1390</a>
     </li></ul></dd>
     
 
@@ -3313,7 +3313,7 @@ SignalCom Key UnWrapping algorithm
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1442">line 1442</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1563">line 1563</a>
     </li></ul></dd>
     
 
@@ -3377,7 +3377,7 @@ SignalCom Key UnWrapping algorithm
 
     
     <div class="description">
-        verifyMAC (K, M, D, IV) the 32-bit result verification of the GOST 28147-89 in   
+        verifyMAC (K, M, D, IV) the 32-bit result verification of the GOST 28147 in   
 "imitovstavka" (MAC) mode, used with D as plaintext, K as key and IV   
 as initialization vector.  Note that the standard specifies its use   
 in this mode only with an initialization vector of zero.
@@ -3553,7 +3553,7 @@ in this mode only with an initialization vector of zero.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1069">line 1069</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1183">line 1183</a>
     </li></ul></dd>
     
 
@@ -3619,7 +3619,7 @@ in this mode only with an initialization vector of zero.
     <div class="description">
         Algorithm name GOST 28147-KW<br><br>
 
-This algorithm encrypts GOST 28147-89 CEK with a GOST 28147-89 KEK.
+This algorithm encrypts GOST 28147-89 CEK with a GOST 28147 KEK.
 Ref. rfc4357 6.1 GOST 28147-89 Key Wrap
 Note: This algorithm MUST NOT be used with a KEK produced by VKO GOST   
 R 34.10-94, because such a KEK is constant for every sender-recipient   
@@ -3771,7 +3771,7 @@ constant KEK may reveal that KEK.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1096">line 1096</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1210">line 1210</a>
     </li></ul></dd>
     
 
@@ -3837,7 +3837,7 @@ constant KEK may reveal that KEK.
     <div class="description">
         Algorithm name GOST 28147-CPKW<br><br>
 
-This algorithm encrypts GOST 28147-89 CEK with a GOST 28147-89 KEK.   
+This algorithm encrypts GOST 28147-89 CEK with a GOST 28147 KEK.   
 It can be used with any KEK (e.g., produced by VKO GOST R 34.10-94 or   
 VKO GOST R 34.10-2001) because a unique UKM is used to diversify the KEK.
 Ref. rfc4357 6.3  CryptoPro Key Wrap
@@ -3987,7 +3987,7 @@ Ref. rfc4357 6.3  CryptoPro Key Wrap
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1228">line 1228</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1344">line 1344</a>
     </li></ul></dd>
     
 
@@ -4168,7 +4168,7 @@ SignalCom Key Wrapping algorithm
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1416">line 1416</a>
+        <a href="gost28147.js.html">gost28147.js</a>, <a href="gost28147.js.html#line1536">line 1536</a>
     </li></ul></dd>
     
 
@@ -4239,7 +4239,7 @@ SignalCom Key Wrapping algorithm
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Wed Dec 10 2014 22:49:23 GMT+0300 (GMT+03:00)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Thu Dec 11 2014 21:22:20 GMT+0300 (GMT+03:00)
 </footer>
 
 </div>
