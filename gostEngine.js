@@ -1,7 +1,7 @@
 /**
  * @file GOST 34.10-2012 signature function with 1024/512 bits digest
  * @version 0.99
- * @copyright 201-15, Rudolf Nickolaev. All rights reserved.
+ * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
 /*
@@ -139,13 +139,13 @@
          *      <li><b>version</b> Algorithm version, number
          *          <ul>
          *              <li><b>1989</b> Current version of standard</li>
-         *              <li><b>2015</b> New planned version of standard. Now not supported</li>
+         *              <li><b>2015</b> New draft version of standard</li>
          *          </ul>
          *      </li>
-         *      <li><b>length</b> Key length, number. Block length = key length / 4
+         *      <li><b>length</b> Block length
          *          <ul>
-         *              <li><b>256</b> 256 bits digest (default)</li>
-         *              <li><b>512</b> 512 bits digest. Now not supported</li>
+         *              <li><b>64</b> 64 bits length (default)</li>
+         *              <li><b>128</b> 128 bits length (only for version 2015)</li>
          *          </ul>
          *      </li>
          *      <li><b>mode</b> Algorithm mode, string

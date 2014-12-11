@@ -187,7 +187,7 @@
 
         tests += perform(++i, {name: 'GOST 28147', sBox: 'D-TEST'},
         '546d203368656c326973652073736e62206167796967747473656865202c3d73', input1, output1);
-        tests += perform(++i, {name: 'GOST 28147', block:'CBC', iv: '1234567890abcdef', sBox: 'D-TEST'},
+        tests += perform(++i, {name: 'GOST 28147', block: 'CBC', iv: '1234567890abcdef', sBox: 'D-TEST'},
         '00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF', input2, output2);
         tests += perform(++i, {name: 'GOST 28147', block: 'CTR', iv: '1234567890abcdef', sBox: 'D-TEST'},
         '0011223344556677889900112233445566778899001122334455667788990011', input3, output3);
@@ -197,11 +197,11 @@
         // Tests with parameters, set S-box.
         tests += perform(++i, {name: 'GOST 28147', sBox: 'D-TEST'},
         '546d203368656c326973652073736e62206167796967747473656865202c3d73', input1, output1); // default parameter S-box set to D-TEST
-        tests += perform(++i, {name: 'GOST 28147', block: 'CFB',  iv: '1234567890abcdef', sBox: 'D-TEST'},
+        tests += perform(++i, {name: 'GOST 28147', block: 'CFB', iv: '1234567890abcdef', sBox: 'D-TEST'},
         '546d203368656c326973652073736e62206167796967747473656865202c3d73', '0000000000000000', 'b587f7a0814c911d'); //type S-box
         tests += perform(++i, {name: 'GOST 28147', block: 'CFB', iv: '1234567890abcdef', sBox: 'E-TEST'},
         '546d203368656c326973652073736e62206167796967747473656865202c3d73', '0000000000000000', 'e8287f53f991d52b');
-        tests += perform(++i, {name: 'GOST 28147', block: 'CFB', shiftBits: 64,  iv: '1234567890abcdef', sBox: 'E-A'},
+        tests += perform(++i, {name: 'GOST 28147', block: 'CFB', shiftBits: 64, iv: '1234567890abcdef', sBox: 'E-A'},
         '546d203368656c326973652073736e62206167796967747473656865202c3d73', '0000000000000000', 'c41009dba22ebe35');
         tests += perform(++i, {name: 'GOST 28147', block: 'CFB', iv: '1234567890abcdef', sBox: 'E-B', shiftBits: 8},
         '546d203368656c326973652073736e62206167796967747473656865202c3d73', '0000000000000000', '80d8723fcd3aba28');
@@ -244,7 +244,7 @@
         '546d203368656c326973652073736e62206167796967747473656865202c3d73', 'fedcba9876543210');
         tests += perform(++i, {name: 'GOST 28147', sBox: 'D-TEST', padding: 'ZERO'},
         '546d203368656c326973652073736e62206167796967747473656865202c3d73', 'fedcba9876543210');
-        
+
         // Key meshing
         println();
         println('Key meshing');
@@ -293,40 +293,49 @@
 
         // Tests for new GOST 2015
         println();
-        println('New GOST 2015');
-        tests += perform(++i, {name: 'GOST 28147', version: 2015},
-        'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff', 'fedcba9876543210', '4ee901e5c2d8ca3d');
-        tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'ECB'},
-        'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff', 
-        '92def06b3c130a59db54c704f8189d204a98fb2e67a8024c8912409b17b57e41', 
-        '2b073f0494f372a0de70e715d3556e4811d8d9e9eacfbc1e7c68260996c67efb');
-        tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'CTR', iv: '12345678'},
-        'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff', 
-        '92def06b3c130a59db54c704f8189d204a98fb2e67a8024c8912409b17b57e41', 
-        '4e98110c97b7b93c3e250d93d6e85d69136d868807b2dbef568eb680ab52a12d');
+        println('New GOST 2015 64 bits');
+        var key64 = 'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff';
+        var inp64 = '92def06b3c130a59db54c704f8189d204a98fb2e67a8024c8912409b17b57e41';
+        tests += perform(++i, {name: 'GOST 28147', version: 2015}, key64, 'fedcba9876543210', '4ee901e5c2d8ca3d');
+        tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'ECB'}, key64, inp64,
+                '2b073f0494f372a0de70e715d3556e4811d8d9e9eacfbc1e7c68260996c67efb');
+        tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'CTR', iv: '12345678'}, key64, inp64,
+                '4e98110c97b7b93c3e250d93d6e85d69136d868807b2dbef568eb680ab52a12d');
         tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'CBC', iv: '1234567890abcdef234567890abcdef134567890abcdef12'},
-        'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff', 
-        '92def06b3c130a59db54c704f8189d204a98fb2e67a8024c8912409b17b57e41', 
-        '96d1b05eea683919aff76129abb937b95058b4a1c4bc001920b78b1a7cd7e667');
+        key64, inp64, '96d1b05eea683919aff76129abb937b95058b4a1c4bc001920b78b1a7cd7e667');
         tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'CFB', iv: '1234567890abcdef234567890abcdef1'},
-        'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff', 
-        '92def06b3c130a59db54c704f8189d204a98fb2e67a8024c8912409b17b57e41', 
-        'db37e0e266903c830d46644c1f9a089c24bdd2035315d38bbcc0321421075505');
+        key64, inp64, 'db37e0e266903c830d46644c1f9a089c24bdd2035315d38bbcc0321421075505');
         tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'OFB', iv: '1234567890abcdef234567890abcdef1'},
-        'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff', 
-        '92def06b3c130a59db54c704f8189d204a98fb2e67a8024c8912409b17b57e41', 
-        'db37e0e266903c830d46644c1f9a089ca0f83062430e327ec824efb8bd4fdb05');
+        key64, inp64, 'db37e0e266903c830d46644c1f9a089ca0f83062430e327ec824efb8bd4fdb05');
         tests += performMac(++i, {name: 'GOST 28147', version: 2015, mode: 'MAC'},
-        'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff', 
-        '92def06b3c130a59db54c704f8189d204a98fb2e67a8024c8912409b17b57e41',
-        '154e7210');
-
+        key64, inp64, '154e7210');
 
         println();
+        println('New GOST 2015 128 bits');
+        var key128 = '8899aabbccddeeff0011223344556677fedcba98765432100123456789abcdef';
+        var inp128 = '1122334455667700ffeeddccbbaa998800112233445566778899aabbcceeff0a112233445566778899aabbcceeff0a002233445566778899aabbcceeff0a0011';
+        tests += perform(++i, {name: 'GOST 28147', version: 2015, length: 128}, key128,
+                '1122334455667700ffeeddccbbaa9988', '7f679d90bebc24305a468d42b9d4edcd');
+        tests += perform(++i, {name: 'GOST 28147', version: 2015, length: 128}, key128, inp128,
+                '7f679d90bebc24305a468d42b9d4edcdb429912c6e0032f9285452d76718d08bf0ca33549d247ceef3f5a5313bd4b157d0b09ccde830b9eb3a02c4c5aa8ada98');
+        tests += perform(++i, {name: 'GOST 28147', version: 2015, length: 128, block: 'CTR', iv: '1234567890abcef0'}, key128, inp128,
+                'f195d8bec10ed1dbd57b5fa240bda1b885eee733f6a13e5df33ce4b33c45dee4a5eae88be6356ed3d5e877f13564a3a5cb91fab1f20cbab6d1c6d15820bdba73');
+        tests += perform(++i, {name: 'GOST 28147', version: 2015, length: 128, block: 'OFB',
+            iv: '1234567890abcef0a1b2c3d4e5f0011223344556677889901213141516171819'}, key128, inp128,
+                '81800a59b1842b24ff1f795e897abd95ed5b47a7048cfab48fb521369d9326bf66a257ac3ca0b8b1c80fe7fc10288a13203ebbc066138660a0292243f6903150');
+        tests += perform(++i, {name: 'GOST 28147', version: 2015, length: 128, block: 'CBC',
+            iv: '1234567890abcef0a1b2c3d4e5f0011223344556677889901213141516171819'}, key128, inp128,
+                '689972d4a085fa4d90e52e3d6d7dcc272826e661b478eca6af1e8e448d5ea5acfe7babf1e91999e85640e8b0f49d90d0167688065a895c631a2d9a1560b63970');
+        tests += perform(++i, {name: 'GOST 28147', version: 2015, length: 128, block: 'CFB',
+            iv: '1234567890abcef0a1b2c3d4e5f0011223344556677889901213141516171819'}, key128, inp128,
+                '81800a59b1842b24ff1f795e897abd95ed5b47a7048cfab48fb521369d9326bf79f2a8eb5cc68d38842d264e97a238b54ffebecd4e922de6c75bd9dd44fbf4d1');
+        tests += performMac(++i, {name: 'GOST 28147', version: 2015, length: 128, mode: 'MAC'}, key128, inp128,
+                '336f4d296059fbe3');
 
+        println();
         println('TOTAL ' + (tests ? tests + ' ERRORS' : 'OK'));
         println();
-        
+
         return tests;
     };
 

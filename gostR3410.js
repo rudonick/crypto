@@ -1,7 +1,7 @@
 /**
  * @file GOST 34.10-2012 signature function with 1024/512 bits digest
  * @version 0.99
- * @copyright 201-15, Rudolf Nickolaev. All rights reserved.
+ * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
 /*

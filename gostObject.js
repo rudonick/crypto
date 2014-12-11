@@ -1,7 +1,7 @@
 /**
  * @file Gost and common ASN.1 Object and Algorithm Identifiers 
  * @version 0.99
- * @copyright 201-15, Rudolf Nickolaev. All rights reserved.
+ * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
 /*
