@@ -953,7 +953,9 @@
             wrapping: ['id-sc-cmsGostWrap'],
             agreement: algorithms['id-sc-r3410-ESDH-r3411kdf'],
             derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 1000},
-            pbes: algorithms['id-sc-pbeWithGost3411AndGost28147CFB']
+            pbes: {id: 'id-sc-pbeWithGost3411AndGost28147CFB', 
+                derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/D-SC', iterations: 1000}, 
+                encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-CFB/E-SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])}}
         },
         'SC-01': {
             signature: algorithms['id-sc-gostR3411-94-with-gostR3410-2001'],
@@ -964,7 +966,9 @@
             wrapping: algorithms['id-sc-cmsGostWrap'],
             agreement: algorithms['id-sc-r3410-ESDH-r3411kdf'],
             derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 1000},
-            pbes: algorithms['id-sc-pbeWithGost3411AndGost28147CFB']
+            pbes: {id: 'id-sc-pbeWithGost3411AndGost28147CFB', 
+                derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/D-SC', iterations: 1000}, 
+                encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-CFB/E-SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])}}
         },
         'RSA-1024': {
             signature: algorithms['sha1withRSAEncryption'],
