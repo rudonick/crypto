@@ -202,27 +202,33 @@
                 if (method !== 'importKey' && method !== 'generateKey') 
                     na.keyWrapping = na.keyWrapping || 'NO';
         }
-        
 
         // Paramsets
-        if (na.name === 'GOST 28147' && na.version === 1989) {
-            na.sBox = algorithm.sBox || na.sBox || 'E-A'; // 'E-A', 'E-B', 'E-C', 'E-D', 'E-SC'
-        } else if (na.name === 'GOST 28147' && na.version === 2015) {
-            na.sBox = 'E-DEFAULT'; 
-        } else if (na.name === 'GOST R 34.11' && na.version === 1994) {
-            na.sBox = algorithm.sBox || na.sBox || 'D-A'; // 'D-SC'
-        } else if (na.name === 'GOST R 34.10' && na.version === 1994) {
-            na.sBox = algorithm.sBox || na.sBox || 'D-A'; // 'D-SC'
-            na.namedParam = algorithm.namedParam || na.namedParam || (na.mode === 'EC-DH' ? 'X-A' : 'S-A'); // 'S-B', 'S-C', 'S-D', 'X-B', 'X-C'
-        } else if (na.name === 'GOST R 34.10' && na.version === 2001) {
-            na.sBox = algorithm.sBox || na.sBox || 'D-A'; // 'D-SC'
-            na.namedCurve = algorithm.namedCurve || na.namedCurve || (na.length === 256 ?
-                    na.mode === 'EC-DH' ? 'X-256-A' : 'S-256-A' : // 'S-256-B', 'S-256-C', 'X-256-B', 'T-256-A', 'T-256-B', 'T-256-C', 'P-256'
-                    na.mode === 'T-512-A'); // 'T-512-B', 'T-512-C'
-        } else if (na.name === 'GOST R 34.10' && na.version === 2012) {
-            na.namedCurve = algorithm.namedCurve || na.namedCurve || (na.length === 256 ?
-                    na.mode === 'EC-DH' ? 'X-256-A' : 'S-256-A' : // 'S-256-B', 'S-256-C', 'X-256-B', 'T-256-A', 'T-256-B', 'T-256-C', 'P-256'
-                    na.mode === 'T-512-A'); // 'T-512-B', 'T-512-C'
+        if (algorithm.sBox)
+            na.sBox = algorithm.sBox;
+        if (algorithm.namedParam)
+            na.namedParam = algorithm.namedParam;
+        if (algorithm.namedCurve)
+            na.namedCurve = algorithm.namedCurve;
+        // Default values
+        if (method !== 'importKey' && method !== 'generateKey') {
+            if (na.name === 'GOST 28147' && na.version === 1989) {
+                na.sBox = na.sBox || 'E-A'; // 'E-A', 'E-B', 'E-C', 'E-D', 'E-SC'
+            } else if (na.name === 'GOST 28147' && na.version === 2015) {
+                na.sBox = 'E-DEFAULT'; 
+            } else if (na.name === 'GOST R 34.11' && na.version === 1994) {
+                na.sBox = na.sBox || 'D-A'; // 'D-SC'
+            } else if (na.name === 'GOST R 34.10' && na.version === 1994) {
+                na.namedParam = na.namedParam || (na.mode === 'EC-DH' ? 'X-A' : 'S-A'); // 'S-B', 'S-C', 'S-D', 'X-B', 'X-C'
+            } else if (na.name === 'GOST R 34.10' && na.version === 2001) {
+                na.namedCurve = na.namedCurve || (na.length === 256 ?
+                        na.mode === 'EC-DH' ? 'X-256-A' : 'S-256-A' : // 'S-256-B', 'S-256-C', 'X-256-B', 'T-256-A', 'T-256-B', 'T-256-C', 'P-256'
+                        na.mode === 'T-512-A'); // 'T-512-B', 'T-512-C'
+            } else if (na.name === 'GOST R 34.10' && na.version === 2012) {
+                na.namedCurve = na.namedCurve || (na.length === 256 ?
+                        na.mode === 'EC-DH' ? 'X-256-A' : 'S-256-A' : // 'S-256-B', 'S-256-C', 'X-256-B', 'T-256-A', 'T-256-B', 'T-256-C', 'P-256'
+                        na.mode === 'T-512-A'); // 'T-512-B', 'T-512-C'
+            }
         }
 
         // Vectors

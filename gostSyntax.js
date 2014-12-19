@@ -884,7 +884,8 @@
             name: 'NAME',
             givenName: 'GNAME',
             initials: 'INITIALS',
-            distinguishedName: 'DN'
+            distinguishedName: 'DN',
+            emailAddress: 'EMAIL'
         };
         var names = [];
         for (var id in aliases)
@@ -899,21 +900,11 @@
              * @returns {string}
              */
             encode: function(name) {
-                var ar = [], s = [];
+                var s = [];
                 for (var id in name) {
-                    ar.push(id);
+                    if (id !== 'buffer') 
+                        s.push((aliases[id] || getIdentifier(id)) + '=' + name[id]);
                 }
-                ar.sort(function(a, b) {
-                    var ai = getIdentifier(a), bi = getIdentifier(b);
-                    if (ai < bi) {
-                        return -1;
-                    } else if (ai > bi) {
-                        return 1;
-                    } else
-                        return 0;
-                });
-                for (var i = 0, n = ar.length; i < n; i++)
-                    s.push((aliases[id] || getIdentifier(id)) + '=' + name[id]);
                 return s.join(',');
             },
             /**
@@ -931,7 +922,7 @@
                 }
             }
         };
-    });
+    })();
 
     // Validity
     var Validity = SEQUENCE({

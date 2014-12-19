@@ -368,7 +368,6 @@
             return derivation &&
                     getSubtle().deriveKey(derivation, passwordKey, encryption, true, ['decrypt']);
         }).then(function(CEK) {
-             if (CEK) console.log(gostCoding.Hex.encode(CEK.buffer));
             // Encrypt content with CEK. Algorithm PKCS#5 PBES2
             return encryption ? getSubtle().decrypt(encryption, CEK, keyData) :
                     keyData; // Data already encrypted
@@ -425,7 +424,6 @@
             // Generate key from password. Algorithm PKCS#5 PBKDF2 
             return derivation && getSubtle().deriveKey(derivation, passwordKey, encryption, true, ['encrypt']);
         }).then(function(CEK) {
-             if (CEK) console.log(gostCoding.Hex.encode(CEK.buffer));
             // Encrypt content with CEK. Algorithm PKCS#5 PBES2
             return encryption && getSubtle().encrypt(encryption, CEK, keyData);
         }).then(function(data) {
