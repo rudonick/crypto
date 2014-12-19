@@ -356,7 +356,7 @@
                 keyData = key.encryptedData;
                 // Import password for key generation
                 return getSubtle().importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
-                        derivation, false, 'deriveKey');
+                        derivation, false, ['deriveKey']);
             } else { // Key already decrypted
                 if (key instanceof ArrayBuffer)
                     keyData = key; // Secret key
@@ -368,6 +368,7 @@
             return derivation &&
                     getSubtle().deriveKey(derivation, passwordKey, encryption, true, ['decrypt']);
         }).then(function(CEK) {
+             if (CEK) console.log(gostCoding.Hex.encode(CEK.buffer));
             // Encrypt content with CEK. Algorithm PKCS#5 PBES2
             return encryption ? getSubtle().decrypt(encryption, CEK, keyData) :
                     keyData; // Data already encrypted
@@ -413,7 +414,7 @@
 
                 // Import password for key generation
                 return getSubtle().importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
-                        derivation, false, 'deriveKey');
+                        derivation, false, ['deriveKey']);
             } else {
                 if (type === 'secret')
                     key = keyData;
@@ -424,6 +425,7 @@
             // Generate key from password. Algorithm PKCS#5 PBKDF2 
             return derivation && getSubtle().deriveKey(derivation, passwordKey, encryption, true, ['encrypt']);
         }).then(function(CEK) {
+             if (CEK) console.log(gostCoding.Hex.encode(CEK.buffer));
             // Encrypt content with CEK. Algorithm PKCS#5 PBES2
             return encryption && getSubtle().encrypt(encryption, CEK, keyData);
         }).then(function(data) {
