@@ -1923,23 +1923,22 @@
         // Hash function definition
         var hash = algorithm.hash;
         if (hash) {
-            if (hash.name)
-                hash = hash.name;
-            var params = {name: hash};
+            if (typeof hash === 'string' || hash instanceof String)
+                hash = {name: hash};
             if (algorithm.version === 1994 || algorithm.version === 2001) {
-                params.version = 1994;
-                params.length = 256;
-                params.sBox = algorithm.sBox;
+                hash.version = 1994;
+                hash.length = 256;
+                hash.sBox = algorithm.sBox || hash.sBox;
             } else {
-                params.version = 2012;
-                params.length = hashLen;
+                hash.version = 2012;
+                hash.length = hashLen;
             }
             if (!GostR3411)
                 GostR3411 = root.GostR3411;
             if (!GostR3411)
                 throw new NotSupportedError('Object GostR3411 not found');
 
-            this.hash = new GostR3411(params);
+            this.hash = new GostR3411(hash);
         }
 
         // Pregenerated seed for key exchange algorithms
