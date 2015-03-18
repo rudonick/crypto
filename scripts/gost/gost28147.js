@@ -892,7 +892,9 @@
 
         for (var i = 0; i < q; i++) {
             syn[0] = (syn[0] + 0x1010101) & 0xffffffff;
-            syn[1] = signed(unsigned((syn[1] + 0x1010104) & 0xffffffff) % 0xffffffff);
+            // syn[1] = signed(unsigned((syn[1] + 0x1010104) & 0xffffffff) % 0xffffffff);
+            var tmp = unsigned(syn[1]) + 0x1010104; // Special thanks to Ilya Matveychikov
+            syn[1] = signed(tmp < 0x100000000 ? tmp : tmp - 0xffffffff);
 
             for (var j = 0; j < b; j++)
                 t[j] = s[j];
@@ -909,7 +911,9 @@
         }
         if (r > 0) {
             syn[0] = (syn[0] + 0x1010101) & 0xffffffff;
-            syn[1] = signed(unsigned((syn[1] + 0x1010104) & 0xffffffff) % 0xffffffff);
+            // syn[1] = signed(unsigned((syn[1] + 0x1010104) & 0xffffffff) % 0xffffffff);
+            var tmp = unsigned(syn[1]) + 0x1010104; // Special thanks to Ilya Matveychikov
+            syn[1] = signed(tmp < 0x100000000 ? tmp : tmp - 0xffffffff);
 
             this.process(key, syn);
 
