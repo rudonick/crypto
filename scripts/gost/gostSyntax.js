@@ -508,8 +508,9 @@
      * @mixin
      * @param {Object} struct
      * @param {function} define
+     * @param {Object} mark
      */
-    var CHOICE = function(struct, define) {
+    var CHOICE = function(struct, define, mark) {
         if (struct instanceof Array) {
             return {
                 /**
@@ -519,17 +520,24 @@
                  * @returns {Object}
                  */
                 encode: function(value) {
-                    if (define)
-                        return define(value).encode(value);
-                    else
-                        for (var i = 0; i < struct.length; i++) {
-                            try {
-                                var s = struct[i].encode(value);
-                                if (s !== undefined)
-                                    return s;
-                            } catch (e) {
-                            }
+                    if (define) {
+                        var i = define(value);
+                        if (i !== undefined && i >= 0 && i < struct.length) {
+                            var r = mark ? mark.encode(value, i) : value,
+                                    s = struct[i].encode(r);
+                            if (s !== undefined)
+                                return s;
                         }
+                    }
+                    for (var i = 0; i < struct.length; i++) {
+                        try {
+                            var r = mark ? mark.encode(value, i) : value,
+                                    s = struct[i].encode(r);
+                            if (s !== undefined)
+                                return s;
+                        } catch (e) {
+                        }
+                    }
                     throw new DataError('Invalid format');
                 },
                 /**
@@ -543,7 +551,7 @@
                         try {
                             var r = struct[i].decode(value);
                             if (r !== undefined)
-                                return r;
+                                return mark ? mark.decode(r, i) : r;
                         } catch (e) {
                         }
                     }
@@ -752,12 +760,27 @@
      */ // <editor-fold defaultstate="collapsed">
 
     var DirectoryString = CHOICE([UTF8String, PrintableString, TeletexString, UniversalString, BMPString], function(value) {
+        if (value && value.length > 1) {
+            var i = value.charCodeAt(value.length - 1);
+            // Find invisible code of marked string
+            if (i < 5)
+                return i;
+        }
         // PrintableString - for characters and symbols with no spaces, overrise UTF8String
-        return /^[A-Za-z0-9\.@\+\-\:\=\\\/\?\!\#\$\%\^\&\*\(\)\[\]\{\}\>\<\|\~]*$/.test(value) ? PrintableString : UTF8String;
+        return /^[A-Za-z0-9\.@\+\-\:\=\\\/\?\!\#\$\%\^\&\*\(\)\[\]\{\}\>\<\|\~]*$/.test(value) ? 1 : 0;
+    }, {
+        encode: function(value) {
+            // Clear invisible code 
+            return value.replace(/[\u0000-\u0004]/g, '');
+        },
+        decode: function(value, i) {
+            // Mark string type with invisible code
+            return value + String.fromCharCode(i);
+        }
     });
 
     var Time = CHOICE([GeneralizedTime, UTCTime], function(value) {
-        return value.getYear() >= 2050 ? GeneralizedTime : UTCTime;
+        return value.getYear() >= 2050 ? 0 : 1;
     });
 
     // Attribute
@@ -902,7 +925,7 @@
             encode: function(name) {
                 var s = [];
                 for (var id in name) {
-                    if (id !== 'buffer') 
+                    if (id !== 'buffer')
                         s.push((aliases[id] || getIdentifier(id)) + '=' + name[id]);
                 }
                 return s.join(',');
@@ -1240,6 +1263,21 @@
         }
     };
 
+    var SCGostAlgorithm = {
+        paramType: Gost2814789IV,
+        encode: function(value) {
+            return {
+                algorithm: value.id,
+                parameters: value.iv
+            };
+        },
+        decode: function(value) {
+            var algorithm = expand(getAlgorithm(value.algorithm));
+            algorithm.iv = value.parameters || new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0]);
+            return algorithm;
+        }
+    };
+
     var GostKeyWrapAlgorithm = {
         paramType: Gost2814789KeyWrapParameters,
         encode: function(value) {
@@ -1301,7 +1339,7 @@
         'id-sc-cmsGost28147Wrap': AlgorithmWithNoParam});
 
     var BaseEncryptionAlgorithmIdentifier = AlgorithmIdentifier({
-        'id-sc-gost28147-gfb': AlgorithmWithNoParam,
+        'id-sc-gost28147-gfb': SCGostAlgorithm,
         'id-Gost28147-89': Gost2814789Algorithm});
 
     var MessageAuthenticationCodeAlgorithm = AlgorithmIdentifier({
@@ -1439,7 +1477,7 @@
 
     var ContentEncryptionAlgorithmIdentifier = AlgorithmIdentifier({
         // Base encryption
-        'id-sc-gost28147-gfb': AlgorithmWithNoParam,
+        'id-sc-gost28147-gfb': SCGostAlgorithm,
         'id-Gost28147-89': Gost2814789Algorithm,
         // Password based encryption
         'pbeWithSHAAndAES128-CBC': PBES1Algorithm,
