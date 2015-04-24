@@ -203,7 +203,7 @@
                             r.push(0x80 + (c >>> 6 & 63));
                             r.push(0x80 + (c & 63));
                         }
-                    } else if (charset === 'uncode' || charset === 'ucs2' || charset === 'utf16') {
+                    } else if (charset === 'unicode' || charset === 'ucs2' || charset === 'utf16') {
                         if (c < 0xD800 || (c >= 0xE000 && c <= 0x10000)) {
                             r.push(c >>> 8);
                             r.push(c & 0xff);
@@ -259,7 +259,7 @@
                                 : c >= 0xc0 && c < 0xe0 && i + 1 < n ? // two bytes 
                                 (c - 0xc0 << 6) + d[++i] - 0x80
                                 : c; // one byte 
-                    } else if (charset === 'uncode' || charset === 'ucs2' || charset === 'utf16') {
+                    } else if (charset === 'unicode' || charset === 'ucs2' || charset === 'utf16') {
                         c = (c << 8) + d[++i];
                         if (c >= 0xD800 && c < 0xE000) {
                             var first = (c - 0xD800) << 10;

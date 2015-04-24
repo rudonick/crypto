@@ -30,7 +30,7 @@
  * 
  */
 
-(function(root, factory) {
+(function (root, factory) {
 
     /*
      * Module imports and exports
@@ -45,7 +45,7 @@
     }
     // </editor-fold>
 
-}(this, function(gostObject, gostCoding, gostSyntax, gostCrypto) {
+}(this, function (gostObject, gostCoding, gostSyntax, gostCrypto) {
 
     /*
      * Common tools and methods
@@ -281,9 +281,10 @@
             if (current.tbsCertificate.extensions && current.tbsCertificate.extensions.authorityKeyIdentifier) {
                 var authorityKeyIdentifier = current.tbsCertificate.extensions.authorityKeyIdentifier;
                 selector.subjectKeyIdentifier = authorityKeyIdentifier.keyIdentifier;
-                if (authorityKeyIdentifier.authorityCertIssuer[0].directoryName)
+                if (authorityKeyIdentifier.authorityCertIssuer && authorityKeyIdentifier.authorityCertIssuer[0].directoryName)
                     selector.issuer = authorityKeyIdentifier.authorityCertIssuer[0].directoryName;
-                selector.serialNumber = getInt16().encode(authorityKeyIdentifier.authorityCertSerialNumber);
+                if (authorityKeyIdentifier.authorityCertSerialNumber)
+                    selector.serialNumber = getInt16().encode(authorityKeyIdentifier.authorityCertSerialNumber);
             }
             // Is last self-signed sertificate? 
             if (equalNames(current.tbsCertificate.subject, current.tbsCertificate.issuer))
@@ -334,7 +335,7 @@
 
     // Verify signature value for certificate
     function verifyValue(certificate, signatureAlgorithm, signatureValue, value) {
-        return retrievePublicKey(certificate).then(function(publicKey) {
+        return retrievePublicKey(certificate).then(function (publicKey) {
             return getSubtle().verify(signatureAlgorithm, publicKey, signatureValue, value);
         });
     }
@@ -344,7 +345,7 @@
     function retrievePrivateKey(self, alias, password)
     {
         var keyData, key, derivation, encryption;
-        return new root.Promise(call).then(function() {
+        return new root.Promise(call).then(function () {
             var key = self.keyStore.getKey(alias);
             if (!key)
                 throw new Error('Private key not found');
@@ -363,15 +364,15 @@
                 else
                     keyData = getSyntax('PrivateKeyInfo').encode(key);
             }
-        }).then(function(passwordKey) {
+        }).then(function (passwordKey) {
             // Generate key from password. Algorithm PKCS#5 PBKDF2 
             return derivation &&
                     getSubtle().deriveKey(derivation, passwordKey, encryption, true, ['decrypt']);
-        }).then(function(CEK) {
+        }).then(function (CEK) {
             // Encrypt content with CEK. Algorithm PKCS#5 PBES2
             return encryption ? getSubtle().decrypt(encryption, CEK, keyData) :
                     keyData; // Data already encrypted
-        }).then(function(data) {
+        }).then(function (data) {
             try { // Decode private key
                 key = getSyntax('PrivateKeyInfo').decode(data);
             } catch (e) {
@@ -395,20 +396,20 @@
     function storePrivateKey(self, privateKey, alias, password) {
         var keyData, key, derivation, encryption,
                 type = privateKey.type;
-        return new root.Promise(call).then(function() {
+        return new root.Promise(call).then(function () {
             // Export key for encryption
             if (type === 'secret')
                 return getSubtle().exportKey('raw', privateKey);
             else
                 return getSubtle().exportKey('pkcs8', privateKey);
-        }).then(function(data) {
+        }).then(function (data) {
             keyData = data;
             if (password) {
                 // Generate random value as salt for password based CEK generation
                 // In this case it's enough one iteration - no much data to hack
                 derivation = expand(self.provider.pbes.derivation, {salt: getSeed(32), iterations: 1}),
-                encryption = expand(self.provider.pbes.encryption);
-                if (!encryption.iv) 
+                        encryption = expand(self.provider.pbes.encryption);
+                if (!encryption.iv)
                     encryption.iv = getSeed(8);
 
                 // Import password for key generation
@@ -420,13 +421,13 @@
                 else
                     key = getSyntax('PrivateKeyInfo').decode(keyData);
             }
-        }).then(function(passwordKey) {
+        }).then(function (passwordKey) {
             // Generate key from password. Algorithm PKCS#5 PBKDF2 
             return derivation && getSubtle().deriveKey(derivation, passwordKey, encryption, true, ['encrypt']);
-        }).then(function(CEK) {
+        }).then(function (CEK) {
             // Encrypt content with CEK. Algorithm PKCS#5 PBES2
             return encryption && getSubtle().encrypt(encryption, CEK, keyData);
-        }).then(function(data) {
+        }).then(function (data) {
             if (encryption)
                 key = {
                     encryptionAlgorithm: expand(self.provider.pbes, {
@@ -465,7 +466,7 @@
          * @memberOf KeyStore
          * @returns {Array} Array of aliases
          */
-        aliases: function() // <editor-fold defaultstate="collapsed">
+        aliases: function () // <editor-fold defaultstate="collapsed">
         {
             var result = [];
             for (var name in this.entries)
@@ -480,7 +481,7 @@
          * @param {string} alias Key alias
          * @return {boolean} True if alias exists
          */
-        containsAlias: function(alias) // <editor-fold defaultstate="collapsed">
+        containsAlias: function (alias) // <editor-fold defaultstate="collapsed">
         {
             return alias in this.entries;
         }, // </editor-fold>
@@ -491,7 +492,7 @@
          * @memberOf KeyStore
          * @param {string} alias Key alias
          */
-        deleteEntry: function(alias) // <editor-fold defaultstate="collapsed">
+        deleteEntry: function (alias) // <editor-fold defaultstate="collapsed">
         {
             delete this.entires[alias];
         }, // </editor-fold>
@@ -503,7 +504,7 @@
          * @param {string} alias Key alias
          * @returns {gostSyntax.Certificate}
          */
-        getCertificate: function(alias) // <editor-fold defaultstate="collapsed">
+        getCertificate: function (alias) // <editor-fold defaultstate="collapsed">
         {
             var entry = this.entries[alias];
             if (entry)
@@ -517,7 +518,7 @@
          * @param {string} alias Key alias
          * @returns {gostSyntax.CertificateList}
          */
-        getCRL: function(alias) // <editor-fold defaultstate="collapsed">
+        getCRL: function (alias) // <editor-fold defaultstate="collapsed">
         {
             var entry = this.entries[alias];
             if (entry)
@@ -531,7 +532,7 @@
          * @param {string} alias Key alias
          * @returns {gostSyntax.Certificate}
          */
-        getRequest: function(alias) // <editor-fold defaultstate="collapsed">
+        getRequest: function (alias) // <editor-fold defaultstate="collapsed">
         {
             var entry = this.entries[alias];
             if (entry)
@@ -545,7 +546,7 @@
          * @param {string} alias Key alias
          * @returns {(gostSyntax.EncryptedPrivateKeyInfo|gostSyntax.PrivateKeyInfo)} Encrypted key
          */
-        getKey: function(alias) // <editor-fold defaultstate="collapsed">
+        getKey: function (alias) // <editor-fold defaultstate="collapsed">
         {
             var entry = this.entries[alias];
             if (entry)
@@ -560,7 +561,7 @@
          * @param {string} alias Key alias
          * @param {gostSyntax.Certificate} cert Key certificate
          */
-        setCertificate: function(alias, cert) // <editor-fold defaultstate="collapsed">
+        setCertificate: function (alias, cert) // <editor-fold defaultstate="collapsed">
         {
             var entry = this.entries[alias] || (this.entries[alias] = {});
             entry.cert = checkType(cert, 'Certificate');
@@ -573,7 +574,7 @@
          * @param {string} alias Alias entry for store CRL
          * @param {gostSyntax.CertificateList} crl CRL to store
          */
-        setCRL: function(alias, crl) // <editor-fold defaultstate="collapsed">
+        setCRL: function (alias, crl) // <editor-fold defaultstate="collapsed">
         {
             var entry = this.entries[alias] || (this.entries[alias] = {});
             entry.crl = checkType(crl, 'CertificateList');
@@ -586,7 +587,7 @@
          * @param {string} alias Alias entry for store CRL
          * @param {gostSyntax.CertificateRequest} request Certification request to store
          */
-        setRequest: function(alias, request) // <editor-fold defaultstate="collapsed">
+        setRequest: function (alias, request) // <editor-fold defaultstate="collapsed">
         {
             var entry = this.entries[alias] || (this.entries[alias] = {});
             entry.request = checkType(request, 'CertificationRequest');
@@ -599,7 +600,7 @@
          * @param {string} alias Key alias
          * @param {(gostSyntax.EncryptedPrivateKeyInfo|gostSyntax.PrivateKeyInfo|FormatedData)} key Encrypted key
          */
-        setKey: function(alias, key) // <editor-fold defaultstate="collapsed">
+        setKey: function (alias, key) // <editor-fold defaultstate="collapsed">
         {
             try {
                 key = checkType(key, 'PrivateKeyInfo');
@@ -620,7 +621,7 @@
          * @memberOf KeyStore
          * @returns {gostSyntax.Certificate[]} certificates.
          */
-        getAllCertificates: function() // <editor-fold defaultstate="collapsed">
+        getAllCertificates: function () // <editor-fold defaultstate="collapsed">
         {
             var certs = [];
             for (var name in this.entries) {
@@ -637,7 +638,7 @@
          * @memberOf KeyStore
          * @returns {gostSyntax.CertificateList[]} CRLs
          */
-        getAllCRLs: function() // <editor-fold defaultstate="collapsed">
+        getAllCRLs: function () // <editor-fold defaultstate="collapsed">
         {
             var crls = [];
             for (var name in this.entries) {
@@ -738,11 +739,11 @@
          * will encrypted by individual passwords
          * @returns {Promise} Promise resolves with imported key store object {@link gostSyntax.PFX}
          */
-        importKeyStore: function(data, password) // <editor-fold defaultstate="collapsed">
+        importKeyStore: function (data, password) // <editor-fold defaultstate="collapsed">
         {
             var self = this, keyStore = self.keyStore,
                     derivation, digest, encryptionKey, authSafe, packages;
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
 
                 // Check data type
                 data = checkType(data, 'PFX');
@@ -760,35 +761,35 @@
                         salt: data.macData.macSalt,
                         iterations: data.macData.iterations
                     }),
-                    digest = expand(self.provider.pbmac.hmac);
+                            digest = expand(self.provider.pbmac.hmac);
 
                     // Import password for key generation
                     return getSubtle().importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
                             derivation, false, ['deriveKey']);
                 }
 
-            }).then(function(passwordKey) {
+            }).then(function (passwordKey) {
                 // Generate key from password. Algorithm PKCS#5 PBKDF2 
                 return derivation && getSubtle().deriveKey(derivation, passwordKey, digest, true, ['verify']);
-            }).then(function(CEK) {
+            }).then(function (CEK) {
                 encryptionKey = CEK;
 
                 // Verify MAC PKCS#5 PBMAC1
                 return digest && getSubtle().verify(digest, encryptionKey, data.macData.mac.digest, authSafe.buffer);
-            }).then(function(verified) {
+            }).then(function (verified) {
 
                 if (!verified)
                     throw new Error('MAC not verified');
 
                 // Verify signature if required
                 return authSafe.contentType === 'signedData' ? self.verifyData(authSafe) : authSafe;
-            }).then(function(extracted) {
+            }).then(function (extracted) {
                 authSafe = extracted;
                 if (authSafe.contentType !== 'data')
                     throw new Error('Unsupported format');
 
                 packages = getSyntax('AuthenticatedSafe').decode(authSafe.content);
-                return Promise.all(packages.map(function(item) {
+                return Promise.all(packages.map(function (item) {
                     // Decrypt content with CEK. Algorithm PKCS#5 PBES2
                     if (item.contentType === 'encryptedData')
                         return self.decryptData(item, password);
@@ -798,11 +799,11 @@
                         throw new Error('Format not supported');
                 }));
 
-            }).then(function(decryptedPackages) {
+            }).then(function (decryptedPackages) {
                 packages = decryptedPackages;
 
-                var storeContent = function(safeContents) {
-                    safeContents.forEach(function(bag) {
+                var storeContent = function (safeContents) {
+                    safeContents.forEach(function (bag) {
                         var alias = (bag.bagAttributes && bag.bagAttributes.friendlyName) || getPEM().encode(getSeed(12));
                         switch (bag.bagId) {
                             case 'keyBag':
@@ -823,7 +824,7 @@
                         }
                     });
                 };
-                packages.forEach(function(item) {
+                packages.forEach(function (item) {
                     storeContent(getSyntax('SafeContents').decode(item.content));
                 });
 
@@ -839,12 +840,12 @@
          * @param {boolean} mode 'mac' - password use for MAC calculation (default), 'encrypt' - content encrypted
          * @returns {Promise} Promise resolves with PKCS#12 {@link FormatedData} keystore 
          */
-        exportKeyStore: function(password, mode) // <editor-fold defaultstate="collapsed">
+        exportKeyStore: function (password, mode) // <editor-fold defaultstate="collapsed">
         {
             var self = this, keyStore = self.keyStore,
                     data, authSafe, derivation, digest, encryptionKey;
 
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
 
                 // Read private keys
                 var aliases = keyStore.aliases(), safeContents = [];
@@ -907,7 +908,7 @@
                     // Generate random value as salt for password based CEK generation
                     // It's enough one iteration (default mode) for mac
                     derivation = expand(self.provider.pbmac.derivation, {salt: getSeed(32), iterations: 1}),
-                    digest = expand(self.provider.pbmac.hmac);
+                            digest = expand(self.provider.pbmac.hmac);
 
                     // Import password for key generation
                     return getSubtle().importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
@@ -915,17 +916,17 @@
                 } else if (mode === 'encrypt')
                     throw new Error('Password required for MAC calculation');
 
-            }).then(function(passwordKey) {
+            }).then(function (passwordKey) {
                 // Generate key from password. Algorithm PKCS#5 PBKDF2 
                 return derivation && getSubtle().deriveKey(derivation, passwordKey, digest, true, ['sign']);
-            }).then(function(CEK) {
+            }).then(function (CEK) {
                 encryptionKey = CEK;
                 // Encrypt content with CEK. Algorithm PKCS#5 PBES2
                 return mode === 'encrypt' ? self.encryptData(data, 'pbes', password) : {
                     contentType: 'data',
                     content: data
                 };
-            }).then(function(contentInfo) {
+            }).then(function (contentInfo) {
                 contentInfo = checkType(contentInfo, 'ContentInfo');
                 authSafe = {
                     contentType: 'data',
@@ -935,7 +936,7 @@
                 // Calculate MAC Algorithm PKCS#5 PBMAC1
                 authSafe.buffer = getSyntax('ContentInfo').encode(authSafe);
                 return digest && getSubtle().sign(digest, encryptionKey, authSafe.buffer);
-            }).then(function(macData) {
+            }).then(function (macData) {
 
                 var pfx = {
                     version: 3,
@@ -971,12 +972,12 @@
          * @param {string} password Password to decrypt/encrypt key
          * @returns {Promise} Promise resolves with exported {@link FormatedData}
          */
-        exportKey: function(alias, format, password) {
+        exportKey: function (alias, format, password) {
             var self = this;
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
                 // Get key from key store
                 return retrievePrivateKey(self, alias, password);
-            }).then(function(privateKey) {
+            }).then(function (privateKey) {
                 format = (format || 'p8').toLowerCase();
                 switch (format) {
                     case 'p8':
@@ -988,7 +989,7 @@
                     case 'p12':
                         throw new Error('Not yet implemented')
                 }
-            }).then(function(key) {
+            }).then(function (key) {
                 switch (format) {
                     case 'p8':
                         return getSyntax('PrivateKeyInfo').encode(key, self.format);
@@ -1018,9 +1019,9 @@
          * @param {string} password Password to decrypt/encrypt key
          * @returns {Promise}
          */
-        importKey: function(key, alias, password) {
+        importKey: function (key, alias, password) {
             var self = this;
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
                 try {
                     key = checkType(key, 'PrivateKeyInfo');
                 } catch (e) {
@@ -1033,7 +1034,7 @@
                 self.keyStore.setKey(alias, key);
                 if (!key.encryptionAlgorithm && password)
                     return retrievePrivateKey(self, alias);
-            }).then(function(privateKey) {
+            }).then(function (privateKey) {
                 if (privateKey)
                     return storePrivateKey(self, privateKey, alias, password);
                 else
@@ -1052,12 +1053,12 @@
          * @param {string} password New password for CA certificate 
          * @returns {Promise} Promise with {@link FormatedData} certificate
          */
-        createCertificate: function(tbsCert, alias, password) // <editor-fold defaultstate="collapsed">
+        createCertificate: function (tbsCert, alias, password) // <editor-fold defaultstate="collapsed">
         {
             var self = this, tbsCertificate = {},
                     certificate = {}, publicKey, privateKey;
 
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
 
                 // Key definition section
                 tbsCert = tbsCert || {};
@@ -1073,13 +1074,13 @@
                     throw Error('Key Algorithm not defined');
 
                 return getSubtle().generateKey(keyAlgorithm, true, ["sign", "verify"]);
-            }).then(function(keyPair) {
+            }).then(function (keyPair) {
                 publicKey = keyPair.publicKey;
                 privateKey = keyPair.privateKey;
 
                 // Extract public key
                 return getSubtle().exportKey('spki', publicKey);
-            }).then(function(keyData) {
+            }).then(function (keyData) {
 
                 // Decode key data for encode this with tbs
                 tbsCertificate.subjectPublicKeyInfo =
@@ -1087,7 +1088,7 @@
 
                 // Calculate subject key indentifier
                 return getSubtle().digest(self.provider.digest, keyData);
-            }).then(function(publicKeyDigest) {
+            }).then(function (publicKeyDigest) {
 
                 // 160 bit from public key hash
                 var subjectKeyIdentifier = new Uint8Array(new Uint8Array(publicKeyDigest, 0, 20)).buffer;
@@ -1140,7 +1141,7 @@
                 tbsCertificate.buffer = getSyntax('TBSCertificate').encode(tbsCertificate);
                 return getSubtle().sign(certificate.signatureAlgorithm, privateKey,
                         tbsCertificate.buffer);
-            }).then(function(signatureValue) {
+            }).then(function (signatureValue) {
 
                 // Create certificate
                 certificate.tbsCertificate = tbsCertificate;
@@ -1149,7 +1150,7 @@
                 // Save certificate to keyStore
                 certificate.buffer = getSyntax('Certificate').encode(certificate);
                 return storePrivateKey(self, privateKey, alias, password);
-            }).then(function() {
+            }).then(function () {
 
                 self.keyStore.setCertificate(alias, certificate);
                 return getSyntax('Certificate').encode(certificate, self.format);
@@ -1168,12 +1169,12 @@
          * @param {string} password Password for private key 
          * @returns {Promise} Promise resolves with {@link FormatedData} certificate
          */
-        issueCertificate: function(tbsCert, reqalias, alias, password) // <editor-fold defaultstate="collapsed">
+        issueCertificate: function (tbsCert, reqalias, alias, password) // <editor-fold defaultstate="collapsed">
         {
             var self = this, keyStore = self.keyStore,
                     tbsCertificate = {}, certificate = {}, requestInfo, request;
 
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
                 // Decode request 
                 request = keyStore.getRequest(reqalias);
                 requestInfo = request.requestInfo;
@@ -1185,18 +1186,18 @@
                 tbsCertificate.subjectPublicKeyInfo = requestInfo.subjectPublicKeyInfo;
                 return getSubtle().importKey('spki', requestInfo.subjectPublicKeyInfo.buffer,
                         requestInfo.subjectPublicKeyInfo.algorithm, true, ['verify']);
-            }).then(function(publicKey) {
+            }).then(function (publicKey) {
 
                 // Verify request signature
                 return getSubtle().verify(request.signatureAlgorithm, publicKey,
                         request.signatureValue, requestInfo.buffer);
-            }).then(function(verified) {
+            }).then(function (verified) {
                 if (!verified)
                     throw new Error('Request signature is not valid');
 
                 // Calculate subject key indentifier
                 return getSubtle().digest(self.provider.digest, tbsCertificate.subjectPublicKeyInfo.buffer);
-            }).then(function(publicKeyDigest) {
+            }).then(function (publicKeyDigest) {
 
                 // 160 bit from public key hash
                 var subjectKeyIdentifier = new Uint8Array(new Uint8Array(publicKeyDigest, 0, 20)).buffer;
@@ -1288,12 +1289,12 @@
 
                 // Retrieve private key from storage
                 return retrievePrivateKey(self, alias, password);
-            }).then(function(privateKey) {
+            }).then(function (privateKey) {
 
                 // Sign cert
                 tbsCertificate.buffer = getSyntax('TBSCertificate').encode(tbsCertificate);
                 return getSubtle().sign(certificate.signatureAlgorithm, privateKey, tbsCertificate.buffer);
-            }).then(function(signatureValue) {
+            }).then(function (signatureValue) {
 
                 // Create certificate
                 certificate.tbsCertificate = tbsCertificate;
@@ -1302,7 +1303,7 @@
                 // Return certificate to key store
                 certificate.buffer = getSyntax('Certificate').encode(certificate);
                 return keyStore.setCertificate(reqalias, certificate);
-            }).then(function() {
+            }).then(function () {
 
                 return getSyntax('Certificate').encode(certificate, self.format);
             });
@@ -1323,10 +1324,10 @@
          * @param {string} format Optional export format: 'x509' (default) or 'p7c' or 'p12' or pki
          * @returns {Promise}  Promise resolves with certificate {@link FormatedData}
          */
-        exportCertificate: function(alias, format) // <editor-fold defaultstate="collapsed">
+        exportCertificate: function (alias, format) // <editor-fold defaultstate="collapsed">
         {
             var self = this;
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
                 var cert = self.keyStore.getCertificate(alias);
                 if (!cert)
                     throw new Error('Certificate not found');
@@ -1375,11 +1376,11 @@
          * @param {string} alias Alias for store certificate
          * @returns {Promise} Promise resolves with Verified certificate {@link gostSyntax.Certificate}
          */
-        importCertificate: function(certificate, alias) // <editor-fold defaultstate="collapsed">
+        importCertificate: function (certificate, alias) // <editor-fold defaultstate="collapsed">
         {
             var self = this, keyStore = self.keyStore, tbsCertificate;
 
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
                 // Decode certificate
                 try {
                     certificate = checkType(certificate, 'ContentInfo');
@@ -1405,9 +1406,10 @@
                     if (certificate.tbsCertificate.extensions && certificate.tbsCertificate.extensions.authorityKeyIdentifier) {
                         var authorityKeyIdentifier = certificate.tbsCertificate.extensions.authorityKeyIdentifier;
                         selector.subjectKeyIdentifier = authorityKeyIdentifier.keyIdentifier;
-                        if (authorityKeyIdentifier.authorityCertIssuer[0].directoryName)
+                        if (authorityKeyIdentifier.authorityCertIssuer && authorityKeyIdentifier.authorityCertIssuer[0].directoryName)
                             selector.issuer = authorityKeyIdentifier.authorityCertIssuer[0].directoryName;
-                        selector.serialNumber = getInt16().encode(authorityKeyIdentifier.authorityCertSerialNumber);
+                        if (authorityKeyIdentifier.authorityCertSerialNumber)
+                            selector.serialNumber = getInt16().encode(authorityKeyIdentifier.authorityCertSerialNumber);
                     }
                     var found = selectKeyStoreCertificates(keyStore, selector);
                     if (found && found.length > 0)
@@ -1419,7 +1421,7 @@
                 // Verify signature
                 return verifyValue(authorityCert, certificate.signatureAlgorithm,
                         certificate.signatureValue, tbsCertificate.buffer);
-            }).then(function(verified) {
+            }).then(function (verified) {
                 if (!verified)
                     throw new Error('Certificate has invalid signature');
                 if (alias)
@@ -1436,15 +1438,15 @@
          * @param {Date} date Date that will use for validition
          * @returns {Promise} Promise resolves with {@link gostSyntax.Certificate} validation path Array
          */
-        validateCertificate: function(certificate, date) // <editor-fold defaultstate="collapsed">
+        validateCertificate: function (certificate, date) // <editor-fold defaultstate="collapsed">
         {
             var self = this, keyStore = self.keyStore, path = [];
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
                 var certs = certificate;
                 if (!(certs instanceof Array))
                     certs = [certificate];
                 // Decode certificates
-                certs = certs.map(function(cert) {
+                certs = certs.map(function (cert) {
                     return checkType(cert, 'Certificate');
                 });
 
@@ -1479,7 +1481,7 @@
                     }
                 }
                 return Promise.all(promises);
-            }).then(function(results) {
+            }).then(function (results) {
                 for (var i = 0, n = results.length; i < n; i++)
                     if (results[i] !== true)
                         throw new Error('Certificate in path has invalid signature');
@@ -1497,12 +1499,12 @@
          * @param {string} password Password to encrypt private key
          * @returns {Promise} Promise resolves with {@link FormatedData} certification request 
          */
-        createRequest: function(cri, alias, password) // <editor-fold defaultstate="collapsed">
+        createRequest: function (cri, alias, password) // <editor-fold defaultstate="collapsed">
         {
 
             var self = this, request = {}, requestInfo = {}, publicKey, privateKey;
 
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
 
                 // Signature algorithm
                 cri = cri || {};
@@ -1517,13 +1519,13 @@
                 // Return result of async chain
                 // Generate key pair
                 return getSubtle().generateKey(keyAlgorithm, true, ["sign", "verify"]);
-            }).then(function(keyPair) {
+            }).then(function (keyPair) {
                 publicKey = keyPair.publicKey;
                 privateKey = keyPair.privateKey;
 
                 // Extract public key
                 return getSubtle().exportKey('spki', publicKey);
-            }).then(function(keyData) {
+            }).then(function (keyData) {
                 requestInfo.subjectPublicKeyInfo = getSyntax('SubjectPublicKeyInfo').decode(keyData);
 
                 // certificate name
@@ -1545,7 +1547,7 @@
                 // Sign request
                 requestInfo.buffer = getSyntax('CertificationRequestInfo').encode(requestInfo);
                 return getSubtle().sign(request.signatureAlgorithm, privateKey, requestInfo.buffer);
-            }).then(function(signatureValue) {
+            }).then(function (signatureValue) {
 
                 // Create certificate request
                 request.requestInfo = requestInfo;
@@ -1554,7 +1556,7 @@
 
                 // Return result
                 return storePrivateKey(self, privateKey, alias, password);
-            }).then(function() {
+            }).then(function () {
 
                 self.keyStore.setRequest(alias, request);
                 return getSyntax('CertificationRequest').encode(request, self.format);
@@ -1568,11 +1570,11 @@
          * @param {string} alias Alias of stored request
          * @returns {Promise} Promise resolves with {@link FormatedData} certification request 
          */
-        exportRequest: function(alias) // <editor-fold defaultstate="collapsed">
+        exportRequest: function (alias) // <editor-fold defaultstate="collapsed">
         {
             var self = this, request;
 
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
                 // Get request from store
                 request = self.keyStore.getRequest(alias);
                 if (!request)
@@ -1590,11 +1592,11 @@
          * @param {string} alias Alias to store imported request
          * @returns {Promise} Promise resolves with verified request {@link gostSyntax.CertificationRequest}
          */
-        importRequest: function(request, alias) // <editor-fold defaultstate="collapsed">
+        importRequest: function (request, alias) // <editor-fold defaultstate="collapsed">
         {
             var self = this, request, requestInfo;
 
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
                 // Extract request info
                 request = checkType(request, 'CertificationRequest');
                 requestInfo = request.requestInfo;
@@ -1603,12 +1605,12 @@
                 var subjectPublicKeyInfo = requestInfo.subjectPublicKeyInfo;
                 return getSubtle().importKey('spki', subjectPublicKeyInfo.buffer,
                         subjectPublicKeyInfo.algorithm, true, ['verify']);
-            }).then(function(publicKey) {
+            }).then(function (publicKey) {
 
                 // Verify request signature
                 return getSubtle().verify(request.signatureAlgorithm, publicKey,
                         request.signatureValue, requestInfo.buffer);
-            }).then(function(verified) {
+            }).then(function (verified) {
                 if (!verified)
                     throw new Error('Request signature is not valid');
 
@@ -1628,11 +1630,11 @@
          * @param {string} password Password for encoding private key
          * @returns {Promise} Promise resolves with CRL {@link FormatedData}
          */
-        updateCRL: function(tbsCRL, alias, password) // <editor-fold defaultstate="collapsed">
+        updateCRL: function (tbsCRL, alias, password) // <editor-fold defaultstate="collapsed">
         {
             var self = this, keyStore = self.keyStore, tbsCertList = {};
 
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
 
                 tbsCRL = tbsCRL || {};
                 // Get issuer certificate
@@ -1723,12 +1725,12 @@
 
                 // Retrieve private key from storage
                 return retrievePrivateKey(self, alias, password);
-            }).then(function(privateKey) {
+            }).then(function (privateKey) {
 
                 // Sign list
                 tbsCertList.buffer = getSyntax('TBSCertList').encode(tbsCertList);
                 return getSubtle().sign(tbsCertList.signature, privateKey, tbsCertList.buffer);
-            }).then(function(signatureValue) {
+            }).then(function (signatureValue) {
 
                 // Create certificate
                 var certList = {
@@ -1760,11 +1762,11 @@
          * @param {string} format Optional export format: 'x509' (default) or 'p7c' or 'p12'
          * @returns {Promise} Promise resolves with CRL {@link FormatedData} 
          */
-        exportCRL: function(alias, format) // <editor-fold defaultstate="collapsed">
+        exportCRL: function (alias, format) // <editor-fold defaultstate="collapsed">
         {
             var self = this;
 
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
                 var crl = [self.keyStore.getCRL(alias)];
                 if (!crl)
                     throw new Error('CRL not found');
@@ -1812,12 +1814,12 @@
          * @param {string} alias Alias to store CRL (optional)
          * @returns {Promise} Promise resolves with verified CRL {@link gostSyntax.CertList}
          */
-        importCRL: function(certList, alias) // <editor-fold defaultstate="collapsed">
+        importCRL: function (certList, alias) // <editor-fold defaultstate="collapsed">
         {
             var self = this, keyStore = self.keyStore,
                     certList, tbsCertList, issuerCert;
 
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
 
                 // Extract request info
                 try {
@@ -1846,7 +1848,7 @@
 
                 // Verify signature
                 return verifyValue(issuerCert, certList.signatureAlgorithm, certList.signatureValue, tbsCertList.buffer);
-            }).then(function(verified) {
+            }).then(function (verified) {
                 if (!verified)
                     throw new Error('Certification list has invalid signature');
 
@@ -1875,17 +1877,17 @@
          * @param {string} password Password to decrypt key
          * @returns {Promise} Promise resolves with CMS {@link FormatedData}
          */
-        signData: function(data, mode, alias, password) // <editor-fold defaultstate="collapsed">
+        signData: function (data, mode, alias, password) // <editor-fold defaultstate="collapsed">
         {
             var self = this, keyStore = self.keyStore, signedData, signerInfo, dataToSign;
             mode = mode || [];
             if (!(mode instanceof Array))
                 mode = [mode];
-            mode = mode.map(function(value) {
-               return (value || '').toLowerCase();
+            mode = mode.map(function (value) {
+                return (value || '').toLowerCase();
             });
 
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
 
                 // Check input data
                 try {
@@ -1920,7 +1922,7 @@
                     // Add digest algorithm if requered
                     var found;
                     signedData.digestAlgorithms = (signedData.digestAlgorithms) || [];
-                    signedData.digestAlgorithms.forEach(function(digestAlgorithm) {
+                    signedData.digestAlgorithms.forEach(function (digestAlgorithm) {
                         if (digestAlgorithm.id === signedData.digestAlgorithm.id)
                             found = true;
                     });
@@ -1946,11 +1948,11 @@
                 // Add unique certificates if required
                 if (mode.indexOf('certpath') >= 0) {
                     signedData.certificates = signedData.certificates || [];
-                    var excerts = signedData.certificates.map(function(cert) {
+                    var excerts = signedData.certificates.map(function (cert) {
                         return cert.certificate;
                     });
                     var certPath = buildKeyStoreCertPath(keyStore, alias);
-                    certPath.forEach(function(cert) {
+                    certPath.forEach(function (cert) {
                         if (selectCertificates(excerts, {
                             issuer: cert.tbsCertificate.issuer,
                             serialNumber: cert.tbsCertificate.serialNumber
@@ -1963,7 +1965,7 @@
                 if (mode.indexOf('attrs') >= 0) {
                     return getSubtle().digest(signerInfo.digestAlgorithm, dataToSign);
                 }
-            }).then(function(digest) {
+            }).then(function (digest) {
                 if (digest) {
                     // Add signed attributes
                     signerInfo.signedAttrs = {
@@ -1978,19 +1980,66 @@
 
                 // Retirve private key
                 return retrievePrivateKey(self, alias, password);
-            }).then(function(privateKey) {
+            }).then(function (privateKey) {
 
                 // Sign data
                 signerInfo.signatureAlgorithm = self.provider.generation;
                 var algorithm = expand(signerInfo.signatureAlgorithm, {hash: signerInfo.digestAlgorithm});
                 return getSubtle().sign(algorithm, privateKey, dataToSign);
-            }).then(function(signatureValue) {
+            }).then(function (signatureValue) {
                 signerInfo.signatureValue = signatureValue;
 
                 // Return result
                 return getSyntax('ContentInfo').encode({
                     contentType: 'signedData',
                     content: signedData
+                }, self.format);
+            });
+        }, // </editor-fold>
+        /**
+         * Digest data in CMS format<br><br>
+         * 
+         * @instance
+         * @memberOf GostPKIX 
+         * @param {(FormatedData|gostSyntax.ContentInfo)} data Source of data
+         * @returns {Promise} Promise resolves with CMS {@link FormatedData}
+         */
+        digestData: function (data) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this, digestedData;
+
+            return new root.Promise(call).then(function () {
+
+                // Check input data
+                try {
+                    data = checkType(data, 'ContentInfo');
+                } catch (e) {
+                    data = {
+                        contentType: 'data',
+                        content: checkData(data)
+                    };
+                }
+
+                // Digested data
+                var dataToDigest = data.content.buffer || data.content;
+                digestedData = {
+                    version: 1,
+                    digestAlgorithm: self.provider.digest,
+                    encapContentInfo: {
+                        eContentType: data.contentType,
+                        eContent: dataToDigest
+                    }
+                };
+
+                // Calculate digest of data (for attributes) if mode 'attrs' 
+                return getSubtle().digest(digestedData.digestAlgorithm, dataToDigest);
+            }).then(function (digest) {
+                digestedData.digest = digest;
+
+                // Return result
+                return getSyntax('ContentInfo').encode({
+                    contentType: 'digestedData',
+                    content: digestedData
                 }, self.format);
             });
         }, // </editor-fold>
@@ -2041,13 +2090,13 @@
          * @param {string} password Optional password. Specify if the key of sender uses and in password mode. Parameter must be ommited for 'kek' mode.
          * @returns {Promise} Promise resolves with CMS {@link FormatedData}
          */
-        encryptData: function(data, mode, recipient, alias, password) // <editor-fold defaultstate="collapsed">
+        encryptData: function (data, mode, recipient, alias, password) // <editor-fold defaultstate="collapsed">
         {
             var self = this, keyStore = self.keyStore, encryption, wrapping, recipients,
                     encryptionKey, encryptedContentInfo, origPrivateKey, publicKeys,
                     origPublicKey, UDMs, keyIdentifier, enveloping;
 
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
 
                 data = checkData(data);
                 mode = (mode || 'keyagree').toLowerCase();
@@ -2060,7 +2109,7 @@
                     case 'keyagree':
                     case 'keytrans':
                         recipients = recipient instanceof Array ? recipient : [recipient];
-                        recipients = recipients.map(function(recip) {
+                        recipients = recipients.map(function (recip) {
                             return keyStore.getCertificate(recip);
                         });
                         break;
@@ -2082,7 +2131,7 @@
                 }
 
                 // Generate salt|ukm for encryption
-                UDMs = recipients.map(function(recipient, i) {
+                UDMs = recipients.map(function (recipient, i) {
                     return getSeed(8);
                 });
                 enveloping = mode !== 'pbes' && mode !== 'keyman'; // Enveloping modes
@@ -2091,7 +2140,7 @@
                     // Import password
                     return gostCrypto.subtle.importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
                             self.provider.derivation, true, ['deriveKey']);
-            }).then(function(pbesKey) {
+            }).then(function (pbesKey) {
 
                 // Generate cek
                 encryption = expand(self.provider.encryption);
@@ -2102,18 +2151,18 @@
                     case 'pbes':
                         // Derive key from password directly to encrypt
                         return getSubtle().deriveKey(expand(self.provider.derivation, {salt: UDMs[0]}),
-                        pbesKey, encryption, true, ['encrypt']);
+                                pbesKey, encryption, true, ['encrypt']);
                     default:
                         return getSubtle().generateKey(encryption, true, ['encrypt']);
                 }
-            }).then(function(key) {
+            }).then(function (key) {
 
                 // Encrypt content 
                 encryptionKey = key;
                 if (!encryption.iv)
                     encryption.iv = getSeed(8);
                 return getSubtle().encrypt(encryption, encryptionKey, data);
-            }).then(function(encryptedContent) {
+            }).then(function (encryptedContent) {
 
                 // Encrypted content
                 encryptedContentInfo = {
@@ -2125,7 +2174,7 @@
                     case 'keyagree':
                     case 'keytrans':
                         // Exctract public keys
-                        return Promise.all(recipients.map(function(recipient) {
+                        return Promise.all(recipients.map(function (recipient) {
                             return retrievePublicKey(recipient);
                         }));
                     case 'pbes':
@@ -2137,7 +2186,7 @@
                         encryptedContentInfo.contentEncryptionAlgorithm = pbes;
                         break;
                 }
-            }).then(function(keys) {
+            }).then(function (keys) {
                 switch (mode) {
                     case 'keyagree':
                     case 'keytrans':
@@ -2156,7 +2205,7 @@
                                 self.provider.derivation, true, ['deriveKey']);
                         break;
                 }
-            }).then(function(key) {
+            }).then(function (key) {
                 if (enveloping) {
                     origPrivateKey = key.privateKey || key;
                     var cert = alias && keyStore.getCertificate(alias);
@@ -2181,13 +2230,13 @@
                     if (cert && cert.tbsCertificate && cert.tbsCertificate.extensions)
                         keyIdentifier = cert.tbsCertificate.extensions.subjectKeyIdentifier;
                 }
-            }).then(function(info) {
+            }).then(function (info) {
                 if (enveloping) {
                     origPublicKey = info;
 
                     // Derive key encryption keys for every recipients
                     wrapping = (mode === 'keytrans' && self.provider.transwrapping) || self.provider.wrapping;
-                    return Promise.all(recipients.map(function(recipient, i) {
+                    return Promise.all(recipients.map(function (recipient, i) {
                         var algorithm;
                         switch (mode) {
                             case 'kek':
@@ -2203,18 +2252,18 @@
                         return getSubtle().deriveKey(algorithm, origPrivateKey, wrapping, true, ['wrapKey']);
                     }));
                 }
-            }).then(function(wrappingKeys) {
+            }).then(function (wrappingKeys) {
                 if (enveloping) {
 
                     // Wrap content encryption key for every recipients
-                    return Promise.all(recipients.map(function(recipient, i) {
+                    return Promise.all(recipients.map(function (recipient, i) {
                         return getSubtle().wrapKey('raw', encryptionKey, wrappingKeys[i], expand(wrapping, {ukm: UDMs[i]}));
                     }));
                 }
-            }).then(function(wrappedKeys) {
+            }).then(function (wrappedKeys) {
                 if (enveloping) {
                     // Create recipient info structures
-                    var recipientInfos = recipients.map(function(recipient, i) {
+                    var recipientInfos = recipients.map(function (recipient, i) {
                         var tbsCert = recipients[i].tbsCertificate,
                                 rid = tbsCert ? {
                                     issuerAndSerialNumber: {
@@ -2301,18 +2350,18 @@
          * @param {FormatedData} detached Detached data (use if not encapsulates)
          * @returns {Promise} Promise resolves with extracted data {@link gostSyntax.ContentInfo}
          */
-        verifyData: function(enveloped, detached) // <editor-fold defaultstate="collapsed">
+        verifyData: function (enveloped, detached) // <editor-fold defaultstate="collapsed">
         {
             var self = this, keyStore = self.keyStore, content, data, encap;
 
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
                 var contentInfo = checkType(enveloped, 'ContentInfo');
-                if (contentInfo.contentType !== 'signedData')
-                    throw new Error('Invalid signed data format');
+                if (contentInfo.contentType !== 'signedData' && contentInfo.contentType !== 'digestedData')
+                    throw new Error('Invalid signed or digested data format');
                 content = contentInfo.content;
 
                 // Check external
-                if (detached) 
+                if (detached)
                     detached = checkData(detached);
 
                 // Get encapsulated data
@@ -2320,63 +2369,75 @@
                 data = (encap && encap.eContent && encap.eContent) || detached;
 
                 // Validate certificate of signers
-                return Promise.all(content.signerInfos.map(function(signerInfo) {
-                    var sid = signerInfo.sid.issuerAndSerialNumber, selector = {
-                        issuer: sid.issuer,
-                        serialNumber: sid.serialNumber},
-                    certs = selectKeyStoreCertificates(keyStore, selector);
-                    if (certs.length > 0)
-                        return certs; // Trusted certificate, no validation required
-                    var allcerts = ((content.certificates || []).map(function(certInfo) {
-                        return certInfo.certificate;
+                if (content.signerInfos) {
+                    return Promise.all(content.signerInfos.map(function (signerInfo) {
+                        var sid = signerInfo.sid.issuerAndSerialNumber, selector = {
+                            issuer: sid.issuer,
+                            serialNumber: sid.serialNumber},
+                        certs = selectKeyStoreCertificates(keyStore, selector);
+                        if (certs.length > 0)
+                            return certs; // Trusted certificate, no validation required
+                        var allcerts = ((content.certificates || []).map(function (certInfo) {
+                            return certInfo.certificate;
+                        }));
+                        certs = selectCertificates(allcerts, selector);
+                        if (certs.length === 0)
+                            throw new Error('Certificate for verification not found');
+                        return self.validateCertificate(certs.concat(allcerts));
                     }));
-                    certs = selectCertificates(allcerts, selector);
-                    if (certs.length === 0)
-                        throw new Error('Certificate for verification not found');
-                    return self.validateCertificate(certs.concat(allcerts));
-                }));
+                }
 
-            }).then(function(paths) {
+            }).then(function (paths) {
 
                 // Verify signatures for each signers
-                return Promise.all(content.signerInfos.map(function(signerInfo, i) {
+                if (content.signerInfos) {
+                    return Promise.all(content.signerInfos.map(function (signerInfo, i) {
 
-                    // Choice data for verification
-                    var dataToVerify = data;
-                    if (signerInfo.signedAttrs) {
-                        if (!signerInfo.signedAttrs.messageDigest)
-                            throw new Error('Message digest must present in signed attributes');
-                        
-                        // To exclude implicit [0] need to reassemble signed attributes
-                        dataToVerify = getSyntax('SignedAttributes').encode(signerInfo.signedAttrs);
-                    }
-                    if (!dataToVerify)
-                        throw new Error('Data for verification not found');
+                        // Choice data for verification
+                        var dataToVerify = data;
+                        if (signerInfo.signedAttrs) {
+                            if (!signerInfo.signedAttrs.messageDigest)
+                                throw new Error('Message digest must present in signed attributes');
 
-                    var algorithm = expand(signerInfo.signatureAlgorithm, {hash: signerInfo.digestAlgorithm});
-                    return verifyValue(paths[i][0], algorithm, signerInfo.signatureValue, dataToVerify);
-                }));
+                            // To exclude implicit [0] need to reassemble signed attributes
+                            dataToVerify = getSyntax('SignedAttributes').encode(signerInfo.signedAttrs);
+                        }
+                        if (!dataToVerify)
+                            throw new Error('Data for verification not found');
 
-            }).then(function(results) {
-                // Verify results
-                for (var i = 0, n = results.length; i < n; i++)
-                    if (results[i] !== true)
-                        throw new Error('Signature not verified');
+                        var algorithm = expand(signerInfo.signatureAlgorithm, {hash: signerInfo.digestAlgorithm});
+                        return verifyValue(paths[i][0], algorithm, signerInfo.signatureValue, dataToVerify);
+                    }));
+                }
+                ;
 
-                // Calculate digests for signed data
-                return Promise.all(content.signerInfos.map(function(signerInfo) {
-                    if (signerInfo.signedAttrs && data)
-                        return getSubtle().digest(signerInfo.digestAlgorithm, data);
-                    return false;
-                }));
-            }).then(function(digests) {
+            }).then(function (results) {
+                if (content.signerInfos) {
+                    // Verify results
+                    for (var i = 0, n = results.length; i < n; i++)
+                        if (results[i] !== true)
+                            throw new Error('Signature not verified');
+
+                    // Calculate digests for signed data
+                    return Promise.all(content.signerInfos.map(function (signerInfo) {
+                        if (signerInfo.signedAttrs && data)
+                            return getSubtle().digest(signerInfo.digestAlgorithm, data);
+                        return false;
+                    }));
+                } else
+                    return getSubtle().digest(content.digestAlgorithm, data);
+
+            }).then(function (digests) {
 
                 // Check digests
-                content.signerInfos.forEach(function(signerInfo, i) {
-                    if (signerInfo.signedAttrs && data &&
-                            compareBuffers(digests[i], signerInfo.signedAttrs.messageDigest) !== 0)
-                        throw new Error('Data digest not verified');
-                });
+                if (content.signerInfos) {
+                    content.signerInfos.forEach(function (signerInfo, i) {
+                        if (signerInfo.signedAttrs && data &&
+                                compareBuffers(digests[i], signerInfo.signedAttrs.messageDigest) !== 0)
+                            throw new Error('Data digest not verified');
+                    });
+                } else if (compareBuffers(digests, content.digest) !== 0)
+                    throw new Error('Data digest not verified');
 
                 return {// Extracted data
                     contentType: (encap && encap.eContentType) || 'data',
@@ -2394,12 +2455,12 @@
          * @param {string} password Recipient key password
          * @returns {Promise} Promise resolves with decrypted data {@link gostSyntax.ContentInfo}
          */
-        decryptData: function(enveloped, alias, password) // <editor-fold defaultstate="collapsed">
+        decryptData: function (enveloped, alias, password) // <editor-fold defaultstate="collapsed">
         {
             var self = this, keyStore = self.keyStore, content, mode, privateKey,
                     info, derivation, wrapping, encryption;
 
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
 
                 var contentInfo = checkType(enveloped, 'ContentInfo');
                 if (contentInfo.contentType !== 'envelopedData' && contentInfo.contentType !== 'encryptedData')
@@ -2407,7 +2468,7 @@
                 content = contentInfo.content;
 
                 // Check recipient certificate for alias
-                var check = function(selector) {
+                var check = function (selector) {
                     var s = selectCertificateAlias(self.keyStore, selector);
                     if (alias && alias === s)
                         return true;
@@ -2533,7 +2594,7 @@
                 }
                 return gostCrypto.subtle.importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
                         derivation, true, ['deriveKey']);
-            }).then(function(key) {
+            }).then(function (key) {
                 privateKey = key;
 
                 // Get public key from message
@@ -2559,7 +2620,7 @@
                             throw Error('Originator certificate not found in key stores');
                         }
                 }
-            }).then(function(pulicKey) {
+            }).then(function (pulicKey) {
 
                 // Define algorithms
                 switch (mode) {
@@ -2593,7 +2654,7 @@
 
                 // Derive key
                 return getSubtle().deriveKey(derivation, privateKey, wrapping, true, ['unwrapKey', 'decrypt']);
-            }).then(function(unwrappingKey) {
+            }).then(function (unwrappingKey) {
 
                 // Unwrap key
                 switch (mode) {
@@ -2604,10 +2665,10 @@
                         return getSubtle().unwrapKey('raw', info.encryptedKey, unwrappingKey,
                                 wrapping, encryption, true, ['decrypt']);
                 }
-            }).then(function(encryptionKey) {
+            }).then(function (encryptionKey) {
 
                 return getSubtle().decrypt(encryption, encryptionKey, content.encryptedContentInfo.encryptedContent);
-            }).then(function(decryptedContent) {
+            }).then(function (decryptedContent) {
 
                 return {// Extracted data
                     contentType: content.encryptedContentInfo.contentType,
@@ -2626,6 +2687,8 @@
          *      <li>digestedData - Verify data digest and return encapContentInfo.eContent</li>
          *  </ul>
          * 
+         * Function use recursion extract for supported formats.
+         * 
          * @instance
          * @memberOf GostPKIX 
          * @param {FormatedData|gostSyntax.ContentInfo} enveloped Enveloped data
@@ -2633,10 +2696,10 @@
          * @param {string} password Password to decrypt private key
          * @returns {Promise} Promise resolves with {@link FormatedData} 
          */
-        extractData: function(enveloped, alias, password) // <editor-fold defaultstate="collapsed">
+        extractData: function (enveloped, alias, password) // <editor-fold defaultstate="collapsed">
         {
             var self = this;
-            return new root.Promise(call).then(function() {
+            return new root.Promise(call).then(function () {
 
                 var contentInfo = checkType(enveloped, 'ContentInfo');
 
@@ -2647,6 +2710,7 @@
                         return contentInfo.content;
                         break;
                     case 'signedData':
+                    case 'digestedData':
                         return self.verifyData(enveloped);
                         break;
                     case 'encryptedData':
@@ -2656,6 +2720,16 @@
                     default:
                         throw new Error('Data format not supported');
                 }
+            }).then(function (data) {
+                // If defined content type
+                var ct = data ? data.contentType : false;
+                if (ct === 'data' || ct === 'signedData' || ct === 'digestedData' ||
+                        ct === 'encryptedData' || ct === 'envelopedData')
+                    // Recourse execution
+                    return self.extractData(data, alias, password);
+                else
+                    return data;
+
             });
         } // </editor-fold>
     };

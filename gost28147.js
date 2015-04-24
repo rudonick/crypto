@@ -1473,13 +1473,13 @@
         } else
             randomSeed(ukm = new Uint8Array((mcount - 1) * k));
         // Output array
-        var d = new Uint8Array(mcount * k + m + 2), b = mask.buffer;
+        var d = new Uint8Array(mcount * k + m + 2), b = d.buffer;
         // Calculate MAC
         var zero32 = new Uint8Array(k);
         var mac = signMAC.call(this, key, zero32);
         d[0] = 0x22; // Magic code
         d[1] = mcount; // Count of masks
-        d.set(mac, 2);
+        d.set(new Uint8Array(mac), 2);
         d.set(ukm, k + m + 2);
         for (var i = 1; i < mcount; i++) {
             var mask = new Uint8Array(b, 2 + m + k * i);
@@ -2077,4 +2077,5 @@
 
     return Gost28147;
 }));
+
 
