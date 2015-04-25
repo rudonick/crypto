@@ -1437,7 +1437,7 @@
     }
 
 
-    // swap bytes in buffer
+    // Swap bytes in buffer
     function swap(s) {
         var src = new Uint8Array(s),
                 dst = new Uint8Array(src.length);
@@ -1446,6 +1446,12 @@
         return dst.buffer;
     }
 
+    // Calculate hash of data
+    function hash(d) {
+        if (this.hash) 
+            d = this.hash.digest(d);
+        return this.swaphash ? swap(d) : d;
+    }
 
     // Check buffer
     function buffer(d) {
@@ -1508,12 +1514,8 @@
     {
 
         // Stage 1
-        var alpha, b = buffer(data);
-        if (this.hash) {
-            // Calculate hash of data
-            alpha = atobi(this.hash.digest(b));
-        } else
-            alpha = atobi(b);
+        var b = buffer(data);
+        var alpha = atobi(hash.call(this, b));
 
         var q = this.q;
         var x = mod(atobi(buffer(privateKey)), q);
@@ -1577,12 +1579,8 @@
         if (compare(r, q) >= 0 || compare(s, q) >= 0)
             return false;
         // Stage 2
-        var alpha, b = buffer(data);
-        if (this.hash) {
-            // Calculate hash of data
-            alpha = atobi(this.hash.digest(b));
-        } else
-            alpha = atobi(b);
+        var b = buffer(data);
+        var alpha = atobi(hash.call(this, b));
         // Stage 3
         var e = mod(alpha, q);
         if (isZero(e) === 0)
@@ -1703,10 +1701,7 @@
         }
         // 2) Calculate a 256-bit hash of K(x,y,UKM):      
         // KEK(x,y,UKM) = gostR3411 (K(x,y,UKM)
-        if (this.hash)
-            return this.hash.digest(k);
-        else
-            return k;
+        return hash.call(this, k);
     } // </editor-fold>
 
     /**
@@ -1920,6 +1915,9 @@
         this.bitLength = hashLen;
         this.keyLength = keyLen;
 
+        // Swap hash for SignalCom algorithms
+        this.swaphash = algorithm.procreator === 'SC';
+
         // Hash function definition
         var hash = algorithm.hash;
         if (hash) {
@@ -1933,6 +1931,10 @@
                 hash.version = 2012;
                 hash.length = hashLen;
             }
+            hash.procreator = hash.procreator || algorithm.procreator;
+            
+            this.swaphash = this.swaphash || (hash.procreator === 'SC');
+                    
             if (!GostR3411)
                 GostR3411 = root.GostR3411;
             if (!GostR3411)
@@ -1940,7 +1942,7 @@
 
             this.hash = new GostR3411(hash);
         }
-
+        
         // Pregenerated seed for key exchange algorithms
         if (algorithm.ukm) // Now don't check size 
             this.ukm = algorithm.ukm;

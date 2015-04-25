@@ -658,24 +658,24 @@
         'id-tc26-agreement-gost-3410-12-256': 'GOST R 34.10-256-DH/GOST R 34.11-256',
         'id-tc26-agreement-gost-3410-12-512': 'GOST R 34.10-512-DH/GOST R 34.11-512',
         // SignalCom algorithms
-        'id-sc-gost28147-ecb': 'GOST 28147-89-ECB/E-SC',
-        'id-sc-gost28147-gamma': 'GOST 28147-89-CTR/E-SC',
-        'id-sc-gost28147-gfb': 'GOST 28147-89-CFB/E-SC',
-        'id-sc-gost28147-mac': 'GOST 28147-89-MAC/E-SC',
-        'id-sc-gostR3410-94': 'GOST R 34.10-94',
-        'id-sc-gostR3410-94-default': 'GOST R 34.10-94',
-        'id-sc-gostR3410-94-test': 'GOST R 34.10-94/S-TEST',
-        'id-sc-gostR3411-94': 'GOST R 34.11-94/D-SC',
-        'id-sc-gostR3411-94-with-gostR3410-94': 'GOST R 34.10-94/GOST R 34.11-94/D-SC',
-        'id-sc-gostR3411-94-with-gostR3410-2001': 'GOST R 34.10-2001/GOST R 34.11-94/D-SC',
-        'id-sc-cmsGostWrap': 'GOST 28147-89-SCKW/E-SC',
-        'id-sc-cmsGost28147Wrap': 'GOST 28147-89-KW/E-SC',
-        'id-sc-pbeWithGost3411AndGost28147': {derivation: {name: 'GOST R 34.11-94-PBKDF2/D-SC'}, encryption: {name: 'GOST 28147-ECB/E-SC'}},
-        'id-sc-pbeWithGost3411AndGost28147CFB': {derivation: {name: 'GOST R 34.11-94-PBKDF2/D-SC'}, encryption: {name: 'GOST 28147-CFB/E-SC'}},
-        'id-sc-gostR3410-2001': 'GOST R 34.10-2001',
-        'id-sc-hmacWithGostR3411': 'GOST R 34.11-94-HMAC/D-SC',
-        'id-sc-r3410-ESDH-r3411kdf': 'GOST R 34.10-2001/GOST R 34.11-94/D-SC',
-        'id-sc-ecdh-singlePass-cofactor-r3411kdf': 'GOST R 34.10-2001-SINGLEPASS/GOST R 34.11-94-KDF/D-SC',
+        'id-sc-gost28147-ecb': 'GOST 28147-89-ECB/SC',
+        'id-sc-gost28147-gamma': 'GOST 28147-89-CTR/SC',
+        'id-sc-gost28147-gfb': 'GOST 28147-89-CFB/SC',
+        'id-sc-gost28147-mac': 'GOST 28147-89-MAC/SC',
+        'id-sc-gostR3410-94': 'GOST R 34.10-94/SC',
+        'id-sc-gostR3410-94-default': 'GOST R 34.10-94/SC',
+        'id-sc-gostR3410-94-test': 'GOST R 34.10-94/SC/S-TEST',
+        'id-sc-gostR3411-94': 'GOST R 34.11-94/SC',
+        'id-sc-gostR3411-94-with-gostR3410-94': 'GOST R 34.10-94/GOST R 34.11-94/SC',
+        'id-sc-gostR3411-94-with-gostR3410-2001': 'GOST R 34.10-2001/GOST R 34.11-94/SC',
+        'id-sc-cmsGostWrap': 'GOST 28147-89-SCKW/SC',
+        'id-sc-cmsGost28147Wrap': 'GOST 28147-89-KW/SC',
+        'id-sc-pbeWithGost3411AndGost28147': {derivation: {name: 'GOST R 34.11-94-PBKDF2/SC'}, encryption: {name: 'GOST 28147-ECB/SC'}},
+        'id-sc-pbeWithGost3411AndGost28147CFB': {derivation: {name: 'GOST R 34.11-94-PBKDF2/SC'}, encryption: {name: 'GOST 28147-CFB/SC'}},
+        'id-sc-gostR3410-2001': 'GOST R 34.10-2001/SC',
+        'id-sc-hmacWithGostR3411': 'GOST R 34.11-94-HMAC/SC',
+        'id-sc-r3410-ESDH-r3411kdf': 'GOST R 34.10-2001/GOST R 34.11-94/SC',
+        'id-sc-ecdh-singlePass-cofactor-r3411kdf': 'GOST R 34.10-2001-SINGLEPASS/GOST R 34.11-94-KDF/SC',
         // RSA algorithms
         rsaEncryption: 'RSASSA-PKCS1-v1_5',
         sha1withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'sha-1'}},
@@ -937,7 +937,7 @@
             hmac: algorithms['id-HMACGostR3411-94'],
             agreement: algorithms['id-GostR3410-94-CryptoPro-ESDH'],
             encryption: {id: 'id-Gost28147-89', name: 'GOST 28147-89', block: 'CFB', sBox: 'E-A', keyMeshing: 'CP'},
-            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 1000}
+            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 2000}
         },
         'CP-01': {
             signature: algorithms['id-GostR3411-94-with-GostR3410-2001'],
@@ -948,7 +948,7 @@
             hmac: algorithms['id-HMACGostR3411-94'],
             agreement: algorithms['id-GostR3410-2001-CryptoPro-ESDH'],
             encryption: {id: 'id-Gost28147-89', name: 'GOST 28147-89-CFB-CPKM', sBox: 'E-A'},
-            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 1000}
+            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 2000}
         },
         'TC-256': {
             signature: algorithms['id-tc26-signwithdigest-gost3410-12-256'],
@@ -959,7 +959,7 @@
             hmac: algorithms['id-tc26-hmac-gost-3411-12-256'],
             agreement: algorithms['id-tc26-agreement-gost-3410-12-256'],
             encryption: {id: 'id-Gost28147-89', name: 'GOST 28147-89-CFB-CPKM', sBox: 'E-A'},
-            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-256-12-PBKDF2', iterations: 1000}
+            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-256-12-PBKDF2', iterations: 2000}
         },
         'TC-512': {
             signature: algorithms['id-tc26-signwithdigest-gost3410-12-512'],
@@ -970,33 +970,33 @@
             hmac: algorithms['id-tc26-hmac-gost-3411-12-512'],
             agreement: algorithms['id-tc26-agreement-gost-3410-12-512'],
             encryption: {id: 'id-Gost28147-89', name: 'GOST 28147-89-CFB-CPKM', sBox: 'E-A'},
-            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-512-PBKDF2', iterations: 1000}
+            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-512-PBKDF2', iterations: 2000}
         },
         'SC-94': {
             signature: algorithms['id-sc-gostR3411-94-with-gostR3410-94'],
             generation: {id: 'id-sc-gostR3410-94', name: 'GOST R 34.10-94', namedParam: 'S-A'},
             digest: algorithms['id-sc-gostR3411-94'],
-            encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-89-CFB/E-SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])},  
+            encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-89-CFB/SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])},  
             hmac: algorithms['id-sc-hmacWithGostR3411'],
             wrapping: ['id-sc-cmsGostWrap'],
             agreement: algorithms['id-sc-r3410-ESDH-r3411kdf'],
-            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 1000},
+            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 2048},
             pbes: {id: 'id-sc-pbeWithGost3411AndGost28147CFB', 
-                derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/D-SC', iterations: 1000}, 
-                encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-CFB/E-SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])}}
+                derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048}, 
+                encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-CFB/SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])}}
         },
         'SC-01': {
             signature: algorithms['id-sc-gostR3411-94-with-gostR3410-2001'],
-            generation: {id: 'id-sc-gostR3410-2001', name: 'GOST R 34.10-2001', namedCurve: 'P-256'},
+            generation: {id: 'id-sc-gostR3410-2001', name: 'GOST R 34.10-2001/SC', namedCurve: 'P-256'},
             digest: algorithms['id-sc-gostR3411-94'],
-            encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-89-CFB/E-SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])},  
+            encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-89-CFB/SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])},  
             hmac: algorithms['id-sc-hmacWithGostR3411'],
             wrapping: algorithms['id-sc-cmsGostWrap'],
             agreement: algorithms['id-sc-r3410-ESDH-r3411kdf'],
-            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 1000},
+            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048},
             pbes: {id: 'id-sc-pbeWithGost3411AndGost28147CFB', 
-                derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/D-SC', iterations: 1000}, 
-                encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-CFB/E-SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])}}
+                derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048}, 
+                encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-CFB/SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])}}
         },
         'RSA-1024': {
             signature: algorithms['sha1withRSAEncryption'],
@@ -1059,7 +1059,7 @@
     ['RSA-1024', 'RSA-2048', 'RSA-4096', 'ECDSA-256', 'ECDSA-384', 'ECDSA-521'].forEach(function(name) {
         var provider = providers[name];
         provider.derivation = provider.derivation || {id: 'PBKDF2', name: 'PBKDF2',
-            iterations: 1000, hash: provider.digest};
+            iterations: 2048, hash: provider.digest};
         provider.pbes = provider.pbes || {id: 'PBES2',
             derivation: provider.derivation,
             encryption: provider.encryption
@@ -1109,7 +1109,7 @@
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Sat Apr 25 2015 01:09:55 GMT+0300 (MSK)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Sat Apr 25 2015 23:40:51 GMT+0300 (MSK)
 </footer>
 
 </div>

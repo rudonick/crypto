@@ -2409,7 +2409,6 @@
                         return verifyValue(paths[i][0], algorithm, signerInfo.signatureValue, dataToVerify);
                     }));
                 }
-                ;
 
             }).then(function (results) {
                 if (content.signerInfos) {
@@ -2723,10 +2722,10 @@
             }).then(function (data) {
                 // If defined content type
                 var ct = data ? data.contentType : false;
-                if (ct === 'data' || ct === 'signedData' || ct === 'digestedData' ||
+                if (ct === 'signedData' || ct === 'digestedData' ||
                         ct === 'encryptedData' || ct === 'envelopedData')
                     // Recourse execution
-                    return self.extractData(data, alias, password);
+                    return self.extractData(data.content, alias, password);
                 else
                     return data;
 
