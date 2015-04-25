@@ -34,8 +34,8 @@
  * 
  */
 
-(function(root, factory) {
-    
+(function (root, factory) {
+
     /*
      * Module imports and exports
      * 
@@ -52,8 +52,8 @@
         root.GostR3411 = factory(root.gostRandom, root.Gost28147);
     }
     // </editor-fold>
-    
-}(this, function(gostRandom, Gost28147) {
+
+}(this, function (gostRandom, Gost28147) {
 
     /*
      * GOST R 34.11-2012
@@ -107,7 +107,7 @@
     }
 
     // Constant C 
-    var C = (function(s) {
+    var C = (function (s) {
         var h = new Int32Array(b64decode(s)),
                 r = new Array(12);
         for (var i = 0; i < 12; i++)
@@ -118,7 +118,7 @@
             '2ahRWTXCrDYvxKXRK43RaZAGm5LLK4n0msTbTTtEtIke3jaccfi3TkFBbgwCqucDp8mTTUJbH5vbWiODUURhcmAqH8uS3DgOVJwHppqKK3uxzrLbC0QKgIQJDeC3Vdk8JEKJJRs6fTreXxbs2JpMlJsiMRZUWo837ZxFmPvHtHTDtjsV0fqYNvRSdjswbB56SzNprwJn558DYTMbiuH/H9t4iv8c50GJ8/PkskjlKjhSbwWApt6+qxst84HNpMprXdhvwEpZot6Ybkd9Hc2678q5SOrvcR2KeWaEFCGAASBhB6vru2v62JT+WmPNxgIw+4nI79CezXsg1xvxSpK8SJkbstnVF/T6UijhiKqkHeeGzJEYne+AXZufITDUEiD4dx3fvDI8pM16sUkEsIAT0roxFvFn5443');
 
     // Precalc Ax 
-    var Ax = (function(s) {
+    var Ax = (function (s) {
         return new Int32Array(b64decode(s));
     })(
             '5vh+XFtxH9Alg3eACST6FshJ4H6FLqSoW0aGoY8GwWoLMumi13tBbqvaN6RngVxm9heWqBpoZnb13AtwY5GVS0hi84235kvx/1ximmi9hcXLgn2m/NdXlWbTba9pufCJNWyfdEg9g7B8vOyxI4yZoTanAqwxxHCNnrao0C+839aLGfpR5bOuN5zPtUCKEn0LvAx4tQggj1rlM+OEIojs7c7Cx9N3wV/S7HgXtlBdD165TMLAgzaHHYwgXbTLCwStdjyFWyigiS9YjRt59v8yVz/s9p5DEZM+D8DTn4A6GMnuAQom9fOtgxDv6PRBGXmmXc2hDH3pOhBKG+4dEkjpLFO/8tshhHM5tPUMz6aiPQlftLyc2EeYzeiKLYsHHFb5f3dxaVp1apzF8C5xoLoevKZj+atCFeZyLrGeIt5fu3gNuc4PJZS6FIJSDmOXZk2ELwMeagII6phcfyFEob5r8Ho3yxzRY2Lbg+COK0sxHGTPcEebq5YOMoVrqYa53ucetUeMh3r1bOm4/kKIX2HW/RvdAVaWYjjIYiFXkj74qS78l/9CEUR2+J19NQhWRSzrTJDJsOCnElYjCFAt+8sBbC16A/qnpkhF' +
@@ -361,11 +361,20 @@
      * http://tools.ietf.org/html/rfc5831
      * 
      */  // <editor-fold defaultstate="collapsed">
-    
+
     // Copy len values from s[sOfs] to d[dOfs]
     function arraycopy(s, sOfs, d, dOfs, len) {
         for (var i = 0; i < len; i++)
             d[dOfs + i] = s[sOfs + i];
+    }
+
+    // Swap bytes in buffer
+    function swap(s) {
+        var src = new Uint8Array(s),
+                dst = new Uint8Array(src.length);
+        for (var i = 0, n = src.length; i < n; i++)
+            dst[n - i - 1] = src[i];
+        return dst.buffer;
     }
 
     // (i + 1 + 4(k - 1)) = 8i + k      i = 0-3, k = 1-8
@@ -489,7 +498,7 @@
             carry = sum >>> 8;
         }
     }
-    
+
     // reset the chaining variables to the IV values.
     var C2 = new Uint8Array([
         0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF,
@@ -555,8 +564,9 @@
         }
         process.call(this, L, 0);
         process.call(this, this.Sum, 0);
-
-        return this.H.buffer;
+        
+        var h = this.H.buffer;
+        return this.swaphash ? swap(h) : h;
     } // </editor-fold>
 
     /** 
@@ -804,7 +814,7 @@
 
         algorithm = algorithm || {};
         this.name = (algorithm.name || 'GOST R 34.10') + '-' + ((algorithm.version || 2012) % 100) + '-' +
-                (algorithm.length || 256) + 
+                (algorithm.length || 256) +
                 (((algorithm.mode || 'HASH') !== 'HASH') ? '-' + algorithm.mode : '') +
                 (typeof algorithm.sBox === 'string' ? '/' + algorithm.sBox : '');
 
@@ -814,19 +824,20 @@
             case 1994:
                 this.digest = digest94;
                 // Define chiper algorithm
-                var sBox = (algorithm.sBox || 'D-A').toUpperCase();
+                var sBox = (algorithm.sBox || (algorithm.procreator === 'SC' ? 'D-SC' : 'D-A')).toUpperCase();
 
                 if (!Gost28147)
                     Gost28147 = root.Gost28147;
                 if (!Gost28147)
                     throw new NotSupportedError('Object Gost28147 not found');
 
-                if (this.digest === digest94)
-                    this.cipher = new Gost28147({
-                        name: 'GOST 28147',
-                        block: 'ECB',
-                        sBox: sBox
-                    });
+                this.cipher = new Gost28147({
+                    name: 'GOST 28147',
+                    block: 'ECB',
+                    sBox: sBox,
+                    procreator: algorithm.procreator
+                });
+
                 break;
             case 2012:
                 this.digest = digest2012;
@@ -834,6 +845,9 @@
             default:
                 throw new NotSupportedError('Algorithm version ' + algorithm.version + ' not supported');
         }
+
+        // Swap hash for SignalCom algorithms
+        this.swaphash = algorithm.procreator === 'SC';
 
         switch (algorithm.mode || 'HASH') {
             case 'HASH':
