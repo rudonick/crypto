@@ -643,7 +643,7 @@
             if (!el) {
                 el = document.createElement('script');
                 el.setAttribute('src', src);
-                (document.head || document.getElementsByTagName('head')[0]).appendChild(el);
+                document.head.appendChild(el);
             }
         }
     }

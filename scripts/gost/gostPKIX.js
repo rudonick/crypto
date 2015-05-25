@@ -112,18 +112,28 @@
         return seed.buffer;
     }
 
+    function removeMarkers(s) {
+        return s ? s.replace(/[\u0000-\u0004]/g, '') : s;
+    }
+
     // Check equals name
     function equalNames(name1, name2) {
         for (var key in name1)
-            if (key !== 'buffer' &&
-                    (typeof name2[key] === 'undefined' || name1[key] !== name2[key]))
+            if (key !== 'buffer' && (typeof name2[key] === 'undefined' || 
+                    removeMarkers(name1[key]) !== removeMarkers(name2[key])))
                 return false;
         for (var key in name2)
-            if (key !== 'buffer' &&
-                    (typeof name1[key] === 'undefined' || name1[key] !== name2[key]))
+            if (key !== 'buffer' && (typeof name1[key] === 'undefined' || 
+                    removeMarkers(name1[key]) !== removeMarkers(name2[key])))
                 return false;
         return true;
     }
+
+    // Convert ArrayBuffer to int16
+    function toInt16(value) {
+        return typeof value === 'number' || value instanceof Number ? value : getInt16().encode(value);
+    }
+    ;
 
     // Convert number to bigendian hex string
     function numberHex(s) {
@@ -284,7 +294,7 @@
                 if (authorityKeyIdentifier.authorityCertIssuer && authorityKeyIdentifier.authorityCertIssuer[0].directoryName)
                     selector.issuer = authorityKeyIdentifier.authorityCertIssuer[0].directoryName;
                 if (authorityKeyIdentifier.authorityCertSerialNumber)
-                    selector.serialNumber = getInt16().encode(authorityKeyIdentifier.authorityCertSerialNumber);
+                    selector.serialNumber = toInt16(authorityKeyIdentifier.authorityCertSerialNumber);
             }
             // Is last self-signed sertificate? 
             if (equalNames(current.tbsCertificate.subject, current.tbsCertificate.issuer))
@@ -341,7 +351,7 @@
     }
 
     // Returns promise on resolve the private key associated with the given alias, 
-    // using the given password to recover it. 
+    // using the given password (or secret key) to recover it. 
     function retrievePrivateKey(self, alias, password)
     {
         var keyData, key, derivation, encryption;
@@ -350,14 +360,21 @@
             if (!key)
                 throw new Error('Private key not found');
             if (key.encryptionAlgorithm) {
-                if (!password)
-                    throw new Error('Password required to decrypt key');
-                derivation = key.encryptionAlgorithm.derivation;
-                encryption = key.encryptionAlgorithm.encryption;
                 keyData = key.encryptedData;
-                // Import password for key generation
-                return getSubtle().importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
-                        derivation, false, ['deriveKey']);
+                if (key.encryptionAlgorithm.id === 'PBES2') {
+                    if (!(password && (typeof password === 'string' || password instanceof String)))
+                        throw new Error('Password required to decrypt key');
+                    derivation = key.encryptionAlgorithm.derivation;
+                    encryption = key.encryptionAlgorithm.encryption;
+                    // Import password for key generation
+                    return getSubtle().importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
+                            derivation, false, ['deriveKey']);
+                } else {
+                    // Base encryption. Password should be secret key
+                    if (!(password && password.type === 'secret'))
+                        throw new Error('Secret key required to decrypt key');
+                    encryption = key.encryptionAlgorithm;
+                }
             } else { // Key already decrypted
                 if (key instanceof ArrayBuffer)
                     keyData = key; // Secret key
@@ -365,11 +382,12 @@
                     keyData = getSyntax('PrivateKeyInfo').encode(key);
             }
         }).then(function (passwordKey) {
-            // Generate key from password. Algorithm PKCS#5 PBKDF2 
-            return derivation &&
-                    getSubtle().deriveKey(derivation, passwordKey, encryption, true, ['decrypt']);
+            // Generate key from password or return ready key. Algorithm PKCS#5 PBKDF2 
+            return derivation ?
+                    getSubtle().deriveKey(derivation, passwordKey, encryption, true, ['decrypt']) :
+                    password;
         }).then(function (CEK) {
-            // Encrypt content with CEK. Algorithm PKCS#5 PBES2
+            // Decrypt content with CEK. Algorithm PKCS#5 PBES2
             return encryption ? getSubtle().decrypt(encryption, CEK, keyData) :
                     keyData; // Data already encrypted
         }).then(function (data) {
@@ -392,7 +410,7 @@
     }
 
 
-    // Assigns the given key to the given alias, protecting it with the given password.
+    // Assigns the given key to the given alias, protecting it with the given password (or secret key).
     function storePrivateKey(self, privateKey, alias, password) {
         var keyData, key, derivation, encryption,
                 type = privateKey.type;
@@ -405,16 +423,24 @@
         }).then(function (data) {
             keyData = data;
             if (password) {
-                // Generate random value as salt for password based CEK generation
-                // In this case it's enough one iteration - no much data to hack
-                derivation = expand(self.provider.pbes.derivation, {salt: getSeed(32), iterations: 1}),
-                        encryption = expand(self.provider.pbes.encryption);
-                if (!encryption.iv)
-                    encryption.iv = getSeed(8);
+                if (typeof password === 'string' || password instanceof String) {
+                    // Generate random value as salt for password based CEK generation
+                    // In this case it's enough one iteration - no much data to hack
+                    derivation = expand(self.provider.pbes.derivation, {salt: getSeed(32), iterations: 1});
+                    encryption = expand(self.provider.pbes.encryption);
+                    if (!encryption.iv)
+                        encryption.iv = getSeed(8);
 
-                // Import password for key generation
-                return getSubtle().importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
-                        derivation, false, ['deriveKey']);
+                    // Import password for key generation
+                    return getSubtle().importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
+                            derivation, false, ['deriveKey']);
+                } else if (password.type === 'secret') {
+                    // Base encryption
+                    encryption = expand(self.provider.encryption);
+                    if (!encryption.iv)
+                        encryption.iv = getSeed(8);
+                } else
+                    throw new Error('Password must be string or secret key type');
             } else {
                 if (type === 'secret')
                     key = keyData;
@@ -422,20 +448,31 @@
                     key = getSyntax('PrivateKeyInfo').decode(keyData);
             }
         }).then(function (passwordKey) {
-            // Generate key from password. Algorithm PKCS#5 PBKDF2 
-            return derivation && getSubtle().deriveKey(derivation, passwordKey, encryption, true, ['encrypt']);
+            // Generate key from password or return ready key. Algorithm PKCS#5 PBKDF2 
+            return derivation ?
+                    getSubtle().deriveKey(derivation, passwordKey, encryption, true, ['encrypt']) :
+                    password;
         }).then(function (CEK) {
             // Encrypt content with CEK. Algorithm PKCS#5 PBES2
             return encryption && getSubtle().encrypt(encryption, CEK, keyData);
         }).then(function (data) {
             if (encryption)
-                key = {
-                    encryptionAlgorithm: expand(self.provider.pbes, {
-                        derivation: derivation,
-                        encryption: encryption
-                    }),
-                    encryptedData: data
-                };
+                if (derivation) {
+                    // Password based encryption
+                    key = {
+                        encryptionAlgorithm: expand(self.provider.pbes, {
+                            derivation: derivation,
+                            encryption: encryption
+                        }),
+                        encryptedData: data
+                    };
+                } else {
+                    // Base enctyption
+                    key = {
+                        encryptionAlgorithm: encryption,
+                        encryptedData: data
+                    };
+                }
             if (alias)
                 self.keyStore.setKey(alias, key);
             return key;
@@ -450,11 +487,57 @@
      * 
      * For storage of keys, you can use an external repository, if you implement this interface.
      * 
+     * @param {Object} storage Storage object with functions setItem, getItem likes localStorage or sessionStorage
      * @class KeyStore
      */
-    function KeyStore() // <editor-fold defaultstate="collapsed">
+    function KeyStore(storage) // <editor-fold defaultstate="collapsed">
     {
         this.entries = {};
+        if (storage) {
+            var saved = JSON.parse(storage.getItem('gostCrypto.keyStore') || '{}');
+            for (var name in saved) {
+                var d = this.entries[name] = {}, s = saved[name];
+                if (s.crl)
+                    d.crl = getSyntax('CertificateList').decode(s.crl);
+                if (s.request)
+                    d.request = getSyntax('CertificationRequest').decode(s.request);
+                if (s.cert)
+                    d.cert = getSyntax('Certificate').decode(s.cert);
+                if (s.key)
+                    try {
+                        d.key = getSyntax('PrivateKeyInfo').decode(s.key);
+                    } catch (e) {
+                        try {
+                            d.key = getSyntax('EncryptedPrivateKeyInfo').decode(s.key);
+                        } catch (e) {
+                            d.key = getPEM().decode(s.key, 'KEY');
+                        }
+                    }
+            }
+            this.save = function () {
+                var saving = {}
+                for (var name in this.entries) {
+                    var d = saving[name] = {}, s = this.entries[name];
+                    if (s.crl)
+                        d.crl = getSyntax('CertificateList').encode(s.crl, 'PEM');
+                    if (s.request)
+                        d.request = getSyntax('CertificationRequest').encode(s.request, 'PEM');
+                    if (s.cert)
+                        d.cert = getSyntax('Certificate').encode(s.cert, 'PEM');
+                    if (s.key)
+                        try {
+                            d.key = getSyntax('PrivateKeyInfo').encode(s.key, 'PEM');
+                        } catch (e) {
+                            try {
+                                d.key = getSyntax('EncryptedPrivateKeyInfo').encode(s.key, 'PEM');
+                            } catch (e) {
+                                d.key = getPEM().encode(s.key, 'KEY');
+                            }
+                        }
+                }
+                storage.setItem('gostCrypto.keyStore', JSON.stringify(saving));
+            };
+        }
     } // </editor-fold>
 
     // Store keys and trusted certificates    
@@ -494,7 +577,8 @@
          */
         deleteEntry: function (alias) // <editor-fold defaultstate="collapsed">
         {
-            delete this.entires[alias];
+            delete this.entries[alias];
+            this.save && this.save();
         }, // </editor-fold>
         /**
          * Returns the certificate associated with the given alias.
@@ -565,6 +649,7 @@
         {
             var entry = this.entries[alias] || (this.entries[alias] = {});
             entry.cert = checkType(cert, 'Certificate');
+            this.save && this.save();
         }, // </editor-fold>
         /**
          * Set issuered CRL 
@@ -578,6 +663,7 @@
         {
             var entry = this.entries[alias] || (this.entries[alias] = {});
             entry.crl = checkType(crl, 'CertificateList');
+            this.save && this.save();
         }, // </editor-fold>
         /**
          * Set issuered CRL 
@@ -591,9 +677,10 @@
         {
             var entry = this.entries[alias] || (this.entries[alias] = {});
             entry.request = checkType(request, 'CertificationRequest');
+            this.save && this.save();
         }, // </editor-fold>
         /**
-         * Assigns the given key to the given alias, protecting it with the given password.
+         * Assigns the given key to the given alias
          * 
          * @instance
          * @memberOf KeyStore
@@ -613,6 +700,7 @@
             }
             var entry = this.entries[alias] || (this.entries[alias] = {});
             entry.key = key;
+            this.save && this.save();
         }, // </editor-fold>
         /**
          * Returns a Array of Certificates
@@ -693,6 +781,7 @@
      * @param {string} providerName Name of crypto provider, defined in {@link gostObject.providers}
      * @param {string} outputFormat Format for output encoded data: DER or PEM
      * @param {KeyStore} keyStore Optional external key store. Internal storage used if the keyStore not specified.
+     * Storage objects like localStorage, sessionStorage with functions setItem and getItem also can be used.
      * 
      * @class GostPKIX
      */
@@ -724,7 +813,8 @@
          * @field keyStore
          * @type {KeyStore} 
          */
-        this.keyStore = keyStore || new KeyStore();
+        this.keyStore = keyStore ? (keyStore.getItem && keyStore.setItem ?
+                new KeyStore(keyStore) : keyStore) : new KeyStore();
     }
 
     GostPKIX.prototype = {
@@ -736,7 +826,7 @@
          * @param {(FormatedData|gostSyntax.PFX)} data Keystore data
          * @param {String} password Password for encrypt store
          * If no password whole key store will not be encrypted, but only privateKeys 
-         * will encrypted by individual passwords
+         * will encrypted by individual passwords (or secret keys)
          * @returns {Promise} Promise resolves with imported key store object {@link gostSyntax.PFX}
          */
         importKeyStore: function (data, password) // <editor-fold defaultstate="collapsed">
@@ -969,7 +1059,7 @@
          * @memberOf GostPKIX 
          * @param {string} alias Key alias
          * @param {string} format Exported format: p8, p8e p12
-         * @param {string} password Password to decrypt/encrypt key
+         * @param {(string|Key)} password Password (or secret key) to decrypt/encrypt key
          * @returns {Promise} Promise resolves with exported {@link FormatedData}
          */
         exportKey: function (alias, format, password) {
@@ -1008,15 +1098,16 @@
          *      <li><b>p8e</b> PKCS#8 EncryptedPrivateKeyInfo format</li>
          *      <li><b>p12</b> PFX key store format</li>
          *  </ul>
-         * If password specified key stored in encryption mode. 
-         * If key already encrypted or password not specified key stored w/o any conversion.
-         * For change key password simple exportKey in 'p8' format with old password and importKey with new password.
+         * If password (or secret key) specified key stored in encryption mode. 
+         * If key already encrypted or password (or secret key) not specified key stored w/o any conversion.
+         * For change key password (or secret key) simple exportKey in 'p8' format with old 
+         * password (or secret key) and importKey with new password (or secret key).
          * 
          * @instance
          * @memberOf GostPKIX 
          * @param {(FormatedData|gostSyntax.PrivateKeyInfo|gostSyntax.EncryptedPrivateKeyInfo)} key 
          * @param {string} alias Key alias
-         * @param {string} password Password to decrypt/encrypt key
+         * @param {(string|Key)} password Password (or secret key) to decrypt/encrypt key
          * @returns {Promise}
          */
         importKey: function (key, alias, password) {
@@ -1050,7 +1141,7 @@
          * @memberOf GostPKIX
          * @param {gostSyntax.TBSCertificate} tbsCert Certificate prototype
          * @param {string} alias Certificate and key alias
-         * @param {string} password New password for CA certificate 
+         * @param {(string|Key)} password New password (or secret key) for CA certificate 
          * @returns {Promise} Promise with {@link FormatedData} certificate
          */
         createCertificate: function (tbsCert, alias, password) // <editor-fold defaultstate="collapsed">
@@ -1166,7 +1257,7 @@
          * structure: serialNumber, validity and extensions
          * @param {string} reqalias alias for retrieve certification request from keyStore. Issuered certificate also stored to this alias
          * @param {string} alias Issuer private key alias in keyStore
-         * @param {string} password Password for private key 
+         * @param {(string|Key)} password Password (or secret key) for private key 
          * @returns {Promise} Promise resolves with {@link FormatedData} certificate
          */
         issueCertificate: function (tbsCert, reqalias, alias, password) // <editor-fold defaultstate="collapsed">
@@ -1391,11 +1482,11 @@
                     if (certificate.contentType === 'signedData')
                         certificate = certificate.content.certificates[0];
                     if (!certificate)
-                        throw new Error('Invalid format')
+                        throw new Error('Invalid format');
                 }
                 tbsCertificate = certificate.tbsCertificate;
                 if (!tbsCertificate)
-                    throw new Error('Invalid format')
+                    throw new Error('Invalid format');
 
                 // Seft-signed?
                 var authorityCert;
@@ -1409,7 +1500,7 @@
                         if (authorityKeyIdentifier.authorityCertIssuer && authorityKeyIdentifier.authorityCertIssuer[0].directoryName)
                             selector.issuer = authorityKeyIdentifier.authorityCertIssuer[0].directoryName;
                         if (authorityKeyIdentifier.authorityCertSerialNumber)
-                            selector.serialNumber = getInt16().encode(authorityKeyIdentifier.authorityCertSerialNumber);
+                            selector.serialNumber = toInt16(authorityKeyIdentifier.authorityCertSerialNumber);
                     }
                     var found = selectKeyStoreCertificates(keyStore, selector);
                     if (found && found.length > 0)
@@ -1496,7 +1587,7 @@
          * @memberOf GostPKIX
          * @param {gostSyntax.CertificationRequestInfo} cri - Prototype for request
          * @param {string} alias Alias for private key
-         * @param {string} password Password to encrypt private key
+         * @param {(string|Key)} password Password (or secret key) to encrypt private key
          * @returns {Promise} Promise resolves with {@link FormatedData} certification request 
          */
         createRequest: function (cri, alias, password) // <editor-fold defaultstate="collapsed">
@@ -1627,7 +1718,7 @@
          * @memberOf GostPKIX 
          * @param {gostSyntax.TBSCertList} tbsCRL CRL prototype, revokedCertificates contains only new certificates to add into CRL
          * @param {string} alias Alias to authority private key
-         * @param {string} password Password for encoding private key
+         * @param {(string|Key)} password Password (or secret key) for encoding private key
          * @returns {Promise} Promise resolves with CRL {@link FormatedData}
          */
         updateCRL: function (tbsCRL, alias, password) // <editor-fold defaultstate="collapsed">
@@ -1758,7 +1849,7 @@
          * 
          s         * @instance
          * @memberOf GostPKIX
-         * @param {(string)} alias Key store alias or selector for CRL
+         * @param {string} alias Key store alias or selector for CRL
          * @param {string} format Optional export format: 'x509' (default) or 'p7c' or 'p12'
          * @returns {Promise} Promise resolves with CRL {@link FormatedData} 
          */
@@ -1874,7 +1965,7 @@
          * @param {(FormatedData|gostSyntax.ContentInfo)} data Source of data
          * @param {(string|string[])} mode Sign mode(s): string or array of string mode values: detached, certpath, attrs
          * @param {string} alias Alias for signer key
-         * @param {string} password Password to decrypt key
+         * @param {(string|Key)} password Password (or secret key) to decrypt key
          * @returns {Promise} Promise resolves with CMS {@link FormatedData}
          */
         signData: function (data, mode, alias, password) // <editor-fold defaultstate="collapsed">
@@ -2049,34 +2140,34 @@
          *  <ul>
          *      <li><b>'keyagree'</b> Key agreement protocol
          *          <ul>
-         *              <li>encryptData(keyStore, data, mode, recipient) - generate ephemeral keys</li>
-         *              <li>encryptData(keyStore, data, mode, recipient, alias, password) - use sender key</li>
+         *              <li>encryptData(data, 'keyagree', recipient) - generate ephemeral keys</li>
+         *              <li>encryptData(data, 'keyagree', recipient, alias, password) - use sender key</li>
          *          </ul>
          *      </li>
          *      <li><b>'keytrans'</b> Key transport protocol
          *          <ul>
-         *              <li>encryptData(keyStore, data, mode, recipient) - generate ephemeral keys</li>
-         *              <li>encryptData(keyStore, data, mode, recipient, alias, password) - use sender key</li>
+         *              <li>encryptData(data, 'keytrans', recipient) - generate ephemeral keys</li>
+         *              <li>encryptData(data, 'keytrans', recipient, alias, password) - use sender key</li>
          *          </ul>
          *      </li>
          *      <li><b>'kek'</b> Key encryption key protocol
          *          <ul>
-         *              <li>encryptData(keyStore, data, mode, alias, password) - use secret key from key store</li>
+         *              <li>encryptData(data, 'kek', alias, password) - use secret key from key store</li>
          *          </ul>
          *      </li>
          *      <li><b>'pbkek'</b> Password based key encryption key protocol. Result EnvelopedData
          *          <ul>
-         *              <li>encryptData(keyStore, data, mode, password) - use password for key encryption</li>
+         *              <li>encryptData(data, 'pbkek', password) - use password for key encryption</li>
          *          </ul>
          *      </li>
          *      <li><b>'keyman'</b> Key management protocol. Simple encryption with symmetric key
          *          <ul>
-         *              <li>encryptData(keyStore, data, mode, alias, password) - use secret key from key store</li>
+         *              <li>encryptData(data, 'keyman', alias, password) - use secret key from key store</li>
          *          </ul>
          *      </li>
          *      <li><b>'pbes'</b> Password based encryption. Key produced direct from password
          *          <ul>
-         *              <li>encryptData(keyStore, data, mode, password) - use password for generate key</li>
+         *              <li>encryptData(data, 'pbes', password) - use password for generate key</li>
          *          </ul>
          *      </li>
          *  </ul>
@@ -2451,7 +2542,7 @@
          * @memberOf GostPKIX
          * @param {FormatedData|gostSyntax.ContentInfo} enveloped Enveloped data
          * @param {string} alias Recipient alias
-         * @param {string} password Recipient key password
+         * @param {(string|Key)} password Recipient password (or secret key)
          * @returns {Promise} Promise resolves with decrypted data {@link gostSyntax.ContentInfo}
          */
         decryptData: function (enveloped, alias, password) // <editor-fold defaultstate="collapsed">
@@ -2692,7 +2783,7 @@
          * @memberOf GostPKIX 
          * @param {FormatedData|gostSyntax.ContentInfo} enveloped Enveloped data
          * @param {string} alias Private key alias
-         * @param {string} password Password to decrypt private key
+         * @param {(string|Key)} password Recipient password (or secret key)
          * @returns {Promise} Promise resolves with {@link FormatedData} 
          */
         extractData: function (enveloped, alias, password) // <editor-fold defaultstate="collapsed">

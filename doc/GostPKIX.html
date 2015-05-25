@@ -180,7 +180,8 @@ For storage of keys, you can use an external repository, if you implement the <a
 
             
 
-            <td class="description last">Optional external key store. Internal storage used if the keyStore not specified.</td>
+            <td class="description last">Optional external key store. Internal storage used if the keyStore not specified.
+Storage objects like localStorage, sessionStorage with functions setItem and getItem also can be used.</td>
         </tr>
 
     
@@ -220,7 +221,7 @@ For storage of keys, you can use an external repository, if you implement the <a
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line661">line 661</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line749">line 749</a>
     </li></ul></dd>
     
 
@@ -404,7 +405,7 @@ Supported formats:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1765">line 1765</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1856">line 1856</a>
     </li></ul></dd>
     
 
@@ -559,6 +560,9 @@ Default provider derived from keyStore<br><br>
             
                 
 <span class="param-type">string</span>
+|
+
+<span class="param-type"><a href="Key.html">Key</a></span>
 
 
             
@@ -568,7 +572,7 @@ Default provider derived from keyStore<br><br>
 
             
 
-            <td class="description last">New password for CA certificate</td>
+            <td class="description last">New password (or secret key) for CA certificate</td>
         </tr>
 
     
@@ -608,7 +612,7 @@ Default provider derived from keyStore<br><br>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1056">line 1056</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1147">line 1147</a>
     </li></ul></dd>
     
 
@@ -761,6 +765,9 @@ Default provider derived from keyStore<br><br>
             
                 
 <span class="param-type">string</span>
+|
+
+<span class="param-type"><a href="Key.html">Key</a></span>
 
 
             
@@ -770,7 +777,7 @@ Default provider derived from keyStore<br><br>
 
             
 
-            <td class="description last">Password to encrypt private key</td>
+            <td class="description last">Password (or secret key) to encrypt private key</td>
         </tr>
 
     
@@ -810,7 +817,7 @@ Default provider derived from keyStore<br><br>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1502">line 1502</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1593">line 1593</a>
     </li></ul></dd>
     
 
@@ -966,6 +973,9 @@ Default provider derived from keyStore<br><br>
             
                 
 <span class="param-type">string</span>
+|
+
+<span class="param-type"><a href="Key.html">Key</a></span>
 
 
             
@@ -975,7 +985,7 @@ Default provider derived from keyStore<br><br>
 
             
 
-            <td class="description last">Recipient key password</td>
+            <td class="description last">Recipient password (or secret key)</td>
         </tr>
 
     
@@ -1015,7 +1025,7 @@ Default provider derived from keyStore<br><br>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line2457">line 2457</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line2548">line 2548</a>
     </li></ul></dd>
     
 
@@ -1174,7 +1184,7 @@ Default provider derived from keyStore<br><br>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line2007">line 2007</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line2098">line 2098</a>
     </li></ul></dd>
     
 
@@ -1243,34 +1253,34 @@ Follow modes supported:
  <ul>
      <li><b>'keyagree'</b> Key agreement protocol
          <ul>
-             <li>encryptData(keyStore, data, mode, recipient) - generate ephemeral keys</li>
-             <li>encryptData(keyStore, data, mode, recipient, alias, password) - use sender key</li>
+             <li>encryptData(data, 'keyagree', recipient) - generate ephemeral keys</li>
+             <li>encryptData(data, 'keyagree', recipient, alias, password) - use sender key</li>
          </ul>
      </li>
      <li><b>'keytrans'</b> Key transport protocol
          <ul>
-             <li>encryptData(keyStore, data, mode, recipient) - generate ephemeral keys</li>
-             <li>encryptData(keyStore, data, mode, recipient, alias, password) - use sender key</li>
+             <li>encryptData(data, 'keytrans', recipient) - generate ephemeral keys</li>
+             <li>encryptData(data, 'keytrans', recipient, alias, password) - use sender key</li>
          </ul>
      </li>
      <li><b>'kek'</b> Key encryption key protocol
          <ul>
-             <li>encryptData(keyStore, data, mode, alias, password) - use secret key from key store</li>
+             <li>encryptData(data, 'kek', alias, password) - use secret key from key store</li>
          </ul>
      </li>
      <li><b>'pbkek'</b> Password based key encryption key protocol. Result EnvelopedData
          <ul>
-             <li>encryptData(keyStore, data, mode, password) - use password for key encryption</li>
+             <li>encryptData(data, 'pbkek', password) - use password for key encryption</li>
          </ul>
      </li>
      <li><b>'keyman'</b> Key management protocol. Simple encryption with symmetric key
          <ul>
-             <li>encryptData(keyStore, data, mode, alias, password) - use secret key from key store</li>
+             <li>encryptData(data, 'keyman', alias, password) - use secret key from key store</li>
          </ul>
      </li>
      <li><b>'pbes'</b> Password based encryption. Key produced direct from password
          <ul>
-             <li>encryptData(keyStore, data, mode, password) - use password for generate key</li>
+             <li>encryptData(data, 'pbes', password) - use password for generate key</li>
          </ul>
      </li>
  </ul>
@@ -1460,7 +1470,7 @@ Follow modes supported:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line2093">line 2093</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line2184">line 2184</a>
     </li></ul></dd>
     
 
@@ -1646,7 +1656,7 @@ Supported formats:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1327">line 1327</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1418">line 1418</a>
     </li></ul></dd>
     
 
@@ -1806,6 +1816,9 @@ Supported formats:
             
                 
 <span class="param-type">string</span>
+|
+
+<span class="param-type"><a href="Key.html">Key</a></span>
 
 
             
@@ -1815,7 +1828,7 @@ Supported formats:
 
             
 
-            <td class="description last">Password to decrypt/encrypt key</td>
+            <td class="description last">Password (or secret key) to decrypt/encrypt key</td>
         </tr>
 
     
@@ -1855,7 +1868,7 @@ Supported formats:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line975">line 975</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1065">line 1065</a>
     </li></ul></dd>
     
 
@@ -2034,7 +2047,7 @@ Supported formats:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line843">line 843</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line933">line 933</a>
     </li></ul></dd>
     
 
@@ -2190,7 +2203,7 @@ Supported formats:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1573">line 1573</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1664">line 1664</a>
     </li></ul></dd>
     
 
@@ -2356,6 +2369,9 @@ Function use recursion extract for supported formats.
             
                 
 <span class="param-type">string</span>
+|
+
+<span class="param-type"><a href="Key.html">Key</a></span>
 
 
             
@@ -2365,7 +2381,7 @@ Function use recursion extract for supported formats.
 
             
 
-            <td class="description last">Password to decrypt private key</td>
+            <td class="description last">Recipient password (or secret key)</td>
         </tr>
 
     
@@ -2405,7 +2421,7 @@ Function use recursion extract for supported formats.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line2698">line 2698</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line2789">line 2789</a>
     </li></ul></dd>
     
 
@@ -2599,7 +2615,7 @@ Method autodetect and support formats:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1379">line 1379</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1470">line 1470</a>
     </li></ul></dd>
     
 
@@ -2787,7 +2803,7 @@ Method autodetect and support formats:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1817">line 1817</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1908">line 1908</a>
     </li></ul></dd>
     
 
@@ -2860,9 +2876,10 @@ Autorecognized and supported formats:
      <li><b>p8e</b> PKCS#8 EncryptedPrivateKeyInfo format</li>
      <li><b>p12</b> PFX key store format</li>
  </ul>
-If password specified key stored in encryption mode. 
-If key already encrypted or password not specified key stored w/o any conversion.
-For change key password simple exportKey in 'p8' format with old password and importKey with new password.
+If password (or secret key) specified key stored in encryption mode. 
+If key already encrypted or password (or secret key) not specified key stored w/o any conversion.
+For change key password (or secret key) simple exportKey in 'p8' format with old 
+password (or secret key) and importKey with new password (or secret key).
     </div>
     
 
@@ -2957,6 +2974,9 @@ For change key password simple exportKey in 'p8' format with old password and im
             
                 
 <span class="param-type">string</span>
+|
+
+<span class="param-type"><a href="Key.html">Key</a></span>
 
 
             
@@ -2966,7 +2986,7 @@ For change key password simple exportKey in 'p8' format with old password and im
 
             
 
-            <td class="description last">Password to decrypt/encrypt key</td>
+            <td class="description last">Password (or secret key) to decrypt/encrypt key</td>
         </tr>
 
     
@@ -3006,7 +3026,7 @@ For change key password simple exportKey in 'p8' format with old password and im
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1022">line 1022</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1113">line 1113</a>
     </li></ul></dd>
     
 
@@ -3146,7 +3166,7 @@ For change key password simple exportKey in 'p8' format with old password and im
 
             <td class="description last">Password for encrypt store
 If no password whole key store will not be encrypted, but only privateKeys 
-will encrypted by individual passwords</td>
+will encrypted by individual passwords (or secret keys)</td>
         </tr>
 
     
@@ -3186,7 +3206,7 @@ will encrypted by individual passwords</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line742">line 742</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line832">line 832</a>
     </li></ul></dd>
     
 
@@ -3368,7 +3388,7 @@ will encrypted by individual passwords</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1595">line 1595</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1686">line 1686</a>
     </li></ul></dd>
     
 
@@ -3545,6 +3565,9 @@ structure: serialNumber, validity and extensions</td>
             
                 
 <span class="param-type">string</span>
+|
+
+<span class="param-type"><a href="Key.html">Key</a></span>
 
 
             
@@ -3554,7 +3577,7 @@ structure: serialNumber, validity and extensions</td>
 
             
 
-            <td class="description last">Password for private key</td>
+            <td class="description last">Password (or secret key) for private key</td>
         </tr>
 
     
@@ -3594,7 +3617,7 @@ structure: serialNumber, validity and extensions</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1172">line 1172</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1263">line 1263</a>
     </li></ul></dd>
     
 
@@ -3784,6 +3807,9 @@ Supported modes:
             
                 
 <span class="param-type">string</span>
+|
+
+<span class="param-type"><a href="Key.html">Key</a></span>
 
 
             
@@ -3793,7 +3819,7 @@ Supported modes:
 
             
 
-            <td class="description last">Password to decrypt key</td>
+            <td class="description last">Password (or secret key) to decrypt key</td>
         </tr>
 
     
@@ -3833,7 +3859,7 @@ Supported modes:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1880">line 1880</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1971">line 1971</a>
     </li></ul></dd>
     
 
@@ -3986,6 +4012,9 @@ Supported modes:
             
                 
 <span class="param-type">string</span>
+|
+
+<span class="param-type"><a href="Key.html">Key</a></span>
 
 
             
@@ -3995,7 +4024,7 @@ Supported modes:
 
             
 
-            <td class="description last">Password for encoding private key</td>
+            <td class="description last">Password (or secret key) for encoding private key</td>
         </tr>
 
     
@@ -4035,7 +4064,7 @@ Supported modes:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1633">line 1633</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1724">line 1724</a>
     </li></ul></dd>
     
 
@@ -4223,7 +4252,7 @@ Supported modes:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1441">line 1441</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line1532">line 1532</a>
     </li></ul></dd>
     
 
@@ -4405,7 +4434,7 @@ Supported modes:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line2353">line 2353</a>
+        <a href="gostPKIX.js.html">gostPKIX.js</a>, <a href="gostPKIX.js.html#line2444">line 2444</a>
     </li></ul></dd>
     
 
@@ -4476,7 +4505,7 @@ Supported modes:
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Sun Apr 26 2015 00:39:57 GMT+0300 (MSK)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Sun May 24 2015 23:56:31 GMT+0300 (MSK)
 </footer>
 
 </div>
