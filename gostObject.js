@@ -499,7 +499,7 @@
         '2.5.4.19': 'physicalDeliveryOfficeName',
         '2.5.4.20': 'telephoneNumber',
         '2.5.4.21': 'telexNumber',
-        '2.5.4.22': 'teletexTerminalIdentifie',
+        '2.5.4.22': 'teletexTerminalIdentifier',
         '2.5.4.23': 'facsimileTelephoneNumber',
         '2.5.4.24': 'x121Address',
         '2.5.4.25': 'internationalISDNNumber',

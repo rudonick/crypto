@@ -861,6 +861,9 @@
      * @class Name
      */
     var RelativeDistinguishedName = SET_OF_SINGLE(AttributeTypeAndValue({
+        serialName: PrintableString,
+        countryName: PrintableString,
+        dnQualifier: PrintableString,
         emailAddress: IA5String,
         domainComponent: IA5String
     }, DirectoryString));
@@ -1494,6 +1497,9 @@
     var KeyEncryptionAlgorithmIdentifier = AlgorithmIdentifier({
         ecdsa: ECDHKeyAlgorithm,
         rsaEncryption: AlgorithmWithNullParam,
+        // Base encryption
+        'id-sc-gost28147-gfb': SCGostAlgorithm,
+        'id-Gost28147-89': Gost2814789Algorithm,
         // Key transport algorithms
         'id-sc-gostR3410-2001': ECDHKeyAlgorithm,
         'id-GostR3410-2001': GostKeyAlgorithm,
