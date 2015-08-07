@@ -72,6 +72,11 @@
         return (gostCoding || (gostCoding = root.gostCoding)).Int16;
     }
 
+    // Chars coding;
+    function getChars() {
+        return (gostCoding || (gostCoding = root.gostCoding)).Chars;
+    }
+
     // Syntax
     function getSyntax(type) {
         return (gostSyntax || (gostSyntax = root.gostSyntax))[type];
@@ -119,11 +124,11 @@
     // Check equals name
     function equalNames(name1, name2) {
         for (var key in name1)
-            if (key !== 'buffer' && (typeof name2[key] === 'undefined' || 
+            if (key !== 'buffer' && (typeof name2[key] === 'undefined' ||
                     removeMarkers(name1[key]) !== removeMarkers(name2[key])))
                 return false;
         for (var key in name2)
-            if (key !== 'buffer' && (typeof name1[key] === 'undefined' || 
+            if (key !== 'buffer' && (typeof name1[key] === 'undefined' ||
                     removeMarkers(name1[key]) !== removeMarkers(name2[key])))
                 return false;
         return true;
@@ -133,7 +138,6 @@
     function toInt16(value) {
         return typeof value === 'number' || value instanceof Number ? value : getInt16().encode(value);
     }
-    ;
 
     // Convert number to bigendian hex string
     function numberHex(s) {
@@ -361,19 +365,21 @@
                 throw new Error('Private key not found');
             if (key.encryptionAlgorithm) {
                 keyData = key.encryptedData;
-                if (key.encryptionAlgorithm.id === 'PBES2') {
+                encryption = key.encryptionAlgorithm;
+                if (encryption.id === 'PBES2' ||
+                        encryption.id === 'id-sc-pbeWithGost3411AndGost28147' ||
+                        encryption.id === 'id-sc-pbeWithGost3411AndGost28147CFB') {
                     if (!(password && (typeof password === 'string' || password instanceof String)))
                         throw new Error('Password required to decrypt key');
-                    derivation = key.encryptionAlgorithm.derivation;
-                    encryption = key.encryptionAlgorithm.encryption;
+                    derivation = encryption.derivation;
+                    encryption = encryption.encryption;
                     // Import password for key generation
-                    return getSubtle().importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
+                    return getSubtle().importKey('raw', getChars().decode(password, 'utf8'),
                             derivation, false, ['deriveKey']);
                 } else {
                     // Base encryption. Password should be secret key
                     if (!(password && password.type === 'secret'))
                         throw new Error('Secret key required to decrypt key');
-                    encryption = key.encryptionAlgorithm;
                 }
             } else { // Key already decrypted
                 if (key instanceof ArrayBuffer)
@@ -432,7 +438,7 @@
                         encryption.iv = getSeed(8);
 
                     // Import password for key generation
-                    return getSubtle().importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
+                    return getSubtle().importKey('raw', getChars().decode(password, 'utf8'),
                             derivation, false, ['deriveKey']);
                 } else if (password.type === 'secret') {
                     // Base encryption
@@ -477,6 +483,18 @@
                 self.keyStore.setKey(alias, key);
             return key;
         });
+    }
+
+    // Define provider for certificate key algorithm
+    function appropriateProvider(certificate) {
+        certificate = checkType(certificate, 'Certificate');
+        var id = certificate.tbsCertificate.subjectPublicKeyInfo.algorithm.id,
+                providers = (gostObject || (gostObject = root.gostObject)).providers;
+        for (var name in providers) {
+            var provider = providers[name];
+            if (provider.generation.id === id)
+                return provider;
+        }
     }
 
 
@@ -854,7 +872,7 @@
                             digest = expand(self.provider.pbmac.hmac);
 
                     // Import password for key generation
-                    return getSubtle().importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
+                    return getSubtle().importKey('raw', getChars().decode(password, 'utf8'),
                             derivation, false, ['deriveKey']);
                 }
 
@@ -1001,7 +1019,7 @@
                             digest = expand(self.provider.pbmac.hmac);
 
                     // Import password for key generation
-                    return getSubtle().importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
+                    return getSubtle().importKey('raw', getChars().decode(password, 'utf8'),
                             derivation, false, ['deriveKey']);
                 } else if (mode === 'encrypt')
                     throw new Error('Password required for MAC calculation');
@@ -1262,8 +1280,8 @@
          */
         issueCertificate: function (tbsCert, reqalias, alias, password) // <editor-fold defaultstate="collapsed">
         {
-            var self = this, keyStore = self.keyStore,
-                    tbsCertificate = {}, certificate = {}, requestInfo, request;
+            var self = this, keyStore = self.keyStore, provider,
+                    tbsCertificate = {}, certificate = {}, requestInfo, request, authorityCert;
 
             return new root.Promise(call).then(function () {
                 // Decode request 
@@ -1271,7 +1289,6 @@
                 requestInfo = request.requestInfo;
 
                 tbsCertificate.version = 2;
-                tbsCertificate.signature = request.signatureAlgorithm;
 
                 // Public key for request
                 tbsCertificate.subjectPublicKeyInfo = requestInfo.subjectPublicKeyInfo;
@@ -1286,8 +1303,20 @@
                 if (!verified)
                     throw new Error('Request signature is not valid');
 
+                // Get issuer certificate
+                authorityCert = keyStore.getCertificate(alias);
+                if (!authorityCert)
+                    throw new Error('Authority certificate not found');
+
+                provider = appropriateProvider(authorityCert) || self.provider;
+
+                // Signature algorithm
+                certificate.signatureAlgorithm = tbsCertificate.signature = tbsCert.signature || provider.signature;
+                if (!tbsCertificate.signature)
+                    throw Error('Signature Algorithm not defined');
+
                 // Calculate subject key indentifier
-                return getSubtle().digest(self.provider.digest, tbsCertificate.subjectPublicKeyInfo.buffer);
+                return getSubtle().digest(provider.digest, tbsCertificate.subjectPublicKeyInfo.buffer);
             }).then(function (publicKeyDigest) {
 
                 // 160 bit from public key hash
@@ -1297,11 +1326,6 @@
                 tbsCertificate.subject = requestInfo.subject;
                 if (!tbsCertificate.subject)
                     throw new Error('Subject not defined');
-
-                // Get issuer certificate
-                var authorityCert = keyStore.getCertificate(alias);
-                if (!authorityCert)
-                    throw new Error('Authority certificate not found');
 
                 // Check key usage
                 var authorityKeyUsage = authorityCert.tbsCertificate.extensions && authorityCert.tbsCertificate.extensions.keyUsage;
@@ -1332,7 +1356,6 @@
                         authorityPathLen = constraints && constraints.pathLenConstraint,
                         pathLenConstraint = authorityPathLen ? authorityPathLen + 1 : 0,
                         authorityCertIssuer = authorityCert.tbsCertificate.issuer;
-                certificate.signatureAlgorithm = authorityCert.tbsCertificate.signature;
 
                 // Certificate serial number
                 if (tbsCert.serialNumber)
@@ -1723,7 +1746,7 @@
          */
         updateCRL: function (tbsCRL, alias, password) // <editor-fold defaultstate="collapsed">
         {
-            var self = this, keyStore = self.keyStore, tbsCertList = {};
+            var self = this, keyStore = self.keyStore, tbsCertList = {}, provider;
 
             return new root.Promise(call).then(function () {
 
@@ -1732,6 +1755,8 @@
                 var authorityCert = keyStore.getCertificate(alias);
                 if (!authorityCert)
                     throw new Error('Issuer certificate not found');
+
+                provider = appropriateProvider(authorityCert) || self.provider;
 
                 if (((authorityCert.tbsCertificate.extensions || {}).keyUsage || []).indexOf('cRLSign') < 0)
                     throw Error('Issuer has not rights for CRL sign');
@@ -1760,7 +1785,7 @@
                 }
 
                 tbsCertList.version = 1;
-                tbsCertList.signature = authorityCert.tbsCertificate.signature;
+                tbsCertList.signature = tbsCRL.signature || provider.signature;
 
                 // Dates
                 if (tbsCRL.thisUpdate)
@@ -1970,7 +1995,7 @@
          */
         signData: function (data, mode, alias, password) // <editor-fold defaultstate="collapsed">
         {
-            var self = this, keyStore = self.keyStore, signedData, signerInfo, dataToSign;
+            var self = this, keyStore = self.keyStore, signedData, signerInfo, dataToSign, provider;
             mode = mode || [];
             if (!(mode instanceof Array))
                 mode = [mode];
@@ -1995,10 +2020,12 @@
                 if (!signerCertificate)
                     throw new Error('Signer certificate not found');
 
+                provider = appropriateProvider(signerCertificate) || self.provider;
+
                 // SignerInfo
                 signerInfo = {
                     version: 1,
-                    digestAlgorithm: self.provider.digest,
+                    digestAlgorithm: provider.digest,
                     sid: {
                         issuerAndSerialNumber: {
                             issuer: signerCertificate.tbsCertificate.issuer,
@@ -2074,7 +2101,7 @@
             }).then(function (privateKey) {
 
                 // Sign data
-                signerInfo.signatureAlgorithm = self.provider.generation;
+                signerInfo.signatureAlgorithm = provider.generation;
                 var algorithm = expand(signerInfo.signatureAlgorithm, {hash: signerInfo.digestAlgorithm});
                 return getSubtle().sign(algorithm, privateKey, dataToSign);
             }).then(function (signatureValue) {
@@ -2185,7 +2212,7 @@
         {
             var self = this, keyStore = self.keyStore, encryption, wrapping, recipients,
                     encryptionKey, encryptedContentInfo, origPrivateKey, publicKeys,
-                    origPublicKey, UDMs, keyIdentifier, enveloping;
+                    origPublicKey, UDMs, keyIdentifier, enveloping, providers;
 
             return new root.Promise(call).then(function () {
 
@@ -2203,6 +2230,9 @@
                         recipients = recipients.map(function (recip) {
                             return keyStore.getCertificate(recip);
                         });
+                        providers = recipients.map(function (recipient) {
+                            return appropriateProvider(recipient) || self.provider;
+                        });
                         break;
                     case 'kek':
                     case 'keyman':
@@ -2211,6 +2241,7 @@
                         if (!alias || typeof alias !== 'string')
                             throw new Error('Alias of secret key must be specified as 4th parameter');
                         recipients = [recipient];
+                        providers = [self.provider];
                         break;
                     case 'pbkek':
                     case 'pbes':
@@ -2218,6 +2249,7 @@
                         if (!password || typeof password !== 'string')
                             throw new Error('Password must be specified as 4th parameter');
                         recipients = [recipient];
+                        providers = [self.provider];
                         break;
                 }
 
@@ -2229,19 +2261,19 @@
 
                 if (mode === 'pbes')
                     // Import password
-                    return gostCrypto.subtle.importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
-                            self.provider.derivation, true, ['deriveKey']);
+                    return gostCrypto.subtle.importKey('raw', getChars().decode(password, 'utf8'),
+                            providers[0].derivation, true, ['deriveKey']);
             }).then(function (pbesKey) {
 
                 // Generate cek
-                encryption = expand(self.provider.encryption);
+                encryption = expand(providers[0].encryption);
                 switch (mode) {
                     case 'keyman':
                         // Extract secret key
                         return retrievePrivateKey(self, alias, password);
                     case 'pbes':
                         // Derive key from password directly to encrypt
-                        return getSubtle().deriveKey(expand(self.provider.derivation, {salt: UDMs[0]}),
+                        return getSubtle().deriveKey(expand(providers[0].derivation, {salt: UDMs[0]}),
                                 pbesKey, encryption, true, ['encrypt']);
                     default:
                         return getSubtle().generateKey(encryption, true, ['encrypt']);
@@ -2270,8 +2302,8 @@
                         }));
                     case 'pbes':
                         // Change algorithm to pbes
-                        var pbes = expand(self.provider.pbes, {
-                            derivation: expand(self.provider.derivation, {salt: UDMs[0]}),
+                        var pbes = expand(providers[0].pbes, {
+                            derivation: expand(providers[0].derivation, {salt: UDMs[0]}),
                             encryption: encryption
                         });
                         encryptedContentInfo.contentEncryptionAlgorithm = pbes;
@@ -2288,12 +2320,12 @@
                             return retrievePrivateKey(self, alias, password);
                         else
                             // Generate ephemeral key pair
-                            return getSubtle().generateKey(self.provider.generation, true, ['deriveKey']);
+                            return getSubtle().generateKey(providers[0].generation, true, ['deriveKey']);
                         break;
                     case 'pbkek':
                         // Import password
-                        return gostCrypto.subtle.importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
-                                self.provider.derivation, true, ['deriveKey']);
+                        return gostCrypto.subtle.importKey('raw', getChars().decode(password, 'utf8'),
+                                providers[0].derivation, true, ['deriveKey']);
                         break;
                 }
             }).then(function (key) {
@@ -2326,7 +2358,7 @@
                     origPublicKey = info;
 
                     // Derive key encryption keys for every recipients
-                    wrapping = (mode === 'keytrans' && self.provider.transwrapping) || self.provider.wrapping;
+                    wrapping = (mode === 'keytrans' && providers[0].transwrapping) || providers[0].wrapping;
                     return Promise.all(recipients.map(function (recipient, i) {
                         var algorithm;
                         switch (mode) {
@@ -2334,11 +2366,11 @@
                                 return origPrivateKey;
                             case 'pbkek':
                                 // Hash based derivation
-                                algorithm = expand(self.provider.derivation, {salt: UDMs[i]});
+                                algorithm = expand(providers[i].derivation, {salt: UDMs[i]});
                                 break;
                             default:
                                 // ECDH key agreement derivation
-                                algorithm = expand(self.provider.agreement, {'public': publicKeys[i], ukm: UDMs[i]});
+                                algorithm = expand(providers[i].agreement, {'public': publicKeys[i], ukm: UDMs[i]});
                         }
                         return getSubtle().deriveKey(algorithm, origPrivateKey, wrapping, true, ['wrapKey']);
                     }));
@@ -2364,7 +2396,7 @@
                             case 'keyagree':
                                 // Key aggreement recipient info
                                 var spki = getSyntax('SubjectPublicKeyInfo').decode(origPublicKey),
-                                        algorithm = expand(spki.algorithm, self.provider.agreement,
+                                        algorithm = expand(spki.algorithm, providers[i].agreement,
                                                 {wrapping: expand(wrapping)});
                                 return {
                                     kari: {
@@ -2404,7 +2436,7 @@
                                 return {
                                     pwri: {
                                         version: 0, // always set to 0
-                                        keyDerivationAlgorithm: expand(self.provider.derivation, {salt: UDMs[i]}),
+                                        keyDerivationAlgorithm: expand(providers[i].derivation, {salt: UDMs[i]}),
                                         keyEncryptionAlgorithm: expand(wrapping, {ukm: UDMs[i]}),
                                         encryptedKey: wrappedKeys[i]}};
                         }
@@ -2548,7 +2580,7 @@
         decryptData: function (enveloped, alias, password) // <editor-fold defaultstate="collapsed">
         {
             var self = this, keyStore = self.keyStore, content, mode, privateKey,
-                    info, derivation, wrapping, encryption;
+                    info, derivation, wrapping, encryption, provider;
 
             return new root.Promise(call).then(function () {
 
@@ -2560,14 +2592,22 @@
                 // Check recipient certificate for alias
                 var check = function (selector) {
                     var s = selectCertificateAlias(self.keyStore, selector);
-                    if (alias && alias === s)
-                        return true;
-                    else if (s)
-                        foundAliases.push(s);
+                    if (s) {
+                        // No alias and exists private key for certificate
+                        if (!alias && keyStore.getKey(s))
+                            alias = s;
+                        if (alias === s) 
+                            return true;
+                        else
+                            foundAliases.push(s);
+                    }
                 };
 
                 // Encryption algorithm
                 encryption = content.encryptedContentInfo.contentEncryptionAlgorithm;
+
+                // Provider
+                provider = self.provider;
 
                 if (contentInfo.contentType === 'envelopedData') {
                     // Try to find recipient in store
@@ -2584,6 +2624,7 @@
                                     (rid.subjectKeyIdentifier &&
                                             check({subjectKeyIdentifier: rid.subjectKeyIdentifier})))
                                 info = recipientInfo.ktri; // decompile algorithm
+                                provider = appropriateProvider(keyStore.getCertificate(alias)) || self.provider;
                         } else if (recipientInfo.kari) {
                             mode = 'keyagree';
                             // check key agree keys rid for certificate
@@ -2601,6 +2642,7 @@
                                         ukm: recipientInfo.kari.ukm,
                                         encryptedKey: recipientEncryptedKeys[i].encryptedKey
                                     };
+                                    provider = appropriateProvider(keyStore.getCertificate(alias)) || self.provider;
                                     break;
                                 }
                             }
@@ -2665,7 +2707,7 @@
                         return retrievePrivateKey(self, alias, password);
                     case 'pbkek':
                         // Import password
-                        derivation = expand(self.provider.derivation, {// provider made redefine PDKF2 algorithm
+                        derivation = expand(provider.derivation, {// provider made redefine PDKF2 algorithm
                             salt: info.keyDerivationAlgorithm.salt,
                             iterations: info.keyDerivationAlgorithm.iterations,
                             hmac: info.keyDerivationAlgorithm.hmac});
@@ -2673,7 +2715,7 @@
                     case 'pbes':
                         // Import password
                         var pbes = encryption;
-                        derivation = expand(self.provider.derivation, {// provider made redefine PDKF2 algorithm
+                        derivation = expand(provider.derivation, {// provider made redefine PDKF2 algorithm
                             salt: pbes.derivation.salt,
                             iterations: pbes.derivation.iterations,
                             hmac: pbes.derivation.hmac});
@@ -2682,7 +2724,7 @@
                         break;
 
                 }
-                return gostCrypto.subtle.importKey('raw', gostCoding.Chars.decode(password, 'utf8'),
+                return gostCrypto.subtle.importKey('raw', getChars().decode(password, 'utf8'),
                         derivation, true, ['deriveKey']);
             }).then(function (key) {
                 privateKey = key;
@@ -2716,18 +2758,18 @@
                 switch (mode) {
                     case 'keytrans':
                         // Algorith identifier already has ukm and public, but has wrong name (not DH)
-                        derivation = expand(self.provider.agreement, {
+                        derivation = expand(provider.agreement, {
                             ukm: info.keyEncryptionAlgorithm.ukm,
                             public: info.keyEncryptionAlgorithm.public,
                             sBox: info.keyEncryptionAlgorithm.sBox});
-                        wrapping = expand(self.provider.transwrapping || self.provider.wrapping,
+                        wrapping = expand(provider.transwrapping || provider.wrapping,
                                 info.keyEncryptionAlgorithm.wrapping,
                                 {ukm: info.keyEncryptionAlgorithm.ukm});
                         break;
                     case 'keyagree':
                         // Append ukm and public to algorithm, sBox and namedCurve/namedParam in the publicKey
                         derivation = expand(info.keyEncryptionAlgorithm, {ukm: info.ukm, public: pulicKey});
-                        wrapping = expand(info.keyEncryptionAlgorithm.wrapping || self.provider.wrapping, {ukm: info.ukm});
+                        wrapping = expand(info.keyEncryptionAlgorithm.wrapping || provider.wrapping, {ukm: info.ukm});
                         break;
                     case 'kek':
                         wrapping = expand(info.keyEncryptionAlgorithm);

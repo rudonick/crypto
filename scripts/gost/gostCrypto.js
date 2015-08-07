@@ -275,8 +275,12 @@
 
         // Normalize hash algorithm
         algorithm.hash && (na.hash = algorithm.hash);
-        if (na.hash)
+        if (na.hash) {
+            if ((typeof na.hash === 'string' || na.hash instanceof String) 
+                && na.procreator)
+                na.hash = na.hash + '/' + na.procreator;
             na.hash = normalize(na.hash, 'digest');
+        }
 
         // Algorithm object identirifer
         algorithm.id && (na.id = algorithm.id);

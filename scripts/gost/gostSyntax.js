@@ -40,7 +40,7 @@
  * 
  */
 
-(function(root, factory) {
+(function (root, factory) {
 
     /*
      * Module imports and exports
@@ -55,7 +55,7 @@
     }
     // </editor-fold>
 
-}(this, function(gostObject, gostCoding) {
+}(this, function (gostObject, gostCoding) {
 
     /*
      * Service functions
@@ -120,7 +120,7 @@
         return r;
     }
 
-    // swap bytes in buffer
+    // Swap bytes in buffer
     function swapBytes(src) {
         if (src instanceof ArrayBuffer)
             src = new Uint8Array(src);
@@ -129,6 +129,30 @@
             dst[n - i - 1] = src[i];
         return dst.buffer;
     }
+
+    // Left pad zero
+    function lpad(n, width) {
+        return n.length >= width ? n : new Array(width - n.length + 1).join('0') + n;
+    }
+
+    // Nearest power 2
+    function npw2(n) {
+        return n <= 2 ? n : n <= 4 ? 4 : n <= 8 ? 8 : n <= 16 ? 16 :
+                n <= 32 ? 32 : n <= 64 ? 64 : n <= 128 ? 128 : n <= 256 ? 256 :
+                n < 512 ? 512 : n < 1024 ? 1024 : undefined;
+    }
+
+    // String int encode/decode to buffer
+    var SInt = {
+        encode: function (value, endian) {
+            return '0x' + getHex().encode(value, endian);
+        },
+        decode: function (value, endian, len) {
+            var s = value.replace('0x', '');
+            len = len || npw2(s.length);
+            return getHex().decode(lpad(s, len), endian);
+        }
+    };
 
     // Get separate buffer for ASN.1 decoded value
     function block(value) {
@@ -213,7 +237,7 @@
      * @private
      * @param {number} tagNumber
      */
-    var PRIMITIVE = function(tagNumber) {
+    var PRIMITIVE = function (tagNumber) {
         return {
             /**
              * Encode value
@@ -221,7 +245,7 @@
              * @param {Object} value
              * @returns {Object}
              */
-            encode: function(value) {
+            encode: function (value) {
                 return encode(value, tagNumber);
             },
             /**
@@ -230,7 +254,7 @@
              * @param {Object} value
              * @returns {Object}
              */
-            decode: function(value) {
+            decode: function (value) {
                 return decode(value, tagNumber);
             }
         };
@@ -255,25 +279,25 @@
     var BMPString = PRIMITIVE(0x1e);
 
     var NULL = {
-        encode: function() {
+        encode: function () {
             return encode(null, 0x05);
         },
-        decode: function(value) {
+        decode: function (value) {
             return decode(value, 0x05);
         }
     };
 
-    var PRIMITIVE_SUBST = function(tagNumber) {
+    var PRIMITIVE_SUBST = function (tagNumber) {
         var BASE = PRIMITIVE(tagNumber);
-        var f = function(struct) {
+        var f = function (struct) {
             return {
-                encode: function(value) {
+                encode: function (value) {
                     var d = struct[value];
                     if (typeof d === 'undefined')
                         throw new DataError('Invalid value');
                     return BASE.encode(d);
                 },
-                decode: function(value) {
+                decode: function (value) {
                     value = BASE.decode(value);
                     for (var name in struct) {
                         if (value === struct[name])
@@ -291,17 +315,17 @@
 
     var ENUMERATED = PRIMITIVE_SUBST(0x0a);
 
-    var ARRAY_OF_BYTE = function(tagNumber, define) {
-        var f = function(type) {
+    var ARRAY_OF_BYTE = function (tagNumber, define) {
+        var f = function (type) {
             if (define && define.call)
                 type = define(type);
             return {
-                encode: function(value) {
+                encode: function (value) {
                     if (type)
                         value = type.encode(value);
                     return encode(value, tagNumber);
                 },
-                decode: function(value) {
+                decode: function (value) {
                     var result = decode(value, tagNumber);
                     if (type)
                         result = type.decode(result);
@@ -309,10 +333,10 @@
                 }
             };
         };
-        f.encode = function(value) {
+        f.encode = function (value) {
             return encode(value, tagNumber);
         };
-        f.decode = function(value) {
+        f.decode = function (value) {
             return decode(value, tagNumber);
         };
         return f;
@@ -320,7 +344,7 @@
 
     var OCTET_STRING = ARRAY_OF_BYTE(0x04);
 
-    var BIT_STRING = ARRAY_OF_BYTE(0x03, function(type) {
+    var BIT_STRING = ARRAY_OF_BYTE(0x03, function (type) {
         if (!type || (type.encode && type.decode)) // already type
             return type;
         else { // Mask type
@@ -328,7 +352,7 @@
             for (var name in type)
                 mask[type[name]] = name;
             return {
-                encode: function(value) {
+                encode: function (value) {
                     if (value instanceof Array) {
                         var s = '';
                         for (var i = 0; i < mask.length; i++) {
@@ -343,7 +367,7 @@
                         s = '0';
                     return s;
                 },
-                decode: function(value) {
+                decode: function (value) {
                     var obj = [];
                     for (var i = 0; i < value.length; i++)
                         if (value.charAt(i) === '1' && mask[i])
@@ -362,7 +386,7 @@
      * @mixin
      * @param {Object} struct
      */
-    var SEQUENCE = function(struct) {
+    var SEQUENCE = function (struct) {
         return {
             /**
              * Encode SEQUENCE value
@@ -370,7 +394,7 @@
              * @param {Object} value
              * @returns {Object}
              */
-            encode: function(value) {
+            encode: function (value) {
                 var result = [];
                 for (var name in struct) {
                     // console.log('name: \'' + name + '\', value: ', value[name]);
@@ -386,7 +410,7 @@
              * @param {Object} value
              * @returns {Object}
              */
-            decode: function(value) {
+            decode: function (value) {
                 value = decode(value, 0x10, 0, true);
                 var result = {}, i = 0;
                 for (var name in struct) {
@@ -404,7 +428,7 @@
     };
 
     var OBJECT_IDENTIFIER = {
-        encode: function(value) {
+        encode: function (value) {
             var s;
             if (/^(\d+\.)+\d+$/.test(value))
                 s = value;
@@ -415,32 +439,32 @@
             }
             return encode(s, 0x06);
         },
-        decode: function(value) {
+        decode: function (value) {
             var s = decode(value, 0x06);
             return getName(s) || s;
         }
     };
 
-    var CTX = function(number, type) {
+    var CTX = function (number, type) {
         return {
-            encode: function(value) {
+            encode: function (value) {
                 value = type.encode(value);
                 return encode(value, number, 0x02, value instanceof Array);
             },
-            decode: function(value) {
+            decode: function (value) {
                 return type.decode(decode(value, number, 0x02, value instanceof Array));
             }
         };
     };
 
-    var ARRAY_OF = function(tagNumber) {
+    var ARRAY_OF = function (tagNumber) {
 
-        return function(type, getter, setter) {
+        return function (type, getter, setter) {
             type = type || ANY;
-            var f = function(typeSet, mask) {
+            var f = function (typeSet, mask) {
                 var baseType = type.call ? type(typeSet) : type;
                 return {
-                    encode: function(value) {
+                    encode: function (value) {
                         var result = [];
                         if (getter)
                             for (var id in value) {
@@ -452,7 +476,7 @@
                                 result.push(baseType.encode(value[i]));
                         return encode(result, tagNumber, 0, true);
                     },
-                    decode: function(value) {
+                    decode: function (value) {
                         var result = setter ? {} : [];
                         value = decode(value, tagNumber, 0, true);
                         if (setter)
@@ -466,13 +490,13 @@
                     }
                 };
             };
-            f.encode = function(value) {
+            f.encode = function (value) {
                 var result = [];
                 for (var i = 0, n = value.length; i < n; i++)
                     result.push(type.encode(value[i]));
                 return encode(result, tagNumber, 0, true);
             };
-            f.decode = function(value) {
+            f.decode = function (value) {
                 value = decode(value, tagNumber, 0, true);
                 var result = [];
                 for (var i = 0, n = value.length; i < n; i++)
@@ -489,12 +513,12 @@
 
     var SET_OF = ARRAY_OF(0x11);
 
-    var SET_OF_SINGLE = function(type) {
+    var SET_OF_SINGLE = function (type) {
         return {
-            encode: function(value) {
+            encode: function (value) {
                 return encode([type.encode(value)], 0x11, 0, true);
             },
-            decode: function(value) {
+            decode: function (value) {
                 value = decode(value, 0x11, 0, true);
                 return type.decode(value[0]);
             }
@@ -510,7 +534,7 @@
      * @param {function} define
      * @param {Object} mark
      */
-    var CHOICE = function(struct, define, mark) {
+    var CHOICE = function (struct, define, mark) {
         if (struct instanceof Array) {
             return {
                 /**
@@ -519,7 +543,7 @@
                  * @param {Object} value
                  * @returns {Object}
                  */
-                encode: function(value) {
+                encode: function (value) {
                     if (define) {
                         var i = define(value);
                         if (i !== undefined && i >= 0 && i < struct.length) {
@@ -546,7 +570,7 @@
                  * @param {Object} value
                  * @returns {Object}
                  */
-                decode: function(value) {
+                decode: function (value) {
                     for (var i = 0; i < struct.length; i++) {
                         try {
                             var r = struct[i].decode(value);
@@ -560,7 +584,7 @@
             };
         } else {
             return {
-                encode: function(value) {
+                encode: function (value) {
                     for (var name in struct) {
                         // console.log('name: \'' + name + '\', value: ', value[name]);
                         var s = value[name];
@@ -569,7 +593,7 @@
                     }
                     throw new DataError('Invalid format');
                 },
-                decode: function(value) {
+                decode: function (value) {
                     var result = {};
                     for (var name in struct) {
                         try {
@@ -589,67 +613,67 @@
         }
     };
 
-    var ENCAPSULATES = (function() {
-        var f = function(type) {
+    var ENCAPSULATES = (function () {
+        var f = function (type) {
             return {
-                encode: function(value) {
+                encode: function (value) {
                     value = type.encode(value);
                     return getBER().encode(value);
                 },
-                decode: function(value) {
+                decode: function (value) {
                     var result = getBER().decode(value);
                     return type.decode(result);
                 }
             };
         };
-        f.encode = function(value) {
+        f.encode = function (value) {
             return getBER().encode(value);
         };
-        f.decode = function(value) {
+        f.decode = function (value) {
             return getBER().decode(value);
         };
         return f;
     })();
 
-    var IMPLICIT = function(type) {
+    var IMPLICIT = function (type) {
         return {
-            encode: function(value) {
+            encode: function (value) {
                 return type.encode(value);
             },
-            decode: function(value) {
+            decode: function (value) {
                 return type.decode(value);
             }
         };
     };
 
-    var EXPLICIT = function(type) {
+    var EXPLICIT = function (type) {
         return {
-            encode: function(value) {
+            encode: function (value) {
                 return [type.encode(value)];
             },
-            decode: function(value) {
+            decode: function (value) {
                 return type.decode(value[0]);
             }
         };
     };
 
     var ANY = {
-        encode: function(value) {
+        encode: function (value) {
             return value;
         },
-        decode: function(value) {
+        decode: function (value) {
             return value;
         }
     };
 
-    var DEFAULT = function(type, opt) {
+    var DEFAULT = function (type, opt) {
         return {
-            encode: function(value) {
+            encode: function (value) {
                 if (value === opt || value === undefined)
                     return undefined;
                 return type.encode(value);
             },
-            decode: function(value) {
+            decode: function (value) {
                 if (value === undefined) {
                     return opt;
                 }
@@ -662,14 +686,14 @@
         };
     };
 
-    var OPTIONAL = function(type) {
+    var OPTIONAL = function (type) {
         return {
-            encode: function(value) {
+            encode: function (value) {
                 if (value === undefined)
                     return undefined;
                 return type.encode(value);
             },
-            decode: function(value) {
+            decode: function (value) {
                 if (value === undefined) {
                     return undefined;
                 }
@@ -682,14 +706,14 @@
         };
     };
 
-    var DEFAULT_NULL = function(type, opt) {
+    var DEFAULT_NULL = function (type, opt) {
         return {
-            encode: function(value) {
+            encode: function (value) {
                 if (value === opt || value === undefined)
                     return NULL.encode(null);
                 return type.encode(value);
             },
-            decode: function(value) {
+            decode: function (value) {
                 if (value === undefined) {
                     return undefined;
                 } else if (value === null) {
@@ -700,12 +724,12 @@
         };
     };
 
-    var IDENTIFIED_BY = function(base, identifier, ownerDafault) {
+    var IDENTIFIED_BY = function (base, identifier, ownerDafault) {
         ownerDafault = ownerDafault || ANY;
-        var f = function(typeSet, typeDefault) {
+        var f = function (typeSet, typeDefault) {
             typeSet = typeSet || {};
             typeDefault = typeDefault || ownerDafault;
-            var define = function(id) {
+            var define = function (id) {
                 var type;
                 if (typeSet) {
                     if (typeSet.call)
@@ -716,36 +740,36 @@
                 return type || typeDefault;
             };
             return {
-                encode: function(value) {
+                encode: function (value) {
                     var type = define(identifier.encode(value));
                     return base(type).encode(value);
                 },
-                decode: function(value) {
+                decode: function (value) {
                     var type = define(identifier.decode(value));
                     return base(type).decode(value);
                 }
             };
         };
-        f.encode = function(value) {
+        f.encode = function (value) {
             return base(ownerDafault).encode(value);
         };
-        f.decode = function(value) {
+        f.decode = function (value) {
             return base(ownerDafault).decode(value);
         };
         return f;
     };
 
-    var ATTRIBUTE = function(struct, id, idType, ownerDafault) {
+    var ATTRIBUTE = function (struct, id, idType, ownerDafault) {
         id = id || 'type';
         idType = idType || OBJECT_IDENTIFIER;
-        var base = function(type) {
+        var base = function (type) {
             return SEQUENCE(struct(type));
         };
         return IDENTIFIED_BY(base, {
-            encode: function(value) {
+            encode: function (value) {
                 return value[id];
             },
-            decode: function(value) {
+            decode: function (value) {
                 return idType.decode(value[0]);
             }
         }, ownerDafault);
@@ -759,7 +783,7 @@
      * 
      */ // <editor-fold defaultstate="collapsed">
 
-    var DirectoryString = CHOICE([UTF8String, PrintableString, TeletexString, UniversalString, BMPString], function(value) {
+    var DirectoryString = CHOICE([UTF8String, PrintableString, TeletexString, UniversalString, BMPString], function (value) {
         if (value && value.length > 1) {
             var i = value.charCodeAt(value.length - 1);
             // Find invisible code of marked string
@@ -769,17 +793,17 @@
         // PrintableString - for characters and symbols with no spaces, overrise UTF8String
         return /^[A-Za-z0-9\.@\+\-\:\=\\\/\?\!\#\$\%\^\&\*\(\)\[\]\{\}\>\<\|\~]*$/.test(value) ? 1 : 0;
     }, {
-        encode: function(value) {
+        encode: function (value) {
             // Clear invisible code 
             return value.replace(/[\u0000-\u0004]/g, '');
         },
-        decode: function(value, i) {
+        decode: function (value, i) {
             // Mark string type with invisible code
             return value + String.fromCharCode(i);
         }
     });
 
-    var Time = CHOICE([GeneralizedTime, UTCTime], function(value) {
+    var Time = CHOICE([GeneralizedTime, UTCTime], function (value) {
         return value.getYear() >= 2050 ? 0 : 1;
     });
 
@@ -788,7 +812,7 @@
 
     var AttributeValue = ANY;
 
-    var AttributeTypeAndValue = ATTRIBUTE(function(type) {
+    var AttributeTypeAndValue = ATTRIBUTE(function (type) {
         return {
             type: AttributeType,
             value: type
@@ -868,12 +892,12 @@
         domainComponent: IA5String
     }, DirectoryString));
 
-    var RDNSequence = SEQUENCE_OF(RelativeDistinguishedName, function(id, value) {
+    var RDNSequence = SEQUENCE_OF(RelativeDistinguishedName, function (id, value) {
         return {
             type: id,
             value: value
         };
-    }, function(result, data) {
+    }, function (result, data) {
         result[data.type] = data.value;
     })();
 
@@ -896,7 +920,7 @@
      * 
      * @class gostSyntax.CanocicalName
      */
-    var CanocicalName = (function() {
+    var CanocicalName = (function () {
         var aliases = {
             commonName: 'CN',
             serialName: 'SN',
@@ -925,7 +949,7 @@
              * @param {gostSyntax.Name} name
              * @returns {string}
              */
-            encode: function(name) {
+            encode: function (name) {
                 var s = [];
                 for (var id in name) {
                     if (id !== 'buffer')
@@ -939,7 +963,7 @@
              * @param {string} canonical
              * @returns {gostSyntax.Name}
              */
-            decode: function(canonical) {
+            decode: function (canonical) {
                 var result = {}, ar = canonical.split(',');
                 for (var i = 0, n = ar.length; i < n; i++) {
                     var item = ar[i].split('='),
@@ -958,28 +982,28 @@
     var Version = INTEGER;
 
     // Attributes
-    var Attribute = ATTRIBUTE(function(type) {
+    var Attribute = ATTRIBUTE(function (type) {
         return {
             type: OBJECT_IDENTIFIER,
             value: type
         };
     });
 
-    var Attributes = SET_OF(Attribute, function(id, value) {
+    var Attributes = SET_OF(Attribute, function (id, value) {
         return {
             type: id,
             value: value
         };
-    }, function(result, data) {
+    }, function (result, data) {
         result[data.type] = data.value;
     });
 
-    var AttributeSequence = SEQUENCE_OF(Attribute, function(id, value) {
+    var AttributeSequence = SEQUENCE_OF(Attribute, function (id, value) {
         return {
             type: id,
             value: value
         };
-    }, function(result, data) {
+    }, function (result, data) {
         result[data.type] = data.value;
     });
     // </editor-fold>    
@@ -1000,17 +1024,28 @@
         seed: OPTIONAL(BIT_STRING)});
 
     var ECPoint = OCTET_STRING({
-        encode: function(value) {
-            return getHex().decode('04' +
-                    value.x.replace('0x', '') +
-                    value.y.replace('0x', ''));
+        encode: function (value) {
+            var len = Math.max(npw2(value.x.length - 2), npw2(value.y.length - 2)) / 2,
+                    r = new Uint8Array(2 * len + 1);
+            r[0] = 0x04;
+            r.set(new Uint8Array(SInt.decode(value.x, false, len)), 1); // x
+            r.set(new Uint8Array(SInt.decode(value.y, false, len)), len + 1); // y
+            return r.buffer;
+//            return getHex().decode('04' +
+//                    value.x.replace('0x', '') +
+//                    value.y.replace('0x', ''));
         },
-        decode: function(value) {
-            var s = getHex().encode(value).replace(/[^A-fa-f0-9]/g, '').substring(2);
+        decode: function (value) {
+            var len = (value.length - 1) / 2;
             return {
-                x: '0x' + s.substring(0, s.length / 2),
-                y: '0x' + s.substring(s.length / 2)
+                x: SInt.encode(new Uint8Array(value, 1, len)),
+                y: SInt.encode(new Uint8Array(value, len + 1, len))
             };
+//            var s = getHex().encode(value).replace(/[^A-fa-f0-9]/g, '').substring(2);
+//            return {
+//                x: '0x' + s.substring(0, s.length / 2),
+//                y: '0x' + s.substring(s.length / 2)
+//            };
         }});
 
     var FieldID = SEQUENCE({
@@ -1037,23 +1072,23 @@
         ecParameters: ECParameters,
         implicitly: OPTIONAL(NULL)});
 
-    var AlgorithmIdentifier = (function() {
-        var Algorithm = function(paramType) {
+    var AlgorithmIdentifier = (function () {
+        var Algorithm = function (paramType) {
             return SEQUENCE({
                 algorithm: OBJECT_IDENTIFIER,
                 parameters: OPTIONAL(paramType)});
         };
 
-        var f = function(algorithms) {
+        var f = function (algorithms) {
             return {
-                encode: function(value) {
+                encode: function (value) {
                     var Type = algorithms[value.id];
                     if (Type)
                         return Algorithm(Type.paramType).encode(Type.encode(value));
                     else
                         throw new NotSupportedError('Algorithm not supported');
                 },
-                decode: function(value) {
+                decode: function (value) {
                     var Type = algorithms[getName(value[0])];
                     if (Type)
                         return Type.decode(Algorithm(Type.paramType).decode(value));
@@ -1062,10 +1097,10 @@
                 }
             };
         };
-        f.encode = function(value) {
+        f.encode = function (value) {
             return Algorithm(ANY).encode(value);
         };
-        f.decode = function(value) {
+        f.decode = function (value) {
             return Algorithm(ANY).decode(value);
         };
         return f;
@@ -1073,7 +1108,7 @@
 
     var ECDHKeyAlgorithm = {
         paramType: ECDHParameters,
-        encode: function(value) {
+        encode: function (value) {
             var parameters;
             if (typeof value.namedCurve === 'string')
                 parameters = {
@@ -1104,7 +1139,7 @@
                 parameters: parameters
             };
         },
-        decode: function(value) {
+        decode: function (value) {
             var parameters = value.parameters,
                     result = getAlgorithm(value.algorithm);
             if (parameters.namedParameters) {
@@ -1126,7 +1161,7 @@
 
     var GostKeyAlgorithm = {
         paramType: GostR3410Parameters,
-        encode: function(value) {
+        encode: function (value) {
             var paramName = value.namedCurve ? 'namedCurve' : 'namedParam',
                     sBox = (value.name.indexOf('-94') >= 0 || value.name.indexOf('-2001') >= 0 ||
                             value.version === 1994 || value.version === 2001) ? value.sBox || 'D-A' :
@@ -1139,7 +1174,7 @@
                 }
             };
         },
-        decode: function(value) {
+        decode: function (value) {
             var parameters = value.parameters;
             return expand(getAlgorithm(value.algorithm),
                     getParameters(parameters.publicKeyParamSet),
@@ -1148,36 +1183,36 @@
     };
 
     var AlgorithmWithNoParam = {
-        encode: function(value) {
+        encode: function (value) {
             return {algorithm: value.id};
         },
-        decode: function(value) {
+        decode: function (value) {
             return getAlgorithm(value.algorithm);
         }
     };
 
     var AlgorithmWithNullParam = {
         paramType: NULL,
-        encode: function(value) {
+        encode: function (value) {
             return {
                 algorithm: value.id,
                 parameters: null
             };
         },
-        decode: function(value) {
+        decode: function (value) {
             return getAlgorithm(value.algorithm);
         }
     };
 
     var Gost341194DigestAlgorithm = {
         paramType: GostR3411Parameters,
-        encode: function(value) {
+        encode: function (value) {
             return {
                 algorithm: value.id,
                 parameters: getAttributes('sBox')[value.sBox || 'D-A']
             };
         },
-        decode: function(value) {
+        decode: function (value) {
             return expand(getAlgorithm(value.algorithm),
                     getParameters(value.parameters));
         }
@@ -1249,7 +1284,7 @@
 
     var Gost2814789Algorithm = {
         paramType: Gost2814789Parameters,
-        encode: function(value) {
+        encode: function (value) {
             return {
                 algorithm: value.id,
                 parameters: {
@@ -1258,7 +1293,7 @@
                 }
             };
         },
-        decode: function(value) {
+        decode: function (value) {
             var algorithm = expand(getAlgorithm(value.algorithm),
                     getParameters(value.parameters.encryptionParamSet));
             algorithm.iv = value.parameters.iv;
@@ -1268,13 +1303,13 @@
 
     var SCGostAlgorithm = {
         paramType: Gost2814789IV,
-        encode: function(value) {
+        encode: function (value) {
             return {
                 algorithm: value.id,
                 parameters: value.iv
             };
         },
-        decode: function(value) {
+        decode: function (value) {
             var algorithm = expand(getAlgorithm(value.algorithm));
             algorithm.iv = value.parameters || new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0]);
             return algorithm;
@@ -1283,7 +1318,7 @@
 
     var GostKeyWrapAlgorithm = {
         paramType: Gost2814789KeyWrapParameters,
-        encode: function(value) {
+        encode: function (value) {
             return {
                 algorithm: value.id,
                 parameters: {
@@ -1292,7 +1327,7 @@
                 }
             };
         },
-        decode: function(value) {
+        decode: function (value) {
             var algorithm = expand(getAlgorithm(value.algorithm),
                     getParameters(value.parameters.encryptionParamSet));
             if (value.parameters.ukm)
@@ -1307,13 +1342,13 @@
 
     var GostKeyAgreementAlgorithm = {
         paramType: KeyWrapAlgorithmIdentifier,
-        encode: function(value) {
+        encode: function (value) {
             return {
                 algorithm: value.id,
                 parameters: value.wrapping
             };
         },
-        decode: function(value) {
+        decode: function (value) {
             var algorithm = expand(getAlgorithm(value.algorithm));
             algorithm.wrapping = value.parameters;
             return algorithm;
@@ -1371,7 +1406,7 @@
 
     var PBKDF2Algorithm = {
         paramType: PBKDF2params,
-        encode: function(value) {
+        encode: function (value) {
             return {
                 algorithm: value.id,
                 parameters: {
@@ -1381,7 +1416,7 @@
                 }
             };
         },
-        decode: function(value) {
+        decode: function (value) {
             var algorithm = expand(getAlgorithm(value.algorithm));
             algorithm.salt = value.parameters.salt.specified;
             algorithm.iterations = value.parameters.iterationCount;
@@ -1399,7 +1434,7 @@
 
     var PBES1Algorithm = {
         paramType: PBEParameter,
-        encode: function(value) {
+        encode: function (value) {
             return {
                 algorithm: value.id,
                 parameters: {
@@ -1408,7 +1443,7 @@
                 }
             };
         },
-        decode: function(value) {
+        decode: function (value) {
             var algorithm = expand(getAlgorithm(value.algorithm));
             algorithm.derivation = expand(algorithm.derivation,
                     {salt: value.parameters.salt, iterations: value.parameters.iterationCount});
@@ -1423,7 +1458,7 @@
 
     var PBES2Algorithm = {
         paramType: PBES2params,
-        encode: function(value) {
+        encode: function (value) {
             return {
                 algorithm: value.id,
                 parameters: {
@@ -1432,7 +1467,7 @@
                 }
             };
         },
-        decode: function(value) {
+        decode: function (value) {
             var algorithm = expand(getAlgorithm(value.algorithm));
             algorithm.derivation = value.parameters.keyDerivationFunc;
             algorithm.encryption = value.parameters.encryptionScheme;
@@ -1459,14 +1494,14 @@
 
     var PasswordMACAlgorithm = {
         paramType: PBMAC1params,
-        encode: function(value) {
+        encode: function (value) {
             return {
                 algorithm: value.id,
                 parameters: {
                     keyDerivationFunc: value.derivation,
                     messageAuthScheme: value.hmac}};
         },
-        decode: function(value) {
+        decode: function (value) {
             var algorithm = expand(getAlgorithm(value.algorithm));
             algorithm.derivation = value.parameters.keyDerivationFunc;
             algorithm.hmac = value.parameters.messageAuthScheme;
@@ -1540,16 +1575,16 @@
      */ // <editor-fold defaultstate="collapsed">
 
     var DHPublicKey = {
-        encode: function(value) {
+        encode: function (value) {
             return INTEGER.encode(getInt16().encode(swapBytes(value)));
         },
-        decode: function(value) {
+        decode: function (value) {
             return swapBytes(getInt16().decode(INTEGER.decode(value)));
         }
     };
 
     var ECDHPublicKey = OCTET_STRING({
-        encode: function(value) {
+        encode: function (value) {
             var r = new Uint8Array(value.byteLength + 1),
                     d = swapBytes(value),
                     len = value.byteLength / 2;
@@ -1558,7 +1593,7 @@
             r.set(new Uint8Array(d, 0, len), len + 1); // y
             return r.buffer;
         },
-        decode: function(value) {
+        decode: function (value) {
             var d = new Uint8Array(value.byteLength - 1),
                     len = d.byteLength / 2;
             d.set(new Uint8Array(value, len + 1, len), 0); // y
@@ -1607,7 +1642,7 @@
      * @class gostSyntax.GostSubjectPublicKeyInfo
      * @param {Object} PKTypes Set of key types
      */
-    var GostSubjectPublicKeyInfo = (function(PKTypes) {
+    var GostSubjectPublicKeyInfo = (function (PKTypes) {
         return {
             /**
              * GostSubjectPublicKeyInfo.encode(value) Encode Algorithm object to gostSyntax.GostSubjectPublicKeyInfo
@@ -1615,7 +1650,7 @@
              * @param {Algorithm} value WebCrypto Algorithm identifier
              * @returns {Object} Encoded object
              */
-            encode: function(value) {
+            encode: function (value) {
                 return SubjectPublicKeyInfo.encode({
                     algorithm: value.algorithm,
                     subjectPublicKey: ENCAPSULATES.encode(
@@ -1628,7 +1663,7 @@
              * @param {Object} value Encoded object
              * @returns {Algorithm} WebCrypto Algorithm identifier
              */
-            decode: function(value) {
+            decode: function (value) {
                 value = SubjectPublicKeyInfo.decode(value);
                 return {
                     algorithm: value.algorithm,
@@ -1659,11 +1694,13 @@
     var PrivateKey = OCTET_STRING;
 
     var DHPrivateKey = {
-        encode: function(value) { // for SignalCom INTEGER d
-            return ENCAPSULATES(INTEGER).encode('0x' + getHex().encode(value, true));
+        encode: function (value) { // for SignalCom INTEGER d
+            return ENCAPSULATES(INTEGER).encode(SInt.encode(value, true));
+//            return ENCAPSULATES(INTEGER).encode('0x' + getHex().encode(value, true));
         },
-        decode: function(value) {
-            return getHex().decode(ENCAPSULATES(INTEGER).decode(value).replace('0x', ''), true);
+        decode: function (value) {
+            return SInt.decode(ENCAPSULATES(INTEGER).decode(value), true);
+//            return getHex().decode(ENCAPSULATES(INTEGER).decode(value).replace('0x', ''), true);
         }
     };
 
@@ -1725,7 +1762,7 @@
      * @class gostSyntax.GostPrivateKeyInfo
      * @param {Object} PKTypes Set of key types
      */
-    var GostPrivateKeyInfo = (function(PKTypes) {
+    var GostPrivateKeyInfo = (function (PKTypes) {
         return {
             /**
              * GostPrivateKeyInfo.encode(value) Encode Algorithm object to gostSyntax.PrivateKeyInfo
@@ -1733,7 +1770,7 @@
              * @param {Algorithm} value WebCrypto Algorithm identifier
              * @returns {Object} Encoded object
              */
-            encode: function(value) {
+            encode: function (value) {
                 return PrivateKeyInfo.encode({
                     version: 0,
                     privateKeyAlgorithm: value.algorithm,
@@ -1746,7 +1783,7 @@
              * @param {Object} value Encoded object
              * @returns {Algorithm} WebCrypto Algorithm identifier
              */
-            decode: function(value) {
+            decode: function (value) {
                 value = PrivateKeyInfo.decode(value);
                 return {
                     algorithm: value.privateKeyAlgorithm,
@@ -1919,7 +1956,7 @@
         accessMethod: OBJECT_IDENTIFIER,
         accessLocation: GeneralName});
 
-    var Extension = ATTRIBUTE(function(type) {
+    var Extension = ATTRIBUTE(function (type) {
         return {
             extnID: OBJECT_IDENTIFIER,
             critical: DEFAULT(BOOLEAN, false),
@@ -1927,13 +1964,13 @@
         };
     }, 'extnID');
 
-    var Extensions = SEQUENCE_OF(Extension, function(id, value, mask) {
+    var Extensions = SEQUENCE_OF(Extension, function (id, value, mask) {
         return {
             extnID: id,
             critical: mask && mask(id, value),
             extnValue: value
         };
-    }, function(result, value) {
+    }, function (result, value) {
         return result[value.extnID] = value.extnValue;
     });
 
@@ -1956,7 +1993,7 @@
         freshestCRL: FreshestCRL,
         authorityInfoAccess: SEQUENCE_OF(AccessDescription),
         subjectInfoAccess: SEQUENCE_OF(AccessDescription)
-    }, function(id, value) {
+    }, function (id, value) {
         return id === 'keyUsage' ||
                 (id === 'basicConstraints' && value.pathLenConstraint === undefined);
     });
@@ -1972,23 +2009,27 @@
 
     var NoSignatureValue = OCTET_STRING;
 
-    var ECDHSignature = (function() {
+    var ECDHSignature = (function () {
         var BaseType = SEQUENCE({
             r: INTEGER,
             s: INTEGER});
         return {
-            encode: function(value) {
+            encode: function (value) {
                 // r || s as integers value
                 value = swapBytes(value);
                 var len = value.byteLength / 2,
-                        s = '0x' + getHex().encode(new Uint8Array(value, 0, len)),
-                        r = '0x' + getHex().encode(new Uint8Array(value, len, len));
+                        s = SInt.encode(new Uint8Array(value, 0, len)),
+                        r = SInt.encode(new Uint8Array(value, len, len));
+//                        s = '0x' + getHex().encode(new Uint8Array(value, 0, len)),
+//                        r = '0x' + getHex().encode(new Uint8Array(value, len, len));
                 return getBER().encode(BaseType.encode({r: r, s: s}));
             },
-            decode: function(value) {
+            decode: function (value) {
                 var signature = BaseType.decode(getBER().decode(value));
-                var r = new Uint8Array(getHex().decode(signature.r.replace('0x', ''))),
-                        s = new Uint8Array(getHex().decode(signature.s.replace('0x', '')));
+                var r = new Uint8Array(SInt.decode(signature.r)),
+                        s = new Uint8Array(SInt.decode(signature.s));
+//                var r = new Uint8Array(getHex().decode(signature.r.replace('0x', ''))),
+//                        s = new Uint8Array(getHex().decode(signature.s.replace('0x', '')));
                 var d = new Uint8Array(s.length + r.length);
                 d.set(s, 0);
                 d.set(r, s.length);
@@ -1998,11 +2039,11 @@
     })();
 
     var GostR3410Signature = {
-        encode: function(value) {
+        encode: function (value) {
             // big endian s || r bit array 
             return swapBytes(value);
         },
-        decode: function(value) {
+        decode: function (value) {
             // big endian s || r bit array 
             return swapBytes(value);
         }
@@ -2031,16 +2072,16 @@
      * @class gostSyntax.GostSignature
      * @param {Object} aSet Set of supported algorithms
      */
-    var SignatureValue = (function(aSet) {
-        return function(algorithm) {
+    var SignatureValue = (function (aSet) {
+        return function (algorithm) {
             var Type = aSet[algorithm.id];
             return {
-                encode: function(value) {
+                encode: function (value) {
                     if (Type)
                         value = Type.encode(value);
                     return value;
                 },
-                decode: function(value) {
+                decode: function (value) {
                     if (value instanceof ArrayBuffer) {
                         if (Type)
                             value = Type.decode(value);
@@ -2066,7 +2107,7 @@
         'id-sc-gostR3411-94-with-gostR3410-94': ECDHSignature,
         'id-sc-gostR3411-94-with-gostR3410-2001': ECDHSignature});
 
-    var GostSignature = function(Type) {
+    var GostSignature = function (Type) {
         return {
             /**
              * Encode object with signature
@@ -2074,7 +2115,7 @@
              * @param {Object} value Object
              * @returns {Object} Encoded object
              */
-            encode: function(value) {
+            encode: function (value) {
                 value = expand(value);
                 value.signatureValue = SignatureValue(value.signatureAlgorithm).encode(value.signatureValue);
                 return Type.encode(value);
@@ -2085,7 +2126,7 @@
              * @param {Object} value Encoded object
              * @returns {Object} Object
              */
-            decode: function(value) {
+            decode: function (value) {
                 var result = Type.decode(value);
                 result.signatureValue = SignatureValue(result.signatureAlgorithm).decode(result.signatureValue);
                 return result;
@@ -2319,7 +2360,7 @@
         deltaCRLIndicator: CRLNumber,
         issuingDistributionPoint: IssuingDistributionPoint,
         freshestCRL: FreshestCRL
-    }, function(id) {
+    }, function (id) {
         return id === 'cRLNumber';
     });
 
@@ -2444,7 +2485,7 @@
         authorityInfoAccess: SEQUENCE_OF(AccessDescription),
         cRLDistributionPoints: CRLDistributionPoints,
         noRevAvail: NULL
-    }, function(id) {
+    }, function (id) {
         return id === 'auditIdentity' || id === 'targetInformation';
     });
 
@@ -2577,17 +2618,17 @@
      */ // <editor-fold defaultstate="collapsed">
 
     // Value type depends on algorithm
-    var AlgorithmValue = function(aSet) {
-        return function(algorithm) {
+    var AlgorithmValue = function (aSet) {
+        return function (algorithm) {
             var Type = aSet[algorithm.id];
             Type = (Type && Type.call && Type(algorithm)) || Type;
             return {
-                encode: function(value) {
+                encode: function (value) {
                     if (Type)
                         value = Type.encode(value);
                     return value;
                 },
-                decode: function(value) {
+                decode: function (value) {
                     if (Type)
                         value = Type.decode(value);
                     return value;
@@ -2639,9 +2680,9 @@
             ephemeralPublicKey: GostSubjectPublicKeyInfo,
             addedukm: OPTIONAL(CTX(0, EXPLICIT(UserKeyingMaterial)))})});
 
-    var CPEncryptedKey = function(algorithm) {
+    var CPEncryptedKey = function (algorithm) {
         return {
-            encode: function(value) {
+            encode: function (value) {
                 // wrappedKey: (UKM(8) | CEK_ENC(32) | CEK_MAC(4)), now we ignore UKM
                 var CEK_ENC = new Uint8Array(new Uint8Array(value, 8, 32)).buffer,
                         CEK_MAC = new Uint8Array(new Uint8Array(value, 40, 4)).buffer;
@@ -2650,7 +2691,7 @@
                     macKey: CEK_MAC
                 };
             },
-            decode: function(value) {
+            decode: function (value) {
                 var UKM = algorithm.ukm,
                         CEK_ENC = value.encryptedKey,
                         CEK_MAC = value.macKey;
@@ -2663,21 +2704,21 @@
         };
     };
 
-    var CPKeyAgreement = function(algorithm) {
+    var CPKeyAgreement = function (algorithm) {
         var Type = CPEncryptedKey(algorithm);
         return {
-            encode: function(value) {
+            encode: function (value) {
                 return Gost2814789EncryptedKey.encode(Type.encode(value));
             },
-            decode: function(value) {
+            decode: function (value) {
                 return Type.decode(Gost2814789EncryptedKey.decode(value));
             }
         };
     };
 
-    var CPKeyTransport = function(algorithm) {
+    var CPKeyTransport = function (algorithm) {
         return {
-            encode: function(value) {
+            encode: function (value) {
                 return GostR3410KeyTransport.encode({
                     sessionEncryptedKey: CPEncryptedKey(algorithm).encode(value),
                     transportParameters: {// from algorithm identifier
@@ -2687,7 +2728,7 @@
                     }
                 });
             },
-            decode: function(value) {
+            decode: function (value) {
                 value = GostR3410KeyTransport.decode(value);
                 algorithm.wrapping = getParameters(value.transportParameters.encryptionParamSet);
                 algorithm.ukm = value.transportParameters.ukm;
@@ -2697,9 +2738,9 @@
         };
     };
 
-    var SCEncryptedKey = function(algorithm) {
+    var SCEncryptedKey = function (algorithm) {
         return {
-            encode: function(value) {
+            encode: function (value) {
                 // wrappedKey: (CEK_ENC(32) | CEK_MAC(4))
                 var CEK_ENC = new Uint8Array(new Uint8Array(value, 0, 32)).buffer,
                         CEK_MAC = new Uint8Array(new Uint8Array(value, 32, 4)).buffer;
@@ -2708,7 +2749,7 @@
                     macKey: CEK_MAC
                 };
             },
-            decode: function(value) {
+            decode: function (value) {
                 var CEK_ENC = value.encryptedKey,
                         CEK_MAC = value.macKey;
                 var encryptedKey = new Uint8Array(CEK_ENC.byteLength + CEK_MAC.byteLength);
@@ -2719,9 +2760,9 @@
         };
     };
 
-    var SCKeyTransport = function(algorithm) {
+    var SCKeyTransport = function (algorithm) {
         return {
-            encode: function(value) {
+            encode: function (value) {
                 return SCGostKeyTransport.encode({
                     sessionEncryptedKey: SCEncryptedKey(algorithm).encode(value),
                     ukm: {// from algorithm identifier
@@ -2730,7 +2771,7 @@
                     }
                 });
             },
-            decode: function(value) {
+            decode: function (value) {
                 value = SCGostKeyTransport.decode(value);
                 algorithm.ukm = value.ukm.addedukm;
                 algorithm['public'] = value.ukm.ephemeralPublicKey;
@@ -2739,13 +2780,13 @@
         };
     };
 
-    var SCKeyAgreement = function(algorithm) {
+    var SCKeyAgreement = function (algorithm) {
         var Type = SCEncryptedKey(algorithm);
         return {
-            encode: function(value) {
+            encode: function (value) {
                 return Gost2814789EncryptedKey.encode(Type.encode(value));
             },
-            decode: function(value) {
+            decode: function (value) {
                 return Type.decode(Gost2814789EncryptedKey.decode(value));
             }
         };
@@ -2771,14 +2812,14 @@
         'id-sc-cmsGostWrap': SCKeyAgreement,
         'id-sc-cmsGost28147Wrap': SCKeyAgreement});
 
-    var GostEncryptedKey = function(Type) {
+    var GostEncryptedKey = function (Type) {
         return {
-            encode: function(value) {
+            encode: function (value) {
                 value = expand(value);
                 value.encryptedKey = ENCAPSULATES(EncryptedKeyValue(value.keyEncryptionAlgorithm)).encode(value.encryptedKey);
                 return Type.encode(value);
             },
-            decode: function(value) {
+            decode: function (value) {
                 var result = Type.decode(value);
                 result.encryptedKey = ENCAPSULATES(EncryptedKeyValue(result.keyEncryptionAlgorithm)).decode(result.encryptedKey);
                 return result;
@@ -2786,13 +2827,13 @@
         };
     };
 
-    var GostKeyAgreeEncryptedKey = function(Type) {
+    var GostKeyAgreeEncryptedKey = function (Type) {
         return {
-            encode: function(value) {
+            encode: function (value) {
                 value = expand(value);
                 var algorithm = value.keyEncryptionAlgorithm;
                 var encaps = ENCAPSULATES(EncryptedKeyValue(algorithm));
-                value.recipientEncryptedKeys = value.recipientEncryptedKeys.map(function(item) {
+                value.recipientEncryptedKeys = value.recipientEncryptedKeys.map(function (item) {
                     item = expand(item);
                     item.encryptedKey = encaps.encode(item.encryptedKey);
                     return item;
@@ -2800,12 +2841,12 @@
                 value.ukm = value.ukm || algorithm.ukm;
                 return Type.encode(value);
             },
-            decode: function(value) {
+            decode: function (value) {
                 var result = Type.decode(value);
                 var algorithm = result.keyEncryptionAlgorithm;
                 algorithm.ukm = algorithm.ukm || result.ukm;
                 var encaps = ENCAPSULATES(EncryptedKeyValue(algorithm));
-                result.recipientEncryptedKeys.forEach(function(item) {
+                result.recipientEncryptedKeys.forEach(function (item) {
                     item.encryptedKey = encaps.decode(item.encryptedKey);
                 });
                 return result;
@@ -3103,7 +3144,7 @@
      */
     var ContentType = OBJECT_IDENTIFIER;
 
-    var ContentInfo = ATTRIBUTE(function(type) {
+    var ContentInfo = ATTRIBUTE(function (type) {
         return {
             contentType: ContentType,
             content: CTX(0, EXPLICIT(type))};
@@ -3145,7 +3186,7 @@
 
     var PKCS8ShroudedKeyBag = EncryptedPrivateKeyInfo;
 
-    var CertBag = ATTRIBUTE(function(type) {
+    var CertBag = ATTRIBUTE(function (type) {
         return {
             certId: CertType,
             certValue: CTX(0, EXPLICIT(type))};
@@ -3156,7 +3197,7 @@
         sdsiCertificate: IA5String
     }, OCTET_STRING);
 
-    var CRLBag = ATTRIBUTE(function(type) {
+    var CRLBag = ATTRIBUTE(function (type) {
         return {
             crlId: CRLType,
             crlValue: CTX(0, EXPLICIT(type))};
@@ -3165,7 +3206,7 @@
         x509CRL: OCTET_STRING(ENCAPSULATES(CertificateList))
     }, OCTET_STRING);
 
-    var SecretBag = ATTRIBUTE(function(type) {
+    var SecretBag = ATTRIBUTE(function (type) {
         return {
             secretTypeId: SecretType,
             secretValue: CTX(0, EXPLICIT(type))
@@ -3174,12 +3215,12 @@
         secret: OCTET_STRING
     }, OCTET_STRING);
 
-    var SafeBag = ATTRIBUTE(function(type) {
+    var SafeBag = ATTRIBUTE(function (type) {
         return {
             bagId: SafeBagType,
             bagValue: CTX(0, EXPLICIT(type)),
             bagAttributes: OPTIONAL(PKCS12Attributes)};
-    }, 'bagId', SafeBagType)(function(type) {
+    }, 'bagId', SafeBagType)(function (type) {
         return ({
             keyBag: KeyBag,
             pkcs8ShroudedKeyBag: PKCS8ShroudedKeyBag,
@@ -3624,16 +3665,16 @@
         macAlgorithm: AlgorithmIdentifier,
         witness: OCTET_STRING});
 
-    var TaggedAttribute = IDENTIFIED_BY(function(type) {
+    var TaggedAttribute = IDENTIFIED_BY(function (type) {
         return SEQUENCE({
             bodyPartID: BodyPartID,
             attrType: OBJECT_IDENTIFIER,
             attrValues: SET_OF(type)
         }, {
-            encode: function(value) {
+            encode: function (value) {
                 return value.attrType;
             },
-            decode: function(value) {
+            decode: function (value) {
                 return OBJECT_IDENTIFIER.decode(value[1]);
             }
         }, AttributeValue)({
@@ -3765,18 +3806,18 @@
      * @param {string} name Format 'PEM' or 'DER'
      * @returns {Formater}
      */
-    var Formater = function(type, name) // <editor-fold defaultstate="collapsed">
+    var Formater = function (type, name) // <editor-fold defaultstate="collapsed">
     {
 
         return {
-            encode: function(value, format) {
+            encode: function (value, format) {
                 value = type.encode(value);
                 value = getBER().encode(value);
                 if ((format || 'DER').toUpperCase() === 'PEM')
                     value = getPEM().encode(value, name);
                 return value;
             },
-            decode: function(value) {
+            decode: function (value) {
                 if (typeof value === 'string' || value instanceof String)
                     value = getPEM().decode(value, name);
                 value = getBER().decode(value);
