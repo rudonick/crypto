@@ -1,6 +1,6 @@
 /** 
  * @file Implementation Web Crypto random generatore for GOST algorithms
- * @version 0.99
+ * @version 1.70
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -30,8 +30,8 @@
  * 
  */
 
-(function(root, factory) {
-    
+(function (root, factory) {
+
     /*
      * Module imports and exports
      * 
@@ -41,18 +41,18 @@
     } else if (typeof exports === 'object') {
         module.exports = factory();
     } else {
-        root.gostRandom = factory();
+        root.GostRandom = factory();
     }
     // </editor-fold>
-    
-}(this, function() {
+
+}(this, function () {
 
     /**
      * The gostCrypto provide general purpose cryptographic functionality for
      * GOST standards including a cryptographically strong pseudo-random number 
      * generator seeded with truly random values.
      * 
-     * @namespace gostRandom
+     * @Class GostRandom
      * 
      */ // <editor-fold defaultstate="collapsed">
 
@@ -67,12 +67,12 @@
         seed: new Uint8Array(1024),
         getIndex: 0,
         setIndex: 0,
-        set: function(x) {
+        set: function (x) {
             if (this.setIndex >= 1024)
                 this.setIndex = 0;
             this.seed[this.setIndex++] = x;
         },
-        get: function() {
+        get: function () {
             if (this.getIndex >= 1024)
                 this.getIndex = 0;
             return this.seed[this.getIndex++];
@@ -82,7 +82,7 @@
     if (typeof document !== 'undefiend') {
         try {
             // Mouse move event to fill random array
-            document.addEventListener('mousemove', function(e) {
+            document.addEventListener('mousemove', function (e) {
                 randomRing.set((new Date().getTime() & 255) ^
                         ((e.clientX || e.pageX) & 255) ^
                         ((e.clientY || e.pageY) & 255));
@@ -92,7 +92,7 @@
 
         try {
             // Keypress event to fill random array
-            document.addEventListener('keydown', function(e) {
+            document.addEventListener('keydown', function (e) {
                 randomRing.set((new Date().getTime() & 255) ^
                         (e.keyCode & 255));
             }, false);
@@ -100,7 +100,8 @@
         }
     } // </editor-fold>
 
-    var gostRandom = {}; 
+    function GostRandom() {
+    }
 
     /**
      * The getRandomValues method generates cryptographically random values. <br><br>
@@ -109,10 +110,10 @@
      * (if it is possible) or  Math.random mixed with time and parameters of 
      * mouse and keyboard events
      * 
-     * @memberOf gostRandom
+     * @memberOf GostRandom
      * @param {(ArrayBuffer|ArrayBufferView)} array Destination buffer for random data
-     */ 
-    gostRandom.getRandomValues = function(array) // <editor-fold defaultstate="collapsed">
+     */
+    GostRandom.prototype.getRandomValues = function (array) // <editor-fold defaultstate="collapsed">
     {
 
         if (!array.byteLength)
@@ -137,7 +138,7 @@
         return array;
     }; // </editor-fold>
 
-    return gostRandom;
+    return GostRandom;
 
 }));
 

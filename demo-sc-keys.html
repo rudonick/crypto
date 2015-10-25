@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+    <head>
+        <title>WebCrypto GOST: SignalCom PrivateKey Export/Import</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
+        <script src="scripts/gost/gostCrypto.js"></script>
+        <script src="scripts/gost/gostCoding.js"></script>
+        <script src="scripts/gost/gostSecurity.js"></script>
+        <script src="scripts/gost/gostASN1.js"></script>
+        <script src="scripts/gost/gostCert.js"></script>
+        <script src="scripts/gost/gostCMS.js"></script>
+        <script src="scripts/gost/gostKeys.js"></script>
+        <script src="scripts/filesaver/FileSaver.js"></script>
+        <script src="scripts/gost/gostViewer.js"></script>
+        <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+        <link type="text/css" rel="stylesheet" href="styles/main.css">
+    </head>
+    <body>
+        <div class="page">
+            <h1><a href="index.html">WebCrypto GOST</a>: SignalCom PrivateKey Export/Import</h1>
+            <p class="note">Demonstration of decoding and conversion SignalCom container files</p>
+            <article>
+                <h2>Export SignalCom PrivateKey</h2>
+                <section>
+                    <p>Find and select all container files "mk.db3", "masks.db3", "kek.opq", "rand.opq" and private key file like "keys\00000001.key"</p>
+                    <div class="fileButton">
+                        <button>Load Container files...</button>
+                        <input id="keyStoreFiles" type="file" multiple onchange="readStoreFiles(this)"/>
+                    </div>
+                    <div class="fileButton">
+                        <button>Load PrivateKey file...</button>
+                        <input id="privateKeyFile" type="file" accept=".key" multiple onchange="readKeyFile(this)"/>
+                    </div>
+                    <button id="exportButton" disabled onclick="exportPrivateKey()">Export PrivateKey</button>
+                    <p id="message"></p>
+                    <label for="password"><strong>PrivateKey password</strong></label>
+                    <input type="password" class="value" id="password"/>
+
+                    <input id="showContainerFiles" type="checkbox" onchange="if (this.checked)
+                                containerFiles.classList.remove('hidden')
+                            else
+                                containerFiles.classList.add('hidden');"><label for="showContainerFiles">Show the contents of PrivateKey and container files</label>
+                    <div id="containerFiles" class="hidden">
+                        <span class="label"><strong>mk.db3</strong></span>
+                        <pre id="mk_db3" contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
+                        <button onclick="saveFile('mk.db3');">Save File</button>
+
+                        <span class="label"><strong>masks.db3</strong></span>
+                        <pre id="masks_db3"  contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
+                        <button onclick="gostViewer.openASN1(masks_db3)">View ASN.1</button>
+                        <button onclick="gostViewer.openSyntax(masks_db3, 'ContentInfo')">View JSON</button>
+                        <button onclick="saveFile('masks.db3');">Save File</button>
+
+                        <span class="label"><strong>kek.opq</strong></span>
+                        <pre id="kek_opq" contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
+                        <button onclick="saveFile('kek.opq');">Save File</button>
+
+                        <span class="label"><strong>rand.opq</strong></span>
+                        <pre id="rand_opq" contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
+                        <button onclick="saveFile('rand.opq');">Save File</button>
+
+                        <span class="label">keys\<strong id="keyFileName">00000001.key</strong></span>
+                        <pre id="keyFile" contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
+                        <button onclick="gostViewer.openASN1(keyFile)">View ASN.1</button>
+                        <button onclick="gostViewer.openSyntax(keyFile, 'GostWrappedPrivateKey')">View JSON</button>
+                        <button onclick="saveKeyFile();">Save File</button>
+                        <p></p>
+                    </div>
+                </section>
+                <h2>Import SignalCom PrivateKey</h2>
+                <section>
+                    <p>Complete Private Key input for import to the SignalCom PrivateKey container</p>
+                    <button id="generateButton" onclick="generatePrivateKey()">Generate PrivateKey</button>
+                    <button id="importButton" disabled onclick="importPrivateKey()">Import PrivateKey</button>
+                    <p id="importMessage"></p>
+
+                    <span class="label"><strong>Private Key</strong></span>
+                    <pre contenteditable id="privateKey" class="encoded" onblur="checkPrivateKey()"></pre>
+                    <div class="fileButton">
+                        <button>Open</button>
+                        <input type="file" onchange="readFile(this, privateKey, 'PRIVATE KEY')"/>
+                    </div>
+                    <button onclick="gostViewer.openASN1(privateKey)">View ASN.1</button>
+                    <button onclick="gostViewer.openSyntax(privateKey, 'PrivateKeyInfo')">View JSON</button>
+
+                </section>
+                <h2>Change SignalCom PrivateKey password</h2>
+                <section>
+                    <p>Enter the new password to encrypt the SignalCom PrivateKey</p>
+                    <label for="newPassword"><strong>New PrivateKey password</strong></label>
+                    <input type="password" class="value" id="newPassword"/>
+                    <button id="changePasswordButton" disabled onclick="changeKeyPassword()">Change PrivateKey password</button>
+                    <p id="passwordMessage"></p>
+                </section>
+            </article>
+        </div>
+        <script>
+            function getValue(name) {
+                return gostCrypto.coding.Hex.decode(document.getElementById(name).textContent);
+            }
+
+            function setValue(name, value) {
+                document.getElementById(name).textContent = gostCrypto.coding.Hex.encode(value);
+            }
+
+            function exportPrivateKey() {
+                // Create key container object with files
+                var keyContainer = new gostCrypto.keys.SignalComPrivateKeyInfo(getValue('keyFile'), {
+                    'mk.db3': getValue('mk_db3'),
+                    'masks.db3': getValue('masks_db3'),
+                    'kek.opq': getValue('kek_opq'),
+                    'rand.opq': getValue('rand_opq')
+                });
+                // Verify key container and password
+                return keyContainer.getKey(password.value).then(function (key) {
+                    privateKey.textContent = key.encode('PEM');
+                    checkPrivateKey();
+                    message.innerHTML = '<span>Success: The private key has been exported.</span>';
+                    passwordMessage.innerHTML = '';
+                }).catch(function (e) {
+                    alert(e.message);
+                });
+            }
+
+            function importPrivateKey() {
+                // Create empty key container 
+                var keyContainer = new gostCrypto.keys.SignalComPrivateKeyInfo();
+                // Add key to conatiner
+                return keyContainer.setKey(privateKey.textContent, password.value).then(function () {
+                    // Save files
+                    setValue('mk_db3', keyContainer['mk.db3']);
+                    setValue('masks_db3', keyContainer['masks.db3']);
+                    setValue('kek_opq', keyContainer['kek.opq']);
+                    setValue('rand_opq', keyContainer['rand.opq']);
+                    setValue('keyFile', keyContainer.encode());
+                    checkStoreFiles();
+                    importMessage.innerHTML = '<span>Success: The private key has been imported.</span>';
+                    passwordMessage.innerHTML = '';
+                }).catch(function (e) {
+                    alert(e.message);
+                });
+            }
+
+            function generatePrivateKey() {
+                // Create empty key container 
+                var keyContainer = new gostCrypto.keys.SignalComPrivateKeyInfo();
+                // Generate private key and certificate
+                return keyContainer.generate({
+                    subject: {
+                        countryName: 'RU',
+                        commonName: 'Alias'
+                    }
+                }, password.value).then(function (req) {
+                    // Generate files
+                    setValue('mk_db3', keyContainer['mk.db3']);
+                    setValue('masks_db3', keyContainer['masks.db3']);
+                    setValue('kek_opq', keyContainer['kek.opq']);
+                    setValue('rand_opq', keyContainer['rand.opq']);
+                    setValue('keyFile', keyContainer.encode());
+                    checkStoreFiles();
+                    return exportPrivateKey();
+                }).then(function () {
+                    importMessage.innerHTML = '<span>Success: The private key has been generated.</span>';
+                    passwordMessage.innerHTML = '';
+                }).catch(function (e) {
+                    alert(e.message);
+                });
+            }
+
+            function changeKeyPassword() {
+                // Change password
+                // Create key container object with files
+                var keyContainer = new gostCrypto.keys.SignalComPrivateKeyInfo(getValue('keyFile'), {
+                    'mk.db3': getValue('mk_db3'),
+                    'masks.db3': getValue('masks_db3'),
+                    'kek.opq': getValue('kek_opq'),
+                    'rand.opq': getValue('rand_opq')
+                });
+                return keyContainer.changePassword(password.value, newPassword.value).then(function () {
+                    // Generate files
+                    setValue('mk_db3', keyContainer['mk.db3']);
+                    setValue('masks_db3', keyContainer['masks.db3']);
+                    setValue('kek_opq', keyContainer['kek.opq']);
+                    setValue('rand_opq', keyContainer['rand.opq']);
+                    setValue('keyFile', keyContainer.encode());
+                    password.value = newPassword.value;
+                    passwordMessage.innerHTML = '<span>Success: The private key password has been changed</span>';
+                }).catch(function (e) {
+                    alert(e.message);
+                });
+            }
+
+            function checkStoreFiles() {
+                var exists = [], absents = [];
+                ['mk.db3', 'masks.db3', 'kek.opq', 'rand.opq'].forEach(function (filename) {
+                    if (document.getElementById(filename.replace('.', '_')).textContent === '')
+                        absents.push(filename);
+                    else
+                        exists.push(filename);
+                });
+                var text;
+                if (exists.length === 0) {
+                    text = 'No container files loaded.';
+                    exportButton.setAttribute('disabled', true);
+                    changePasswordButton.setAttribute('disabled', true);
+                } else if (absents.length > 0) {
+                    text = 'Loaded files: "<strong>' + exists.join('</strong>", "<strong>') + '</strong>"' +
+                            '. It remains to load files : "<strong>' + absents.join('</strong>", "<strong>') + '</strong>".';
+                    exportButton.setAttribute('disabled', true);
+                    changePasswordButton.setAttribute('disabled', true);
+                } else if (keyFile.textContent === '') {
+                    text = 'Container files are loaded. Please load PrivateKey file like "keys\\00000001.key"';
+                    exportButton.setAttribute('disabled', true);
+                    changePasswordButton.setAttribute('disabled', true);
+                } else {
+                    text = 'All the required files are loaded and ready to export.';
+                    exportButton.removeAttribute('disabled');
+                    changePasswordButton.removeAttribute('disabled');
+                }
+                message.innerHTML = '<span>' + text + '</span>';
+            }
+
+            function checkPrivateKey() {
+                var text;
+                if (privateKey.textContent === '') {
+                    importButton.setAttribute('disabled', true);
+                    text = 'Input PKCS#8 private key file';
+                } else {
+                    importButton.removeAttribute('disabled');
+                    text = 'Private key are loaded and ready to import.';
+                }
+                importMessage.innerHTML = '<span>' + text + '</span>';
+            }
+
+            function readStoreFiles(input) {
+                var count = input.files.length;
+                for (var i = 0, n = input.files.length; i < n; i++) {
+                    (function (file) {
+                        var reader = new FileReader(),
+                                name = file.name;
+                        reader.onload = function (e) {
+                            setValue(name.replace('.', '_'), e.target.result);
+                            count--;
+                            if (!count)
+                                checkStoreFiles();
+                        };
+                        reader.readAsArrayBuffer(file);
+                    })(input.files[i]);
+                }
+            }
+
+            function saveFile(filename) {
+                saveAs(new Blob([getValue(filename.replace('.', '_'))],
+                        {type: 'application/octet-binary'}), filename);
+            }
+
+            function readKeyFile(input) {
+                var file = input.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    keyFileName.textContent = file.name;
+                    reader.onload = function (e) {
+                        setValue('keyFile', e.target.result);
+                        checkStoreFiles();
+                    };
+                    reader.readAsArrayBuffer(file);
+                }
+            }
+
+            function saveKeyFile() {
+                saveAs(new Blob([getValue('keyFile')],
+                        {type: 'application/octet-binary'}), keyFileName.textContent);
+            }
+
+            function readFile(input, node, name) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var data = e.target.result, text;
+                    try {
+                        data = gostCrypto.coding.PEM.decode(data, name);
+                        text = gostCrypto.coding.PEM.encode(data, name);
+                    } catch (e) {
+                        text = gostCrypto.coding.Base64.encode(data);
+                    }
+                    node.textContent = text;
+                };
+                reader.readAsArrayBuffer(input.files[0]);
+            }
+
+        </script>
+    </body>
+</html>

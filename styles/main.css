@@ -146,6 +146,11 @@ input[type="checkbox"] {
     display: inline-block;
 }
 
+input[type="checkbox"] + label {
+    padding-left: 20px;
+    display: inline-block;
+}
+
 .fileInput {
     position: relative;
     overflow: hidden;

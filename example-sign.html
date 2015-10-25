@@ -36,11 +36,11 @@ gostCrypto.subtle.generateKey('GOST R 34.10', true, ['sign', 'verify']).then(fun
 
     // Store key in secluded place
     return gostCrypto.subtle.exportKey('raw', keyPair.privateKey).then(function(result) {
-        privateKey.value = gostCoding.Hex.encode(result);
+        privateKey.value = gostCrypto.coding.Hex.encode(result);
 
         // Provide the public key to recepient
         return gostCrypto.subtle.exportKey('raw', keyPair.publicKey).then(function(result) {
-            publicKey.value = gostCoding.Hex.encode(result);
+            publicKey.value = gostCrypto.coding.Hex.encode(result);
             signButton.removeAttribute('disabled');
         });
     });
@@ -140,16 +140,16 @@ gostCrypto.subtle.generateKey('GOST R 34.10', true, ['sign', 'verify']).then(fun
                     <span class="label">Sign message procedure</span>
                     <pre contenteditable class="procedure  prettyprint" id="signMethod">
 // Get private key from secluded place
-gostCrypto.subtle.importKey('raw', gostCoding.Hex.decode(privateKey.value),
+gostCrypto.subtle.importKey('raw', gostCrypto.coding.Hex.decode(privateKey.value),
         'GOST R 34.10', true, ['sign']).then(function(key) {
 
     // Use private key for signing message
     return gostCrypto.subtle.sign('GOST R 34.10/GOST R 34.11', key, 
-        gostCoding.Chars.decode(message.textContent));
+        gostCrypto.coding.Chars.decode(message.textContent));
 }).then(function(result) {
 
     // Send signature with message
-    signature.value = gostCoding.Hex.encode(result);
+    signature.value = gostCrypto.coding.Hex.encode(result);
     verifyButton.removeAttribute('disabled');
 }).catch(function(error) {
     alert(error.message);
@@ -165,12 +165,12 @@ gostCrypto.subtle.importKey('raw', gostCoding.Hex.decode(privateKey.value),
                     <span class="label">Verify signature procedure</span>
                     <pre contenteditable class="procedure prettyprint" id="verifyMethod">
 // Get public key from trusted source
-gostCrypto.subtle.importKey('raw', gostCoding.Hex.decode(publicKey.value),
+gostCrypto.subtle.importKey('raw', gostCrypto.coding.Hex.decode(publicKey.value),
         'GOST R 34.10', true, ['verify']).then(function(key) {
 
     // Use public key for verify message signature
     return gostCrypto.subtle.verify('GOST R 34.10/GOST R 34.11', key, 
-        gostCoding.Hex.decode(signature.value), gostCoding.Chars.decode(message.textContent));
+        gostCrypto.coding.Hex.decode(signature.value), gostCrypto.coding.Chars.decode(message.textContent));
 }).then(function(result) {
 
     // Check result

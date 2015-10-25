@@ -9,17 +9,17 @@
         <script src="scripts/polyfill/typedarray.js"></script>
         <script>
             var tasks = {
-                gost28147: {
-                    module: 'gost28147.test.js',
-                    method: 'Gost28147_test'
+                gostCipher: {
+                    module: 'gostCipher.test.js',
+                    method: 'GostCipher_test'
                 },
-                gostR3410: {
-                    module: 'gostR3410.test.js',
-                    method: 'GostR3410_test'
+                gostSign: {
+                    module: 'gostSign.test.js',
+                    method: 'GostSign_test'
                 },
-                gostR3411: {
-                    module: 'gostR3411.test.js',
-                    method: 'GostR3411_test'
+                gostDigest: {
+                    module: 'gostDigest.test.js',
+                    method: 'GostDigest_test'
                 }
             };
 
@@ -43,7 +43,7 @@
             var workerSupported = (function testWorker() {
                 if (typeof Worker !== 'undefined')
                     try {
-                        new Worker('scripts/gost/' + tasks.gost28147.module);
+                        new Worker('scripts/gost/' + tasks.gostCipher.module);
                         return true;
                     } catch (e) {
                     }
@@ -67,7 +67,7 @@
                 importScripts.baseUrl = 'scripts/gost/';
 
                 // Import main tasks
-                importScripts(tasks.gost28147.module, tasks.gostR3410.module, tasks.gostR3411.module);
+                importScripts(tasks.gostCipher.module, tasks.gostSign.module, tasks.gostDigest.module);
 
                 var postMessage = processData;
             }
@@ -100,17 +100,17 @@
                 loader.removeAttribute('hidden');
                 setTimeout(function() {
                     if (value === 'all')
-                        execute(tasks.gostR3411, function() {
-                            execute(tasks.gostR3410, function() {
-                                execute(tasks.gost28147, function() {
+                        execute(tasks.gostDigest, function() {
+                            execute(tasks.gostSign, function() {
+                                execute(tasks.gostCipher, function() {
                                     loader.setAttribute('hidden', true);
                                 });
                             });
                         });
-                    else if (value === 'gostR3411perf')
+                    else if (value === 'gostDigestperf')
                         execute({
-                            module: tasks.gostR3411.module,
-                            method: tasks.gostR3411.method,
+                            module: tasks.gostDigest.module,
+                            method: tasks.gostDigest.method,
                             args: [1]
                         }, function() {
                             loader.setAttribute('hidden', true);
@@ -133,10 +133,10 @@
                     <label>Select test type</label>
                     <select class="select-test" id="selectedTest">
                         <option value="all" selected>All GOST tests w/o performance</option>
-                        <option value="gost28147">GOST 28147-89 tests</option>
-                        <option value="gostR3410">GOST R 34.10-94/2001/2012 tests</option>
-                        <option value="gostR3411">GOST R 34.11-94/2012 tests</option>
-                        <option value="gostR3411perf">GOST R 34.11 performance tests</option>
+                        <option value="gostCipher">GOST 28147-89/GOST R 34.12-2015 tests</option>
+                        <option value="gostSign">GOST R 34.10-94/2001/2012 tests</option>
+                        <option value="gostDigest">GOST R 34.11-94/2012 tests</option>
+                        <option value="gostDigestperf">GOST R 34.11 performance tests</option>
                     </select>
                     <button onclick="runTests(selectedTest.value)">Run</button>
                     <div style="display: inline-block; width: 48px; height: 12px; overflow: visible; position: relative">

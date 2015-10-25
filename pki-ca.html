@@ -8,11 +8,12 @@
         <script src="scripts/prettify/prettify.js"></script>
         <script src="scripts/prettify/lang-css.js"></script>
         <script src="scripts/polyfill/typedarray.js"></script>
+        <script src="scripts/gost/gostRandom.js"></script>
         <script src="scripts/gost/gostCrypto.js"></script>
         <script src="scripts/gost/gostCoding.js"></script>
-        <script src="scripts/gost/gostObject.js"></script>
-        <script src="scripts/gost/gostSyntax.js"></script>
-        <script src="scripts/gost/gostPKIX.js"></script>
+        <script src="scripts/gost/gostSecurity.js"></script>
+        <script src="scripts/gost/gostASN1.js"></script>
+        <script src="scripts/gost/gostCert.js"></script>
         <script src="scripts/filesaver/FileSaver.js"></script>
         <script src="scripts/gost/gostViewer.js"></script>
         <link type="text/css" rel="stylesheet" href="styles/prettify.css">
@@ -27,12 +28,12 @@
                 <section>
                     <label for="provider"><strong>Algorithm</strong> parameters for selected provider</label>
                     <select class="value" id="provider">
-                        <option value="TC-256" selected>GOST R 34.10-2012 256 TC26</option>
-                        <option value="TC-512">GOST R 34.10-2012 512 TC26</option>
-                        <option value="CP-01">GOST R 34.10-2001 CryptoPro</option>
-                        <option value="SC-01">GOST R 34.10-2001 SignalCom</option>
-                        <option value="RSA-2048">RSASSA PKCS#1 v1.5 2048/SHA256</option>
-                        <option value="ECDSA-256">ECDSA secp256r1/SHA256</option>
+                        <option value="TC-256" selected>Crypto-Pro GOST R 34.10-2012 Cryptographic Service Provider</option>
+                        <option value="TC-512">Crypto-Pro GOST R 34.10-2012 Strong Cryptographic Service Provider</option>
+                        <option value="CP-01">Crypto-Pro GOST R 34.10-2001 Cryptographic Service Provider</option>
+                        <option value="SC-01">Signal-COM ECGOST Cryptographic Provider</option>
+                        <option value="RSA-2048">Microsoft Strong Cryptographic Provider</option>
+                        <option value="ECDSA-256">Microsoft Base DSS and Diffie-Hellman Cryptographic Provider</option>
                     </select>
                     <label for="countryName"><strong>Country name</strong></label>
                     <input class="value" id="countryName" value="RU"/>
@@ -52,26 +53,15 @@
                     <span class="label"><strong>CA Certificate & Private Key</strong> contents</span>
                     <pre contenteditable id="certificate" class="encoded"></pre>
                     <button onclick="
-                              saveAs(new Blob([gostCoding.Chars.decode(certificate.textContent, 'ascii')], {type: 'text/plain'}), 'ca.cer');
+                              saveAs(new Blob([gostCrypto.coding.Chars.decode(certificate.textContent, 'ascii')], {type: 'text/plain'}), 'ca.cer');
                                                 ">Save contents to file</button>
                     <button onclick="certificate.innerHTML = ''">Clear</button>
                     <button onclick="gostViewer.openASN1(certificate)">View ASN.1</button>
                     <button onclick="gostViewer.openSyntax(certificate, 'Certificate')">View JSON</button>
                     <span class="label">Generate CA method</span>
                     <pre contenteditable id="generateMethod" class="procedure prettyprint">
-// Validity period
-var notBefore = new Date();
-notBefore.setHours(0, 0, 0, 0);
-var notAfter = new Date(notBefore);
-notAfter.setDate(notAfter.getDate() + parseInt(days.value || '365'));
-
 // Create CA certificate with parameters from this page
-var pki = new GostPKIX(provider.value, 'PEM');
-pki.createCertificate({
-    validity: {
-        notBefore: notBefore,
-        notAfter: notAfter
-    },
+var cert = new gostCrypto.cert.X509({
     subject: {
         countryName: countryName.value,
         stateOrProvinceName: stateOrProvinceName.value,
@@ -84,18 +74,26 @@ pki.createCertificate({
         keyUsage: ['digitalSignature', 'nonRepudiation', 'keyEncipherment', 
             'dataEncipherment', 'keyAgreement', 'keyCertSign', 'cRLSign'],
         extKeyUsage: ['serverAuth', 'clientAuth', 'codeSigning', 'emailProtection']
-    }
-}, 'Pushkin').then(function(data) {
+    },
+    days: parseInt(days.value || '365')
+});
 
-    // Output ready certificate
-    certificate.textContent = data;
+// Generate key pair for certificate
+cert.generate(provider.value).then(function(key) {
 
     // Output ready private key
-    return pki.exportKey('Pushkin');
-}).then(function(data) {
+    certificate.textContent = key.encode('PEM');
 
-    certificate.textContent += '\r\n\r\n' + data;
-}, function(reason) {
+    // Sign certificate
+    return cert.sign(key);
+}).then(function() {
+
+    // Output ready certificate
+    certificate.textContent = cert.encode('PEM') + '\r\n\r\n' + certificate.textContent;
+
+    // Verify certificate
+    return cert.verify();
+}).catch(function(reason) {
     alert(reason.message);
 });</pre>
                 </section>

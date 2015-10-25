@@ -99,7 +99,7 @@ WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#subtlecrypto
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line876">line 876</a>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line996">line 996</a>
     </li></ul></dd>
     
 
@@ -170,8 +170,13 @@ Supported algorithm names:
      <li><b>GOST 28147-OFB</b> "gammirovanie s obratnoj svyaziyu po vyhodu" (OFB) mode</li>
      <li><b>GOST 28147-CTR</b> "gammirovanie" (counter) mode</li>
      <li><b>GOST 28147-CBC</b> Cipher-Block-Chaining (CBC) mode</li>
+     <li><b>GOST R 34.12-ECB</b> "prostaya zamena" (ECB) mode (default)</li>
+     <li><b>GOST R 34.12-CFB</b> "gammirovanie s obratnoj svyaziyu po shifrotekstu" (CFB) mode</li>
+     <li><b>GOST R 34.12-OFB</b> "gammirovanie s obratnoj svyaziyu po vyhodu" (OFB) mode</li>
+     <li><b>GOST R 34.12-CTR</b> "gammirovanie" (counter) mode</li>
+     <li><b>GOST R 34.12-CBC</b> Cipher-Block-Chaining (CBC) mode</li>
  </ul>
- For additional modes see <a href="Gost28147.html">Gost28147</a>
+ For additional modes see <a href="GostCipher.html">GostCipher</a>
     </div>
     
 
@@ -309,7 +314,7 @@ Supported algorithm names:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line920">line 920</a>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1045">line 1045</a>
     </li></ul></dd>
     
 
@@ -382,8 +387,12 @@ Supported algorithm names:
      <li><b>GOST R 34.10-DH</b> ECDH Key Agreement mode</li>
      <li><b>GOST R 34.11-KDF</b> Key for Derivation Algorithm</li>
      <li><b>GOST R 34.11-PBKDF2</b> Password Based Key for Derivation Algorithm</li>
+     <li><b>GOST R 34.11-PFXKDF</b> PFX Key for Derivation Algorithm</li>
+     <li><b>GOST R 34.11-CPKDF</b> Password Based Key for CryptoPro Derivation Algorithm</li>
+     <li><b>SHA-PBKDF2</b> Password Based Key for Derivation Algorithm</li>
+     <li><b>SHA-PFXKDF</b> PFX Key for Derivation Algorithm</li>
  </ul>
- For additional modes see <a href="GostR3410.html">GostR3410</a> and <a href="GostR3411.html">GostR3411</a>
+ For additional modes see <a href="GostSign.html">GostSign</a> and <a href="GostDigest.html">GostDigest</a>
     </div>
     
 
@@ -521,7 +530,7 @@ Supported algorithm names:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1146">line 1146</a>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1304">line 1304</a>
     </li></ul></dd>
     
 
@@ -596,8 +605,12 @@ Supported algorithm names:
      <li><b>GOST R 34.10-DH</b> ECDH Key Agreement mode</li>
      <li><b>GOST R 34.11-KDF</b> Key for Derivation Algorithm</li>
      <li><b>GOST R 34.11-PBKDF2</b> Password Based Key for Derivation Algorithm</li>
+     <li><b>GOST R 34.11-PFXKDF</b> PFX Key for Derivation Algorithm</li>
+     <li><b>GOST R 34.11-CPKDF</b> Password Based Key for CryptoPro Derivation Algorithm</li>
+     <li><b>SHA-PBKDF2</b> Password Based Key for Derivation Algorithm</li>
+     <li><b>SHA-PFXKDF</b> PFX Key for Derivation Algorithm</li>
  </ul>
- For additional modes see <a href="GostR3410.html">GostR3410</a> and <a href="GostR3411.html">GostR3411</a>
+ For additional modes see <a href="GostSign.html">GostSign</a> and <a href="GostDigest.html">GostDigest</a>
     </div>
     
 
@@ -781,7 +794,7 @@ Supported algorithm names:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1101">line 1101</a>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1254">line 1254</a>
     </li></ul></dd>
     
 
@@ -853,8 +866,9 @@ Supported algorithm names:
  <ul>
      <li><b>GOST R 34.11-94</b> Old-Style GOST Hash</li>
      <li><b>GOST R 34.11</b> GOST Streebog Hash</li>
+     <li><b>SHA</b> SHA Hash</li>
  </ul>
- For additional modes see <a href="GostR3411.html">GostR3411</a>
+ For additional modes see <a href="GostDigest.html">GostDigest</a>
     </div>
     
 
@@ -969,7 +983,7 @@ Supported algorithm names:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1030">line 1030</a>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1170">line 1170</a>
     </li></ul></dd>
     
 
@@ -1044,8 +1058,13 @@ Supported algorithm names:
      <li><b>GOST 28147-OFB</b> "gammirovanie s obratnoj svyaziyu po vyhodu" (OFB) mode</li>
      <li><b>GOST 28147-CTR</b> "gammirovanie" (counter) mode</li>
      <li><b>GOST 28147-CBC</b> Cipher-Block-Chaining (CBC) mode</li>
+     <li><b>GOST R 34.12-ECB</b> "prostaya zamena" (ECB) mode (default)</li>
+     <li><b>GOST R 34.12-CFB</b> "gammirovanie s obratnoj svyaziyu po shifrotekstu" (CFB) mode</li>
+     <li><b>GOST R 34.12-OFB</b> "gammirovanie s obratnoj svyaziyu po vyhodu" (OFB) mode</li>
+     <li><b>GOST R 34.12-CTR</b> "gammirovanie" (counter) mode</li>
+     <li><b>GOST R 34.12-CBC</b> Cipher-Block-Chaining (CBC) mode</li>
  </ul>
- For more information see <a href="Gost28147.html">Gost28147</a>
+ For more information see <a href="GostCipher.html">GostCipher</a>
     </div>
     
 
@@ -1183,7 +1202,7 @@ Supported algorithm names:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line885">line 885</a>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1005">line 1005</a>
     </li></ul></dd>
     
 
@@ -1263,10 +1282,16 @@ Supported algorithm names:
      <li><b>GOST R 34.10</b> ECGOST Private and Public keys</li>
      <li><b>GOST 28147</b> Key for encryption GOST 28147 modes</li>
      <li><b>GOST 28147-KW</b> Key for key wrapping GOST 28147 modes</li>
+     <li><b>GOST R 34.12</b> Key for encryption GOST R 34.12 modes</li>
+     <li><b>GOST R 34.12-KW</b> Key for key wrapping GOST R 34.12 modes</li>
      <li><b>GOST R 34.11-KDF</b> Key for Derivation Algorithm</li>
      <li><b>GOST R 34.11-PBKDF2</b> Import Password for Key for Derivation Algorithm</li>
+     <li><b>GOST R 34.11-PFXKDF</b> Import PFX Key for Derivation Algorithm</li>
+     <li><b>GOST R 34.11-CPKDF</b> Import Password Key for CryptoPro Derivation Algorithm</li>
+     <li><b>SHA-PBKDF2</b> Import Password for Key for Derivation Algorithm</li>
+     <li><b>SHA-PFXKDF</b> Import PFX Key for Derivation Algorithm</li>
  </ul>
- For additional modes see <a href="GostR3410.html">GostR3410</a>, <a href="GostR3411.html">GostR3411</a> and <a href="Gost28147.html">Gost28147</a><br>
+ For additional modes see <a href="GostSign.html">GostSign</a>, <a href="GostDigest.html">GostDigest</a> and <a href="GostCipher.html">GostCipher</a><br>
     </div>
     
 
@@ -1381,7 +1406,7 @@ Supported algorithm names:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1258">line 1258</a>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1423">line 1423</a>
     </li></ul></dd>
     
 
@@ -1456,9 +1481,11 @@ Supported algorithm names:
      <li><b>GOST R 34.10</b> ECGOST Key Pairs</li>
      <li><b>GOST 28147</b> Key for encryption GOST 28147 modes</li>
      <li><b>GOST 28147-KW</b> Key for wrapping GOST 28147 modes</li>
+     <li><b>GOST R 34.12</b> Key for encryption GOST R 34.12 modes</li>
+     <li><b>GOST R 34.12-KW</b> Key for wrapping GOST R 34.12 modes</li>
      <li><b>GOST R 34.11-KDF</b> Key for Derivation Algorithm</li>
  </ul>
- For additional modes see <a href="GostR3410.html">GostR3410</a>, <a href="GostR3411.html">GostR3411</a> and <a href="Gost28147.html">Gost28147</a><br>
+ For additional modes see <a href="GostSign.html">GostSign</a>, <a href="GostDigest.html">GostDigest</a> and <a href="GostCipher.html">GostCipher</a><br>
  Note: Generation key for GOST R 34.10-94 not supported.
     </div>
     
@@ -1597,7 +1624,7 @@ Supported algorithm names:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1060">line 1060</a>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1201">line 1201</a>
     </li></ul></dd>
     
 
@@ -1680,9 +1707,11 @@ Supported algorithm names:
      <li><b>GOST R 34.10</b> ECGOST Private and Public keys</li>
      <li><b>GOST 28147</b> Key for encryption GOST 28147 modes</li>
      <li><b>GOST 28147-KW</b> Key for key wrapping GOST 28147 modes</li>
+     <li><b>GOST R 34.12</b> Key for encryption GOST 34.12 modes</li>
+     <li><b>GOST R 34.12-KW</b> Key for key wrapping GOST 34.12 modes</li>
      <li><b>GOST R 34.11-KDF</b> Key for Derivation Algorithm</li>
  </ul>
- For additional modes see <a href="GostR3410.html">GostR3410</a>, <a href="GostR3411.html">GostR3411</a> and <a href="Gost28147.html">Gost28147</a><br>
+ For additional modes see <a href="GostSign.html">GostSign</a>, <a href="GostDigest.html">GostDigest</a> and <a href="GostCipher.html">GostCipher</a><br>
     </div>
     
 
@@ -1866,7 +1895,7 @@ Supported algorithm names:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1180">line 1180</a>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1342">line 1342</a>
     </li></ul></dd>
     
 
@@ -1942,9 +1971,11 @@ Supported algorithm names:
      <li><b>GOST R 34.10/GOST R 34.11-94</b> ECGOST Signature with Old-Style Hash</li>
      <li><b>GOST R 34.10/GOST R 34.11</b> ECGOST Signature with Streebog Hash</li>
      <li><b>GOST 28147-MAC</b> MAC base on GOST 28147</li>
+     <li><b>GOST R 34.12-MAC</b> MAC base on GOST R 43.12</li>
      <li><b>GOST R 34.11-HMAC</b> HMAC base on GOST 34.11</li>
+     <li><b>SHA-HMAC</b> HMAC base on SHA</li>
  </ul>
- For additional modes see <a href="GostR3410.html">GostR3410</a>, <a href="GostR3411.html">GostR3411</a> and <a href="Gost28147.html">Gost28147</a>
+ For additional modes see <a href="GostSign.html">GostSign</a>, <a href="GostDigest.html">GostDigest</a> and <a href="GostCipher.html">GostCipher</a>
     </div>
     
 
@@ -2082,7 +2113,7 @@ Supported algorithm names:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line955">line 955</a>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1085">line 1085</a>
     </li></ul></dd>
     
 
@@ -2152,8 +2183,9 @@ WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto
 Supported algorithm names:
  <ul>
      <li><b>GOST 28147-KW</b> Key Wrapping GOST 28147 modes</li>
+     <li><b>GOST R 34.12-KW</b> Key Wrapping GOST R 34.12 modes</li>
  </ul>
- For additional modes see <a href="Gost28147.html">Gost28147</a><br>
+ For additional modes see <a href="GostCipher.html">GostCipher</a><br>
     </div>
     
 
@@ -2383,7 +2415,7 @@ Supported algorithm names:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1344">line 1344</a>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1519">line 1519</a>
     </li></ul></dd>
     
 
@@ -2459,9 +2491,11 @@ Supported algorithm names:
      <li><b>GOST R 34.10/GOST R 34.11-94</b> ECGOST Signature with Old-Style Hash</li>
      <li><b>GOST R 34.10/GOST R 34.11</b> ECGOST Signature with Streebog Hash</li>
      <li><b>GOST 28147-MAC</b> MAC base on GOST 28147</li>
+     <li><b>GOST R 34.12-MAC</b> MAC base on GOST R 34.12</li>
      <li><b>GOST R 34.11-HMAC</b> HMAC base on GOST 34.11</li>
+     <li><b>SHA-HMAC</b> HMAC base on SHA</li>
  </ul>
- For additional modes see <a href="GostR3410.html">GostR3410</a>, <a href="GostR3411.html">GostR3411</a> and <a href="Gost28147.html">Gost28147</a>
+ For additional modes see <a href="GostSign.html">GostSign</a>, <a href="GostDigest.html">GostDigest</a> and <a href="GostCipher.html">GostCipher</a>
     </div>
     
 
@@ -2622,7 +2656,7 @@ Supported algorithm names:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line992">line 992</a>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1128">line 1128</a>
     </li></ul></dd>
     
 
@@ -2692,8 +2726,9 @@ WebCrypto API reference <a href="http://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto
 Supported algorithm names:
  <ul>
      <li><b>GOST 28147-KW</b> Key Wrapping GOST 28147 modes</li>
+     <li><b>GOST R 34.12-KW</b> Key Wrapping GOST R 34.12 modes</li>
  </ul>
- For additional modes see <a href="Gost28147.html">Gost28147</a><br>
+ For additional modes see <a href="GostCipher.html">GostCipher</a><br>
     </div>
     
 
@@ -2854,7 +2889,7 @@ Supported algorithm names:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1308">line 1308</a>
+        <a href="gostCrypto.js.html">gostCrypto.js</a>, <a href="gostCrypto.js.html#line1479">line 1479</a>
     </li></ul></dd>
     
 
@@ -2919,13 +2954,13 @@ Supported algorithm names:
 </div>
 
 <nav id="nav">
-    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCoding.html">gostCoding</a></li><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li><li><a href="gostObject.html">gostObject</a></li><li><a href="gostRandom.html">gostRandom</a></li><li><a href="gostSyntax.html">gostSyntax</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="Gost28147.html">Gost28147</a></li><li><a href="gostCoding.Base64.html">Base64</a></li><li><a href="gostCoding.BER.html">BER</a></li><li><a href="gostCoding.Chars.html">Chars</a></li><li><a href="gostCoding.Hex.html">Hex</a></li><li><a href="gostCoding.Int16.html">Int16</a></li><li><a href="gostCoding.PEM.html">PEM</a></li><li><a href="GostPKIX.html">GostPKIX</a></li><li><a href="GostR3410.html">GostR3410</a></li><li><a href="GostR3411.html">GostR3411</a></li><li><a href="gostSyntax.AttributeCertificate.html">AttributeCertificate</a></li><li><a href="gostSyntax.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="gostSyntax.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="gostSyntax.CanocicalName.html">CanocicalName</a></li><li><a href="gostSyntax.Certificate.html">Certificate</a></li><li><a href="gostSyntax.CertificateList.html">CertificateList</a></li><li><a href="gostSyntax.CertificationRequest.html">CertificationRequest</a></li><li><a href="gostSyntax.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="gostSyntax.ContentInfo.html">ContentInfo</a></li><li><a href="gostSyntax.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="gostSyntax.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="gostSyntax.GostSignature.html">GostSignature</a></li><li><a href="gostSyntax.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="gostSyntax.PFX.html">PFX</a></li><li><a href="gostSyntax.PKIData.html">PKIData</a></li><li><a href="gostSyntax.PKIResponse.html">PKIResponse</a></li><li><a href="gostSyntax.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="gostSyntax.SafeContents.html">SafeContents</a></li><li><a href="gostSyntax.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="gostSyntax.TBSCertificate.html">TBSCertificate</a></li><li><a href="gostSyntax.TBSCertList.html">TBSCertList</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyStore.html">KeyStore</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Name.html">Name</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
+    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="GostASN1.html">GostASN1</a></li><li><a href="GostASN1.AttributeCertificate.html">AttributeCertificate</a></li><li><a href="GostASN1.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="GostASN1.Attributes.html">Attributes</a></li><li><a href="GostASN1.AuthenticatedData.html">AuthenticatedData</a></li><li><a href="GostASN1.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="GostASN1.Certificate.html">Certificate</a></li><li><a href="GostASN1.CertificateList.html">CertificateList</a></li><li><a href="GostASN1.CertificationRequest.html">CertificationRequest</a></li><li><a href="GostASN1.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="GostASN1.ContentInfo.html">ContentInfo</a></li><li><a href="GostASN1.DigestedData.html">DigestedData</a></li><li><a href="GostASN1.EncryptedData.html">EncryptedData</a></li><li><a href="GostASN1.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="GostASN1.EnvelopedData.html">EnvelopedData</a></li><li><a href="GostASN1.Extensions.html">Extensions</a></li><li><a href="GostASN1.GostEncryptedKey.html">GostEncryptedKey</a></li><li><a href="GostASN1.GostKeyContainer.html">GostKeyContainer</a></li><li><a href="GostASN1.GostKeyContainerName.html">GostKeyContainerName</a></li><li><a href="GostASN1.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="GostASN1.GostPrivateKeys.html">GostPrivateKeys</a></li><li><a href="GostASN1.GostPrivateMasks.html">GostPrivateMasks</a></li><li><a href="GostASN1.GostSignature.html">GostSignature</a></li><li><a href="GostASN1.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="GostASN1.GostWrappedPrivateKey.html">GostWrappedPrivateKey</a></li><li><a href="GostASN1.Name.html">Name</a></li><li><a href="GostASN1.PFX.html">PFX</a></li><li><a href="GostASN1.PKIData.html">PKIData</a></li><li><a href="GostASN1.PKIResponse.html">PKIResponse</a></li><li><a href="GostASN1.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="GostASN1.SafeContents.html">SafeContents</a></li><li><a href="GostASN1.Sequence.html">Sequence</a></li><li><a href="GostASN1.Set.html">Set</a></li><li><a href="GostASN1.SignedAttributes.html">SignedAttributes</a></li><li><a href="GostASN1.SignedData.html">SignedData</a></li><li><a href="GostASN1.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="GostASN1.TBSCertificate.html">TBSCertificate</a></li><li><a href="GostASN1.TBSCertList.html">TBSCertList</a></li><li><a href="GostASN1.UnsignedAttributes.html">UnsignedAttributes</a></li><li><a href="GostASN1.Validity.html">Validity</a></li><li><a href="GostCert.html">GostCert</a></li><li><a href="GostCert.CertificateTrustPolicy.html">CertificateTrustPolicy</a></li><li><a href="GostCert.CertPath.html">CertPath</a></li><li><a href="GostCert.CertStore.html">CertStore</a></li><li><a href="GostCert.CRL.html">CRL</a></li><li><a href="GostCert.Request.html">Request</a></li><li><a href="GostCert.TrustedCAPolicy.html">TrustedCAPolicy</a></li><li><a href="GostCert.X509.html">X509</a></li><li><a href="GostCipher.html">GostCipher</a></li><li><a href="GostCMS.html">GostCMS</a></li><li><a href="GostCMS.DataContentInfo.html">DataContentInfo</a></li><li><a href="GostCMS.DigestedDataContentInfo.html">DigestedDataContentInfo</a></li><li><a href="GostCMS.EncryptedDataContentInfo.html">EncryptedDataContentInfo</a></li><li><a href="GostCMS.EnvelopedDataContentInfo.html">EnvelopedDataContentInfo</a></li><li><a href="GostCMS.SignedDataContentInfo.html">SignedDataContentInfo</a></li><li><a href="GostCoding.html">GostCoding</a></li><li><a href="GostCoding.Base64.html">Base64</a></li><li><a href="GostCoding.BER.html">BER</a></li><li><a href="GostCoding.Chars.html">Chars</a></li><li><a href="GostCoding.Hex.html">Hex</a></li><li><a href="GostCoding.Int16.html">Int16</a></li><li><a href="GostCoding.PEM.html">PEM</a></li><li><a href="GostDigest.html">GostDigest</a></li><li><a href="GostKeys.html">GostKeys</a></li><li><a href="GostKeys.CryptoProKeyContainer.html">CryptoProKeyContainer</a></li><li><a href="GostKeys.PKCS8.html">PKCS8</a></li><li><a href="GostKeys.PKCS8Encrypted.html">PKCS8Encrypted</a></li><li><a href="GostKeys.PKCS12.html">PKCS12</a></li><li><a href="GostKeys.SignalComKeyContainer.html">SignalComKeyContainer</a></li><li><a href="GostKeys.SignalComPrivateKeyInfo.html">SignalComPrivateKeyInfo</a></li><li><a href="GostRandom.html">GostRandom</a></li><li><a href="GostSecurity.html">GostSecurity</a></li><li><a href="GostSign.html">GostSign</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
 </nav>
 
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Sat Aug 08 2015 00:33:34 GMT+0300 (MSK)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Sun Oct 25 2015 02:48:22 GMT+0300 (MSK)
 </footer>
 
 </div>

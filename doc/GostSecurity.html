@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>WebCrypto GOST: Class: GostSecurity</title>
+
+    <script src="../scripts/prettify/prettify.js"> </script>
+    <script src="../scripts/prettify/lang-css.js"> </script>
+    <link type="text/css" rel="stylesheet" href="../styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="../styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div class="page">
+
+<div id="main">
+
+    <h1 class="page-title"><a href="../index.html">WebCrypto GOST</a> Class: GostSecurity</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+        GostSecurity
+        </h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+<dt>
+    
+        
+        <h2>Constructor</h2>
+        
+
+        <h4 class="name" id="GostSecurity"><span class="type-signature"></span>new GostSecurity<span class="signature">()</span><span class="type-signature"></span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        GOST and common ASN.1 Object and Algorithm Identifiers
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostSecurity.js.html">gostSecurity.js</a>, <a href="gostSecurity.js.html#line1076">line 1076</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+     
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        <dl>
+            
+<dt>
+    <h4 class="name" id="algorithms"><span class="type-signature">(static) </span>algorithms<span class="type-signature"></span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        Algorithm identifiers gostCrypto.AlgorithmIdentifier for Object Identifiers
+    </div>
+    
+
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostSecurity.js.html">gostSecurity.js</a>, <a href="gostSecurity.js.html#line625">line 625</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="attributes"><span class="type-signature">(static) </span>attributes<span class="type-signature"></span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        Named attributes for Algorithm identifiers <a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a><br><br> 
+
+Recognized attributes:
+ <ul>
+     <li>sBox - Paramsets for GOST 28147. Supported values:
+         <ul>
+             <li>D-TEST - id-GostR3411-94-TestParamSet</li>
+             <li>D-A - id-GostR3411-94-CryptoProParamSet</li>
+             <li>D-B - id-GostR3411-94-CryptoPro-A-ParamSet</li>
+             <li>D-C - id-GostR3411-94-CryptoPro-B-ParamSet</li>
+             <li>D-D - id-GostR3411-94-CryptoPro-C-ParamSet</li>
+             <li>E-TEST - id-Gost28147-89-TestParamSet</li>
+             <li>E-A - id-Gost28147-89-CryptoPro-A-ParamSet</li>
+             <li>E-B - id-Gost28147-89-CryptoPro-B-ParamSet</li>
+             <li>E-C - id-Gost28147-89-CryptoPro-C-ParamSet</li>
+             <li>E-D - id-Gost28147-89-CryptoPro-D-ParamSet</li>
+             <li>E-Z - id-tc26-gost-28147-param-Z</li>
+             <li>D-256 - id-tc26-gost3411-12-256</li>
+             <li>D-512 - id-tc26-gost3411-12-512</li>
+         </ul>
+     </li>
+     <li>namedParam - Paramset for GOST R 34.10-94
+         <ul>
+             <li>S-TEST - id-GostR3410-94-TestParamSet</li>
+             <li>S-A - id-GostR3410-94-CryptoPro-A-ParamSet</li>
+             <li>S-B - id-GostR3410-94-CryptoPro-B-ParamSet</li>
+             <li>S-C - id-GostR3410-94-CryptoPro-C-ParamSet</li>
+             <li>S-D - id-GostR3410-94-CryptoPro-D-ParamSet</li>
+             <li>X-A - id-GostR3410-94-CryptoPro-XchA-ParamSet</li>
+             <li>X-B - id-GostR3410-94-CryptoPro-XchB-ParamSet</li>
+             <li>X-C - id-GostR3410-94-CryptoPro-XchC-ParamSet</li>
+         </ul>
+     </li>
+     <li>namedCurve - Paramset for GOST R 34.10-01 and GOST R 34.10-12
+         <ul>
+             <li>S-256-TEST - id-GostR3410-2001-CryptoPro-TestParamSet</li>
+             <li>S-256-A - id-GostR3410-2001-CryptoPro-A-ParamSet</li>
+             <li>S-256-B - id-GostR3410-2001-CryptoPro-B-ParamSet</li>
+             <li>S-256-C - id-GostR3410-2001-CryptoPro-C-ParamSet</li>
+             <li>X-256-A - id-GostR3410-2001-CryptoPro-XchA-ParamSet</li>
+             <li>X-256-B - id-GostR3410-2001-CryptoPro-XchB-ParamSet</li>
+             <li>P-256 - secp256r1</li>
+             <li>T-256-TEST - id-tc26-gost-3410-12-256-paramSetTest</li>
+             <li>T-256-A - id-tc26-gost-3410-12-256-paramSetA</li>
+             <li>T-256-B - id-tc26-gost-3410-12-256-paramSetB</li>
+             <li>T-512-TEST - id-tc26-gost-3410-12-512-paramSetTest</li>
+             <li>T-512-A - id-tc26-gost-3410-12-512-paramSetA</li>
+             <li>T-512-B - id-tc26-gost-3410-12-512-paramSetB</li>
+         </ul>
+     </li>
+ </ul>
+    </div>
+    
+
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostSecurity.js.html">gostSecurity.js</a>, <a href="gostSecurity.js.html#line853">line 853</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="identifiers"><span class="type-signature">(static) </span>identifiers<span class="type-signature"></span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        ASN.1 Object Identifiers for freandly names
+Generated automaticly
+    </div>
+    
+
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostSecurity.js.html">gostSecurity.js</a>, <a href="gostSecurity.js.html#line613">line 613</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="names"><span class="type-signature">(static) </span>names<span class="type-signature"></span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        Freandly names for ASN.1 Object Identifiers
+    </div>
+    
+
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostSecurity.js.html">gostSecurity.js</a>, <a href="gostSecurity.js.html#line72">line 72</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="parameters"><span class="type-signature">(static) </span>parameters<span class="type-signature"></span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        Algorithm parameters
+    </div>
+    
+
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostSecurity.js.html">gostSecurity.js</a>, <a href="gostSecurity.js.html#line752">line 752</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="providers"><span class="type-signature">(static) </span>providers<span class="type-signature"></span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        Set of algorithms for different providers<br><br>
+Supported providers:
+ <ul>
+     <li><b>CP-94</b> - CryptoPro GOST R 34.10-94 algorithm set</li>
+     <li><b>CP-01</b> - CryptoPro GOST R 34.10-2001 algorithm set</li>
+     <li><b>TC-256</b> - Technical Commitee GOST R 34.10-256 algorithm set</li>
+     <li><b>TC-512</b> - Technical Commitee GOST R 34.10-512 algorithm set</li>
+     <li><b>SC-94</b> - SignalCom GOST R 34.10-94 algorithm set</li>
+     <li><b>SC-01</b> - SignalCom GOST R 34.10-2001 algorithm set</li>
+ </ul>
+ 
+ Follow set can be used if it's supported your browser native WebCrypto API:
+ <ul>
+     <li><b>RSA-2048</b> - RSA Encryption 2048 bits with SHA-256 algorithm set</li>
+     <li><b>ECDSA-256</b> - ECDSA-256 with SHA-256 algorithm set</li>
+ </ul>
+ 
+ Each provider records has follow standart algorithm identifiers:
+ <ul>
+     <li><b>signature</b> - Signature algorithm</li>
+     <li><b>generation</b> - Asymmetric key generation algorithm</li>
+     <li><b>digest</b> - Digest algorithm</li>
+     <li><b>wrapping</b> - Key wrapping algorithm</li>
+     <li><b>hmac</b> - Hash-based message authentication code algorithm</li>
+     <li><b>agreement</b> - Key agreement algorithm (except RSA schema)</li>
+     <li><b>encryption</b> - Content encription algorithm</li>
+     <li><b>derivation</b> - Password-based derivation algorithm</li>
+     <li><b>pbes</b> - Password-based encryption algorithm</li>
+     <li><b>pbmac</b> - Password-based message authentication code algorithm</li>
+ </ul>
+    </div>
+    
+
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostSecurity.js.html">gostSecurity.js</a>, <a href="gostSecurity.js.html#line931">line 931</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        </dl>
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav id="nav">
+    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="GostASN1.html">GostASN1</a></li><li><a href="GostASN1.AttributeCertificate.html">AttributeCertificate</a></li><li><a href="GostASN1.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="GostASN1.Attributes.html">Attributes</a></li><li><a href="GostASN1.AuthenticatedData.html">AuthenticatedData</a></li><li><a href="GostASN1.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="GostASN1.Certificate.html">Certificate</a></li><li><a href="GostASN1.CertificateList.html">CertificateList</a></li><li><a href="GostASN1.CertificationRequest.html">CertificationRequest</a></li><li><a href="GostASN1.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="GostASN1.ContentInfo.html">ContentInfo</a></li><li><a href="GostASN1.DigestedData.html">DigestedData</a></li><li><a href="GostASN1.EncryptedData.html">EncryptedData</a></li><li><a href="GostASN1.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="GostASN1.EnvelopedData.html">EnvelopedData</a></li><li><a href="GostASN1.Extensions.html">Extensions</a></li><li><a href="GostASN1.GostEncryptedKey.html">GostEncryptedKey</a></li><li><a href="GostASN1.GostKeyContainer.html">GostKeyContainer</a></li><li><a href="GostASN1.GostKeyContainerName.html">GostKeyContainerName</a></li><li><a href="GostASN1.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="GostASN1.GostPrivateKeys.html">GostPrivateKeys</a></li><li><a href="GostASN1.GostPrivateMasks.html">GostPrivateMasks</a></li><li><a href="GostASN1.GostSignature.html">GostSignature</a></li><li><a href="GostASN1.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="GostASN1.GostWrappedPrivateKey.html">GostWrappedPrivateKey</a></li><li><a href="GostASN1.Name.html">Name</a></li><li><a href="GostASN1.PFX.html">PFX</a></li><li><a href="GostASN1.PKIData.html">PKIData</a></li><li><a href="GostASN1.PKIResponse.html">PKIResponse</a></li><li><a href="GostASN1.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="GostASN1.SafeContents.html">SafeContents</a></li><li><a href="GostASN1.Sequence.html">Sequence</a></li><li><a href="GostASN1.Set.html">Set</a></li><li><a href="GostASN1.SignedAttributes.html">SignedAttributes</a></li><li><a href="GostASN1.SignedData.html">SignedData</a></li><li><a href="GostASN1.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="GostASN1.TBSCertificate.html">TBSCertificate</a></li><li><a href="GostASN1.TBSCertList.html">TBSCertList</a></li><li><a href="GostASN1.UnsignedAttributes.html">UnsignedAttributes</a></li><li><a href="GostASN1.Validity.html">Validity</a></li><li><a href="GostCert.html">GostCert</a></li><li><a href="GostCert.CertificateTrustPolicy.html">CertificateTrustPolicy</a></li><li><a href="GostCert.CertPath.html">CertPath</a></li><li><a href="GostCert.CertStore.html">CertStore</a></li><li><a href="GostCert.CRL.html">CRL</a></li><li><a href="GostCert.Request.html">Request</a></li><li><a href="GostCert.TrustedCAPolicy.html">TrustedCAPolicy</a></li><li><a href="GostCert.X509.html">X509</a></li><li><a href="GostCipher.html">GostCipher</a></li><li><a href="GostCMS.html">GostCMS</a></li><li><a href="GostCMS.DataContentInfo.html">DataContentInfo</a></li><li><a href="GostCMS.DigestedDataContentInfo.html">DigestedDataContentInfo</a></li><li><a href="GostCMS.EncryptedDataContentInfo.html">EncryptedDataContentInfo</a></li><li><a href="GostCMS.EnvelopedDataContentInfo.html">EnvelopedDataContentInfo</a></li><li><a href="GostCMS.SignedDataContentInfo.html">SignedDataContentInfo</a></li><li><a href="GostCoding.html">GostCoding</a></li><li><a href="GostCoding.Base64.html">Base64</a></li><li><a href="GostCoding.BER.html">BER</a></li><li><a href="GostCoding.Chars.html">Chars</a></li><li><a href="GostCoding.Hex.html">Hex</a></li><li><a href="GostCoding.Int16.html">Int16</a></li><li><a href="GostCoding.PEM.html">PEM</a></li><li><a href="GostDigest.html">GostDigest</a></li><li><a href="GostKeys.html">GostKeys</a></li><li><a href="GostKeys.CryptoProKeyContainer.html">CryptoProKeyContainer</a></li><li><a href="GostKeys.PKCS8.html">PKCS8</a></li><li><a href="GostKeys.PKCS8Encrypted.html">PKCS8Encrypted</a></li><li><a href="GostKeys.PKCS12.html">PKCS12</a></li><li><a href="GostKeys.SignalComKeyContainer.html">SignalComKeyContainer</a></li><li><a href="GostKeys.SignalComPrivateKeyInfo.html">SignalComPrivateKeyInfo</a></li><li><a href="GostRandom.html">GostRandom</a></li><li><a href="GostSecurity.html">GostSecurity</a></li><li><a href="GostSign.html">GostSign</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Sun Oct 25 2015 02:48:22 GMT+0300 (MSK)
+</footer>
+
+</div>
+
+<script> prettyPrint(); </script>
+<script src="../scripts/prettify/linenumber.js"> </script>
+</body>
+</html>

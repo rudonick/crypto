@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+    <head>
+        <title>WebCrypto GOST: ASN.1 viewer tool</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
+        <script src="scripts/polyfill/typedarray.js"></script>
+        <script src="scripts/gost/gostRandom.js"></script>
+        <script src="scripts/gost/gostCrypto.js"></script>
+        <script src="scripts/gost/gostCoding.js"></script>
+        <script src="scripts/gost/gostSecurity.js"></script>
+        <script src="scripts/gost/gostASN1.js"></script>
+        <script src="scripts/gost/gostPKIX.js"></script>
+        <script src="scripts/gost/gostViewer.js"></script>
+        <link type="text/css" rel="stylesheet" href="styles/main.css">
+        <script>
+
+            // Load PFX
+            function load(value) {
+                var pki = new GostPKIX('CP-01');
+                pki.importKeyStore(value, 'remark').then(function() {
+                    var aliases = pki.keyStore.aliases();
+                    return pki.exportKey(aliases[0], undefined, 'remark');
+                })['catch'](function(e) {
+                    console.log(e);
+                });
+                
+                return gostViewer.printASN1(value);
+            }
+
+            // Print from text Hex or Base64 encoded
+            function printText() {
+                if (inputtext.value) {
+                    try {
+                        inputtext.style.height = null;
+                        inputtext.style.height = (inputtext.scrollHeight + 10) + 'px';
+                        inputfile.value = '';
+                        result.innerHTML = '';
+                        result.innerHTML = load(inputtext.value);
+                    } catch (error) {
+                        result.innerHTML = 'Error: ' + error.message;
+                    }
+                }
+            }
+
+            // Print from file Base64 or Binary
+            function printFile() {
+                if (inputfile.value) {
+                    try {
+                        inputtext.style.height = null;
+                        inputtext.value = '';
+                        result.innerHTML = '';
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                            try {
+                                result.innerHTML = load(e.target.result);
+                            } catch (error) {
+                                result.innerHTML = 'Error: ' + error.message;
+                            }
+                        };
+                        reader.readAsArrayBuffer(inputfile.files[0]);
+                    } catch (error) {
+                        result.innerHTML = 'Error: ' + error.message;
+                    }
+                }
+            }
+        </script>
+    </head>
+    <body onload="inputfile.value = inputfileview.value = '';
+            printText();">
+        <div class="page art11">
+            <h1><a href="index.html">WebCrypto GOST</a>: ASN.1 viewer tool</h1>
+            <p class="note">The tool is intended for experimentation with data processing.</p>
+            <article>
+                <h2>View ASN.1 data contents</h2>
+                <section>
+                    <div>
+                        <span class="label"><strong>Select file</strong> in PEM or BER (CER, DER) encoding</span>
+                        <div class="fileInput">
+                            <input id="inputfileview" placeholder="Select the file" value=""/>
+                            <input id="inputfile" type="file" onchange="inputfileview.value = this.files[0] ? this.files[0].name : '';
+                                    printFile();"/>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="label"><strong>Paste text</strong> in BASE64 or HEX encoding</span>
+                        <textarea id="inputtext" class="encoded" onchange="printText();">
+-----BEGIN PFX-----
+MIIIugIBAzCCCHYGCSqGSIb3DQEHAaCCCGcEgghjMIIIXzCCAhAGCSqGSIb3DQEHAaCCAgEEggH9MIIB
++TCCAfUGCyqGSIb3DQEMCgECoIHbMIHYMCQGCiqGSIb3DQEMAVAwFgQQkwG49pvb2EC5HYWZ35HWAAIC
+B9AEga+BtCq/X8OeVnF78wFYUr/3XobMKGxM9MBOoANL6lEJxRyE7YlEcf2MojKN0nFh89HxGudksYof
+UUpFXK+sji+lbJvqU2In9uiM3qXg2MNiperQT7U0Vu1qEwFb4gb9z0XlNJQ2dGTGTMIRo6DYRK6P2MGJ
+byS96+xOOhX7qE4ZrUJXI78pxAw2BD+/hdUqiQwKetpy/tE6TWIUfUFwPY+5WSqSlWGzTJZMJJaALV+M
+MYIBBjATBgkqhkiG9w0BCRUxBgQEAQAAADBXBgkqhkiG9w0BCRQxSh5IADEAMgAyAGYAMwBjAGUAYQAt
+ADIAZABjADAALQA0ADgAZAA5AC0AOQA5ADUANwAtAGUAYwA2AGQAMQBiADIAMwA4AGMAYgBmMIGVBgkr
+BgEEAYI3EQExgYcegYQAQwByAHkAcAB0AG8ALQBQAHIAbwAgAEcATwBTAFQAIABSACAAMwA0AC4AMQAw
+AC0AMgAwADEAMgAgAFMAdAByAG8AbgBnACAAQwByAHkAcAB0AG8AZwByAGEAcABoAGkAYwAgAFMAZQBy
+AHYAaQBjAGUAIABQAHIAbwB2AGkAZABlAHIwggZHBgkqhkiG9w0BBwagggY4MIIGNAIBADCCBi0GCSqG
+SIb3DQEHATAcBgoqhkiG9w0BDAEGMA4ECHU/Y+YEJfvkAgIH0ICCBgCuV0qebbo1PkBBYwnwhJbuKD3t
+dCNzcdykiyAf2RxBN8nuHovCEgwPXW9hqRHudEQjHMSjgeBRMPNadwI+RrS6qT3v6mHe4byamAlCpbwE
+xLGvdReqZhye4JjZ9YAsOpYl2g9qQFNircPPXpCcwAU/0atq3CvRxBL45zOHFbfV3KoMJcHaLfQD0iXG
+K8jwvivrkjRgcqr/mVdPOWSQSWnRPkmDSkuu/hNQvtUmehfe6BKKCMDoRKVfS003KLllsWhE/gV6Spyc
+E9qr753rvaSbCJIUZpM4/h8wPVTjYd9ABp17SVPFT3deH0tt+r1TnBmrpYD6x00p4YV5z2+UiNHEeyKq
+ZGLi/jc11Oe9qBjvF5e8Mz+uFSO6l6aKaWL5Hia6Q7EKPhF4AWLFCbFuBjWh3eJPrUPughTmjwLID4qk
+ydM5iTKRE9U+ZbvXuC101ZCJ9tI35dki27ks8l4zHZunKGliJIs8m2wMj9Y5vQujKXS6ZKnHr1GmPZlJ
+tN7Fo+vJKgywzn7XlTt3twzCgaL9/1j4NwRyTZdA2VzWQTEie7IqDSNvN5ANMtmE8ANomq87Sj8gshZP
+9zpYkKtCvRG5LSYZhcx9gXrw3MmHy8fNkHP3r9p3cFx3w276p57aOwZTaMautQOc89VovttZoSHnt8fI
+g6eUpAfwiLPT3ytj9fgY6ZsAvIoz9co9KDwCLmC//BKxXqoZfXiiV3sKHfsldzzIOFDhXwAhf6XJ6zvh
+sUax020hGyBJXqAxeCfhnUJlyGgAQWymkIYIYJ2pqntVthFy/Wj81LsC4pkzsELFVM8gUYVUniloQZCv
+7CNZhTkc4VTu4NqdzVA1E0xa8HgK4QXQRnHcJBpdXT1AgSgCzP+bb/voUXeNG/tw+YDBt1ke+dgY/Wra
+pZAICy2hZDc6QLkQy1vGPNAVqAdKk4PVass7Zn0PN7hSyJ8yjuStnp9BPkko/fLUH8THf93VFyX7hm2O
+seZkN1DU9HcOWleS5CE8Ic2unFuVGFvLnq+E7PO+XZb/of6YPzVgOmPOE6CaY5yEzetdoFwu6AVWZH8k
+5Rw1wudhI1Niu6D5hHsiKQU8/y0Cbyk4jQ03aNYEgpx2vpRFjes31g6dJcnUhgHgbiGVYm+Xd2SHGL/C
+kuwWyiV9u36A+YJpdXdDvoSeq7ys8spV8XVxzJhISJDdG3POxtqWBFA5X7IBPqI9WijMkjJtfhvPqzYy
+l7fV/igY1JMEhyU2pQqpiAteEOQgGiPYgjDGHqcA7vXiGOsG1deS5mYKSCdCupdlXCVLUfFJm42SaekZ
+/grHmDhlg8klzvr3yTRFRWFVrd6lZiaeU3x2EFHf6YPB1EW3HyR5iRT1wEFdEs3GKWbD2AKO7ABJwWOi
++knQw+HlXhLbxwtrxmWCgJM6O894///u6+ccfO03+9PMnw/FR34ztefQttuoOfn3MsKIg/OkPT/qUFxy
+5OYaPgxhLaywCJqf0MHwMPZxldE6cK/vFJAX+O1PUP6UwK47VxpA9yWD6Tkt/nOmQCItN8mdZXLF5YOu
+FkUxjdIMgb4p/T4paVVZlO0tPcWKjFz84uGK4fA5X/KuD3O/MYHzL1sPIQEJ3wrVcD4kPR/paFCCe8E5
+PugPOzD1pnyRQAB/Q+FXRKaHCUBWrE5NBPp39uXkwp4I0vv3PTT948p3DLgYLNS6M5H5D+VsjZyrMRHY
+HzvBmz7LcsTnffIBgR2yJ0/vbrIkCju3qP7J+7IHJ5lBKI4Ph4bBGW2MflitAWg5TZp9fuH/zNh2yu0t
+qkpJOqAEjrI1pORiczHmMWW3wNHnm+Z/TMIBtbD11prX2xbzRzsPMTD5xOkTN9saCwFqpcZiDRfvH7pt
+D7QMw6wzihVgtHwfULZn0mAKaorakmGfdVB66/Hfa+XEHUTIbiOo4pF7klq+L0jBkq0U37Don56vftFe
+XurQ/L6aeIdx/G8OpfFaDGr31AdJZRyugt/yEOhwOEya83qP6vvc6FF+Cq3COEAvX1GkF3KDcfkTTKkF
+ygjuWQ8/PgJ/qVIpozbPuMQwOzAfMAcGBSsOAwIaBBRG45r5olT14pJn8hvcIF7yUNI7UQQULYF6gB94
+1thyDXvLrJnaf7DFTqQCAgfQ
+-----END PFX-----</textarea>
+                    </div>
+                </section>
+                <h2>Output result</h2>
+                <section>
+                    <pre id="result" class="results">
+                    </pre>
+                </section>
+            </article>
+        </div>
+    </body>
+</html>

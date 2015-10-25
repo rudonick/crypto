@@ -28,7 +28,7 @@
         <article>
             <pre class="prettyprint source linenums"><code>/**
  * @file GOST 34.10-2012 signature function with 1024/512 bits digest
- * @version 0.99
+ * @version 1.70
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -58,26 +58,26 @@
  * 
  */
 
-(function(root, factory) {
+(function (root, factory) {
 
     /*
      * Module imports and exports
      * 
      */ // &lt;editor-fold defaultstate="collapsed">
     if (typeof define === 'function' &amp;&amp; define.amd) {
-        define(['gostRandom', 'gost28147', 'gostR3411', 'gostR3410'], factory);
+        define(['gostRandom', 'gostCipher', 'gostDigest', 'gostSign'], factory);
     } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostRandom'), require('gost28147'), require('gostR3411'), require('gostR3410'));
+        module.exports = factory(require('gostRandom'), require('gostCipher'), require('gostDigest'), require('gostSign'));
     } else {
         if (typeof importScripts !== 'undefined') {
-            if (!(root.gostRandom &amp;&amp; root.Gost28147 &amp;&amp; root.GostR3411 &amp;&amp; root.GostR3410))
-                importScripts('gostRandom.js', 'gost28147.js', 'gostR3411.js', 'gostR3410.js');
+            if (!(root.GostRandom &amp;&amp; root.GostCipher &amp;&amp; root.GostDigest &amp;&amp; root.GostSign))
+                importScripts('gostRandom.js', 'gostCipher.js', 'gostDigest.js', 'gostSign.js');
         }
-        root.gostEngine = factory(root.gostRandom, root.Gost28147, root.GostR3411, root.GostR3410);
+        root.gostEngine = factory(root.GostRandom, root.GostCipher, root.GostDigest, root.GostSign);
     }
     // &lt;/editor-fold>
 
-}(this, function(gostRandom, Gost28147, GostR3411, GostR3410) {
+}(this, function (GostRandom, GostCipher, GostDigest, GostSign) {
 
     /*
      * Engine definition base on normalized algorithm identifier
@@ -95,22 +95,23 @@
             throw new (root.SyntaxError || Error)('Algorithm name not defined');
 
         var name = algorithm.name, mode = algorithm.mode;
-        if (name === 'GOST 28147' &amp;&amp; (method === 'generateKey' ||
+        if ((name === 'GOST 28147' || name === 'GOST R 34.12' || name === 'RC2') &amp;&amp; (method === 'generateKey' ||
                 (mode === 'MAC' &amp;&amp; (method === 'sign' || method === 'verify')) ||
                 (mode === 'KW' &amp;&amp; (method === 'wrapKey' || method === 'unwrapKey')) ||
                 ((!mode || mode === 'ES') &amp;&amp; (method === 'encrypt' || method === 'decrypt')))) {
-            return 'Gost28147';
+            return 'GostCipher';
 
-        } else if (name === 'GOST R 34.11' &amp;&amp; (method === 'digest' ||
+        } else if ((name === 'GOST R 34.11' || name === 'SHA') &amp;&amp; (method === 'digest' ||
                 (mode === 'HMAC' &amp;&amp; (method === 'sign' || method === 'verify' || method === 'generateKey')) ||
-                (mode === 'PBKDF2' &amp;&amp; (method === 'deriveKey' || method === 'deriveBits' || method === 'generateKey')))) {
-            return 'GostR3411';
+                ((mode === 'KDF' || mode === 'PBKDF2' || mode === 'PFXKDF' || mode === 'CPKDF') &amp;&amp;
+                        (method === 'deriveKey' || method === 'deriveBits' || method === 'generateKey')))) {
+            return 'GostDigest';
 
         } else if (name === 'GOST R 34.10' &amp;&amp; (method === 'generateKey' ||
                 ((!mode || mode === 'SIGN') &amp;&amp; (method === 'sign' || method === 'verify')) ||
-                (mode === 'DH' || (method === 'deriveKey' || method === 'deriveBits')))) {
-
-            return 'GostR3410';
+                (mode === 'KW' &amp;&amp; (method === 'wrapKey' || method === 'unwrapKey')) ||
+                (mode === 'DH' &amp;&amp; (method === 'deriveKey' || method === 'deriveBits')))) {
+            return 'GostSign';
         } else
             throw new (root.NotSupportedError || Error)('Algorithm ' + name + '-' + mode + ' is not valid for ' + method);
     } // &lt;/editor-fold>
@@ -121,9 +122,9 @@
      * 
      * Object provide interface to GOST low-level cryptogric classes:
      *  &lt;ul>
-     *      &lt;li>Gost28147 - implementation of GOST 28147 Encryption algorithms. Reference {@link http://tools.ietf.org/html/rfc5830}&lt;/li>
-     *      &lt;li>GostR3411 - implementation of GOST R 34.11 Hash Function algorithms. References {@link http://tools.ietf.org/html/rfc5831} and {@link http://tools.ietf.org/html/rfc6986}&lt;/li>
-     *      &lt;li>GostR3410 - implementation of GOST R 34.10 Digital Signature algorithms. References {@link http://tools.ietf.org/html/rfc5832} and {@link http://tools.ietf.org/html/rfc7091}&lt;/li>
+     *      &lt;li>GostCipher - implementation of GOST 28147, GOST R 34.12, GOST R 34.13 Encryption algorithms. Reference {@link http://tools.ietf.org/html/rfc5830}&lt;/li>
+     *      &lt;li>GostDigest - implementation of GOST R 34.11 Hash Function algorithms. References {@link http://tools.ietf.org/html/rfc5831} and {@link http://tools.ietf.org/html/rfc6986}&lt;/li>
+     *      &lt;li>GostSign - implementation of GOST R 34.10 Digital Signature algorithms. References {@link http://tools.ietf.org/html/rfc5832} and {@link http://tools.ietf.org/html/rfc7091}&lt;/li>
      *  &lt;/ul>
      * @namespace gostEngine
      */
@@ -144,7 +145,7 @@
          * @param {Array} args Method arguments (keys, data, additional parameters)
          * @returns {(CryptoOperationData|Key|KeyPair|boolean)} Result of method execution
          */
-        execute: function(algorithm, method, args) // &lt;editor-fold defaultstate="collapsed">
+        execute: function (algorithm, method, args) // &lt;editor-fold defaultstate="collapsed">
         {
             // Define engine for GOST algorithms
             var engine = defineEngine(method, algorithm);
@@ -154,16 +155,16 @@
             return cipher[method].apply(cipher, args);
         }, // &lt;/editor-fold>
         /**
-         * gostEngine.getGost28147(algorithm) returns GOST 28147 cipher instance&lt;br>&lt;br>
+         * gostEngine.getGostCipher(algorithm) returns GOST 28147 / GOST R 34.12 cipher instance&lt;br>&lt;br>
          * 
-         * GOST 28147-89 Encryption Algorithm&lt;br>&lt;br> 
+         * GOST 28147-89 / GOST R 34.12-15 Encryption Algorithm&lt;br>&lt;br> 
          * When keys and initialization vectors are converted to/from byte arrays, 
          * little-endian byte order is assumed.&lt;br>&lt;br>
          * 
          * Normalized algorithm identifier common parameters:
          * 
          *  &lt;ul>
-         *      &lt;li>&lt;b>name&lt;/b> Algorithm name 'GOST 28147'&lt;/li>
+         *      &lt;li>&lt;b>name&lt;/b> Algorithm name 'GOST 28147' or 'GOST R 34.12'&lt;/li>
          *      &lt;li>&lt;b>version&lt;/b> Algorithm version, number
          *          &lt;ul>
          *              &lt;li>&lt;b>1989&lt;/b> Current version of standard&lt;/li>
@@ -247,14 +248,14 @@
          * 
          * @memberOf gostEngine
          * @param {AlgorithmIndentifier} algorithm Algorithm identifier
-         * @returns {Gost28147} Instance of Gost28147
+         * @returns {GostCipher} Instance of GostCipher
          */
-        getGost28147: function(algorithm) // &lt;editor-fold defaultstate="collapsed">
+        getGostCipher: function (algorithm) // &lt;editor-fold defaultstate="collapsed">
         {
-            return new (Gost28147 || (Gost28147 = root.Gost28147))(algorithm);
+            return new (GostCipher || (GostCipher = root.GostCipher))(algorithm);
         }, // &lt;/editor-fold>
         /**
-         * gostEngine.getGostR3411(algorithm) returns GOST R 34.11 cipher instance&lt;br>&lt;br>
+         * gostEngine.getGostDigest(algorithm) returns GOST R 34.11 cipher instance&lt;br>&lt;br>
          * 
          * Normalized algorithm identifier common parameters:
          * 
@@ -278,6 +279,8 @@
          *              &lt;li>&lt;b>HMAC&lt;/b> HMAC algorithm based on GOST R 34.11&lt;/li>
          *              &lt;li>&lt;b>KDF&lt;/b> Derive bits for KEK deversification&lt;/li>
          *              &lt;li>&lt;b>PBKDF2&lt;/b> Password based key dirivation algorithms PBKDF2 (based on HMAC)&lt;/li>
+         *              &lt;li>&lt;b>PFXKDF&lt;/b> PFX key dirivation algorithms PFXKDF&lt;/li>
+         *              &lt;li>&lt;b>CPKDF&lt;/b> CryptoPro Password based key dirivation algorithms&lt;/li>
          *          &lt;/ul>
          *      &lt;/li>
          *      &lt;li>&lt;b>sBox&lt;/b> Paramset sBox for GOST 28147-89. Used only if version = 1994&lt;/li>
@@ -306,18 +309,32 @@
          *              &lt;li>&lt;b>iterations&lt;/b> Iteration count. GOST recomended value 1000 (default) or 2000&lt;/li>
          *          &lt;/ul>
          *      &lt;/li>
+         *      &lt;li>DeriveBits/DeriveKey PFXKDF mode
+         *          &lt;ul>
+         *              &lt;li>&lt;b>salt&lt;/b> {@link CryptoOperationData} Random salt as input for HMAC algorithm&lt;/li>
+         *              &lt;li>&lt;b>iterations&lt;/b> Iteration count. GOST recomended value 1000 (default) or 2000&lt;/li>
+         *              &lt;li>&lt;b>diversifier&lt;/b> Deversifier, ID=1 - key material for performing encryption or decryption, 
+         *              ID=2 - IV (Initial Value) for encryption or decryption, ID=3 - integrity key for MACing&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
+         *      &lt;li>DeriveBits/DeriveKey CPKDF mode
+         *          &lt;ul>
+         *              &lt;li>&lt;b>salt&lt;/b> {@link CryptoOperationData} Random salt as input for HMAC algorithm&lt;/li>
+         *              &lt;li>&lt;b>iterations&lt;/b> Iteration count. GOST recomended value 1000 (default) or 2000&lt;/li>
+         *          &lt;/ul>
+         *      &lt;/li>
          *  &lt;/ul>
          * 
          * @memberOf gostEngine
          * @param {AlgorithmIndentifier} algorithm Algorithm identifier
-         * @returns {GostR3411} Instance of GostR3411
+         * @returns {GostDigest} Instance of GostDigest
          */
-        getGostR3411: function(algorithm) // &lt;editor-fold defaultstate="collapsed">
+        getGostDigest: function (algorithm) // &lt;editor-fold defaultstate="collapsed">
         {
-            return new (GostR3411 || (GostR3411 = root.GostR3411))(algorithm);
+            return new (GostDigest || (GostDigest = root.GostDigest))(algorithm);
         }, // &lt;/editor-fold>
         /**
-         * gostEngine.getGostR3410(algorithm) returns GOST R 34.10 cipher instance&lt;br>&lt;br>
+         * gostEngine.getGostSign(algorithm) returns GOST R 34.10 cipher instance&lt;br>&lt;br>
          * 
          * Normalized algorithm identifier common parameters:
          * 
@@ -355,7 +372,7 @@
          *              &lt;li>{@link CryptoOperationData} &lt;b>public&lt;/b> The peer's EC public key data&lt;/li>
          *          &lt;/ul>
          *      &lt;/li>
-         *      &lt;li>GenerateKey mode (SIGN and DH) version = 1994
+         *      &lt;li>GenerateKey mode (SIGN and DH and KW) version = 1994
          *          &lt;ul>
          *              &lt;li>&lt;b>namedParam&lt;/b> Paramset for key generation algorithm. If specified no additianal parameters required&lt;/li>
          *          &lt;/ul>
@@ -367,7 +384,7 @@
          *              &lt;li>&lt;b>a&lt;/b> {@link CryptoOperationData} Generator, integer, 1&lt;a&lt;p-1, at that aq (mod p) = 1&lt;/li>
          *          &lt;/ul>
          *      &lt;/li>
-         *      &lt;li>GenerateKey mode (SIGN and DH) version = 2001 or 2012
+         *      &lt;li>GenerateKey mode (SIGN and DH and KW) version = 2001 or 2012
          *          &lt;ul>
          *              &lt;li>&lt;b>namedCurve&lt;/b> Paramset for key generation algorithm. If specified no additianal parameters required&lt;/li>
          *          &lt;/ul>
@@ -385,11 +402,11 @@
          *  
          * @memberOf gostEngine
          * @param {AlgorithmIndentifier} algorithm Algorithm identifier
-         * @returns {GostR3410} Instance of GostR3410
+         * @returns {GostSign} Instance of GostSign
          */
-        getGostR3410: function(algorithm) // &lt;editor-fold defaultstate="collapsed">
+        getGostSign: function (algorithm) // &lt;editor-fold defaultstate="collapsed">
         {
-            return new (GostR3410 || (GostR3410 = root.GostR3410))(algorithm);
+            return new (GostSign || (GostSign = root.GostSign))(algorithm);
         } // &lt;/editor-fold>
     };
 
@@ -412,7 +429,7 @@
          * @name onmessage
          * @param {MessageEvent} event Message event with data {algorithm, method, args}
          */
-        root.onmessage = function(event) {
+        root.onmessage = function (event) {
             try {
                 postMessage({
                     id: event.data.id,
@@ -431,7 +448,7 @@
         var baseUrl = '', nameSuffix = '';
         // Try to define from DOM model
         if (typeof document !== 'undefined') {
-            (function() {
+            (function () {
                 var regs = /^(.*)gostCrypto(.*)\.js$/i;
                 var list = document.querySelectorAll('script');
                 for (var i = 0, n = list.length; i &lt; n; i++) {
@@ -446,7 +463,7 @@
         }
 
         // Local importScripts procedure for include dependens
-        var importScripts = function() {
+        var importScripts = function () {
             for (var i = 0, n = arguments.length; i &lt; n; i++) {
                 var name = arguments[i].split('.'),
                         src = baseUrl + name[0] + nameSuffix + '.' + name[1];
@@ -460,14 +477,14 @@
         };
 
         // Import engines
-        if (!gostRandom)
+        if (!GostRandom)
             importScripts('gostRandom.js');
-        if (!Gost28147)
-            importScripts('gost28147.js');
-        if (!GostR3411)
-            importScripts('gostR3411.js');
-        if (!GostR3410)
-            importScripts('gostR3410.js');
+        if (!GostCipher)
+            importScripts('gostCipher.js');
+        if (!GostDigest)
+            importScripts('gostDigest.js');
+        if (!GostSign)
+            importScripts('gostSign.js');
     } // &lt;/editor-fold>
 
     return gostEngine;
@@ -484,13 +501,13 @@
 </div>
 
 <nav id="nav">
-    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCoding.html">gostCoding</a></li><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li><li><a href="gostObject.html">gostObject</a></li><li><a href="gostRandom.html">gostRandom</a></li><li><a href="gostSyntax.html">gostSyntax</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="Gost28147.html">Gost28147</a></li><li><a href="gostCoding.Base64.html">Base64</a></li><li><a href="gostCoding.BER.html">BER</a></li><li><a href="gostCoding.Chars.html">Chars</a></li><li><a href="gostCoding.Hex.html">Hex</a></li><li><a href="gostCoding.Int16.html">Int16</a></li><li><a href="gostCoding.PEM.html">PEM</a></li><li><a href="GostPKIX.html">GostPKIX</a></li><li><a href="GostR3410.html">GostR3410</a></li><li><a href="GostR3411.html">GostR3411</a></li><li><a href="gostSyntax.AttributeCertificate.html">AttributeCertificate</a></li><li><a href="gostSyntax.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="gostSyntax.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="gostSyntax.CanocicalName.html">CanocicalName</a></li><li><a href="gostSyntax.Certificate.html">Certificate</a></li><li><a href="gostSyntax.CertificateList.html">CertificateList</a></li><li><a href="gostSyntax.CertificationRequest.html">CertificationRequest</a></li><li><a href="gostSyntax.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="gostSyntax.ContentInfo.html">ContentInfo</a></li><li><a href="gostSyntax.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="gostSyntax.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="gostSyntax.GostSignature.html">GostSignature</a></li><li><a href="gostSyntax.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="gostSyntax.PFX.html">PFX</a></li><li><a href="gostSyntax.PKIData.html">PKIData</a></li><li><a href="gostSyntax.PKIResponse.html">PKIResponse</a></li><li><a href="gostSyntax.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="gostSyntax.SafeContents.html">SafeContents</a></li><li><a href="gostSyntax.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="gostSyntax.TBSCertificate.html">TBSCertificate</a></li><li><a href="gostSyntax.TBSCertList.html">TBSCertList</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyStore.html">KeyStore</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Name.html">Name</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
+    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="GostASN1.html">GostASN1</a></li><li><a href="GostASN1.AttributeCertificate.html">AttributeCertificate</a></li><li><a href="GostASN1.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="GostASN1.Attributes.html">Attributes</a></li><li><a href="GostASN1.AuthenticatedData.html">AuthenticatedData</a></li><li><a href="GostASN1.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="GostASN1.Certificate.html">Certificate</a></li><li><a href="GostASN1.CertificateList.html">CertificateList</a></li><li><a href="GostASN1.CertificationRequest.html">CertificationRequest</a></li><li><a href="GostASN1.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="GostASN1.ContentInfo.html">ContentInfo</a></li><li><a href="GostASN1.DigestedData.html">DigestedData</a></li><li><a href="GostASN1.EncryptedData.html">EncryptedData</a></li><li><a href="GostASN1.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="GostASN1.EnvelopedData.html">EnvelopedData</a></li><li><a href="GostASN1.Extensions.html">Extensions</a></li><li><a href="GostASN1.GostEncryptedKey.html">GostEncryptedKey</a></li><li><a href="GostASN1.GostKeyContainer.html">GostKeyContainer</a></li><li><a href="GostASN1.GostKeyContainerName.html">GostKeyContainerName</a></li><li><a href="GostASN1.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="GostASN1.GostPrivateKeys.html">GostPrivateKeys</a></li><li><a href="GostASN1.GostPrivateMasks.html">GostPrivateMasks</a></li><li><a href="GostASN1.GostSignature.html">GostSignature</a></li><li><a href="GostASN1.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="GostASN1.GostWrappedPrivateKey.html">GostWrappedPrivateKey</a></li><li><a href="GostASN1.Name.html">Name</a></li><li><a href="GostASN1.PFX.html">PFX</a></li><li><a href="GostASN1.PKIData.html">PKIData</a></li><li><a href="GostASN1.PKIResponse.html">PKIResponse</a></li><li><a href="GostASN1.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="GostASN1.SafeContents.html">SafeContents</a></li><li><a href="GostASN1.Sequence.html">Sequence</a></li><li><a href="GostASN1.Set.html">Set</a></li><li><a href="GostASN1.SignedAttributes.html">SignedAttributes</a></li><li><a href="GostASN1.SignedData.html">SignedData</a></li><li><a href="GostASN1.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="GostASN1.TBSCertificate.html">TBSCertificate</a></li><li><a href="GostASN1.TBSCertList.html">TBSCertList</a></li><li><a href="GostASN1.UnsignedAttributes.html">UnsignedAttributes</a></li><li><a href="GostASN1.Validity.html">Validity</a></li><li><a href="GostCert.html">GostCert</a></li><li><a href="GostCert.CertificateTrustPolicy.html">CertificateTrustPolicy</a></li><li><a href="GostCert.CertPath.html">CertPath</a></li><li><a href="GostCert.CertStore.html">CertStore</a></li><li><a href="GostCert.CRL.html">CRL</a></li><li><a href="GostCert.Request.html">Request</a></li><li><a href="GostCert.TrustedCAPolicy.html">TrustedCAPolicy</a></li><li><a href="GostCert.X509.html">X509</a></li><li><a href="GostCipher.html">GostCipher</a></li><li><a href="GostCMS.html">GostCMS</a></li><li><a href="GostCMS.DataContentInfo.html">DataContentInfo</a></li><li><a href="GostCMS.DigestedDataContentInfo.html">DigestedDataContentInfo</a></li><li><a href="GostCMS.EncryptedDataContentInfo.html">EncryptedDataContentInfo</a></li><li><a href="GostCMS.EnvelopedDataContentInfo.html">EnvelopedDataContentInfo</a></li><li><a href="GostCMS.SignedDataContentInfo.html">SignedDataContentInfo</a></li><li><a href="GostCoding.html">GostCoding</a></li><li><a href="GostCoding.Base64.html">Base64</a></li><li><a href="GostCoding.BER.html">BER</a></li><li><a href="GostCoding.Chars.html">Chars</a></li><li><a href="GostCoding.Hex.html">Hex</a></li><li><a href="GostCoding.Int16.html">Int16</a></li><li><a href="GostCoding.PEM.html">PEM</a></li><li><a href="GostDigest.html">GostDigest</a></li><li><a href="GostKeys.html">GostKeys</a></li><li><a href="GostKeys.CryptoProKeyContainer.html">CryptoProKeyContainer</a></li><li><a href="GostKeys.PKCS8.html">PKCS8</a></li><li><a href="GostKeys.PKCS8Encrypted.html">PKCS8Encrypted</a></li><li><a href="GostKeys.PKCS12.html">PKCS12</a></li><li><a href="GostKeys.SignalComKeyContainer.html">SignalComKeyContainer</a></li><li><a href="GostKeys.SignalComPrivateKeyInfo.html">SignalComPrivateKeyInfo</a></li><li><a href="GostRandom.html">GostRandom</a></li><li><a href="GostSecurity.html">GostSecurity</a></li><li><a href="GostSign.html">GostSign</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
 </nav>
 
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Sat Aug 08 2015 00:33:32 GMT+0300 (MSK)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Sun Oct 25 2015 02:48:17 GMT+0300 (MSK)
 </footer>
 
 </div>

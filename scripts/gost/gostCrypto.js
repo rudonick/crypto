@@ -1,6 +1,6 @@
 /**
  * @file Implementation Web Crypto interfaces for GOST algorithms
- * @version 0.99
+ * @version 1.70
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -30,7 +30,7 @@
  * 
  */
 
-(function(root, factory) {
+(function (root, factory) {
 
     /*
      * Module imports and exports
@@ -41,12 +41,11 @@
     } else if (typeof exports === 'object') {
         module.exports = factory(require('gostRandom'));
     } else {
-        root.gostCrypto = factory(root.gostRandom);
+        root.gostCrypto = factory(root.GostRandom);
     }
     // </editor-fold>
 
-}(this, function(gostRandom) {
-
+}(this, function (GostRandom) {
 
     /*
      * Algorithm normalization
@@ -76,56 +75,104 @@
         var na = {};
         name = modes[0].replace(/[\.\s]/g, '');
         modes = modes.slice(1);
-        if (name.indexOf('GOST') >= 0 && name.indexOf('28147') >= 0) {
+        if (name.indexOf('28147') >= 0) {
             na = {
                 name: 'GOST 28147',
-                version: 1989, // 2015
+                version: 1989,
+                mode: (algorithm.mode || (// ES, MAC, KW
+                        (method === 'sign' || method === 'verify') ? 'MAC' :
+                        (method === 'wrapKey' || method === 'unwrapKey') ? 'KW' : 'ES')).toUpperCase(),
+                length: algorithm.length || 64
+            };
+        } else if (name.indexOf('3412') >= 0) {
+            na = {
+                name: 'GOST R 34.12',
+                version: 2015,
                 mode: (algorithm.mode || (// ES, MAC, KW
                         (method === 'sign' || method === 'verify') ? 'MAC' :
                         (method === 'wrapKey' || method === 'unwrapKey') ? 'KW' : 'ES')).toUpperCase(),
                 length: algorithm.length || 64 // 128
             };
-        } else if (name.indexOf('GOST') >= 0 && name.indexOf('3411') >= 0) {
+        } else if (name.indexOf('3411') >= 0) {
             na = {
                 name: 'GOST R 34.11',
                 version: 2012, // 1994
-                mode: (algorithm.mode || (// HASH, KDF, HMAC, PBKDF2
+                mode: (algorithm.mode || (// HASH, KDF, HMAC, PBKDF2, PFXKDF, CPKDF
                         (method === 'deriveKey' || method === 'deriveBits') ? 'KDF' :
                         (method === 'sign' || method === 'verify') ? 'HMAC' : 'HASH')).toUpperCase(),
                 length: algorithm.length || 256 // 512
             };
-        } else if (name.indexOf('GOST') >= 0 && name.indexOf('3410') >= 0) {
+        } else if (name.indexOf('3410') >= 0) {
             na = {
                 name: 'GOST R 34.10',
                 version: 2012, // 1994, 2001
-                mode: (algorithm.mode || (// SIGN, DH
+                mode: (algorithm.mode || (// SIGN, DH, KW
                         (method === 'deriveKey' || method === 'deriveBits') ? 'DH' : 'SIGN')).toUpperCase(),
                 length: algorithm.length || 256 // 512
             };
+        } else if (name.indexOf('SHA') >= 0) {
+            na = {
+                name: 'SHA',
+                version: (algorithm.length || 160) === 160 ? 1 : 2, // 1, 2
+                mode: (algorithm.mode || (// HASH, KDF, HMAC, PBKDF2, PFXKDF
+                        (method === 'deriveKey' || method === 'deriveBits') ? 'KDF' :
+                        (method === 'sign' || method === 'verify') ? 'HMAC' : 'HASH')).toUpperCase(),
+                length: algorithm.length || 160
+            };
+        } else if (name.indexOf('RC2') >= 0) {
+            na = {
+                name: 'RC2',
+                version: 1,
+                mode: (algorithm.mode || (// ES, MAC, KW
+                        (method === 'sign' || method === 'verify') ? 'MAC' :
+                        (method === 'wrapKey' || method === 'unwrapKey') ? 'KW' : 'ES')).toUpperCase(),
+                length: algorithm.length || 32 // 1 - 1024
+            };
+        } else if (name.indexOf('PBKDF2') >= 0) {
+            na = normalize(algorithm.hash, 'digest');
+            na.mode = 'PBKDF2';
+        } else if (name.indexOf('PFXKDF') >= 0) {
+            na = normalize(algorithm.hash, 'digest');
+            na.mode = 'PFXKDF';
+        } else if (name.indexOf('CPKDF') >= 0) {
+            na = normalize(algorithm.hash, 'digest');
+            na.mode = 'CPKDF';
+        } else if (name.indexOf('HMAC') >= 0) {
+            na = normalize(algorithm.hash, 'digest');
+            na.mode = 'HMAC';
         } else
             throw new NotSupportedError('Algorithm not supported');
 
         // Compile modes
-        modes.forEach(function(mode) {
+        modes.forEach(function (mode) {
             mode = mode.toUpperCase();
             if (/^[0-9]+$/.test(mode)) {
-                if ((['8', '16', '32'].indexOf(mode) >= 0) || (na.length === '128' && mode === '64')) {
+                if ((['8', '16', '32'].indexOf(mode) >= 0) || (na.length === '128' && mode === '64')) { // Shift bits
                     if (na.mode === 'ES')
                         na.shiftBits = parseInt(mode);
                     else if (na.mode === 'MAC')
                         na.macLength = parseInt(mode);
                     else
                         throw new NotSupportedError('Algorithm ' + na.name + ' mode ' + mode + ' not supported');
-                } else if (['89', '94', '01', '12', '15', '1989', '1994', '2001', '2012', '2015'].indexOf(mode) >= 0) {
+                } else if (['89', '94', '01', '12', '15', '1989', '1994', '2001', '2012', '2015'].indexOf(mode) >= 0) { // GOST Year
                     var version = parseInt(mode);
                     version = version < 1900 ? (version < 80 ? 2000 + version : 1900 + version) : version;
                     na.version = version;
-                } else if (['64', '128', '256', '512'].indexOf(mode) >= 0)
+                } else if (['1'].indexOf(mode) >= 0 && na.name === 'SHA') { // SHA-1
+                    na.version = 1;
+                    na.length = 160;
+                } else if (['256', '384', '512'].indexOf(mode) >= 0 && na.name === 'SHA') { // SHA-2
+                    na.version = 2;
                     na.length = parseInt(mode);
-                else if (['1000', '2000'].indexOf(mode) >= 0)
+                } else if (['40', '128'].indexOf(mode) >= 0 && na.name === 'RC2') { // RC2
+                    na.version = 1;
+                    na.length = parseInt(mode); // key size
+                } else if (['64', '128', '256', '512'].indexOf(mode) >= 0) // block size
+                    na.length = parseInt(mode);
+                else if (['1000', '2000'].indexOf(mode) >= 0) // Iterations
                     na.iterations = parseInt(mode);
                 // Named Paramsets
-            } else if (['E-DEFAULT', 'E-TEST', 'E-A', 'E-B', 'E-C', 'E-D', 'E-SC', 'E-Z', 'D-TEST', 'D-A', 'D-SC'].indexOf(mode) >= 0) {
+            } else if (['E-TEST', 'E-A', 'E-B', 'E-C', 'E-D', 'E-SC', 'E-Z', 'D-TEST', 'D-A', 'D-SC'].indexOf(mode) >= 0) {
                 na.sBox = mode;
             } else if (['S-TEST', 'S-A', 'S-B', 'S-C', 'S-D', 'X-A', 'X-B', 'X-C'].indexOf(mode) >= 0) {
                 na.namedParam = mode;
@@ -135,8 +182,8 @@
             } else if (['SC', 'CP'].indexOf(mode) >= 0) {
                 na.procreator = mode;
 
-                // Encription GOST 28147
-            } else if (na.name === 'GOST 28147') {
+                // Encription GOST 28147 or GOST R 34.12
+            } else if (na.name === 'GOST 28147' || na.name === 'GOST R 34.12' || na.name === 'RC2') {
                 if (['ES', 'MAC', 'KW'].indexOf(mode) >= 0) {
                     na.mode = mode;
                 } else if (['ECB', 'CFB', 'OFB', 'CTR', 'CBC'].indexOf(mode) >= 0) {
@@ -153,8 +200,8 @@
                     throw new NotSupportedError('Algorithm ' + na.name + ' mode ' + mode + ' not supported');
 
                 // Digesting GOST 34.11
-            } else if (na.name === 'GOST R 34.11') {
-                if (['HASH', 'KDF', 'HMAC', 'PBKDF2'].indexOf(mode) >= 0)
+            } else if (na.name === 'GOST R 34.11' || na.name === 'SHA') {
+                if (['HASH', 'KDF', 'HMAC', 'PBKDF2', 'PFXKDF', 'CPKDF'].indexOf(mode) >= 0)
                     na.mode = mode;
                 else
                     throw new NotSupportedError('Algorithm ' + na.name + ' mode ' + mode + ' not supported');
@@ -164,12 +211,33 @@
                 var hash = mode.replace(/[\.\s]/g, '');
                 if (hash.indexOf('GOST') >= 0 && hash.indexOf('3411') >= 0)
                     na.hash = mode;
-                else if (['SIGN', 'DH'].indexOf(mode))
+                else if (['SIGN', 'DH', 'KW'].indexOf(mode))
                     na.mode = mode;
                 else
                     throw new NotSupportedError('Algorithm ' + na.name + ' mode ' + mode + ' not supported');
             }
         });
+
+        // Procreator
+        na.procreator = na.procreator || 'CP';
+
+        // Key size
+        switch (na.name) {
+            case 'GOST 28147':
+            case 'GOST R 34.12':
+                na.keySize = 32;
+                break;
+            case 'RC2':
+                na.keySize = Math.ceil(na.length / 8);
+                break;
+            case 'GOST R 34.11':
+            case 'SHA':
+                na.keySize = na.length / 8;
+                break;
+            case 'GOST R 34.10':
+                na.keySize = na.length / (na.version === 1994 ? 4 : 8);
+                break;
+        }
 
         // Encrypt additional modes 
         if (na.mode === 'ES') {
@@ -184,7 +252,7 @@
             if (algorithm.shiftBits)
                 na.shiftBits = algorithm.shiftBits; // 8, 16, 32, 64
             if (algorithm.keyMeshing)
-            na.keyMeshing = algorithm.keyMeshing; // NO, CP
+                na.keyMeshing = algorithm.keyMeshing; // NO, CP
             if (na.keyMeshing)
                 na.keyMeshing = na.keyMeshing.toUpperCase();
             // Default values
@@ -192,43 +260,40 @@
                 na.block = na.block || 'ECB';
                 na.padding = na.padding || (na.block === 'CBC' || na.block === 'ECB' ? 'ZERO' : 'NO');
                 if (na.block === 'CFB' || na.block === 'OFB')
-                    na.shiftBits = na.shiftBits || na.length; 
+                    na.shiftBits = na.shiftBits || na.length;
                 na.keyMeshing = na.keyMeshing || 'NO';
             }
         }
         if (na.mode === 'KW') {
             if (algorithm.keyWrapping)
                 na.keyWrapping = algorithm.keyWrapping; // NO, CP, SC
-                if (na.keyWrapping)
-                    na.keyWrapping = na.keyWrapping.toUpperCase();
-                if (method !== 'importKey' && method !== 'generateKey') 
-                    na.keyWrapping = na.keyWrapping || 'NO';
+            if (na.keyWrapping)
+                na.keyWrapping = na.keyWrapping.toUpperCase();
+            if (method !== 'importKey' && method !== 'generateKey')
+                na.keyWrapping = na.keyWrapping || 'NO';
         }
 
         // Paramsets
-        if (algorithm.sBox)
-            na.sBox = algorithm.sBox;
-        if (algorithm.namedParam)
-            na.namedParam = algorithm.namedParam;
-        if (algorithm.namedCurve)
-            na.namedCurve = algorithm.namedCurve;
+        ['sBox', 'namedParam', 'namedCurve', 'curve', 'param', 'modulusLength'].forEach(function (name) {
+            algorithm[name] && (na[name] = algorithm[name]);
+        });
         // Default values
         if (method !== 'importKey' && method !== 'generateKey') {
-            if (na.name === 'GOST 28147' && na.version === 1989) {
+            if (na.name === 'GOST 28147') {
                 na.sBox = na.sBox || (na.procreator === 'SC' ? 'E-SC' : 'E-A'); // 'E-A', 'E-B', 'E-C', 'E-D', 'E-SC'
-            } else if (na.name === 'GOST 28147' && na.version === 2015) {
-                na.sBox = 'E-DEFAULT'; 
+            } else if (na.name === 'GOST R 34.12' && na.length === 64) {
+                na.sBox = 'E-Z';
             } else if (na.name === 'GOST R 34.11' && na.version === 1994) {
                 na.sBox = na.sBox || (na.procreator === 'SC' ? 'D-SC' : 'D-A'); // 'D-SC'
             } else if (na.name === 'GOST R 34.10' && na.version === 1994) {
-                na.namedParam = na.namedParam || (na.mode === 'EC-DH' ? 'X-A' : 'S-A'); // 'S-B', 'S-C', 'S-D', 'X-B', 'X-C'
+                na.namedParam = na.namedParam || (na.mode === 'DH' ? 'X-A' : 'S-A'); // 'S-B', 'S-C', 'S-D', 'X-B', 'X-C'
             } else if (na.name === 'GOST R 34.10' && na.version === 2001) {
                 na.namedCurve = na.namedCurve || (na.length === 256 ?
-                        na.procreator === 'SC' ? 'P-256' : (na.mode === 'EC-DH' ? 'X-256-A' : 'S-256-A') : // 'S-256-B', 'S-256-C', 'X-256-B', 'T-256-A', 'T-256-B', 'T-256-C', 'P-256'
+                        na.procreator === 'SC' ? 'P-256' : (na.mode === 'DH' ? 'X-256-A' : 'S-256-A') : // 'S-256-B', 'S-256-C', 'X-256-B', 'T-256-A', 'T-256-B', 'T-256-C', 'P-256'
                         na.mode === 'T-512-A'); // 'T-512-B', 'T-512-C'
             } else if (na.name === 'GOST R 34.10' && na.version === 2012) {
                 na.namedCurve = na.namedCurve || (na.length === 256 ?
-                        na.procreator === 'SC' ? 'P-256' : (na.mode === 'EC-DH' ? 'X-256-A' : 'S-256-A')  : // 'S-256-B', 'S-256-C', 'X-256-B', 'T-256-A', 'T-256-B', 'T-256-C', 'P-256'
+                        na.procreator === 'SC' ? 'P-256' : (na.mode === 'DH' ? 'X-256-A' : 'S-256-A') : // 'S-256-B', 'S-256-C', 'X-256-B', 'T-256-A', 'T-256-B', 'T-256-C', 'P-256'
                         na.mode === 'T-512-A'); // 'T-512-B', 'T-512-C'
             }
         }
@@ -247,19 +312,29 @@
             case 'MAC':
                 algorithm.iv && (na.iv = algorithm.iv);
                 break;
+            case 'KDF':
+                algorithm.label && (na.label = algorithm.label);
+                algorithm.contex && (na.context = algorithm.contex);
+                break;
             case 'PBKDF2':
                 algorithm.salt && (na.salt = algorithm.salt);
                 algorithm.iterations && (na.iterations = algorithm.iterations);
                 break;
-            case 'KDF':
-                algorithm.label && (na.label = algorithm.label);
-                algorithm.contex && (na.context = algorithm.contex);
+            case 'PFXKDF':
+                algorithm.salt && (na.salt = algorithm.salt);
+                algorithm.iterations && (na.iterations = algorithm.iterations);
+                algorithm.diversifier && (na.diversifier = algorithm.diversifier);
+                break;
+            case 'CPKDF':
+                algorithm.salt && (na.salt = algorithm.salt);
+                algorithm.iterations && (na.iterations = algorithm.iterations);
                 break;
         }
 
         // Verification method and modes
         if (method && (
-                ((na.mode !== 'ES' && na.mode !== 'SIGN' && na.mode !== 'MAC' && na.mode !== 'HMAC' && na.mode !== 'KW') &&
+                ((na.mode !== 'ES' && na.mode !== 'SIGN' && na.mode !== 'MAC' &&
+                        na.mode !== 'HMAC' && na.mode !== 'KW' && na.mode !== 'DH') &&
                         (method === 'generateKey')) ||
                 ((na.mode !== 'ES') &&
                         (method === 'encrypt' || method === 'decrypt')) ||
@@ -269,15 +344,16 @@
                         (method === 'digest')) ||
                 ((na.mode !== 'KW') &&
                         (method === 'wrapKey' || method === 'unwrapKey')) ||
-                ((na.mode !== 'DH' && na.mode !== 'PBKDF2' && na.mode !== 'KDF') &&
+                ((na.mode !== 'DH' && na.mode !== 'PBKDF2' && na.mode !== 'PFXKDF' &&
+                        na.mode !== 'CPKDF' && na.mode !== 'KDF') &&
                         (method === 'deriveKey' || method === 'deriveBits'))))
             throw new NotSupportedError('Algorithm mode ' + na.mode + ' not valid for method ' + method);
 
         // Normalize hash algorithm
         algorithm.hash && (na.hash = algorithm.hash);
         if (na.hash) {
-            if ((typeof na.hash === 'string' || na.hash instanceof String) 
-                && na.procreator)
+            if ((typeof na.hash === 'string' || na.hash instanceof String)
+                    && na.procreator)
                 na.hash = na.hash + '/' + na.procreator;
             na.hash = normalize(na.hash, 'digest');
         }
@@ -290,12 +366,22 @@
 
     // Check for possibility use native crypto.subtle
     function checkNative(algorithm) {
-        return rootCrypto && rootCrypto.subtle && algorithm && (
-                ((typeof algorithm === 'string' || algorithm instanceof String) &&
-                        algorithm.toUpperCase().indexOf('GOST') === -1) ||
-                (algorithm.name && algorithm.name.toUpperCase().indexOf('GOST') === -1) ||
-                (algorithm.hash && algorithm.hash.name &&
-                        algorithm.hash.name.toUpperCase().indexOf('GOST') === -1));
+        if (!rootCrypto || !rootCrypto.subtle || !algorithm)
+            return false;
+        // Prepare name
+        var name = (typeof algorithm === 'string' || algorithm instanceof String) ?
+                name = algorithm : algorithm.name;
+        if (!name)
+            return false;
+        name = name.toUpperCase();
+        // Digest algorithm for key derivation
+        if (name.indexOf('KDF') > 0 && algorithm.hash)
+            return checkNative(algorithm.hash);
+        // True if no supported names
+        return name.indexOf('GOST') === -1 &&
+                name.indexOf('SHA') === -1 &&
+                name.indexOf('RC2') === -1 &&
+                name.indexOf('DES') === -1;
     }
     // </editor-fold>
 
@@ -313,18 +399,18 @@
             throw new SyntaxError('Key algorithm name not defined');
 
         var name = key.algorithm.name,
-                gost28147 = name === 'GOST 28147',
-                gostR3411 = name === 'GOST R 34.11',
-                gostR3410 = name === 'GOST R 34.10';
+                gostCipher = name === 'GOST 28147' || name === 'GOST R 34.12' || name === 'RC2',
+                gostDigest = name === 'GOST R 34.11' || name === 'SHA',
+                gostSign = name === 'GOST R 34.10';
 
-        if (!gost28147 && !gostR3410 && !gostR3411)
+        if (!gostCipher && !gostSign && !gostDigest)
             throw new NotSupportedError('Key algorithm ' + name + ' is unsupproted');
 
         if (!key.type)
             throw new SyntaxError('Key type not defined');
 
-        if (((gost28147 || gostR3411) && key.type !== 'secret') ||
-                (gostR3410 && !(key.type === 'public' || key.type === 'private')))
+        if (((gostCipher || gostDigest) && key.type !== 'secret') ||
+                (gostSign && !(key.type === 'public' || key.type === 'private')))
             throw new DataError('Key type ' + key.type + ' is not valid for algorithm ' + name);
 
         if (!key.usages || !key.usages.indexOf)
@@ -332,8 +418,7 @@
 
         for (var i = 0, n = key.usages.length; i < n; i++) {
             var md = key.usages[i];
-            if (((md === 'wrapKey' || md === 'unwrapKey' ||
-                    md === 'encrypt' || md === 'decrypt') && key.type !== 'secret') ||
+            if (((md === 'encrypt' || md === 'decrypt') && key.type !== 'secret') ||
                     (md === 'sign' && key.type === 'public') ||
                     (md === 'verify' && key.type === 'private'))
                 throw new InvalidStateError('Key type ' + key.type + ' is not valid for ' + md);
@@ -346,8 +431,8 @@
         if (!key.buffer)
             throw new SyntaxError('Key buffer is not defined');
 
-        var size = key.buffer.byteLength * 8;
-        if ((key.type === 'secret' && size !== 256 &&
+        var size = key.buffer.byteLength * 8, keySize = 8 * key.algorithm.keySize;
+        if ((key.type === 'secret' && size !== (keySize || 256) &&
                 (key.usages.indexOf('encrypt') >= 0 || key.usages.indexOf('decrypt') >= 0)) ||
                 (key.type === 'private' && !(size === 256 || size === 512)) ||
                 (key.type === 'public' && !(size === 512 || size === 1024)))
@@ -364,7 +449,7 @@
                     params = ['sBox', 'keyMeshing', 'padding', 'block'];
                     break;
                 case 'SIGN':
-                    params = ['namedCurve', 'namedParam', 'sBox'];
+                    params = ['namedCurve', 'namedParam', 'sBox', 'curve', 'param', 'modulusLength'];
                     break;
                 case 'MAC':
                     params = ['sBox'];
@@ -373,17 +458,23 @@
                     params = ['keyWrapping', 'ukm'];
                     break;
                 case 'DH':
-                    params = ['namedCurve', 'namedParam', 'sBox', 'ukm'];
-                    break;
-                case 'PBKDF2':
-                    params = ['sBox', 'iterations', 'salt'];
+                    params = ['namedCurve', 'namedParam', 'sBox', 'ukm', 'curve', 'param', 'modulusLength'];
                     break;
                 case 'KDF':
                     params = ['context', 'label'];
                     break;
+                case 'PBKDF2':
+                    params = ['sBox', 'iterations', 'salt'];
+                    break;
+                case 'PFXKDF':
+                    params = ['sBox', 'iterations', 'salt', 'diversifier'];
+                    break;
+                case 'CPKDF':
+                    params = ['sBox', 'salt'];
+                    break;
             }
             if (params)
-                params.forEach(function(name) {
+                params.forEach(function (name) {
                     key.algorithm[name] && (algorithm[name] = key.algorithm[name]);
                 });
         }
@@ -403,22 +494,32 @@
         return key;
     }
 
-    function convertKeyPair(algorithm, extractable, keyUsages, publicBuffer, privateBuffer) {
+    function convertKeyPair(publicAlgorithm, privateAlgorithm, extractable, keyUsages, publicBuffer, privateBuffer) {
 
         if (!keyUsages || !keyUsages.indexOf)
             throw new SyntaxError('Key usages not defined');
 
-        var publicUsages = keyUsages.filter(function(value) {
+        var publicUsages = keyUsages.filter(function (value) {
             return value !== 'sign';
         });
-        var privateUsages = keyUsages.filter(function(value) {
+        var privateUsages = keyUsages.filter(function (value) {
             return value !== 'verify';
         });
 
         return {
-            publicKey: convertKey(algorithm, extractable, publicUsages, publicBuffer, 'public'),
-            privateKey: convertKey(algorithm, extractable, privateUsages, privateBuffer, 'private')
+            publicKey: convertKey(publicAlgorithm, extractable, publicUsages, publicBuffer, 'public'),
+            privateKey: convertKey(privateAlgorithm, extractable, privateUsages, privateBuffer, 'private')
         };
+    }
+
+    // Swap bytes in buffer
+    function swapBytes(src) {
+        if (src instanceof ArrayBuffer)
+            src = new Uint8Array(src);
+        var dst = new Uint8Array(src.length);
+        for (var i = 0, n = src.length; i < n; i++)
+            dst[n - i - 1] = src[i];
+        return dst.buffer;
     }
     // </editor-fold>
 
@@ -441,15 +542,15 @@
      */ // <editor-fold defaultstate="collapsed">
     if (!root.Promise) {
 
-        root.Promise = (function() {
+        root.Promise = (function () {
 
             function mswrap(value) {
                 if (value && value.oncomplete === null && value.onerror === null) {
-                    return new Promise(function(resolve, reject) {
-                        value.oncomplete = function() {
+                    return new Promise(function (resolve, reject) {
+                        value.oncomplete = function () {
                             resolve(value.result);
                         };
-                        value.onerror = function() {
+                        value.onerror = function () {
                             reject(new OperationError(value.toString()));
                         };
                     });
@@ -470,13 +571,13 @@
                 }
 
                 try {
-                    executor(function(value) {
+                    executor(function (value) {
                         if (state === 'pending') {
                             state = 'fulfilled';
                             result = value;
                             resolveQueue.forEach(call);
                         }
-                    }, function(reason) {
+                    }, function (reason) {
                         if (state === 'pending') {
                             state = 'rejected';
                             result = reason;
@@ -501,9 +602,9 @@
                  * @param {function} onRejected A Function called when the Promise is rejected. This function has one argument, the rejection reason.
                  * @returns {Promise} 
                  */
-                this.then = function(onFulfilled, onRejected) {
+                this.then = function (onFulfilled, onRejected) {
 
-                    return new Promise(function(resolve, reject) {
+                    return new Promise(function (resolve, reject) {
 
                         function asyncOnFulfilled() {
                             var value;
@@ -559,7 +660,7 @@
                  * @param {function} onRejected A Function called when the Promise is rejected. This function has one argument, the rejection reason.
                  * @returns {Promise} 
                  */
-                this['catch'] = function(onRejected) {
+                this['catch'] = function (onRejected) {
                     return this.then(undefined, onRejected);
                 };
             }
@@ -580,12 +681,12 @@
              * @param {KeyUsages} promises Array with promises.
              * @returns {Promise}
              */
-            Promise.all = function(promises) {
-                return new Promise(function(resolve, reject) {
+            Promise.all = function (promises) {
+                return new Promise(function (resolve, reject) {
                     var result = [], count = 0;
                     function asyncResolve(k) {
                         count++;
-                        return function(data) {
+                        return function (data) {
                             result[k] = data;
                             count--;
                             if (count === 0)
@@ -624,7 +725,7 @@
     var baseUrl = '', nameSuffix = '';
     // Try to define from DOM model
     if (typeof document !== 'undefined') {
-        (function() {
+        (function () {
             var regs = /^(.*)gostCrypto(.*)\.js$/i;
             var list = document.querySelectorAll('script');
             for (var i = 0, n = list.length; i < n; i++) {
@@ -662,7 +763,7 @@
             worker = new Worker(baseUrl + 'gostEngine' + nameSuffix + '.js');
 
             // Result of opertion
-            worker.onmessage = function(event) {
+            worker.onmessage = function (event) {
                 // Find task
                 var id = event.data.id;
                 for (var i = 0, n = tasks.length; i < n; i++)
@@ -680,7 +781,7 @@
             };
 
             // Worker error - reject all waiting tasks
-            worker.onerror = function(event) {
+            worker.onerror = function (event) {
                 for (var i = 0, n = tasks.length; i < n; i++)
                     tasks[i].reject(event.error);
                 tasks = [];
@@ -707,7 +808,7 @@
 
     // Executor for any method
     function execute(algorithm, method, args) {
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             try {
                 if (worker) {
                     var id = ++sequence;
@@ -731,7 +832,7 @@
             }
         });
     }
-    
+
     // Self resolver
     function call(callback) {
         try {
@@ -739,6 +840,7 @@
         } catch (e) {
         }
     }
+
     // </editor-fold>
 
     /*
@@ -871,7 +973,25 @@
      *  </pre>
      * @class CryptoOperationData
      */
+    var CryptoOperationData = root.ArrayBuffer;
+    
+    /**
+     * DER-encoded ArrayBuffer or PEM-encoded DOMString constains ASN.1 object<br>
+     * <pre>
+     *  typedef (ArrayBuffer or DOMString) FormatedData;
+     * </pre>
+     * @class FormatedData
+     */
     // </editor-fold>
+
+    /**
+     * The gostCrypto provide general purpose cryptographic functionality for
+     * GOST standards including a cryptographically strong pseudo-random number 
+     * generator seeded with truly random values.
+     * 
+     * @namespace gostCrypto
+     */
+    var gostCrypto = {};
 
     /**
      * The SubtleCrypto class provides low-level cryptographic primitives and algorithms.
@@ -894,8 +1014,13 @@
      *      <li><b>GOST 28147-OFB</b> "gammirovanie s obratnoj svyaziyu po vyhodu" (OFB) mode</li>
      *      <li><b>GOST 28147-CTR</b> "gammirovanie" (counter) mode</li>
      *      <li><b>GOST 28147-CBC</b> Cipher-Block-Chaining (CBC) mode</li>
+     *      <li><b>GOST R 34.12-ECB</b> "prostaya zamena" (ECB) mode (default)</li>
+     *      <li><b>GOST R 34.12-CFB</b> "gammirovanie s obratnoj svyaziyu po shifrotekstu" (CFB) mode</li>
+     *      <li><b>GOST R 34.12-OFB</b> "gammirovanie s obratnoj svyaziyu po vyhodu" (OFB) mode</li>
+     *      <li><b>GOST R 34.12-CTR</b> "gammirovanie" (counter) mode</li>
+     *      <li><b>GOST R 34.12-CBC</b> Cipher-Block-Chaining (CBC) mode</li>
      *  </ul>
-     *  For more information see {@link Gost28147} 
+     *  For more information see {@link GostCipher} 
      * 
      * @memberOf SubtleCrypto
      * @method encrypt
@@ -905,9 +1030,9 @@
      * @param {CryptoOperationData} data Operation data
      * @returns {Promise} Promise that resolves with {@link CryptoOperationData}
      */
-    SubtleCrypto.prototype.encrypt = function(algorithm, key, data) // <editor-fold defaultstate="collapsed">
+    SubtleCrypto.prototype.encrypt = function (algorithm, key, data) // <editor-fold defaultstate="collapsed">
     {
-        return new Promise(call).then(function() {
+        return new Promise(call).then(function () {
             if (checkNative(algorithm))
                 return rootCrypto.subtle.encrypt(algorithm, key, data);
 
@@ -929,8 +1054,13 @@
      *      <li><b>GOST 28147-OFB</b> "gammirovanie s obratnoj svyaziyu po vyhodu" (OFB) mode</li>
      *      <li><b>GOST 28147-CTR</b> "gammirovanie" (counter) mode</li>
      *      <li><b>GOST 28147-CBC</b> Cipher-Block-Chaining (CBC) mode</li>
+     *      <li><b>GOST R 34.12-ECB</b> "prostaya zamena" (ECB) mode (default)</li>
+     *      <li><b>GOST R 34.12-CFB</b> "gammirovanie s obratnoj svyaziyu po shifrotekstu" (CFB) mode</li>
+     *      <li><b>GOST R 34.12-OFB</b> "gammirovanie s obratnoj svyaziyu po vyhodu" (OFB) mode</li>
+     *      <li><b>GOST R 34.12-CTR</b> "gammirovanie" (counter) mode</li>
+     *      <li><b>GOST R 34.12-CBC</b> Cipher-Block-Chaining (CBC) mode</li>
      *  </ul>
-     *  For additional modes see {@link Gost28147} 
+     *  For additional modes see {@link GostCipher} 
      * 
      * @memberOf SubtleCrypto
      * @method decrypt
@@ -940,9 +1070,9 @@
      * @param {CryptoOperationData} data Operation data
      * @returns {Promise} Promise that resolves with {@link CryptoOperationData}
      */
-    SubtleCrypto.prototype.decrypt = function(algorithm, key, data) // <editor-fold defaultstate="collapsed">
+    SubtleCrypto.prototype.decrypt = function (algorithm, key, data) // <editor-fold defaultstate="collapsed">
     {
-        return new Promise(call).then(function() {
+        return new Promise(call).then(function () {
             if (checkNative(algorithm))
                 return rootCrypto.subtle.decrypt(algorithm, key, data);
 
@@ -965,9 +1095,11 @@
      *      <li><b>GOST R 34.10/GOST R 34.11-94</b> ECGOST Signature with Old-Style Hash</li>
      *      <li><b>GOST R 34.10/GOST R 34.11</b> ECGOST Signature with Streebog Hash</li>
      *      <li><b>GOST 28147-MAC</b> MAC base on GOST 28147</li>
+     *      <li><b>GOST R 34.12-MAC</b> MAC base on GOST R 43.12</li>
      *      <li><b>GOST R 34.11-HMAC</b> HMAC base on GOST 34.11</li>
+     *      <li><b>SHA-HMAC</b> HMAC base on SHA</li>
      *  </ul>
-     *  For additional modes see {@link GostR3410}, {@link GostR3411} and {@link Gost28147}
+     *  For additional modes see {@link GostSign}, {@link GostDigest} and {@link GostCipher}
      * 
      * @memberOf SubtleCrypto
      * @method sign
@@ -977,15 +1109,19 @@
      * @param {CryptoOperationData} data Operation data
      * @returns {Promise} Promise that resolves with {@link CryptoOperationData}
      */
-    SubtleCrypto.prototype.sign = function(algorithm, key, data) // <editor-fold defaultstate="collapsed">
+    SubtleCrypto.prototype.sign = function (algorithm, key, data) // <editor-fold defaultstate="collapsed">
     {
-        return new Promise(call).then(function() {
+        return new Promise(call).then(function () {
             if (checkNative(algorithm))
                 return rootCrypto.subtle.sign(algorithm, key, data);
 
             algorithm = normalize(algorithm, 'sign');
-            return execute(algorithm, 'sign',
-                    [extractKey('sign', algorithm, key), data]);
+            var value = execute(algorithm, 'sign',
+                    [extractKey('sign', algorithm, key), data]).then(function (data) {
+                return algorithm.procreator === 'SC' ?
+                        gostCrypto.asn1.GostSignature.encode(data) : data;
+            });
+            return value;
         });
     }; // </editor-fold>
 
@@ -1002,9 +1138,11 @@
      *      <li><b>GOST R 34.10/GOST R 34.11-94</b> ECGOST Signature with Old-Style Hash</li>
      *      <li><b>GOST R 34.10/GOST R 34.11</b> ECGOST Signature with Streebog Hash</li>
      *      <li><b>GOST 28147-MAC</b> MAC base on GOST 28147</li>
+     *      <li><b>GOST R 34.12-MAC</b> MAC base on GOST R 34.12</li>
      *      <li><b>GOST R 34.11-HMAC</b> HMAC base on GOST 34.11</li>
+     *      <li><b>SHA-HMAC</b> HMAC base on SHA</li>
      *  </ul>
-     *  For additional modes see {@link GostR3410}, {@link GostR3411} and {@link Gost28147}
+     *  For additional modes see {@link GostSign}, {@link GostDigest} and {@link GostCipher}
      * 
      * @memberOf SubtleCrypto
      * @method verify
@@ -1015,15 +1153,17 @@
      * @param {CryptoOperationData} data Operation data
      * @returns {Promise} Promise that resolves with boolean value of verification result
      */
-    SubtleCrypto.prototype.verify = function(algorithm, key, signature, data) // <editor-fold defaultstate="collapsed">
+    SubtleCrypto.prototype.verify = function (algorithm, key, signature, data) // <editor-fold defaultstate="collapsed">
     {
-        return new Promise(call).then(function() {
+        return new Promise(call).then(function () {
             if (checkNative(algorithm))
                 return rootCrypto.subtle.verify(algorithm, key, signature, data);
 
             algorithm = normalize(algorithm, 'verify');
             return execute(algorithm, 'verify',
-                    [extractKey('verify', algorithm, key), signature, data]);
+                    [extractKey('verify', algorithm, key),
+                        algorithm.procreator === 'SC' ?
+                                gostCrypto.asn1.GostSignature.decode(signature) : signature, data]);
         });
     }; // </editor-fold>
 
@@ -1036,8 +1176,9 @@
      *  <ul>
      *      <li><b>GOST R 34.11-94</b> Old-Style GOST Hash</li>
      *      <li><b>GOST R 34.11</b> GOST Streebog Hash</li>
+     *      <li><b>SHA</b> SHA Hash</li>
      *  </ul>
-     *  For additional modes see {@link GostR3411}
+     *  For additional modes see {@link GostDigest}
      * 
      * @memberOf SubtleCrypto
      * @method digest
@@ -1046,9 +1187,9 @@
      * @param {CryptoOperationData} data Operation data
      * @returns {Promise} Promise that resolves with {@link CryptoOperationData}
      */
-    SubtleCrypto.prototype.digest = function(algorithm, data) // <editor-fold defaultstate="collapsed">
+    SubtleCrypto.prototype.digest = function (algorithm, data) // <editor-fold defaultstate="collapsed">
     {
-        return new Promise(call).then(function() {
+        return new Promise(call).then(function () {
             if (checkNative(algorithm))
                 return rootCrypto.subtle.digest(algorithm, data);
 
@@ -1069,9 +1210,11 @@
      *      <li><b>GOST R 34.10</b> ECGOST Key Pairs</li>
      *      <li><b>GOST 28147</b> Key for encryption GOST 28147 modes</li>
      *      <li><b>GOST 28147-KW</b> Key for wrapping GOST 28147 modes</li>
+     *      <li><b>GOST R 34.12</b> Key for encryption GOST R 34.12 modes</li>
+     *      <li><b>GOST R 34.12-KW</b> Key for wrapping GOST R 34.12 modes</li>
      *      <li><b>GOST R 34.11-KDF</b> Key for Derivation Algorithm</li>
      *  </ul>
-     *  For additional modes see {@link GostR3410}, {@link GostR3411} and {@link Gost28147}<br>
+     *  For additional modes see {@link GostSign}, {@link GostDigest} and {@link GostCipher}<br>
      *  Note: Generation key for GOST R 34.10-94 not supported.
      * 
      * @memberOf SubtleCrypto
@@ -1082,16 +1225,26 @@
      * @param {KeyUsages} keyUsages Key usage array: type of operation that may be performed using a key
      * @returns {Promise} Promise that resolves with {@link Key} or {@link KeyPair} in according to key algorithm
      */
-    SubtleCrypto.prototype.generateKey = function(algorithm, extractable, keyUsages) // <editor-fold defaultstate="collapsed">
+    SubtleCrypto.prototype.generateKey = function (algorithm, extractable, keyUsages) // <editor-fold defaultstate="collapsed">
     {
-        return new Promise(call).then(function() {
+        return new Promise(call).then(function () {
             if (checkNative(algorithm))
                 return rootCrypto.subtle.generateKey(algorithm, extractable, keyUsages);
 
+            var privateAlgorithm = algorithm.privateKey,
+                    publicAlgorithm = algorithm.publicKey;
             algorithm = normalize(algorithm, 'generateKey');
-            return execute(algorithm, 'generateKey', []).then(function(data) {
+            if (privateAlgorithm)
+                privateAlgorithm = normalize(privateAlgorithm, 'generateKey');
+            else
+                privateAlgorithm = algorithm;
+            if (publicAlgorithm)
+                publicAlgorithm = normalize(publicAlgorithm, 'generateKey');
+            else
+                publicAlgorithm = algorithm;
+            return execute(algorithm, 'generateKey', []).then(function (data) {
                 if (data.publicKey && data.privateKey)
-                    return convertKeyPair(algorithm, extractable, keyUsages, data.publicKey, data.privateKey);
+                    return convertKeyPair(publicAlgorithm, privateAlgorithm, extractable, keyUsages, data.publicKey, data.privateKey);
                 else
                     return convertKey(algorithm, extractable, keyUsages, data);
             });
@@ -1110,8 +1263,12 @@
      *      <li><b>GOST R 34.10-DH</b> ECDH Key Agreement mode</li>
      *      <li><b>GOST R 34.11-KDF</b> Key for Derivation Algorithm</li>
      *      <li><b>GOST R 34.11-PBKDF2</b> Password Based Key for Derivation Algorithm</li>
+     *      <li><b>GOST R 34.11-PFXKDF</b> PFX Key for Derivation Algorithm</li>
+     *      <li><b>GOST R 34.11-CPKDF</b> Password Based Key for CryptoPro Derivation Algorithm</li>
+     *      <li><b>SHA-PBKDF2</b> Password Based Key for Derivation Algorithm</li>
+     *      <li><b>SHA-PFXKDF</b> PFX Key for Derivation Algorithm</li>
      *  </ul>
-     *  For additional modes see {@link GostR3410} and {@link GostR3411}
+     *  For additional modes see {@link GostSign} and {@link GostDigest}
      * 
      * @memberOf SubtleCrypto
      * @method deriveKey
@@ -1123,21 +1280,22 @@
      * @param {KeyUsages} keyUsages Key usage array: type of operation that may be performed using a key 
      * @returns {Promise} Promise that resolves with {@link Key}
      */
-    SubtleCrypto.prototype.deriveKey = function(algorithm, baseKey,
+    SubtleCrypto.prototype.deriveKey = function (algorithm, baseKey,
             derivedKeyType, extractable, keyUsages) // <editor-fold defaultstate="collapsed">
     {
-        return new Promise(call).then(function() {
+        return new Promise(call).then(function () {
             if (checkNative(algorithm))
                 return rootCrypto.subtle.deriveKey(algorithm, baseKey,
                         derivedKeyType, extractable, keyUsages);
 
             algorithm = normalize(algorithm, 'deriveKey');
             derivedKeyType = normalize(derivedKeyType, 'generateKey');
+            algorithm.keySize = derivedKeyType.keySize;
             if (algorithm['public']) {
                 algorithm['public'].algorithm = normalize(algorithm['public'].algorithm);
                 algorithm['public'] = extractKey('deriveKey', algorithm, algorithm['public']);
             }
-            return execute(algorithm, 'deriveKey', [extractKey('deriveKey', algorithm, baseKey)]).then(function(data) {
+            return execute(algorithm, 'deriveKey', [extractKey('deriveKey', algorithm, baseKey)]).then(function (data) {
                 return convertKey(derivedKeyType, extractable, keyUsages, data);
             });
         });
@@ -1153,8 +1311,12 @@
      *      <li><b>GOST R 34.10-DH</b> ECDH Key Agreement mode</li>
      *      <li><b>GOST R 34.11-KDF</b> Key for Derivation Algorithm</li>
      *      <li><b>GOST R 34.11-PBKDF2</b> Password Based Key for Derivation Algorithm</li>
+     *      <li><b>GOST R 34.11-PFXKDF</b> PFX Key for Derivation Algorithm</li>
+     *      <li><b>GOST R 34.11-CPKDF</b> Password Based Key for CryptoPro Derivation Algorithm</li>
+     *      <li><b>SHA-PBKDF2</b> Password Based Key for Derivation Algorithm</li>
+     *      <li><b>SHA-PFXKDF</b> PFX Key for Derivation Algorithm</li>
      *  </ul>
-     *  For additional modes see {@link GostR3410} and {@link GostR3411}
+     *  For additional modes see {@link GostSign} and {@link GostDigest}
      * 
      * @memberOf SubtleCrypto
      * @method deriveBits
@@ -1164,9 +1326,9 @@
      * @param {number} length Length bits
      * @returns {Promise} Promise that resolves with {@link CryptoOperationData}
      */
-    SubtleCrypto.prototype.deriveBits = function(algorithm, baseKey, length) // <editor-fold defaultstate="collapsed">
+    SubtleCrypto.prototype.deriveBits = function (algorithm, baseKey, length) // <editor-fold defaultstate="collapsed">
     {
-        return new Promise(call).then(function() {
+        return new Promise(call).then(function () {
             if (checkNative(algorithm))
                 return rootCrypto.subtle.deriveBits(algorithm, baseKey, length);
 
@@ -1197,9 +1359,11 @@
      *      <li><b>GOST R 34.10</b> ECGOST Private and Public keys</li>
      *      <li><b>GOST 28147</b> Key for encryption GOST 28147 modes</li>
      *      <li><b>GOST 28147-KW</b> Key for key wrapping GOST 28147 modes</li>
+     *      <li><b>GOST R 34.12</b> Key for encryption GOST 34.12 modes</li>
+     *      <li><b>GOST R 34.12-KW</b> Key for key wrapping GOST 34.12 modes</li>
      *      <li><b>GOST R 34.11-KDF</b> Key for Derivation Algorithm</li>
      *  </ul>
-     *  For additional modes see {@link GostR3410}, {@link GostR3411} and {@link Gost28147}<br>
+     *  For additional modes see {@link GostSign}, {@link GostDigest} and {@link GostCipher}<br>
      * 
      * @memberOf SubtleCrypto
      * @method importKey
@@ -1211,9 +1375,9 @@
      * @param {KeyUsages} keyUsages Key usage array: type of operation that may be performed using a key
      * @returns {Promise} Promise that resolves with {@link Key}
      */
-    SubtleCrypto.prototype.importKey = function(format, keyData, algorithm, extractable, keyUsages) // <editor-fold defaultstate="collapsed">
+    SubtleCrypto.prototype.importKey = function (format, keyData, algorithm, extractable, keyUsages) // <editor-fold defaultstate="collapsed">
     {
-        return new Promise(call).then(function() {
+        return new Promise(call).then(function () {
             if (checkNative(algorithm))
                 return rootCrypto.subtle.importKey(format, keyData, algorithm, extractable, keyUsages);
 
@@ -1231,17 +1395,18 @@
                 }
             } else {
 
-                if (format === 'pkcs8' && root.gostSyntax && root.gostCoding)
-                    key = root.gostSyntax.GostPrivateKeyInfo.decode(keyData);
-                else if (format === 'spki' && root.gostSyntax && root.gostCoding)
-                    key = root.gostSyntax.GostSubjectPublicKeyInfo.decode(keyData);
+                if (format === 'pkcs8')
+                    key = gostCrypto.asn1.GostPrivateKeyInfo.decode(keyData);
+                else if (format === 'spki')
+                    key = gostCrypto.asn1.GostSubjectPublicKeyInfo.decode(keyData);
                 else
                     throw new NotSupportedError('Key format not supported');
 
                 algorithm = normalize(key.algorithm, 'importKey');
                 data = key.buffer;
                 type = key.type;
-                extractable = extractable || key.extractable;
+                if (extractable !== false)
+                    extractable = extractable || key.extractable;
                 if (keyUsages) {
                     for (var i = 0; i < keyUsages.length; i++) {
                         if (key.usages.indexOf(keyUsages[i]) < 0)
@@ -1272,10 +1437,16 @@
      *      <li><b>GOST R 34.10</b> ECGOST Private and Public keys</li>
      *      <li><b>GOST 28147</b> Key for encryption GOST 28147 modes</li>
      *      <li><b>GOST 28147-KW</b> Key for key wrapping GOST 28147 modes</li>
+     *      <li><b>GOST R 34.12</b> Key for encryption GOST R 34.12 modes</li>
+     *      <li><b>GOST R 34.12-KW</b> Key for key wrapping GOST R 34.12 modes</li>
      *      <li><b>GOST R 34.11-KDF</b> Key for Derivation Algorithm</li>
      *      <li><b>GOST R 34.11-PBKDF2</b> Import Password for Key for Derivation Algorithm</li>
+     *      <li><b>GOST R 34.11-PFXKDF</b> Import PFX Key for Derivation Algorithm</li>
+     *      <li><b>GOST R 34.11-CPKDF</b> Import Password Key for CryptoPro Derivation Algorithm</li>
+     *      <li><b>SHA-PBKDF2</b> Import Password for Key for Derivation Algorithm</li>
+     *      <li><b>SHA-PFXKDF</b> Import PFX Key for Derivation Algorithm</li>
      *  </ul>
-     *  For additional modes see {@link GostR3410}, {@link GostR3411} and {@link Gost28147}<br>
+     *  For additional modes see {@link GostSign}, {@link GostDigest} and {@link GostCipher}<br>
      * 
      * @memberOf SubtleCrypto
      * @method exportKey
@@ -1284,9 +1455,9 @@
      * @param {Key} key Key object
      * @returns {Promise} Promise that resolves with {@link CryptoOperationData}
      */
-    SubtleCrypto.prototype.exportKey = function(format, key) // <editor-fold defaultstate="collapsed">
+    SubtleCrypto.prototype.exportKey = function (format, key) // <editor-fold defaultstate="collapsed">
     {
-        return new Promise(call).then(function() {
+        return new Promise(call).then(function () {
             if (key && checkNative(key.algorithm))
                 return rootCrypto.subtle.exportKey(format, key);
 
@@ -1296,10 +1467,10 @@
             var raw = extractKey(null, null, key);
             if (format === 'raw')
                 return raw;
-            else if (format === 'pkcs8' && key.algorithm && key.algorithm.id && root.gostSyntax && root.gostCoding)
-                return root.gostSyntax.GostPrivateKeyInfo.encode(key);
-            else if (format === 'spki' && key.algorithm && key.algorithm.id && root.gostSyntax && root.gostCoding)
-                return root.gostSyntax.GostSubjectPublicKeyInfo.encode(key);
+            else if (format === 'pkcs8' && key.algorithm && key.algorithm.id)
+                return gostCrypto.asn1.GostPrivateKeyInfo.encode(key);
+            else if (format === 'spki' && key.algorithm && key.algorithm.id)
+                return gostCrypto.asn1.GostSubjectPublicKeyInfo.encode(key);
             else
                 throw new NotSupportedError('Key format not supported');
         });
@@ -1312,8 +1483,9 @@
      * Supported algorithm names:
      *  <ul>
      *      <li><b>GOST 28147-KW</b> Key Wrapping GOST 28147 modes</li>
+     *      <li><b>GOST R 34.12-KW</b> Key Wrapping GOST R 34.12 modes</li>
      *  </ul>
-     *  For additional modes see {@link Gost28147}<br>
+     *  For additional modes see {@link GostCipher}<br>
      * 
      * @memberOf SubtleCrypto
      * @method wrapKey
@@ -1324,15 +1496,18 @@
      * @param {AlgorithmIdentifier} wrapAlgorithm Algorithm identifier
      * @returns {Promise} Promise that resolves with {@link CryptoOperationData}
      */
-    SubtleCrypto.prototype.wrapKey = function(format, key, wrappingKey, wrapAlgorithm) // <editor-fold defaultstate="collapsed">
+    SubtleCrypto.prototype.wrapKey = function (format, key, wrappingKey, wrapAlgorithm) // <editor-fold defaultstate="collapsed">
     {
-        return new Promise(call).then(function() {
+        return new Promise(call).then(function () {
             if (checkNative(wrapAlgorithm))
                 return rootCrypto.subtle.wrapKey(format, key, wrappingKey, wrapAlgorithm);
 
             wrapAlgorithm = normalize(wrapAlgorithm, 'wrapKey');
+            var keyData = extractKey(null, null, key);
+            if (wrapAlgorithm.procreator === 'SC' && key.type === 'private')
+                keyData = swapBytes(keyData);
             return execute(wrapAlgorithm, 'wrapKey',
-                    [extractKey('wrapKey', wrapAlgorithm, wrappingKey), extractKey(null, null, key)]).then(function(data) {
+                    [extractKey('wrapKey', wrapAlgorithm, wrappingKey), keyData]).then(function (data) {
                 if (format === 'raw')
                     return data;
                 else
@@ -1348,8 +1523,9 @@
      * Supported algorithm names:
      *  <ul>
      *      <li><b>GOST 28147-KW</b> Key Wrapping GOST 28147 modes</li>
+     *      <li><b>GOST R 34.12-KW</b> Key Wrapping GOST R 34.12 modes</li>
      *  </ul>
-     *  For additional modes see {@link Gost28147}<br>
+     *  For additional modes see {@link GostCipher}<br>
      * 
      * @memberOf SubtleCrypto
      * @method unwrapKey
@@ -1363,10 +1539,10 @@
      * @param {KeyUsages} keyUsages Key usage array: type of operation that may be performed using a key
      * @returns {Promise} Promise that resolves with {@link Key}
      */
-    SubtleCrypto.prototype.unwrapKey = function(format, wrappedKey, unwrappingKey,
+    SubtleCrypto.prototype.unwrapKey = function (format, wrappedKey, unwrappingKey,
             unwrapAlgorithm, unwrappedKeyAlgorithm, extractable, keyUsages) // <editor-fold defaultstate="collapsed">
     {
-        return new Promise(call).then(function() {
+        return new Promise(call).then(function () {
             if (checkNative(unwrapAlgorithm))
                 return rootCrypto.subtle.unwrapKey(format, wrappedKey, unwrappingKey,
                         unwrapAlgorithm, unwrappedKeyAlgorithm, extractable, keyUsages);
@@ -1376,7 +1552,7 @@
             if (format !== 'raw')
                 throw new NotSupportedError('Key format not supported');
 
-            return execute(unwrapAlgorithm, 'unwrapKey', [extractKey('unwrapKey', unwrapAlgorithm, unwrappingKey), wrappedKey]).then(function(data) {
+            return execute(unwrapAlgorithm, 'unwrapKey', [extractKey('unwrapKey', unwrapAlgorithm, unwrappingKey), wrappedKey]).then(function (data) {
                 var type;
                 if (unwrappedKeyAlgorithm && unwrappedKeyAlgorithm.name) {
                     var name = unwrappedKeyAlgorithm.name.toUpperCase().replace(/[\.\s]/g, '');
@@ -1385,19 +1561,12 @@
                     else if (name.indexOf('3410') >= 0 && keyUsages.indexOf('verify') >= 0)
                         type = 'public';
                 }
+                if (unwrapAlgorithm.procreator === 'SC' && type === 'private')
+                    data = swapBytes(data);
                 return convertKey(unwrappedKeyAlgorithm, extractable, keyUsages, data, type);
             });
         });
     }; // </editor-fold>
-
-    /**
-     * The gostCrypto provide general purpose cryptographic functionality for
-     * GOST standards including a cryptographically strong pseudo-random number 
-     * generator seeded with truly random values.
-     * 
-     * @namespace gostCrypto
-     */
-    var gostCrypto = {};
 
     /**
      * The subtle attribute provides an instance of the SubtleCrypto 
@@ -1409,10 +1578,6 @@
      */
     gostCrypto.subtle = new SubtleCrypto();
 
-
-    // Check import randomizer
-    gostRandom || (rootCrypto && rootCrypto.getRandomValues) || importScripts('gostRandom.js');
-
     /**
      * The getRandomValues method generates cryptographically random values. 
      * 
@@ -1422,20 +1587,18 @@
      * @memberOf gostCrypto
      * @param {(CryptoOperationData)} array Destination buffer for random data
      */
-    gostCrypto.getRandomValues = function(array) // <editor-fold defaultstate="collapsed">
+    gostCrypto.getRandomValues = function (array) // <editor-fold defaultstate="collapsed">
     {
         // Execute randomizer
-        gostRandom = gostRandom || root.gostRandom;
-        if (!gostRandom && rootCrypto && rootCrypto.getRandomValues)
-            gostRandom = rootCrypto;
-        if (gostRandom)
-            gostRandom.getRandomValues(array);
+        GostRandom = GostRandom || root.GostRandom;
+        var randomSource = GostRandom ? new GostRandom() : rootCrypto;
+        if (randomSource.getRandomValues)
+            randomSource.getRandomValues(array);
         else
             throw new NotSupportedError('Random generator not found');
     }; // </editor-fold>
     // </editor-fold>
 
     return gostCrypto;
-
 }));
 

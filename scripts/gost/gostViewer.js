@@ -32,17 +32,20 @@
  * 
  */
 
-(function(root, factory) {
+(function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['gostCoding', 'gostObject', 'gostSyntax'], factory);
+        define(['gostCrypto', 'gostCoding', 'gostSecurity', 'gostASN1'], factory);
     } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostCoding'), require('gostObject'), require('gostSyntax'));
+        module.exports = factory(require('gostCrypto'), require('gostCoding'), require('gostSecurity'), require('gostASN1'));
     } else {
-        root.gostViewer = factory(root.gostCoding, root.gostObject, root.gostSyntax);
+        root.gostViewer = factory(root.gostCrypto, root.gostCoding, root.gostSecurity, root.gostASN1);
     }
-}(this, function(gostCoding, gostObject, gostSyntax) {
+}(this, function (gostCrypto) {
 
-    var printASN1 = (function() {
+    var coding = gostCrypto.coding, names = gostCrypto.security.names, asn1 = gostCrypto.asn1;
+
+
+    var printASN1 = (function () {
 
         function hex(start, buffer) {
             var s = '', d = new Uint8Array(buffer);
@@ -55,9 +58,9 @@
 
         function childs(block, offset, ident) {
             var s = '', start = '             : ';
-            if (block.length > 0) {
+            if (block.object.length > 0) {
                 s += ' {\r\n';
-                block.forEach(function(child) {
+                block.object.forEach(function (child) {
                     s += process(child, offset, ident + ' ');
                     offset += child.header.length + child.content.length;
                 });
@@ -68,6 +71,8 @@
         }
 
         function process(block, offset, ident) {
+            if (block.tagClass > 2)
+                throw new Error('Private and Application tags is not supported')
             offset = offset || 0;
             ident = ident || '';
             var start = '             : ',
@@ -80,20 +85,20 @@
             else
                 switch (block.typeName.toUpperCase()) {
                     case 'OBJECT IDENTIFIER':
-                        var id = block.toString(),
-                                name = gostObject.names[id];
+                        var id = block.object,
+                                name = names[id];
                         s += ' <b>' + (name ? name : '?') + '</b> (' + id + ')';
                         break;
                     case 'INTEGER':
                     case 'ENUMERATED':
-                        if (block instanceof Number) {
-                            s += ' <b>' + block.toString() + '</b>';
+                        if (typeof block.object === 'number') {
+                            s += ' <b>' + block.object + '</b>';
                         } else
                             s += hex(start + ident + ' ', block.content);
                         break;
                     case 'GENERALIZEDTIME':
                     case 'UTCTIME':
-                        s += ' <b>' + block.toString() + '</b>';
+                        s += ' <b>' + block.object + '</b>';
                         break;
                     case 'PRINTABLESTRING':
                     case 'IA5STRING':
@@ -103,14 +108,14 @@
                     case 'BMPSTRING':
                     case 'UTF8STRING':
                     case 'UNIVERSALSTRING':
-                        s += ' <b>&quot;' + block.toString() + '&quot;</b>';
+                        s += ' <b>&quot;' + block.object + '&quot;</b>';
                         break;
                     case 'BOOLEAN':
-                        s += ' <b>' + (block ? 'true' : 'false') + '</b>';
+                        s += ' <b>' + (block.object ? 'true' : 'false') + '</b>';
                         break;
                     case 'OCTET STRING':
                         try {
-                            s += ', encapsulates' + childs([gostCoding.BER.decode(block.content)],
+                            s += ', encapsulates' + childs({object: [coding.BER.decode(block.content)]},
                                     offset + block.header.length, ident);
                         } catch (e) {
                             s += hex(start + ident + ' ', block.content);
@@ -118,62 +123,73 @@
                         break;
                     case 'BIT STRING':
                         s += ', unused ' + block.content[0] + ' bits';
-                        if (block instanceof ArrayBuffer) {
+                        if (block.object instanceof ArrayBuffer) {
                             try {
-                                s += ', encapsulates' + childs([gostCoding.BER.decode(block)],
+                                s += ', encapsulates' + childs({object: [coding.BER.decode(block.object)]},
                                         offset + block.header.length, ident);
                             } catch (e) {
-                                s += hex(start + ident + ' ', block);
+                                s += hex(start + ident + ' ', block.object);
                             }
                         } else
-                            s += '\r\n' + start + ident + ' <b>' + block + 'B</b>';
+                            s += '\r\n' + start + ident + ' <b>' + block.object + 'B</b>';
                         break;
                     default:
-                        s += hex(start + ident + ' ', block.content);
+                        try {
+                            s += ', encapsulates' + childs({object: [coding.BER.decode(block.content)]},
+                                    offset + block.header.length, ident);
+                        } catch (e) {
+                            s += hex(start + ident + ' ', block.content);
+                        }
                 }
             return s + '\r\n';
         }
 
-        return function(value) {
+        return function (value) {
             if (typeof value === 'string' || value instanceof String) { // text
                 var t = /([A-Fa-f0-9\s]+)/g.exec(value);
                 if (t && t[1].length === value.length) // Hex format
-                    value = gostCoding.Hex.decode(value);
+                    value = coding.Hex.decode(value);
                 else // PEM format
-                    value = gostCoding.PEM.decode(value);
+                    value = coding.PEM.decode(value);
             } else { // binary
                 try {
-                    value = gostCoding.PEM.decode(gostCoding.Chars.encode(value, 'ascii'));
+                    value = coding.PEM.decode(coding.Chars.encode(value, 'ascii'));
                 } catch (e) {
                 }
             }
-            return process(gostCoding.BER.decode(value));
+            return process(coding.BER.decode(value));
         };
     })();
 
-    var printSyntax = (function() {
+    var printSyntax = (function () {
 
         function process(value, ident) {
             ident = ident || '';
             if (typeof value === 'undefined')
                 return '<b>undefined</b>';
             else if (value instanceof Array) {
-                var s = '[';
                 var r = [], l = 0;
                 for (var i = 0, n = value.length; i < n; i++) {
                     r[i] = process(value[i], ident + '    ');
                     l += r[i].replace(/\<[^\>]+\>/g, '').length + 2;
                 }
-                if (l > 80)
-                    return '[\r\n' + ident + '    ' +
-                            r.join(',\r\n' + ident + '    ') +
-                            '\r\n' + ident + ']';
-                else
+                if (l > 80) {
+                    var s = '[', m = 0;
+                    for (var i = 0, n = r.length; i < n; i++) {
+                        s += (i > 0 ? ', ' : '') +
+                                (m === 0 && l > 80 ? '\r\n' + ident + '    ' : ' ') + r[i];
+                        m += r[i].replace(/\<[^\>]+\>/g, '').length + 2;
+                        if (m > 80)
+                            m = 0;
+                    }
+                    s += l > 80 ? '\r\n' + ident + ']' : ' ]';
+                    return s;
+                } else
                     return '[ ' + r.join(', ') + ' ]';
             } else if (typeof value === 'string' || value instanceof String) {
                 if (value.toString() === '') // null
                     return '<b>null</b>';
-                else  
+                else
                     return '<b>"' + value.replace(/([\"])/g, '\\$1') + '"</b>';
             } else if (typeof value === 'number' || value instanceof Number) {
                 return '<b>' + value + '</b>';
@@ -197,7 +213,7 @@
                 var first = true;
                 var s = '{';
                 for (var name in value) {
-                    if (name === 'buffer')
+                    if (typeof value[name] === 'function' || value[name] === undefined)
                         continue;
                     var norm = /^[a-zA-Z\_][a-zA-Z0-9\_]*$/.test(name);
                     if (first)
@@ -214,41 +230,41 @@
             return 'unrecognized';
         }
 
-        return function(value, type) {
+        return function (value, type) {
             if (typeof value === 'string' || value instanceof String) { // text
                 var t = /([A-Fa-f0-9\s]+)/g.exec(value);
                 if (t && t[1].length === value.length) // Hex format
-                    value = gostCoding.Hex.decode(value);
+                    value = coding.Hex.decode(value);
                 else // PEM format
-                    value = gostCoding.PEM.decode(value);
+                    value = coding.PEM.decode(value);
             } else { // binary
                 try {
-                    value = gostCoding.PEM.decode(gostCoding.Chars.encode(value, 'ascii'));
+                    value = coding.PEM.decode(coding.Chars.encode(value, 'ascii'));
                 } catch (e) {
                 }
             }
             if (type) {
-                return process(gostSyntax[type].decode(value));
+                return process(asn1[type].decode(value));
             } else
-                return process(gostCoding.BER.decode(value));
+                return process(coding.BER.decode(value));
         };
 
     })();
-    
+
     function open(header, content, item) {
         var el = document.getElementById('print');
         if (el)
             el.parentNode.removeChild(el);
         el = document.createElement('div');
         el.id = 'print';
-        el.innerHTML = 
-                    '<span class="label">' + header + '</span>' +
-                    '<pre class="encoded">' + content + '</pre>' +
-                    '<button onclick="(function(x){x.parentNode.removeChild(x);})(document.getElementById(\'print\'))">Close View</button>';
-           var next = item.nextElementSibling;
-           while (next.nodeName.toLowerCase() === 'button')
-               next = next.nextElementSibling;
-           next.parentNode.insertBefore(el, next);
+        el.innerHTML =
+                '<span class="label">' + header + '</span>' +
+                '<pre class="encoded">' + content + '</pre>' +
+                '<button onclick="(function(x){x.parentNode.removeChild(x);})(document.getElementById(\'print\'))">Close View</button>';
+        var next = item.nextElementSibling;
+        while (next.nodeName.toLowerCase() === 'button')
+            next = next.nextElementSibling;
+        next.parentNode.insertBefore(el, next);
     }
 
     function openASN1(item) {
@@ -256,8 +272,8 @@
     }
 
     function openSyntax(item, type) {
-        open('Syntax ' + (type ? 'gostSyntax.' + type + '.decode(value):' :
-                'gostCoding.PEM.decode(value):'), printSyntax(item.textContent, type), item);
+        open('Syntax ' + (type ? 'gostCrypto.asn1.' + type + '.decode(value):' :
+                'gostCrypto.coding.PEM.decode(value):'), printSyntax(item.textContent, type), item);
     }
 
     return {

@@ -8,8 +8,8 @@
         <script src="scripts/polyfill/typedarray.js"></script>
         <script src="scripts/gost/gostCrypto.js"></script>
         <script src="scripts/gost/gostCoding.js"></script>
-        <script src="scripts/gost/gostObject.js"></script>
-        <script src="scripts/gost/gostSyntax.js"></script>
+        <script src="scripts/gost/gostSecurity.js"></script>
+        <script src="scripts/gost/gostASN1.js"></script>
         <script src="scripts/gost/gostViewer.js"></script>
         <link type="text/css" rel="stylesheet" href="styles/main.css">
         <script>
@@ -24,8 +24,8 @@
                         result.innerHTML = type ?
                                 gostViewer.printSyntax(inputtext.value, type) : recognize(inputtext.value);
                         output.textContent = (syntaxType.value ?
-                                'gostSyntax.' + syntaxType.value + '.decode(value)' :
-                                'gostCoding.PEM.decode(value)') + ':';
+                                'gostCrypto.asn1.' + syntaxType.value + '.decode(value)' :
+                                'gostCrypto.coding.PEM.decode(value)') + ':';
                     } catch (error) {
                         result.innerHTML = 'Error: ' + error.message;
                     }
@@ -48,8 +48,8 @@
                                 result.innerHTML = 'Error: ' + error.message;
                             }
                             output.textContent = (syntaxType.value ?
-                                    'gostSyntax.' + syntaxType.value + '.decode(value)' :
-                                    'gostCoding.PEM.decode(value)') + ':';
+                                    'gostCrypto.asn1.' + syntaxType.value + '.decode(value)' :
+                                    'gostCrypto.coding.PEM.decode(value)') + ':';
                         };
                         reader.readAsArrayBuffer(inputfile.files[0]);
                     } catch (error) {

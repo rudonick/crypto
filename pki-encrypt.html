@@ -10,9 +10,10 @@
         <script src="scripts/polyfill/typedarray.js"></script>
         <script src="scripts/gost/gostCrypto.js"></script>
         <script src="scripts/gost/gostCoding.js"></script>
-        <script src="scripts/gost/gostObject.js"></script>
-        <script src="scripts/gost/gostSyntax.js"></script>
-        <script src="scripts/gost/gostPKIX.js"></script>
+        <script src="scripts/gost/gostSecurity.js"></script>
+        <script src="scripts/gost/gostASN1.js"></script>
+        <script src="scripts/gost/gostCert.js"></script>
+        <script src="scripts/gost/gostCMS.js"></script>
         <script src="scripts/filesaver/FileSaver.js"></script>
         <script src="scripts/gost/gostViewer.js"></script>
         <link type="text/css" rel="stylesheet" href="styles/prettify.css">
@@ -20,68 +21,66 @@
     </head>
     <body>
         <div class="page art03">
-            <h1><a href="index.html">WebCrypto GOST</a>: CMS Enveloped data</h1>
+            <h1><a href="index.html">WebCrypto GOST</a>: CMS Enveloped/Encrypted data</h1>
             <p class="note">The tool is intended for experimentation with data processing</p>
             <article>
                 <h2>Encrypt sample data</h2>
                 <section>
                     <label for="provider"><strong>Algorithm</strong> parameters for selected provider</label>
                     <select class="value" id="provider">
-                        <option value="TC-256" selected>GOST R 34.10-2012 256 TC26</option>
-                        <option value="TC-512">GOST R 34.10-2012 512 TC26</option>
-                        <option value="CP-01">GOST R 34.10-2001 CryptoPro</option>
-                        <option value="SC-01">GOST R 34.10-2001 SignalCom</option>
-                        <option value="RSA-2048">RSASSA PKCS#1 v1.5 2048/SHA256</option>
-                        <option value="ECDSA-256">ECDSA secp256r1/SHA256</option>
+                        <option value="TC-256" selected>Crypto-Pro GOST R 34.10-2012 Cryptographic Service Provider</option>
+                        <option value="TC-512">Crypto-Pro GOST R 34.10-2012 Strong Cryptographic Service Provider</option>
+                        <option value="CP-01">Crypto-Pro GOST R 34.10-2001 Cryptographic Service Provider</option>
+                        <option value="SC-01">Signal-COM ECGOST Cryptographic Provider</option>
                     </select>
                     <label for="provider"><strong>Encryption protocol</strong> in according to CMS rules</label>
                     <select class="value" id="encryptionType" onchange="
                             switch (encryptionType.value) {
                                 case 'KEYAGREE':
                                     recipientBlock.removeAttribute('hidden');
+                                    senderBlock.removeAttribute('hidden');
                                     kekBlock.setAttribute('hidden', true);
                                     passwordBlock.setAttribute('hidden', true);
                                     break;
                                 case 'KEYTRANS':
                                     recipientBlock.removeAttribute('hidden');
+                                    senderBlock.setAttribute('hidden', true);
                                     kekBlock.setAttribute('hidden', true);
                                     passwordBlock.setAttribute('hidden', true);
                                     break;
-                                case 'KEYMAN':
-                                case 'KEK':
+                                case 'ES':
                                     recipientBlock.setAttribute('hidden', true);
+                                    senderBlock.setAttribute('hidden', true);
                                     kekBlock.removeAttribute('hidden');
                                     passwordBlock.setAttribute('hidden', true);
                                     break;
                                 case 'PBES':
-                                case 'PBKEK':
                                     recipientBlock.setAttribute('hidden', true);
+                                    senderBlock.setAttribute('hidden', true);
                                     kekBlock.setAttribute('hidden', true);
                                     passwordBlock.removeAttribute('hidden');
                                     break;
                             }
                             ">
-                        <option value="KEYAGREE" selected>Key agreement protocol</option>
-                        <option value="KEYTRANS">Key transport protocoal</option>
-                        <option value="KEK">Key encryption key protocol</option>
-                        <option value="PBKEK">Password key encryption protocol</option>
-                        <option value="KEYMAN">Key management protocol</option>
-                        <option value="PBES">Password based encryption protocol</option>
+                        <option value="KEYAGREE" selected>Key Agreement encryption</option>
+                        <option value="KEYTRANS">Key Transport encryption</option>
+                        <option value="ES">Secret Key encryption</option>
+                        <option value="PBES">Password based encryption</option>
                     </select>
                     <div id="kekBlock" hidden>
-                        <label for="kek"><strong>Key encryption key</strong></label>
-                        <input class="value" id="kek"/>
+                        <span class="label"><strong>Encryption key</strong></span>
+                        <pre contenteditable id="kek" class="encoded"></pre>
                         <button onclick="
-                                var encryption = gostObject.providers[provider.value].encryption;
-                                gostCrypto.subtle.generateKey(encryption, true, 
-                                    ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey']).then(function (key) {
+                                var encryption = gostCrypto.security.providers[provider.value].encryption;
+                                gostCrypto.subtle.generateKey(encryption, true,
+                                        ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey']).then(function (key) {
                                     return gostCrypto.subtle.exportKey('raw', key);
-                                }).then(function(keyData) {
-                                    kek.value = gostCoding.Hex.encode(keyData);
-                                }).catch(function(reason) {
+                                }).then(function (keyData) {
+                                    kek.textContent = gostCrypto.coding.Hex.encode(keyData);
+                                }).catch(function (reason) {
                                     alert(reason.message);
                                 });">Generate key</button>
-                        <button onclick="kek.value = ''">Clear</button>
+                        <button onclick="kek.textContent = ''">Clear</button>
                     </div>
                     <div id="passwordBlock" hidden>
                         <label for="password"><strong>Password</strong> for encryption</label>
@@ -95,33 +94,64 @@
                             <button id="loadButton">Load from file</button>
                             <input type="file" onchange="
                                     var reader = new FileReader();
-                                    reader.onload = function(e) {
+                                    reader.onload = function (e) {
                                         recipient.textContent = e.target.result;
                                     };
                                     reader.readAsText(this.files[0]);"/>
                         </div>
                         <button onclick="
-                            var pki = new GostPKIX(provider.value, 'PEM');
-                            pki.createCertificate({
-                                subject: {
-                                    countryName: 'RU',
-                                    stateOrProvinceName: 'С.Питербургъ',
-                                    organizationName: 'Современник',
-                                    organizationalUnitName: 'Руководство',
-                                    title: 'Редактор',
-                                    commonName: 'Пушкин Александр Сергеевич'
-                                }
-                            }, 'Pushkin').then(function(data) {
-                                recipient.textContent = data;
-
-                                return pki.exportKey('Pushkin');
-                            }).then(function(data) {
-
-                                recipient.textContent += '\r\n\r\n' + data;
-                            }, function(reason) {
-                                alert(reason.message);
+                                var cert = new gostCrypto.cert.X509({
+                                    subject: {
+                                        countryName: 'RU',
+                                        stateOrProvinceName: 'С.Питербургъ',
+                                        organizationName: 'Современник',
+                                        organizationalUnitName: 'Руководство',
+                                        title: 'Редактор',
+                                        commonName: 'Пушкин Александр Сергеевич'
+                                    }
+                                });
+                                cert.generate(provider.value).then(function (key) {
+                                    recipient.textContent = key.encode('PEM');
+                                    return cert.sign(key);
+                                }).then(function () {
+                                    recipient.textContent = cert.encode('PEM') + '\r\n\r\n' + recipient.textContent;
+                                }).catch(function (reason) {
+                                    alert(reason.message);
                                 });">Generate new one</button>
                         <button onclick="recipient.innerHTML = ''">Clear</button>
+                    </div>
+                    <div id="senderBlock">
+                        <span class="label"><strong>Sender certificate</strong></span>
+                        <pre contenteditable id="sender" class="encoded"></pre>
+                        <div class="fileButton">
+                            <button id="loadButton">Load from file</button>
+                            <input type="file" onchange="
+                                    var reader = new FileReader();
+                                    reader.onload = function (e) {
+                                        sender.textContent = e.target.result;
+                                    };
+                                    reader.readAsText(this.files[0]);"/>
+                        </div>
+                        <button onclick="
+                                var cert = new gostCrypto.cert.X509({
+                                    subject: {
+                                        countryName: 'RU',
+                                        stateOrProvinceName: 'С.Питербургъ',
+                                        organizationName: 'Современник',
+                                        organizationalUnitName: 'Действующие лица',
+                                        title: 'Филосов и публицист',
+                                        commonName: 'Евгеній Онѣгинъ'
+                                    }
+                                });
+                                cert.generate(provider.value).then(function (key) {
+                                    sender.textContent = key.encode('PEM');
+                                    return cert.sign(key);
+                                }).then(function () {
+                                    sender.textContent = cert.encode('PEM') + '\r\n\r\n' + sender.textContent;
+                                }).catch(function (reason) {
+                                    alert(reason.message);
+                                });">Generate new one</button>
+                        <button onclick="sender.innerHTML = ''">Clear</button>
                     </div>
                     <span class="label"><strong>Data</strong> for encryption</span>
                     <pre contenteditable id="message" class="content">
@@ -143,39 +173,42 @@
                     <span class="label"><strong>Enveloped data</strong> CMS PKCS#7 format</span>
                     <pre contenteditable id="encryptedData" class="encoded"></pre>
                     <button onclick="
-                            saveAs(new Blob([gostCoding.Chars.decode(encryptedData.textContent, 'ascii')], {type: 'text/plain'}), 'data.sig');
+                            saveAs(new Blob([gostCrypto.coding.Chars.decode(encryptedData.textContent, 'ascii')], {type: 'text/plain'}), 'data.sig');
                             ">Save contents to file</button>
                     <button onclick="encryptedData.innerHTML = ''">Clear</button>
                     <button onclick="gostViewer.openASN1(encryptedData)">View ASN.1</button>
                     <button onclick="gostViewer.openSyntax(encryptedData, 'ContentInfo')">View JSON</button>
                     <span class="label">Encrypt data method</span>
                     <pre contenteditable id="encryptMethod" class="procedure prettyprint">
-var pki = new GostPKIX(provider.value, 'PEM');
-var content = gostCoding.Chars.decode(message.textContent, 'utf-8');
+var content = gostCrypto.coding.Chars.decode(message.textContent, 'utf-8');
 var mode = encryptionType.value;
-var promise;
+var promise, msg, senderKey, senderCert;
 switch(mode) {
     case 'KEYAGREE':
+        // Sender key and certificate required only for key agreement
+        senderKey = new gostCrypto.asn1.PrivateKeyInfo(sender.textContent);
+        senderCert = new gostCrypto.cert.X509(sender.textContent);
     case 'KEYTRANS':
-        // Use certificate
-        pki.keyStore.setCertificate('Pushkin', recipient.textContent);
-        promise = pki.encryptData(content, mode, 'Pushkin');
+        // Use recipient certificate for encryption
+        msg = new gostCrypto.cms.EnvelopedDataContentInfo(); 
+        var receiverCert = new gostCrypto.cert.X509(recipient.textContent);
+        promise = msg.encloseContent(content, provider.value).then(function() {
+            return msg.addRecipient(receiverCert, senderKey, senderCert);
+        });
         break;
-    case 'KEK':
-    case 'KEYMAN':
-        // Use key encryption key
-        pki.keyStore.setKey('Pushkin', gostCoding.Hex.decode(kek.value));
-        promise = pki.encryptData(content, mode, 'Pushkin');
-        break;
-    case 'PBKEK':
+    case 'ES':
     case 'PBES':
-        promise = pki.encryptData(content, mode, password.value);
+        // Use secret key or password for encryption
+        var keyPassword = mode === 'ES' ? gostCrypto.coding.Hex.decode(kek.textContent) :
+                password.value;
+        msg = new gostCrypto.cms.EncryptedDataContentInfo(); 
+        promise =  msg.encloseContent(content, keyPassword, provider.value);
         break;
 }
-promise.then(function(data) {
+promise.then(function() {
 
     // Output encrypted data
-    encryptedData.textContent = data;
+    encryptedData.textContent = msg.encode('PEM');
 
 }).catch(function(reason) {
     alert(reason.message);
@@ -190,34 +223,31 @@ promise.then(function(data) {
                     </pre>   
                     <span class="label">Decrypt data method</span>
                     <pre contenteditable id="decryptMethod" class="procedure prettyprint">
-// Import certificate
-var pki = new GostPKIX(provider.value, 'PEM');
-var data = encryptedData.textContent;
+var encrypted = encryptedData.textContent;
 var mode = encryptionType.value;
-var promise;
+var promise, msg;
 switch(mode) {
     case 'KEYAGREE':
     case 'KEYTRANS':
-        // Use certificate
-        pki.keyStore.setKey('Pushkin', recipient.textContent); 
-        pki.keyStore.setCertificate('Pushkin', recipient.textContent); 
-        promise = pki.extractData(data, 'Pushkin');
+        // Use recipient key and certificate for decryption
+        msg = new gostCrypto.cms.EnvelopedDataContentInfo(encrypted); 
+        var receiverKey = new gostCrypto.asn1.PrivateKeyInfo(recipient.textContent);
+        var receiverCert = new gostCrypto.cert.X509(recipient.textContent);
+        promise = msg.getEnclosed(receiverKey, receiverCert);
         break;
-    case 'KEK':
-    case 'KEYMAN':
-        // Use key encryption key
-        pki.keyStore.setKey('Pushkin', gostCoding.Hex.decode(kek.value));
-        promise = pki.extractData(data, 'Pushkin');
-        break;
+    case 'ES':
     case 'PBES':
-    case 'PBKEK':
-        promise = pki.extractData(data, password.value);
+        // Use secret key or password for decryption
+        var keyPassword = mode === 'ES' ? gostCrypto.coding.Hex.decode(kek.textContent) :
+                password.value;
+        msg = new gostCrypto.cms.EncryptedDataContentInfo(encrypted); 
+        promise =  msg.getEnclosed(keyPassword);
         break;
 }
 promise.then(function(data) {
 
     // Decrypted result
-    decryptedData.textContent = gostCoding.Chars.encode(data.content, 'utf-8');
+    decryptedData.textContent = gostCrypto.coding.Chars.encode(data.content, 'utf-8');
 
 }).catch(function(reason) {
     alert(reason.message);

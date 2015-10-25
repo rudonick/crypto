@@ -108,7 +108,6 @@ gostCrypto.subtle.generateKey(algorithm, true, ['sign', 'verify']).then(function
         // Provide the public key to recepient
         return gostCrypto.subtle.exportKey('raw', keyPair.publicKey).then(function(result) {
             publicKey.textContent = gostCoding.Hex.encode(result);
-            signButton.removeAttribute('disabled');
         });
     });
 });</pre>

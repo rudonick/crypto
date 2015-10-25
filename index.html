@@ -12,6 +12,7 @@
             <h1><a href="index.html">WebCrypto GOST</a> Library</h1>
             <p class="note">Pure Javascript implementation of WebCrypto API interfaces and Public Key 
                 Infrastructure for GOST algorithms (Russian Cryptographic Standards)</p>
+            <p class="note">Current version 1.70</p>
             <article>
                 <h2>Download</h2>
                 <section>
@@ -29,9 +30,11 @@
                 <section>
                     <ol>
                         <li><a href="doc/index.html">Table of contents</a>: source files, namespaces and classes</li>
-                        <li><a href="doc/gostEngine.html">GOST Engine</a> low-level algorithms refs. GOST 28147, GOST R 34.10 and GOST R 34.11</li>
+                        <li><a href="doc/gostEngine.html">GOST Engine</a> low-level algorithms refs. GOST 28147, GOST R 34.10, GOST R 34.11, GOST R 34.12 and GOST R 34.13</li>
                         <li><a href="doc/SubtleCrypto.html">WebCrypto API</a> basic cryptographic operations JavaScript API</li>
-                        <li><a href="doc/GostPKIX.html">Public Key Infrastructure</a> using X.509 high-level methods: X.509, CMS, PFX etc.</li>
+                        <li><a href="doc/GostCert.html">Public Key Infrastructure</a> using X.509 provides facilities for handling certificates, CRLs, etc.</li>
+                        <li><a href="doc/GostCMS.html">Cryptographic Message Syntax</a> implementats RFC-5652 specification.</li>
+                        <li><a href="doc/GostKeys.html">Private Key Management</a> provides the ability to use the key store formats: PFX, CryptoPro and SignalCom.</li>
                     </ol>
                 </section>
                 <h2>Tests, examples and demonstration</h2>
@@ -60,7 +63,12 @@
                         <li><a href="pki-crl.html">Certificate revocation</a> and generation of X.509 CRL</li>
                         <li><a href="pki-sign.html">Sign and verify document</a> PKCS#7 format complex example</li>
                         <li><a href="pki-encrypt.html">Encrypt and decrypt document</a> PKCS#7 format complex example</li>
-                        <li><a href="pki-store.html">Export and import key store</a> PKCS#12 format complex example</li>
+                        <!-- <li><a href="pki-store.html">Export and import key store</a> PKCS#12 format complex example</li> -->
+                    </ol>
+                    <p>Demonstration of tools to work with key containers</p>
+                    <ol start="14">
+                        <li><a href="demo-cp-keys.html">Export and import CryptoPro</a> PrivateKey Container</li>
+                        <li><a href="demo-sc-keys.html">Export and import SignalCom</a> PrivateKey Container</li>
                     </ol>
                 </section>
                 <h2>Summary</h2>
@@ -73,7 +81,7 @@
                         <li><a href="http://signal-com.ru/products/crypt/signal-com">Signal-COM CSP</a> and <a href="http://signal-com.ru/products/crypt/message_pro">Message-PRO</a></li>
                     </ul>
                     The library supports the following high-level cryptographic protocols:
-                    <p><a href="doc/GostPKIX.html">Public Key Infrastructure Using X.509</a>
+                    <p><a href="doc/GostCert.html">Public Key Infrastructure Using X.509</a>
                     <ul>
                         <li>Generation of self-signed X.509 Certificates</li>
                         <li>Generation of PKCS#10 Certification Requests</li>
@@ -84,37 +92,36 @@
                         <li>Validation of Certification Path using trusted store</li>
                         <li>Encode/Decode SubjectPublicKeyInfo for a various GOST-based CSP</li>
                     </ul>
-                    <p><a href="doc/GostPKIX.html">Content Digital Signature using PKCS#7 Cryptographic Message Syntax (CMS)</a>
+                    <p><a href="doc/GostCMS.html">Content Digital Signature using PKCS#7 Cryptographic Message Syntax (CMS)</a>
                     <ul>
                         <li>Generation of Attached and Detached Digital Signature</li>
                         <li>Signature based on SignedAttributes or direct on data content</li>
                         <li>Using SignedData format for delivery Certificates and CRLs</li>
                         <li>Encode/Decode SignatureValue for a various GOST-based CSP</li>
                     </ul>
-                    <p><a href="doc/GostPKIX.html">Content Encryption using PKCS#7 Cryptographic Message Syntax (CMS)</a>
+                    <p><a href="doc/GostCMS.html">Content Encryption using PKCS#7 Cryptographic Message Syntax (CMS)</a>
                     <ul>
                         <li>Key Agreement Encryption Protocol</li>
                         <li>Transport Key Encryption Protocol</li>
-                        <li>Key Encryption Key Protocol</li>
-                        <li>Password-based Key Encryption Key Protocol</li>
-                        <li>Key Management Encryption Protocol</li>
-                        <li>Password-based Key Encryption Protocol</li>
-                        <li>Encode/Decode EncryptedKey and EncryptedContent for a various GOST-based CSP</li>
+                        <li>Secret Key based Encryption Protocol</li>
+                        <li>Password based Key Encryption Protocol</li>
+                        <li>Encode/Decode EncryptedKey and EncryptedContent for a various GOST-based CSPs</li>
                     </ul>
-                    <p><a href="doc/GostPKIX.html">Key Store and Key Management</a>
+                    <p><a href="doc/GostKeys.html">Key Store and Key Management</a>
                     <ul>
                         <li>Export/Import PKCS#12 Key Store in the following formats: pfx</li>
                         <li>Export/Import Private and Secret Keys in the following formats: raw, p8, p8e, p12</li>
                         <li>Password-based Encryption of Asymmetric and Symmetric keys in Store</li>
-                        <li>Encode/Decode PrivateKeyInfo for a various GOST-based CSP</li>
+                        <li>Encode/Decode PrivateKeyInfo for a various GOST-based CSPs</li>
+                        <li>Binary compatibility of key container formats for the CryptoPro CSPs and the SignalCom CSPs</li>
                         <li>Ability to use an external Key Store for PKI operations</li>
                     </ul>
-                    <p><a href="doc/GostPKIX.html">Support Syntax of Certificate Management over CMS (CMC)</a>
+                    <p><a href="doc/GostASN1.html">Support Syntax of Certificate Management over CMS (CMC)</a>
                     <p>The library implements follow low-level algorithms:
                     <ul>
-                        <li><a href="doc/Gost28147.html">GOST 28147-89</a> Encryption, Decryption, Key Wrapping and Message Authentication Code (MAC)</li> 
-                        <li><a href="doc/GostR3411.html">GOST 34.11-94</a> and <a href="doc/GostR3411.html">GOST 34.11-2012</a> Digest, Hash and Password MAC, Key Derivation (KDF) and Password Key Derivation (PBKDF2)</li> 
-                        <li><a href="doc/GostR3410.html">GOST 34.10-94</a>, <a href="doc/GostR3410.html">GOST 34.11-2001</a> and <a href="doc/GostR3410.html">GOST 34.11-2012</a> Digital Signature, Key Derivation using Elliptic curve Diffie–Hellman (ECDH)</li> 
+                        <li><a href="doc/GostCipher.html">GOST 28147-89</a>, <a href="doc/GostCipher.html">GOST R 34.12-2015</a> and <a href="doc/GostCipher.html">GOST R 34.13-2015</a> Encryption, Decryption, Key Wrapping and Message Authentication Code (MAC)</li> 
+                        <li><a href="doc/GostDigest.html">GOST R 34.11-94</a> and <a href="doc/GostDigest.html">GOST R 34.11-2012</a> Digest, Hash and Password MAC, Key Derivation (KDF) and Password Key Derivation (PBKDF2)</li> 
+                        <li><a href="doc/GostSign.html">GOST R 34.10-94</a>, <a href="doc/GostSign.html">GOST R 34.11-2001</a> and <a href="doc/GostSign.html">GOST 34.11-2012</a> Digital Signature, Key Derivation using Elliptic curve Diffie–Hellman (ECDH)</li> 
                     </ul>
                     For these algorithms the library supports both 256 and 512 bits modes.
                     <p><a href="doc/SubtleCrypto.html">Web Cryptography API</a> interface provides access to low-level algorithms in an asynchronous mode.</p>
@@ -133,6 +140,16 @@
                     </ol>
                     <p>Library contains polyfill methods of Crypto and CryptoSubtle interfaces and extends algorithms for GOST-oriented crypto scenarios. For non-GOST algorithms execution passthrough to native CryptoSubtle method.</p>
                     <p>The library implements GOST methods and algorithms described in the following references</p>
+                    <ol start="2">
+                        <li><a href="http://tools.ietf.org/html/rfc5830">RFC 5830</a> GOST 28147-89: RFC 5830 Encryption, Decryption, and Message Authentication Code (MAC) Algorithms</li>
+                        <li><a href="http://tools.ietf.org/html/rfc5832">RFC 5832</a> GOST R 34.10-2001: Digital Signature Algorithm (deprecated)</li>
+                        <li><a href="http://tools.ietf.org/html/rfc7091">RFC 7091</a> GOST R 34.10-2012: Digital Signature Algorithm</li>
+                        <li><a href="http://tools.ietf.org/html/rfc5831">RFC 5831</a> GOST R 34.11-94: Hash Function Algorithm (deprecated)</li>
+                        <li><a href="http://tools.ietf.org/html/rfc6986">RFC 6986</a> GOST R 34.11-2012: Hash Function Algorithm</li>
+                        <li><a href="http://tools.ietf.org/html/rfc4357">RFC 4357</a> Additional Cryptographic Algorithms for Use with GOST 28147-89, GOST R 34.10-94, GOST R 34.10-2001, and GOST R 34.11-94 Algorithms</li>
+                        <li><a href="http://tools.ietf.org/html/rfc4490">RFC 4490</a> Using the GOST 28147-89, GOST R 34.11-94, GOST R 34.10-94, and GOST R 34.10-2001 Algorithms with Cryptographic Message Syntax (CMS)</li>
+                        <li><a href="http://tools.ietf.org/html/rfc4491">RFC 4491</a> Using the GOST R 34.10-94, GOST R 34.10-2001, and GOST R 34.11-94 Algorithms with the Internet X.509 Public Key Infrastructure Certificate and CRL Profile</li>
+                    </ol>
                     <ol start="2">
                         <li><a href="http://tools.ietf.org/html/rfc5830">RFC 5830</a> GOST 28147-89: RFC 5830 Encryption, Decryption, and Message Authentication Code (MAC) Algorithms</li>
                         <li><a href="http://tools.ietf.org/html/rfc5832">RFC 5832</a> GOST R 34.10-2001: Digital Signature Algorithm (deprecated)</li>

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+    <head>
+        <title>WebCrypto GOST: CryptoPro PrivateKey Export/Import</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
+        <script src="scripts/gost/gostCrypto.js"></script>
+        <script src="scripts/gost/gostCoding.js"></script>
+        <script src="scripts/gost/gostSecurity.js"></script>
+        <script src="scripts/gost/gostASN1.js"></script>
+        <script src="scripts/gost/gostCert.js"></script>
+        <script src="scripts/gost/gostCMS.js"></script>
+        <script src="scripts/gost/gostKeys.js"></script>
+        <script src="scripts/filesaver/FileSaver.js"></script>
+        <script src="scripts/gost/gostViewer.js"></script>
+        <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+        <link type="text/css" rel="stylesheet" href="styles/main.css">
+    </head>
+    <body>
+        <div class="page">
+            <h1><a href="index.html">WebCrypto GOST</a>: CryptoPro PrivateKey Export/Import</h1>
+            <p class="note">Demonstration of decoding and conversion CryptoPro container files</p>
+            <article>
+                <h2>Export CryptoPro PrivateKey</h2>
+                <section>
+                    <p>Find and select all PrivateKey files from HDImageStore or FloppyStore: "header.key", "name.key", "primary.key", "masks.key", "primary2.key", "masks2.key"</p>
+                    <div class="fileButton">
+                        <button>Load Container files...</button>
+                        <input id="keyStoreFiles" type="file" multiple accept=".key" onchange="readStoreFiles(this)"/>
+                    </div>
+                    <button id="exportButton" disabled onclick="exportPrivateKey()">Export Container</button>
+                    <p id="message"></p>
+                    <label for="password"><strong>PrivateKey password</strong></label>
+                    <input type="password" class="value" id="password"/>
+
+                    <input id="showContainerFiles" type="checkbox" onchange="if (this.checked)
+                                containerFiles.classList.remove('hidden')
+                            else
+                                containerFiles.classList.add('hidden');"><label for="showContainerFiles">Show the contents of PrivateKey container files</label>
+                    <div id="containerFiles" class="hidden">
+                        <span class="label"><strong>header.key</strong></span>
+                        <pre id="headerKey" contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
+                        <button onclick="gostViewer.openASN1(headerKey)">View ASN.1</button>
+                        <button onclick="gostViewer.openSyntax(headerKey, 'GostKeyContainer')">View JSON</button>
+                        <button onclick="saveFile('header.key');">Save File</button>
+
+                        <span class="label"><strong>name.key</strong></span>
+                        <pre id="nameKey"  contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
+                        <button onclick="gostViewer.openASN1(nameKey)">View ASN.1</button>
+                        <button onclick="gostViewer.openSyntax(nameKey, 'GostKeyContainerName')">View JSON</button>
+                        <button onclick="saveFile('name.key');">Save File</button>
+
+                        <span class="label"><strong>primary.key</strong></span>
+                        <pre id="primaryKey" contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
+                        <button onclick="gostViewer.openASN1(primaryKey)">View ASN.1</button>
+                        <button onclick="gostViewer.openSyntax(primaryKey, 'GostPrivateKeys')">View JSON</button>
+                        <button onclick="saveFile('primary.key');">Save File</button>
+
+                        <span class="label"><strong>masks.key</strong></span>
+                        <pre id="masksKey" contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
+                        <button onclick="gostViewer.openASN1(masksKey)">View ASN.1</button>
+                        <button onclick="gostViewer.openSyntax(masksKey, 'GostPrivateMasks')">View JSON</button>
+                        <button onclick="saveFile('masks.key');">Save File</button>
+
+                        <span class="label"><strong>primary2.key</strong></span>
+                        <pre id="primary2Key" contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
+                        <button onclick="gostViewer.openASN1(primary2Key)">View ASN.1</button>
+                        <button onclick="gostViewer.openSyntax(primary2Key, 'GostPrivateKeys')">View JSON</button>
+                        <button onclick="saveFile('primary2.key');">Save File</button>
+
+                        <span class="label"><strong>masks2.key</strong></span>
+                        <pre id="masks2Key" contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
+                        <button onclick="gostViewer.openASN1(masks2Key)">View ASN.1</button>
+                        <button onclick="gostViewer.openSyntax(masks2Key, 'GostPrivateMasks')">View JSON</button>
+                        <button onclick="saveFile('masks2.key');">Save File</button>
+                        <p></p>
+                    </div>
+                </section>
+                <h2>Import CryptoPro PrivateKey</h2>
+                <section>
+                    <p>Complete Private Key and Certificate input for import to the CryptoPro PrivateKey container</p>
+                    <button id="generateButton" onclick="generatePrivateKey()">Generate Key Container</button>
+                    <button id="importButton" disabled onclick="importPrivateKey()">Import Container</button>
+                    <p id="importMessage"></p>
+                    <span class="label"><strong>Container Name</strong></span>
+                    <pre contenteditable id="containerName" class="encoded" onblur="checkCertAndKey()"></pre>
+                    <span class="label"><strong>Certificate</strong></span>
+                    <pre contenteditable id="certificate" class="encoded" onblur="checkCertAndKey()"></pre>
+                    <div class="fileButton">
+                        <button>Open</button>
+                        <input type="file" onchange="readFile(this, certificate, 'CERTIFICATE')"/>
+                    </div>
+                    <button onclick="gostViewer.openASN1(certificate)">View ASN.1</button>
+                    <button onclick="gostViewer.openSyntax(certificate, 'Certificate')">View JSON</button>
+
+                    <span class="label"><strong>Private Key</strong></span>
+                    <pre contenteditable id="privateKey" class="encoded" onblur="checkCertAndKey()"></pre>
+                    <div class="fileButton">
+                        <button>Open</button>
+                        <input type="file" onchange="readFile(this, privateKey, 'PRIVATE KEY')"/>
+                    </div>
+                    <button onclick="gostViewer.openASN1(privateKey)">View ASN.1</button>
+                    <button onclick="gostViewer.openSyntax(privateKey, 'PrivateKeyInfo')">View JSON</button>
+
+                </section>
+                <h2>Change CryptoPro PrivateKey password</h2>
+                <section>
+                    <p>Enter the new password to encrypt the CryptoPro PrivateKey</p>
+                    <label for="newPassword"><strong>New PrivateKey password</strong></label>
+                    <input type="password" class="value" id="newPassword"/>
+                    <button id="changePasswordButton" disabled onclick="changeKeyPassword()">Change PrivateKey password</button>
+                    <p id="passwordMessage"></p>
+                </section>
+            </article>
+        </div>
+        <script>
+            function exportPrivateKey() {
+                // Create key container object with files
+                var keyContainer = new gostCrypto.keys.CryptoProKeyContainer({
+                    header: headerKey.textContent,
+                    name: nameKey.textContent,
+                    primary: primaryKey.textContent,
+                    masks: masksKey.textContent,
+                    primary2: primary2Key.textContent,
+                    masks2: masks2Key.textContent
+                });
+                // Verify key container and password
+                return keyContainer.verify(password.value).then(function() {
+                    // Container name
+                    containerName.textContent = keyContainer.getContainerName();
+                    // Get certificate from container
+                    return keyContainer.getCertificate();
+                }).then(function(cert) {
+                    certificate.textContent = cert.encode('PEM');
+                    // Get private key from container
+                    return keyContainer.getKey(password.value);
+                }).then(function(key) {
+                    privateKey.textContent = key.encode('PEM');
+                    checkCertAndKey();
+                    message.innerHTML = '<span>Success: The private key has been exported.</span>';
+                    passwordMessage.innerHTML = '';
+                }).catch(function(e) {
+                    alert(e.message);
+                });
+            }
+
+            function importPrivateKey() {
+                // Create empty key container 
+                var keyContainer = new gostCrypto.keys.CryptoProKeyContainer();
+                // Add key to conatiner
+                return keyContainer.setKey(privateKey.textContent, password.value).then(function(){
+                    // Add certificate to container
+                    return keyContainer.setCertificate(certificate.textContent);
+                }).then(function() {
+                    // Set container name
+                    keyContainer.setContainerName(containerName.textContent);
+                    // Generate files
+                    var files = keyContainer.encode('PEM');
+                    headerKey.textContent = files.header;
+                    nameKey.textContent= files.name;
+                    primaryKey.textContent = files.primary;
+                    masksKey.textContent = files.masks;
+                    primary2Key.textContent = files.primary2;
+                    masks2Key.textContent = files.masks2;
+                    checkStoreFiles();
+                    importMessage.innerHTML = '<span>Success: The private key has been imported.</span>';
+                    passwordMessage.innerHTML = '';
+                }).catch(function(e) {
+                    alert(e.message);
+                });
+            }
+
+            function generatePrivateKey() {
+                // Create empty key container 
+                var keyContainer = new gostCrypto.keys.CryptoProKeyContainer();
+                if (!containerName.textContent)
+                    containerName.textContent = 'Alias';
+                // Generate private key and certificate
+                return keyContainer.generate({
+                    subject: {
+                        countryName: 'RU',
+                        commonName: containerName.textContent
+                    }
+                }, password.value).then(function(req) {
+                    // Set container name
+                    keyContainer.setContainerName(containerName.textContent);
+                    // Generate files
+                    var files = keyContainer.encode('PEM');
+                    headerKey.textContent = files.header;
+                    nameKey.textContent= files.name;
+                    primaryKey.textContent = files.primary;
+                    masksKey.textContent = files.masks;
+                    primary2Key.textContent = files.primary2;
+                    masks2Key.textContent = files.masks2;
+                    checkStoreFiles();
+                    return exportPrivateKey();
+                }).then(function() {
+                    importMessage.innerHTML = '<span>Success: The private key has been generated.</span>';
+                    passwordMessage.innerHTML = '';
+                }).catch(function(e) {
+                    alert(e.message);
+                });
+            }
+
+            function changeKeyPassword() {
+                // Change password
+                // Create key container object with files
+                var keyContainer = new gostCrypto.keys.CryptoProKeyContainer({
+                    header: headerKey.textContent,
+                    name: nameKey.textContent,
+                    primary: primaryKey.textContent,
+                    masks: masksKey.textContent,
+                    primary2: primary2Key.textContent,
+                    masks2: masks2Key.textContent
+                });
+                return keyContainer.changePassword(password.value, newPassword.value).then(function() {
+                    // Generate files
+                    var files = keyContainer.encode('PEM');
+                    headerKey.textContent = files.header;
+                    nameKey.textContent= files.name;
+                    primaryKey.textContent = files.primary;
+                    masksKey.textContent = files.masks;
+                    primary2Key.textContent = files.primary2;
+                    masks2Key.textContent = files.masks2;
+                    password.value = newPassword.value;
+                    passwordMessage.innerHTML = '<span>Success: The private key password has been changed</span>';
+                }).catch(function(e) {
+                    alert(e.message);
+                });
+            }
+
+            function saveFile(filename) {
+                var name = filename.replace('.key', 'Key');
+                saveAs(new Blob([gostCrypto.coding.Base64.decode(document.getElementById(name).textContent)],
+                        {type: 'application/octet-binary'}), filename);
+            }
+
+            function checkStoreFiles() {
+                var exists = [], absents = [];
+                ['headerKey', 'nameKey', 'primaryKey', 'masksKey', 'primary2Key', 'masks2Key'].forEach(function (name) {
+                    var filename = name.replace('Key', '.key');
+                    if (document.getElementById(name).textContent === '')
+                        absents.push(filename);
+                    else
+                        exists.push(filename);
+                });
+                var text;
+                if (exists.length === 0) {
+                    text = 'No container files loaded.';
+                    exportButton.setAttribute('disabled', true);
+                    changePasswordButton.setAttribute('disabled', true);
+                } else if (absents.length > 0) {
+                    text = 'Loaded files: "<strong>' + exists.join('</strong>", "<strong>') + '</strong>"' +
+                            '. It remains to load files : "<strong>' + absents.join('</strong>", "<strong>') + '</strong>".';
+                    exportButton.setAttribute('disabled', true);
+                    changePasswordButton.setAttribute('disabled', true);
+                } else {
+                    text = 'All the required files are loaded and ready to export.';
+                    exportButton.removeAttribute('disabled');
+                    changePasswordButton.removeAttribute('disabled');
+                }
+                message.innerHTML = '<span>' + text + '</span>';
+            }
+
+            function checkCertAndKey() {
+                var text;
+                if (certificate.textContent === '' || privateKey.textContent === '' || containerName.textContent === '') {
+                    importButton.setAttribute('disabled', true);
+                    text = 'Input container name, load X.509 certificate and PKCS#8 private key files';
+                } else {
+                    importButton.removeAttribute('disabled');
+                    text = 'Certificate and private key are loaded and ready to import.';
+                }
+                importMessage.innerHTML = '<span>' + text + '</span>';
+            }
+
+            function readStoreFiles(input) {
+                var count = input.files.length;
+                for (var i = 0, n = input.files.length; i < n; i++) {
+                    (function (file) {
+                        var reader = new FileReader(),
+                                name = file.name.replace('.key', 'Key');
+                        reader.onload = function (e) {
+                            document.getElementById(name).textContent =
+                                    gostCrypto.coding.Base64.encode(e.target.result);
+                            count--;
+                            if (!count)
+                                checkStoreFiles();
+                        };
+                        reader.readAsArrayBuffer(file);
+                    })(input.files[i]);
+                }
+            }
+            
+            function readFile(input, node, name) {
+                            var reader = new FileReader();
+                reader.onload = function(e) {
+                    var data = e.target.result, text;
+                    try {
+                        data = gostCrypto.coding.PEM.decode(data, name);
+                        text = gostCrypto.coding.PEM.encode(data, name);
+                    } catch (e) {
+                        text = gostCrypto.coding.Base64.encode(data);
+                    }
+                    node.textContent = text;
+                };
+                reader.readAsArrayBuffer(input.files[0]);
+            }
+            
+        </script>
+    </body>
+</html>

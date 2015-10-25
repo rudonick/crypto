@@ -79,12 +79,12 @@ Qu’écrirez-vous sur ces tablettes,
                     <span class="label">Encrypt procedure</span>
                     <pre contenteditable class="procedure prettyprint" id="encryptMethod">
 // Import password for key generation
-gostCrypto.subtle.importKey('raw', gostCoding.Chars.decode(password.value, 'utf8'), 
+gostCrypto.subtle.importKey('raw', gostCrypto.coding.Chars.decode(password.value, 'utf8'), 
     'GOST R 34.11-PBKDF2', true, ['deriveKey']).then(function(passwordKey) {
 
     // Generate random value as salt for password based CEK generation
     var salt = new Uint8Array(32); gostCrypto.getRandomValues(salt);
-    SALTfield.value = gostCoding.Hex.encode(salt);
+    SALTfield.value = gostCrypto.coding.Hex.encode(salt);
 
     // Generate key from password. Algorithm PKCS#5 PBKDF2 based on HMAC(GOST R 34.11)
     return gostCrypto.subtle.deriveKey({name: 'GOST R 34.11-PBKDF2', salt: salt, iterations: 1000}, passwordKey, 
@@ -93,13 +93,13 @@ gostCrypto.subtle.importKey('raw', gostCoding.Chars.decode(password.value, 'utf8
 
     // Encrypt content with CEK. Algorithm PKCS#5 PBSE2 based on GOST 28147
     return gostCrypto.subtle.encrypt('GOST 28147-CFB', CEK, 
-        gostCoding.Chars.decode(content.textContent, 'utf8')).then(function(data) {
-        encrypted.textContent = gostCoding.Base64.encode(data);
+        gostCrypto.coding.Chars.decode(content.textContent, 'utf8')).then(function(data) {
+        encrypted.textContent = gostCrypto.coding.Base64.encode(data);
 
         // Calculate HMAC prevent to do any changes. Algorithm PKCS#5 PBMAC1 based on HMAC(GOST R 34.11)
         return gostCrypto.subtle.sign('GOST R 34.11-HMAC', CEK, data);
     }).then(function(data) {
-        HMACfield.value = gostCoding.Hex.encode(data);
+        HMACfield.value = gostCrypto.coding.Hex.encode(data);
         decryptButton.removeAttribute('disabled');
     });
 }).catch(function(error) {
@@ -118,19 +118,19 @@ gostCrypto.subtle.importKey('raw', gostCoding.Chars.decode(password.value, 'utf8
                     <span class="label">Decrypt procedure</span>
                     <pre contenteditable class="procedure prettyprint" id="decryptMethod">
 // Import password for key generation
-gostCrypto.subtle.importKey('raw', gostCoding.Chars.decode(password.value, 'utf8'), 
+gostCrypto.subtle.importKey('raw', gostCrypto.coding.Chars.decode(password.value, 'utf8'), 
     'GOST R 34.11-PBKDF2', true, ['deriveKey']).then(function(passwordKey) {
 
     // Generate key from password. Algorithm PKCS#5 PBKDF2 based on HMAC(GOST R 34.11)
-    var salt = gostCoding.Hex.decode(SALTfield.value);
+    var salt = gostCrypto.coding.Hex.decode(SALTfield.value);
     return gostCrypto.subtle.deriveKey({name: 'GOST R 34.11-PBKDF2', salt: salt, iterations: 1000}, passwordKey, 
             'GOST 28147', true, ['decrypt', 'verify']);
 }).then(function(CEK) {
 
     // Get saved digital signature for verification
-    var HMAC = gostCoding.Hex.decode(HMACfield.value);
+    var HMAC = gostCrypto.coding.Hex.decode(HMACfield.value);
     // Get source of encripted content
-    var source = gostCoding.Base64.decode(encrypted.textContent);
+    var source = gostCrypto.coding.Base64.decode(encrypted.textContent);
 
     // Verify HMAC to ensure that content not changed
     return gostCrypto.subtle.verify('GOST R 34.11-HMAC', CEK, HMAC, source).then(function(check) {
@@ -139,7 +139,7 @@ gostCrypto.subtle.importKey('raw', gostCoding.Chars.decode(password.value, 'utf8
 
             // Decrypt encrypted content with CEK
             return gostCrypto.subtle.decrypt('GOST 28147-CFB', CEK, source).then(function(data) {
-                decrypted.textContent = gostCoding.Chars.encode(data, 'utf8');
+                decrypted.textContent = gostCrypto.coding.Chars.encode(data, 'utf8');
             });
         } else
             notchanged.value = 'No';

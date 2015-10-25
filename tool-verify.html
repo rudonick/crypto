@@ -41,24 +41,24 @@
                     </select>
                     <div id="manual" class="hidden">
                         <label for="paramA">Coefficient <strong><i>a</i></strong> of the elliptic curve E</label>
-                        <input class="value" id="paramA"/>
+                        <input class="value" id="paramA" value="FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC"/>
                         <label for="paramB">Coefficient <strong><i>b</i></strong> of the elliptic curve E</label>
-                        <input class="value" id="paramB"/>
+                        <input class="value" id="paramB" value="5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B"/>
                         <label for="paramP">Elliptic curve modulus <strong><i>p</i></strong> - prime number</label>
-                        <input class="value" id="paramP"/>
+                        <input class="value" id="paramP" value="FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF"/>
                         <label for="paramQ">Elliptic curve modulus <strong><i>q</i></strong> - Prime number</label>
-                        <input class="value" id="paramQ"/>
+                        <input class="value" id="paramQ" value="FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551"/>
                         <label for="paramX">Base point p coordinate <strong><i>x</i></strong></label>
-                        <input class="value" id="paramX"/>
+                        <input class="value" id="paramX" value="6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296"/>
                         <label for="paramY">Base point p coordinate <strong><i>y</i></strong></label>
-                        <input class="value" id="paramY"/>
+                        <input class="value" id="paramY" value="4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5"/>
                     </div>
                     <label for="hashParam">Select <strong>Hash algorithm</strong></label>
                     <select class="value" id="hashParam" onchange="verified.value = ''">
                         <option selected value="GOSTR3411">id-GostR3411-2012-ParamSet</option>
                         <option value="GOSTR3411-94/D-TEST">id-GostR3411-94-TestParamSet</option>
                         <option value="GOSTR3411-94/D-A">id-Gost3491-94-CryptoPro-ParamSet</option>
-                        <option value="GOSTR3411-94/D-SC">id-Gost3491-94-SignalCom-ParamSet</option>
+                        <option value="GOSTR3411-94/D-SC">id-sc-gostR3411-94 (SignalCom)</option>
                         <option value="GOSTR3411-94/E-TEST">id-Gost28147-89-TestParamSet</option>
                         <option value="GOSTR3411-94/E-A">id-Gost28147-89-CryptoPro-A-ParamSet</option>
                         <option value="GOSTR3411-94/E-B">id-Gost28147-89-CryptoPro-B-ParamSet</option>
@@ -80,7 +80,7 @@
                                 };
                                 reader.readAsText(this.files[0]);"/>
                     </div>
-                    <button onclick="publicKey.value = gostCoding.Hex.encode(gostCoding.Hex.decode(publicKey.value), true)">Swap bytes</button>
+                    <button onclick="publicKey.value = gostCrypto.coding.Hex.encode(gostCrypto.coding.Hex.decode(publicKey.value), true)">Swap bytes</button>
                     <button onclick="publicKey.value = ''">Clear</button>
 
                     <label for="signature"><strong>Signature contents</strong> in HEX format</label>
@@ -94,7 +94,7 @@
                                 };
                                 reader.readAsText(this.files[0]);"/>
                     </div>
-                    <button onclick="signature.value = gostCoding.Hex.encode(gostCoding.Hex.decode(signature.value), true)">Swap bytes</button>
+                    <button onclick="signature.value = gostCrypto.coding.Hex.encode(gostCrypto.coding.Hex.decode(signature.value), true)">Swap bytes</button>
                     <button onclick="signature.value = ''">Clear</button>
 
                 </section>
@@ -160,7 +160,7 @@ function decode(ondata) {
         }
         reader.readAsArrayBuffer(fileSourceSelect.files[0]);
     } else {
-        ondata(gostCoding[format[0]].decode(source.textContent, format[1]));
+        ondata(gostCrypto.coding[format[0]].decode(source.textContent, format[1]));
     }
 }
 
@@ -170,12 +170,12 @@ function verify(publicKey, signature, message) {
 
     // Set curve parameters
     if (namedCurve.value === 'Other') {
-        algorithm.a = gostCoding.Hex.decode(paramA.value, 'BigEndian');
-        algorithm.b = gostCoding.Hex.decode(paramB.value, 'BigEndian');
-        algorithm.p = gostCoding.Hex.decode(paramP.value, 'BigEndian');
-        algorithm.q = gostCoding.Hex.decode(paramQ.value, 'BigEndian');
-        algorithm.x = gostCoding.Hex.decode(paramX.value, 'BigEndian');
-        algorithm.y = gostCoding.Hex.decode(paramY.value, 'BigEndian');
+        algorithm.a = '0x' + paramA.value;
+        algorithm.b = '0x' + paramB.value;
+        algorithm.p = '0x' + paramP.value;
+        algorithm.q = '0x' + paramQ.value;
+        algorithm.x = '0x' + paramX.value;
+        algorithm.y = '0x' + paramY.value;
     } else
         algorithm.namedCurve = namedCurve.value; 
 
@@ -198,8 +198,8 @@ function verify(publicKey, signature, message) {
 // Execute procedure
 decode(function(message) {
     
-    verify(gostCoding.Hex.decode(publicKey.value, 'BigEndian'), 
-        gostCoding.Hex.decode(signature.value, 'BigEndian'), message);
+    verify(gostCrypto.coding.Hex.decode(publicKey.value, 'BigEndian'), 
+        gostCrypto.coding.Hex.decode(signature.value, 'BigEndian'), message);
 });</pre>
                 </section>
             </article>

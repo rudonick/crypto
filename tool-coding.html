@@ -86,7 +86,7 @@
                         <span class="label"><strong>Destination contents</strong></span>
                         <pre contenteditable id="dest" class="encoded"></pre>
                         <button id="saveButton" onclick="
-                                saveAs(new Blob([gostCoding.Chars.decode(dest.textContent, 'utf8')], {type: 'text/plain;charset=utf8'}), 'result.txt');
+                                saveAs(new Blob([gostCrypto.coding.Chars.decode(dest.textContent, 'utf8')], {type: 'text/plain;charset=utf8'}), 'result.txt');
                                 ">Save contents to file</button>
                         <button onclick="dest.textContent = ''">Clear</button>
                     </div>
@@ -108,7 +108,7 @@ function decode(format, param, ondata) {
         }
         reader.readAsArrayBuffer(fileSourceSelect.files[0]);
     } else {
-        ondata(gostCoding[format].decode(source.textContent, param));
+        ondata(gostCrypto.coding[format].decode(source.textContent, param));
     }
 }
 
@@ -117,7 +117,7 @@ function encode(format, param, data) {
     if (format === 'Binary') { 
         saveAs(new Blob([data], {type: 'application/octet-stream'}), destFileName.value);
     } else {
-        dest.textContent = gostCoding[format].encode(data, param);
+        dest.textContent = gostCrypto.coding[format].encode(data, param);
     }
 }
 
