@@ -34,22 +34,22 @@
 
 (function(root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['gostCoding', 'gostR3410'], factory);
+        define(['gostCoding', 'gostSign'], factory);
     } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostCoding'), require('gostR3410'));
+        module.exports = factory(require('gostCoding'), require('gostSign'));
     } else {
         if (typeof importScripts !== 'undefined') {
             if (!root.onmessage)
                 root.onmessage = function(event) {
                     postMessage((root[event.data.object] || root)[event.data.method].apply(event.data.object || root, event.data.args));
                 };
-            importScripts('gostCoding.js', 'gostR3410.js');
+            importScripts('gostCoding.js', 'gostSign.js');
         }
-        root.GostR3410_test = factory(root.gostCoding, root.GostR3410);
+        root.GostSign_test = factory(root.GostCoding, root.GostSign);
     }
-}(this, function(gostCoding, GostR3410) {
+}(this, function(GostCoding, GostSign) {
 
-    var root = this;
+    var root = this, gostCoding;
 
     /* ========== Tests ========== */
 
@@ -75,7 +75,7 @@
         else
             output = false;
 
-        var cipher = new GostR3410(algorithm);
+        var cipher = new GostSign(algorithm);
         var result = 'Test ' + ' ' + ('0' + id).slice(-2) + ' ' + (cipher.name + ' ' + new Array(61).join('.')).substring(0, 60) + ' ';
         var data = typeof message === 'string' ? Hex.decode(message, true) : message;
 
@@ -115,7 +115,7 @@
     function performDerive(id, algorithm) {
         var ukm = algorithm.ukm;
         delete algorithm.ukm;
-        var cipher = new GostR3410(algorithm);
+        var cipher = new GostSign(algorithm);
         var result = 'Test ' + ' ' + ('0' + id).slice(-2) + ' ' + (cipher.name + ' ' + new Array(61).join('.')).substring(0, 60) + ' ';
         var keyPair1 = cipher.generateKey(),
                 keyPair2 = cipher.generateKey(),
@@ -130,12 +130,12 @@
 
             var start = (new Date).getTime();
             algorithm.public = publicKey2;
-            cipher = new GostR3410(algorithm);
+            cipher = new GostSign(algorithm);
             var kek1 = gostCoding.Hex.encode(cipher.deriveKey(privateKey1));
             var finish = (new Date).getTime();
 
             algorithm.public = publicKey1;
-            cipher = new GostR3410(algorithm);
+            cipher = new GostSign(algorithm);
             var kek2 = gostCoding.Hex.encode(cipher.deriveKey(privateKey2));
 
             var test = 0 + (kek1 !== kek2);
@@ -152,9 +152,9 @@
 
     return function() {
 
-        gostCoding = gostCoding || root.gostCoding;
-        GostR3410 = GostR3410 || root.GostR3410;
-
+        GostCoding = GostCoding || root.GostCoding;
+        gostCoding = new GostCoding();
+        GostSign = GostSign || root.GostSign;
 
         // GOST R 34.10 tests
         var tests = 0, i = 0;
@@ -210,7 +210,7 @@
             namedCurve: 'S-256-TEST',
         }, '2DFBC1B372D89A1188C09C52E0EEC61FCE52032AB1022E8E67ECE6672B043EE5');
 
-        // GostR3411-94-with-Gost-3410-2001
+        // GostDigest-94-with-Gost-3410-2001
         tests2 += perform(++i, {
             name: 'GOST R 34.10',
             namedCurve: 'S-256-TEST',
@@ -220,7 +220,7 @@
             }
         }, gostCoding.Chars.decode('Suppose the original message has length = 50 bytes'));
 
-        // GostR3411-2012-with-Gost-3410-2012
+        // GostDigest-2012-with-Gost-3410-2012
         tests2 += perform(++i, {
             name: 'GOST R 34.10',
             namedCurve: 'T-512-TEST',

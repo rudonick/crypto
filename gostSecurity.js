@@ -1,6 +1,6 @@
 /**
- * @file Gost and common ASN.1 Object and Algorithm Identifiers 
- * @version 0.99
+ * @file GOST and common ASN.1 Object and Algorithm Identifiers 
+ * @version 1.70
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -30,30 +30,44 @@
  * 
  */
 
-(function(root, factory) {
-    
+(function (root, factory) {
+
     /*
      * Module imports and exports
      * 
      */ // <editor-fold defaultstate="collapsed">
     if (typeof define === 'function' && define.amd) {
-        define(factory);
+        define(['gostCrypto'], factory);
     } else if (typeof exports === 'object') {
-        module.exports = factory();
+        module.exports = factory(require('gostCrypto'));
     } else {
-        root.gostObject = factory();
+        root.GostSecurity = factory(root.gostCrypto);
     }
     // </editor-fold>
 
-}(this, function() {
+}(this, function (gostCrypto) {
 
+    // <editor-fold defaultstate="collapsed">
     var root = this;
+
+    // Expand javascript object
+    function expand() {
+        var r = {};
+        for (var i = 0, n = arguments.length; i < n; i++) {
+            var item = arguments[i];
+            if (typeof item === 'object')
+                for (var name in item)
+                    r[name] = item[name];
+        }
+        return r;
+    }
+    // </editor-fold>
 
     /**
      * Freandly names for ASN.1 Object Identifiers
      * 
      * @field names
-     * @memberOf gostObject
+     * @memberOf GostSecurity
      */ // <editor-fold defaultstate="collapsed">
     var names = {
         // CryptoPro algoritms
@@ -61,7 +75,7 @@
         '1.2.643.2.2.3': 'id-GostR3411-94-with-GostR3410-2001',
         '1.2.643.2.2.4': 'id-GostR3411-94-with-GostR3410-94',
         '1.2.643.2.2.9': 'id-GostR3411-94',
-        '1.2.643.2.2.10': 'id-HMACGostR3411-94', 
+        '1.2.643.2.2.10': 'id-HMACGostR3411-94',
         '1.2.643.2.2.13.0': 'id-Gost28147-89-None-KeyWrap',
         '1.2.643.2.2.13.1': 'id-Gost28147-89-CryptoPro-KeyWrap',
         '1.2.643.2.2.14.0': 'id-Gost28147-89-None-KeyMeshing',
@@ -131,9 +145,14 @@
         '1.2.643.2.2.35.3': 'id-GostR3410-2001-CryptoPro-C-ParamSet',
         '1.2.643.2.2.36.0': 'id-GostR3410-2001-CryptoPro-XchA-ParamSet',
         '1.2.643.2.2.36.1': 'id-GostR3410-2001-CryptoPro-XchB-ParamSet',
+        "1.2.643.2.2.37.1": 'id-CryptoPro-GostPrivateKeys-V1',
+        "1.2.643.2.2.37.2": 'id-CryptoPro-GostPrivateKeys-V2',
+        "1.2.643.2.2.37.2.1": 'id-CryptoPro-GostPrivateKeys-V2-Full',
+        "1.2.643.2.2.37.2.2": 'id-CryptoPro-GostPrivateKeys-V2-PartOf',
         '1.2.643.2.2.37.3.1': 'intermediateCertificates',
         '1.2.643.2.2.37.3.2': 'trustedCertificatesSignature',
         '1.2.643.2.2.37.3.3': 'trustedCertificatesExchange',
+        '1.2.643.2.2.37.3.10': 'keyValidity',
         '1.2.643.2.2.38.1': 'personalBaseProlicy',
         '1.2.643.2.2.38.2': 'networkBasePolicy',
         '1.2.643.2.2.47.1': 'id-CryptoPro-ocsp-treats-exp-key-or-exp-cert-rev',
@@ -146,6 +165,10 @@
         '1.2.643.2.2.97': 'id-GostR3410-94-CryptoPro-ESDH',
         '1.2.643.2.2.98': 'id-GostR3410-2001DH',
         '1.2.643.2.2.99': 'id-GostR3410-94DH',
+        // signature attributes
+        '1.2.643.2.45.1.1.1': 'signatureComment',
+        '1.2.643.2.45.1.1.2': 'resourceName',
+        '1.2.643.2.45.1.1.3': 'signatureUsage',
         // params
         '1.2.643.3.131.1.1': 'INN',
         '1.2.643.3.141.1.1': 'RNS FSS',
@@ -224,9 +247,9 @@
         '1.3.6.1.4.1.22554.1.1.2.1.2': 'pbeWithSHAAndAES128-CBC',
         '1.3.6.1.4.1.22554.1.1.2.1.22': 'pbeWithSHAAndAES192-CBC',
         '1.3.6.1.4.1.22554.1.1.2.1.42': 'pbeWithSHAAndAES256-CBC',
-        '1.3.6.1.4.1.22554.1.2.1.2.1.2': 'pbeWithSHA256AndAES128-CBC', 
-        '1.3.6.1.4.1.22554.1.2.1.2.1.22': 'pbeWithSHA256AndAES192-CBC', 
-        '1.3.6.1.4.1.22554.1.2.1.2.1.42': 'pbeWithSHA256AndAES256-CBC', 
+        '1.3.6.1.4.1.22554.1.2.1.2.1.2': 'pbeWithSHA256AndAES128-CBC',
+        '1.3.6.1.4.1.22554.1.2.1.2.1.22': 'pbeWithSHA256AndAES192-CBC',
+        '1.3.6.1.4.1.22554.1.2.1.2.1.42': 'pbeWithSHA256AndAES256-CBC',
         //  Diffie-Hellman Key Exchange Keys
         '1.2.840.113549': 'rsa',
         '1.2.840.113549.1.1.1': 'rsaEncryption',
@@ -303,7 +326,7 @@
         '1.2.840.113549.1.9.25.4': 'sequenceNumber',
         '1.2.840.113549.1.9.25.5': 'pkcs7PDU',
         '1.2.840.113549.1.9.26.1': 'pkcs9String',
-        '1.2.840.113549.1.9.26.2': 'signingTime',
+        '1.2.840.113549.1.9.26.2': 'signingTimeString',
         '1.2.840.113549.1.9.27.1': 'caseIgnoreMatch',
         '1.2.840.113549.1.9.27.2': 'signingTimeMatch',
         // password-based-encryption for pkcs#12
@@ -315,6 +338,7 @@
         '1.2.840.113549.1.12.1.4': 'pbeWithSHAAnd2-KeyTripleDES-CBC',
         '1.2.840.113549.1.12.1.5': 'pbeWithSHAAnd128BitRC2-CBC',
         '1.2.840.113549.1.12.1.6': 'pbewithSHAAnd40BitRC2-CBC',
+        '1.2.840.113549.1.12.1.80': 'pbeUnknownGost',
         '1.2.840.113549.1.12.2.1': 'pkcs8-key-shrouding',
         '1.2.840.113549.1.12.3.1': 'keyBagId',
         '1.2.840.113549.1.12.3.2': 'certAndCRLBagId',
@@ -340,7 +364,9 @@
         '1.3.132.112': 'ecDH',
         '1.3.14.3.2.26': 'sha1',
         '1.3.6.1.4.1.311.2.1.14': 'msCertExtensions',
-        '1.3.6.1.4.1.311.17.1': 'pkcs-12-key-provider-name-attr',
+        '1.3.6.1.4.1.311.17.1': 'keyProviderNameAttr',
+        '1.3.6.1.4.1.311.17.2': 'localMachineKeyset',
+        '1.3.6.1.4.1.311.17.3.20': 'certKeyIdentifierPropId',
         // SignalCom algorithms
         '1.3.6.1.4.1.5849': 'SignalCom',
         '1.3.6.1.4.1.5849.1.1.1': 'id-sc-gost28147-ecb',
@@ -385,7 +411,7 @@
         '1.3.6.1.5.5.7.5.1.4': 'pkiArchiveOptions',
         '1.3.6.1.5.5.7.5.1.5': 'oldCertID',
         '1.3.6.1.5.5.7.5.1.6': 'protocolEncrKey',
-        '1.3.6.1.5.5.7.5.2': 'regInfo',
+        '1.3.6.1.5.5.7.5.2': 'regInfoAttr',
         '1.3.6.1.5.5.7.5.2.1': 'UTF8Pairs',
         '1.3.6.1.5.5.7.5.2.2': 'certReq',
         '1.3.6.1.5.5.7.6.2': 'noSignature',
@@ -411,7 +437,7 @@
         '1.3.6.1.5.5.7.7.24': 'confirmCertAcceptance',
         '1.3.6.1.5.5.7.7.25': 'statusInfoV2',
         '1.3.6.1.5.5.7.7.26': 'trustedAnchors',
-        '1.3.6.1.5.5.7.7.27': 'authData',
+        '1.3.6.1.5.5.7.7.27': 'authPublish',
         '1.3.6.1.5.5.7.7.28': 'batchRequests',
         '1.3.6.1.5.5.7.7.29': 'batchResponses',
         '1.3.6.1.5.5.7.7.30': 'publishCert',
@@ -535,19 +561,19 @@
         '2.5.4.65': 'pseudonym',
         '2.5.4.72': 'role',
         // X.509 extension OIDsets
-        '2.5.29.1': 'authorityKeyIdentifier',
-        '2.5.29.2': 'keyAttributes',
-        '2.5.29.3': 'certificatePolicies',
+        '2.5.29.1': 'authorityKeyIdentifierX',
+        '2.5.29.2': 'keyAttributesX',
+        '2.5.29.3': 'certificatePoliciesX',
         '2.5.29.4': 'keyUsageRestriction',
         '2.5.29.5': 'policyMapping',
         '2.5.29.6': 'subtreesConstraint',
-        '2.5.29.7': 'subjectAltName',
-        '2.5.29.8': 'issuerAltName',
+        '2.5.29.7': 'subjectAltNameX',
+        '2.5.29.8': 'issuerAltNameX',
         '2.5.29.9': 'subjectDirectoryAttributes',
-        '2.5.29.10': 'basicConstraints',
-        '2.5.29.11': 'nameConstraints',
-        '2.5.29.12': 'policyConstraints',
-        '2.5.29.13': 'basicConstraints',
+        '2.5.29.10': 'basicConstraintsX',
+        '2.5.29.11': 'nameConstraintsX',
+        '2.5.29.12': 'policyConstraintsX',
+        '2.5.29.13': 'basicConstraintsY',
         '2.5.29.14': 'subjectKeyIdentifier',
         '2.5.29.15': 'keyUsage',
         '2.5.29.16': 'privateKeyUsagePeriod',
@@ -559,8 +585,8 @@
         '2.5.29.22': 'expirationDate',
         '2.5.29.23': 'instructionCode',
         '2.5.29.24': 'invalidityDate',
-        '2.5.29.25': 'cRLDistributionPoints',
-        '2.5.29.26': 'issuingDistributionPoint',
+        '2.5.29.25': 'cRLDistributionPointsX',
+        '2.5.29.26': 'issuingDistributionPointX',
         '2.5.29.27': 'deltaCRLIndicator',
         '2.5.29.28': 'issuingDistributionPoint',
         '2.5.29.29': 'certificateIssuer',
@@ -568,7 +594,7 @@
         '2.5.29.31': 'cRLDistributionPoints',
         '2.5.29.32': 'certificatePolicies',
         '2.5.29.33': 'policyMappings',
-        '2.5.29.34': 'policyConstraints',
+        '2.5.29.34': 'policyConstraintsY',
         '2.5.29.35': 'authorityKeyIdentifier',
         '2.5.29.36': 'policyConstraints',
         '2.5.29.37': 'extKeyUsage',
@@ -582,26 +608,26 @@
      * ASN.1 Object Identifiers for freandly names
      * Generated automaticly
      * @field identifiers
-     * @memberOf gostObject
+     * @memberOf GostSecurity
      */
     var identifiers = {};
-    for (var id in names) {
+    for (var id in names) 
         identifiers[names[id]] = id;
-    }
+    
     // </editor-fold>
 
     /**
      * Algorithm identifiers {@link gostCrypto.AlgorithmIdentifier} for Object Identifiers
      * 
      * @field algorithms
-     * @memberOf gostObject
+     * @memberOf GostSecurity
      */ // <editor-fold defaultstate="collapsed">
     var algorithms = {
         // CryptoPro algoritms
         'id-GostR3411-94-with-GostR3410-2001': 'GOST R 34.10-2001/GOST R 34.11-94',
         'id-GostR3411-94-with-GostR3410-94': 'GOST R 34.10-94/GOST R 34.11-94',
         'id-GostR3411-94': 'GOST R 34.11-94',
-        'id-HMACGostR3411-94': 'GOST R 34.11-94-HMAC',
+        'id-HMACGostR3411-94': {name: 'HMAC', hash: {name: 'GOST R 34.11-94'}},
         'id-Gost28147-89-None-KeyWrap': 'GOST 28147-89-KW',
         'id-Gost28147-89-CryptoPro-KeyWrap': 'GOST 28147-89-CPKW',
         'id-GostR3410-2001': 'GOST R 34.10-2001',
@@ -625,10 +651,10 @@
         'id-tc26-signwithdigest-gost3410-12-94': 'GOST R 34.10-256/GOST R 34.11-94',
         'id-tc26-signwithdigest-gost3410-12-256': 'GOST R 34.10-256/GOST R 34.11-256',
         'id-tc26-signwithdigest-gost3410-12-512': 'GOST R 34.10-512/GOST R 34.11-512',
-        'id-tc26-hmac-gost-3411-12-256': 'GOST R 34.11-256-HMAC',
-        'id-tc26-hmac-gost-3411-12-512': 'GOST R 34.11-512-HMAC',
+        'id-tc26-hmac-gost-3411-12-256': {name: 'HMAC', hash: {name: 'GOST R 34.11-256'}},
+        'id-tc26-hmac-gost-3411-12-512': {name: 'HMAC', hash: {name: 'GOST R 34.11-512'}},
         'id-tc26-agreement-gost-3410-12-256': 'GOST R 34.10-256-DH/GOST R 34.11-256',
-        'id-tc26-agreement-gost-3410-12-512': 'GOST R 34.10-512-DH/GOST R 34.11-512',
+        'id-tc26-agreement-gost-3410-12-512': 'GOST R 34.10-512-DH/GOST R 34.11-256',
         // SignalCom algorithms
         'id-sc-gost28147-ecb': 'GOST 28147-89-ECB/SC',
         'id-sc-gost28147-gamma': 'GOST 28147-89-CTR/SC',
@@ -645,30 +671,36 @@
         'id-sc-pbeWithGost3411AndGost28147': {derivation: {name: 'GOST R 34.11-94-PBKDF2/SC'}, encryption: {name: 'GOST 28147-ECB/SC'}},
         'id-sc-pbeWithGost3411AndGost28147CFB': {derivation: {name: 'GOST R 34.11-94-PBKDF2/SC'}, encryption: {name: 'GOST 28147-CFB/SC'}},
         'id-sc-gostR3410-2001': 'GOST R 34.10-2001/SC',
-        'id-sc-hmacWithGostR3411': 'GOST R 34.11-94-HMAC/SC',
-        'id-sc-r3410-ESDH-r3411kdf': 'GOST R 34.10-2001/GOST R 34.11-94/SC',
-        'id-sc-ecdh-singlePass-cofactor-r3411kdf': 'GOST R 34.10-2001-SINGLEPASS/GOST R 34.11-94-KDF/SC',
+        'id-sc-hmacWithGostR3411': {name: 'HMAC', hash: {name: 'GOST R 34.11-94/SC'}},
+        'id-sc-r3410-ESDH-r3411kdf': 'GOST R 34.10-2001-DH/GOST R 34.11-94/SC',
         // RSA algorithms
-        rsaEncryption: 'RSASSA-PKCS1-v1_5',
-        sha1withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'sha-1'}},
-        sha256withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'sha-256'}},
-        sha384withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'sha-384'}},
-        sha512withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'sha-512'}},
+        noSignature: 'NONE',
+        rsaEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-256'}},
+        sha1withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-1'}},
+        sha256withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-256'}},
+        sha384withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-384'}},
+        sha512withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-512'}},
         'rsaes-oaep': 'RSA-OAEP',
         'rsassa-pss': 'RSA-PSS',
         // ECDSA
         'ecdsa': 'ECDSA',
-        'ecdsa-with-SHA1': {name: 'ECDSA', hash: {name: 'sha-1'}},
-        'ecdsa-with-SHA256': {name: 'ECDSA', hash: {name: 'sha-256'}},
-        'ecdsa-with-SHA384': {name: 'ECDSA', hash: {name: 'sha-384'}},
-        'ecdsa-with-SHA512': {name: 'ECDSA', hash: {name: 'sha-512'}},
+        'ecdsa-with-SHA1': {name: 'ECDSA', hash: {name: 'SHA-1'}},
+        'ecdsa-with-SHA256': {name: 'ECDSA', hash: {name: 'SHA-256'}},
+        'ecdsa-with-SHA384': {name: 'ECDSA', hash: {name: 'SHA-384'}},
+        'ecdsa-with-SHA512': {name: 'ECDSA', hash: {name: 'SHA-512'}},
         // Legion of the Bouncy Castle pbe
-        'pbeWithSHAAndAES128-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'sha-1'}}, encryption: {name: 'AES-CBC', length: 128}},
-        'pbeWithSHAAndAES192-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'sha-1'}}, encryption: {name: 'AES-CBC', length: 192}},
-        'pbeWithSHAAndAES256-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'sha-1'}}, encryption: {name: 'AES-CBC', length: 256}},
-        'pbeWithSHA256AndAES128-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'sha-256'}}, encryption: {name: 'AES-CBC', length: 128}},
-        'pbeWithSHA256AndAES192-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'sha-256'}}, encryption: {name: 'AES-CBC', length: 192}},
-        'pbeWithSHA256AndAES256-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'sha-256'}}, encryption: {name: 'AES-CBC', length: 256}},
+        'pbeWithSHAAndAES128-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-1'}}, encryption: {name: 'AES-CBC', length: 128}},
+        'pbeWithSHAAndAES192-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-1'}}, encryption: {name: 'AES-CBC', length: 192}},
+        'pbeWithSHAAndAES256-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-1'}}, encryption: {name: 'AES-CBC', length: 256}},
+        'pbeWithSHA256AndAES128-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-256'}}, encryption: {name: 'AES-CBC', length: 128}},
+        'pbeWithSHA256AndAES192-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-256'}}, encryption: {name: 'AES-CBC', length: 192}},
+        'pbeWithSHA256AndAES256-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-256'}}, encryption: {name: 'AES-CBC', length: 256}},
+        // PKCS12 PBE
+        'pbeWithSHAAnd3-KeyTripleDES-CBC': {derivation: {name: 'PFXKDF', hash: 'SHA-1'}, encryption: {name: '3DES', block: 'CBC'}},
+        'pbeWithSHAAnd2-KeyTripleDES-CBC': {derivation: {name: 'PFXKDF', hash: 'SHA-1'}, encryption: {name: '2DES', block: 'CBC'}},
+        'pbeWithSHAAnd128BitRC2-CBC': {derivation: {name: 'PFXKDF', hash: 'SHA-1'}, encryption: {name: 'RC2', block: 'CBC', length: 128}},
+        'pbewithSHAAnd40BitRC2-CBC': {derivation: {name: 'PFXKDF', hash: 'SHA-1'}, encryption: {name: 'RC2', block: 'CBC', length: 40}},
+        'pbeUnknownGost': {derivation: {name: 'PFXKDF', hash: 'GOST R 34.11'}, encryption: {name: 'GOST 28147-89-CFB'}},
         //  Diffie-Hellman Key Exchange Keys
         ecDH: 'ECDH',
         dhKeyAgreement: 'DH',
@@ -686,19 +718,19 @@
         'aes256-GCM': {name: 'AES-GCM', length: 256},
         'aes256-wrap': {name: 'AES-KW', length: 256},
         // hash algorihtms
-        sha1: 'sha-1',
-        sha256: 'sha-256',
-        sha384: 'sha-384',
-        sha512: 'sha-512',
+        sha1: 'SHA-1',
+        sha256: 'SHA-256',
+        sha384: 'SHA-384',
+        sha512: 'SHA-512',
         // PBE
         PBKDF2: 'PBKDF2',
         PBES2: {derivation: {name: 'PBKDF2'}, encryption: {}},
         PBMAC1: {derivation: {name: 'PBKDF2'}, hmac: {}},
         // HMAC
-        hmacWithSHA1: {name: 'HMAC', hash: {name: 'sha-1'}},
-        hmacWithSHA256: {name: 'HMAC', hash: {name: 'sha-256'}},
-        hmacWithSHA384: {name: 'HMAC', hash: {name: 'sha-384'}},
-        hmacWithSHA512: {name: 'HMAC', hash: {name: 'sha-512'}}
+        hmacWithSHA1: 'SHA-1-HMAC',
+        hmacWithSHA256: {name: 'HMAC', hash: {name: 'SHA-256'}},
+        hmacWithSHA384: {name: 'HMAC', hash: {name: 'SHA-384'}},
+        hmacWithSHA512: {name: 'HMAC', hash: {name: 'SHA-512'}}
     };
 
     // Each algorithm must has id for convertions
@@ -715,7 +747,7 @@
      * Algorithm parameters
      * 
      * @field parameters
-     * @memberOf gostObject
+     * @memberOf GostSecurity
      */ // <editor-fold defaultstate="collapsed">
     var parameters = {
         'id-GostR3410-94-TestParamSet': {namedParam: 'S-TEST'},
@@ -760,7 +792,7 @@
         'id-Gost28147-89-None-KeyMeshing': {keyMeshing: 'NO'},
         'id-Gost28147-89-CryptoPro-KeyMeshing': {keyMeshing: 'CP'},
         // TC-26 encryption parameters
-        'id-tc26-gost-28147-param-Z': {sBox: 'E-Z'}
+        'id-tc26-gost-28147-param-Z': {block: 'CFB', sBox: 'E-Z'}
     };  // </editor-fold>
 
     /**
@@ -816,7 +848,7 @@
      *      </li>
      *  </ul>
      * @field attributes
-     * @memberOf gostObject
+     * @memberOf GostSecurity
      */ // <editor-fold defaultstate="collapsed">
     var attributes = {
         sBox: {
@@ -875,12 +907,8 @@
      *  
      *  Follow set can be used if it's supported your browser native WebCrypto API:
      *  <ul>
-     *      <li><b>RSA-1024</b> - RSA Encryption 1024 bits with SHA-1 algorithm set</li>
      *      <li><b>RSA-2048</b> - RSA Encryption 2048 bits with SHA-256 algorithm set</li>
-     *      <li><b>RSA-4096</b> - RSA Encryption 4096 bits with SHA-512 algorithm set</li>
      *      <li><b>ECDSA-256</b> - ECDSA-256 with SHA-256 algorithm set</li>
-     *      <li><b>ECDSA-384</b> - ECDSA-384 with SHA-384 algorithm set</li>
-     *      <li><b>ECDSA-521</b> - ECDSA-521 with SHA-512 algorithm set</li>
      *  </ul>
      *  
      *  Each provider records has follow standart algorithm identifiers:
@@ -898,12 +926,14 @@
      *  </ul>
      *  
      * @field providers
-     * @memberOf gostObject
+     * @memberOf GostSecurity
      */ // <editor-fold defaultstate="collapsed">
     var providers = {
         'CP-94': {
+            title: 'Crypto-Pro GOST R 34.10-94 Cryptographic Service Provider',
             signature: algorithms['id-GostR3411-94-with-GostR3410-94'],
-            generation: {id: 'id-GostR3410-94', name: 'GOST R 34.10-94', namedParam: 'X-A'},
+            publicKey: {id: 'id-GostR3410-94', name: 'GOST R 34.10-94', namedParam: 'X-A'},
+            privateKey: {id: 'id-GostR3410-94DH', name: 'GOST R 34.10-94-DH', namedParam: 'X-A'},
             digest: algorithms['id-GostR3411-94'],
             wrapping: {id: 'id-Gost28147-89-CryptoPro-KeyWrap', name: 'GOST 28147-89-CPKW', sBox: 'E-A'},
             hmac: algorithms['id-HMACGostR3411-94'],
@@ -912,123 +942,115 @@
             derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 2000}
         },
         'CP-01': {
+            title: 'Crypto-Pro GOST R 34.10-2001 Cryptographic Service Provider',
             signature: algorithms['id-GostR3411-94-with-GostR3410-2001'],
-            generation: {id: 'id-GostR3410-2001', name: 'GOST R 34.10-2001', namedCurve: 'X-256-A'},
+            publicKey: {id: 'id-GostR3410-2001', name: 'GOST R 34.10-2001', namedCurve: 'X-256-A'},
+            privateKey: {id: 'id-GostR3410-2001DH', name: 'GOST R 34.10-2001-DH', namedCurve: 'X-256-A'},
             digest: {id: 'id-GostR3411-94', name: 'GOST R 34.11-94', sBox: 'D-A'},
-            wrapping: {id: 'id-Gost28147-89-None-KeyWrap', name: 'GOST 28147-89-KW', sBox: 'E-A'},
-            transwrapping: {id: 'id-Gost28147-89-CryptoPro-KeyWrap', name: 'GOST 28147-89-CPKW', sBox: 'E-A'},
+            wrapping: {id: 'id-Gost28147-89-CryptoPro-KeyWrap', name: 'GOST 28147-89-CPKW', sBox: 'E-A'},
             hmac: algorithms['id-HMACGostR3411-94'],
             agreement: algorithms['id-GostR3410-2001-CryptoPro-ESDH'],
             encryption: {id: 'id-Gost28147-89', name: 'GOST 28147-89-CFB-CPKM', sBox: 'E-A'},
             derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 2000}
         },
         'TC-256': {
+            title: 'Crypto-Pro GOST R 34.10-2012 Cryptographic Service Provider',
             signature: algorithms['id-tc26-signwithdigest-gost3410-12-256'],
-            generation: {id: 'id-tc26-gost3410-12-256', name: 'GOST R 34.10-2012', namedCurve: 'X-256-A'},
+            publicKey: {id: 'id-tc26-gost3410-12-256', name: 'GOST R 34.10-256', namedCurve: 'T-256-A'},
+            privateKey: {id: 'id-tc26-agreement-gost-3410-12-256', name: 'GOST R 34.10-256-DH/GOST R 34.11-256', namedCurve: 'T-256-A'},
             digest: algorithms['id-tc26-gost3411-12-256'],
-            wrapping: {id: 'id-Gost28147-89-None-KeyWrap', name: 'GOST 28147-89-KW', sBox: 'E-A'},
-            transwrapping: {id: 'id-Gost28147-89-CryptoPro-KeyWrap', name: 'GOST 28147-89-CPKW', sBox: 'E-A'},
+            wrapping: {id: 'id-Gost28147-89-CryptoPro-KeyWrap', name: 'GOST 28147-89-CPKW', sBox: 'E-A'},
             hmac: algorithms['id-tc26-hmac-gost-3411-12-256'],
             agreement: algorithms['id-tc26-agreement-gost-3410-12-256'],
             encryption: {id: 'id-Gost28147-89', name: 'GOST 28147-89-CFB-CPKM', sBox: 'E-A'},
             derivation: {id: 'PBKDF2', name: 'GOST R 34.11-256-12-PBKDF2', iterations: 2000}
         },
         'TC-512': {
+            title: 'Crypto-Pro GOST R 34.10-2012 Strong Cryptographic Service Provider',
             signature: algorithms['id-tc26-signwithdigest-gost3410-12-512'],
-            generation: {id: 'id-tc26-gost3410-12-512', name: 'GOST R 34.10-2012-512', namedCurve: 'T-512-A'},
+            publicKey: {id: 'id-tc26-gost3410-12-512', name: 'GOST R 34.10-512', namedCurve: 'T-512-A'},
+            privateKey: {id: 'id-tc26-agreement-gost-3410-12-512', name: 'GOST R 34.10-512-DH/GOST R 34.11-256', namedCurve: 'T-512-A'},
             digest: algorithms['id-tc26-gost3411-12-512'],
-            wrapping: {id: 'id-Gost28147-89-None-KeyWrap', name: 'GOST 28147-89-KW', sBox: 'E-A'},
-            transwrapping: {id: 'id-Gost28147-89-CryptoPro-KeyWrap', name: 'GOST 28147-89-CPKW', sBox: 'E-A'},
+            wrapping: {id: 'id-Gost28147-89-CryptoPro-KeyWrap', name: 'GOST 28147-89-CPKW', sBox: 'E-A'},
             hmac: algorithms['id-tc26-hmac-gost-3411-12-512'],
             agreement: algorithms['id-tc26-agreement-gost-3410-12-512'],
             encryption: {id: 'id-Gost28147-89', name: 'GOST 28147-89-CFB-CPKM', sBox: 'E-A'},
-            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-512-PBKDF2', iterations: 2000}
+            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-256-PBKDF2', iterations: 2000}
         },
         'SC-94': {
+            title: 'Signal-COM GOST Cryptographic Provider',
             signature: algorithms['id-sc-gostR3411-94-with-gostR3410-94'],
-            generation: {id: 'id-sc-gostR3410-94', name: 'GOST R 34.10-94', namedParam: 'S-A'},
+            publicKey: {id: 'id-sc-gostR3410-94', name: 'GOST R 34.10-94/SC', namedParam: 'S-A'},
+            privateKey: {id: 'id-sc-gostR3410-94', name: 'GOST R 34.10-94/SC', modulusLength: 1024, param: {
+                p: '0xB4E25EFB018E3C8B87505E2A67553C5EDC56C2914B7E4F89D23F03F03377E70A2903489DD60E78418D3D851EDB5317C4871E40B04228C3B7902963C4B7D85D52B9AA88F2AFDBEB28DA8869D6DF846A1D98924E925561BD69300B9DDD05D247B5922D967CBB02671881C57D10E5EF72D3E6DAD4223DC82AA1F7D0294651A480DF',
+                q: '0x972432A437178B30BD96195B773789AB2FFF15594B176DD175B63256EE5AF2CF',
+                a: '0x8FD36731237654BBE41F5F1F8453E71CA414FFC22C25D915309E5D2E62A2A26C7111F3FC79568DAFA028042FE1A52A0489805C0DE9A1A469C844C7CABBEE625C3078888C1D85EEA883F1AD5BC4E6776E8E1A0750912DF64F79956499F1E182475B0B60E2632ADCD8CF94E9C54FD1F3B109D81F00BF2AB8CB862ADF7D40B9369A'}},
             digest: algorithms['id-sc-gostR3411-94'],
-            encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-89-CFB/SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])},  
+            encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-89-CFB/SC'},
             hmac: algorithms['id-sc-hmacWithGostR3411'],
             wrapping: ['id-sc-cmsGostWrap'],
             agreement: algorithms['id-sc-r3410-ESDH-r3411kdf'],
-            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 2048},
-            pbes: {id: 'id-sc-pbeWithGost3411AndGost28147CFB', 
-                derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048}, 
+            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048},
+            pbes: {id: 'id-sc-pbeWithGost3411AndGost28147CFB',
+                derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048},
                 encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-CFB/SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])}}
         },
         'SC-01': {
+            title: 'Signal-COM ECGOST Cryptographic Provider',
             signature: algorithms['id-sc-gostR3411-94-with-gostR3410-2001'],
-            generation: {id: 'id-sc-gostR3410-2001', name: 'GOST R 34.10-2001/SC', namedCurve: 'P-256'},
+            publicKey: {id: 'id-sc-gostR3410-2001', name: 'GOST R 34.10-2001/SC', namedCurve: 'P-256'},
+            privateKey: {id: 'id-sc-gostR3410-2001', name: 'GOST R 34.10-2001/SC', curve: {
+                p: '0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF',
+                a: '0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC',
+                b: '0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B',
+                x: '0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296',
+                y: '0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5',
+                q: '0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551'}},
             digest: algorithms['id-sc-gostR3411-94'],
-            encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-89-CFB/SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])},  
+            encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-89-CFB/SC'},
             hmac: algorithms['id-sc-hmacWithGostR3411'],
             wrapping: algorithms['id-sc-cmsGostWrap'],
             agreement: algorithms['id-sc-r3410-ESDH-r3411kdf'],
             derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048},
-            pbes: {id: 'id-sc-pbeWithGost3411AndGost28147CFB', 
-                derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048}, 
+            pbes: {id: 'id-sc-pbeWithGost3411AndGost28147CFB',
+                derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048},
                 encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-CFB/SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])}}
         },
-        'RSA-1024': {
-            signature: algorithms['sha1withRSAEncryption'],
-            generation: {id: 'rsaEncryption', name: 'RSASSA-PKCS1-v1_5', modulusLength: 1024, publicExponent: new Uint8Array([0x01, 0x00, 0x01])},
-            digest: algorithms['sha1'],
-            encryption: algorithms['aes128-CFB'],
-            hmac: algorithms['hmacWithSHA1']
-        },
         'RSA-2048': {
+            title: 'Microsoft Strong Cryptographic Provider',
             signature: algorithms['sha256withRSAEncryption'],
-            generation: {id: 'rsaEncryption', name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([0x01, 0x00, 0x01])},
+            publicKey: {id: 'rsaEncryption', name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048,
+                publicExponent: new Uint8Array([0x01, 0x00, 0x01]), hash: algorithms['sha256']},
+            privateKey: {id: 'rsaEncryption', name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048,
+                publicExponent: new Uint8Array([0x01, 0x00, 0x01]), hash: algorithms['sha256']},
             digest: algorithms['sha256'],
             encryption: algorithms['aes256-CFB'],
             hmac: algorithms['hmacWithSHA256']
         },
-        'RSA-4096': {
-            signature: algorithms['sha512withRSAEncryption'],
-            generation: {id: 'rsaEncryption', name: 'RSASSA-PKCS1-v1_5', modulusLength: 4096, publicExponent: new Uint8Array([0x01, 0x00, 0x01])},
-            digest: algorithms['sha512'],
-            encryption: algorithms['aes256-CFB'],
-            hmac: algorithms['hmacWithSHA512']
-        },
         'ECDSA-256': {
+            title: 'Microsoft Base DSS and Diffie-Hellman Cryptographic Provider',
             signature: algorithms['ecdsa-with-SHA256'],
-            generation: {id: 'ecdsa', name: 'ECDSA', namedCurve: 'P-256'},
+            publicKey: {id: 'ecdsa', name: 'ECDSA', namedCurve: 'P-256'},
+            privateKey: {id: 'ecdsa', name: 'ECDSA', namedCurve: 'P-256'},
             digest: algorithms['sha256'],
             encryption: algorithms['aes256-CFB'],
             hmac: algorithms['hmacWithSHA256'],
             agreement: algorithms['ecDH']
-        },
-        'ECDSA-384': {
-            signature: algorithms['ecdsa-with-SHA384'],
-            generation: {id: 'ecdsa', name: 'ECDSA', namedCurve: 'P-384'},
-            digest: algorithms['sha384'],
-            encryption: algorithms['aes256-CFB'],
-            hmac: algorithms['hmacWithSHA384'],
-            agreement: algorithms['ecDH']
-        },
-        'ECDSA-521': {
-            signature: algorithms['ecdsa-with-SHA512'],
-            generation: {id: 'ecdsa', name: 'ECDSA', namedCurve: 'P-521'},
-            digest: algorithms['sha512'],
-            encryption: algorithms['aes256-CFB'],
-            hmac: algorithms['hmacWithSHA512'],
-            agreement: algorithms['ecDH']
         }
     };
     // Russian providers extension
-    ['CP-94', 'CP-01', 'TC-256', 'TC-512', 'SC-94', 'SC-01'].forEach(function(name) {
+    ['CP-94', 'CP-01', 'TC-256', 'TC-512', 'SC-94', 'SC-01'].forEach(function (name) {
         var provider = providers[name];
-        provider.hmac.hash = provider.digest;
-        provider.derivation.hash = provider.digest;
-        provider.derivation.hmac = provider.hmac;
+        provider.hmac = expand(provider.hmac, {hash: provider.digest});
+        provider.derivation = expand(provider.derivation, {hash: provider.digest, hmac: provider.hmac});
         provider.pbes = provider.pbes || {id: 'PBES2', derivation: provider.derivation,
             encryption: provider.encryption};
         provider.pbmac = provider.pbmac || {id: 'PBMAC1', derivation: provider.derivation,
             hmac: provider.hmac};
+        provider.agreement = expand(provider.agreement, {wrapping: provider.wrapping});
     });
     // RSA & ECDA providers extension
-    ['RSA-1024', 'RSA-2048', 'RSA-4096', 'ECDSA-256', 'ECDSA-384', 'ECDSA-521'].forEach(function(name) {
+    ['RSA-2048', 'ECDSA-256'].forEach(function (name) {
         var provider = providers[name];
         provider.derivation = provider.derivation || {id: 'PBKDF2', name: 'PBKDF2',
             iterations: 2048, hash: provider.digest};
@@ -1042,21 +1064,23 @@
         };
     });
     // Workaround for Chrome error for RSA algorithm when hash for keys is not defined
-    if (root.crypto && root.crypto.subtle)
-        setTimeout(function() {
-            root.crypto.subtle.generateKey(providers['RSA-2048'].generation)['catch'](function() {
-                providers['RSA-1024'].generation.hash = providers['RSA-1024'].digest;
-                providers['RSA-2048'].generation.hash = providers['RSA-2048'].digest;
-                providers['RSA-4096'].generation.hash = providers['RSA-4096'].digest;
-                algorithms['rsaEncryption'].hash = providers['RSA-2048'].digest;
-            });
-        }); // </editor-fold>
+    // if (root.crypto && root.crypto.subtle)
+    //    setTimeout(function () {
+    //        root.crypto.subtle.generateKey(providers['RSA-2048'].generation, false, ["sign"])['catch'](function () {
+    //            providers['RSA-2048'].generation.hash = providers['RSA-2048'].digest;
+    //            algorithms['rsaEncryption'].hash = providers['RSA-2048'].digest;
+    //        });
+    //    }); 
+    // </editor-fold>
 
     /**
      * GOST and common ASN.1 Object and Algorithm Identifiers
-     * @namespace gostObject
+     * @class GostSecurity
      */
-    return {
+    function GostSecurity() {
+    }
+
+    GostSecurity.prototype = {
         names: names,
         identifiers: identifiers,
         algorithms: algorithms,
@@ -1065,4 +1089,13 @@
         providers: providers
     };
 
+    /**
+     * GOST and common ASN.1 Object and Algorithm Identifiers  
+     * 
+     * @memberOf gostCrypto
+     * @type GostSecurity
+     */
+    gostCrypto.security = new GostSecurity();
+
+    return GostSecurity();
 }));

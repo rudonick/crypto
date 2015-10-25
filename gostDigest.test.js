@@ -32,24 +32,24 @@
  * 
  */
 
-(function(root, factory) {
+(function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['gostCoding', 'gostR3411'], factory);
+        define(['gostCoding', 'gostDigest'], factory);
     } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostCoding'), require('gostR3411'));
+        module.exports = factory(require('gostCoding'), require('gostDigest'));
     } else {
         if (typeof importScripts !== 'undefined') {
             if (!root.onmessage)
-                root.onmessage = function(event) {
+                root.onmessage = function (event) {
                     postMessage((root[event.data.object] || root)[event.data.method].apply(event.data.object || root, event.data.args));
                 };
-            importScripts('gostCoding.js', 'gostR3411.js');
+            importScripts('gostCoding.js', 'gostDigest.js');
         }
-        root.GostR3411_test = factory(root.gostCoding, root.GostR3411);
+        root.GostDigest_test = factory(root.GostCoding, root.GostDigest);
     }
-}(this, function(gostCoding, GostR3411) {
+}(this, function (GostCoding, GostDigest) {
 
-    var root = this;
+    var root = this, gostCoding;
 
     /* ========== Tests ========== */
 
@@ -91,16 +91,17 @@
         return test;
     }
 
-    return function(performance) {
+    return function (performance) {
 
-        gostCoding = gostCoding || root.gostCoding;
-        GostR3411 = GostR3411 || root.GostR3411;
+        GostCoding = GostCoding || root.GostCoding;
+        gostCoding = new GostCoding();
+        GostDigest = GostDigest || root.GostDigest;
 
         // GOST R 34.11-94 tests
         var tests = 0, i = 0;
         println('GOST R 34.11-94 TEST', true);
 
-        var cipher = new GostR3411({name: 'GOST R 34.11', version: 1994});
+        var cipher = new GostDigest({name: 'GOST R 34.11', version: 1994});
 
         tests += perform(cipher, ++i,
                 gostCoding.Chars.decode(''),
@@ -116,7 +117,7 @@
                 '73b70a39497de53a6e08c67b6d4db853540f03e9389299d9b0156ef7e85d0f61');
         println();
 
-        cipher = new GostR3411({name: 'GOST R 34.11', version: 1994, sBox: 'D-TEST'});
+        cipher = new GostDigest({name: 'GOST R 34.11', version: 1994, sBox: 'D-TEST'});
 
         tests += perform(cipher, ++i,
                 gostCoding.Chars.decode(''),
@@ -133,15 +134,15 @@
         println();
 
         println('PBKDF2 tests');
-        cipher = new GostR3411({name: 'GOST R 34.11', version: 1994, mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 1});
+        cipher = new GostDigest({name: 'GOST R 34.11', version: 1994, mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 1});
         tests += perform(cipher, ++i,
                 gostCoding.Chars.decode('password'),
                 '7314e7c04fb2e662c543674253f68bd0b73445d07f241bed872882da21662d58', 'deriveKey');
-        cipher = new GostR3411({name: 'GOST R 34.11', version: 1994, mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 2});
+        cipher = new GostDigest({name: 'GOST R 34.11', version: 1994, mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 2});
         tests += perform(cipher, ++i,
                 gostCoding.Chars.decode('password'),
                 '990dfa2bd965639ba48b07b792775df79f2db34fef25f274378872fed7ed1bb3', 'deriveKey');
-        cipher = new GostR3411({name: 'GOST R 34.11', version: 1994, mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 1000});
+        cipher = new GostDigest({name: 'GOST R 34.11', version: 1994, mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 1000});
         tests += perform(cipher, ++i,
                 gostCoding.Chars.decode('password'),
                 '2b6e0a5cc2103274dd3353fb86e4983c6451f8025a51cd9ddfd33361c6cb572b', 'deriveKey');
@@ -150,17 +151,17 @@
         if (performance) {
 
             println('PBKDF2 4096 iterations tests');
-            cipher = new GostR3411({name: 'GOST R 34.11', version: 1994, mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 4096});
+            cipher = new GostDigest({name: 'GOST R 34.11', version: 1994, mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 4096});
             tests += perform(cipher, ++i,
                     gostCoding.Chars.decode('password'),
                     '1f1829a94bdff5be10d0aeb36af498e7a97467f3b31116a5a7c1afff9deadafe', 'deriveKey');
 
-            cipher = new GostR3411({name: 'GOST R 34.11', version: 1994, mode: 'PBKDF2', salt: gostCoding.Chars.decode('saltSALTsaltSALTsaltSALTsaltSALTsalt'), iterations: 4096});
+            cipher = new GostDigest({name: 'GOST R 34.11', version: 1994, mode: 'PBKDF2', salt: gostCoding.Chars.decode('saltSALTsaltSALTsaltSALTsaltSALTsalt'), iterations: 4096});
             tests += perform(cipher, ++i,
                     gostCoding.Chars.decode('passwordPASSWORDpassword'),
                     '788358c69cb2dbe251a7bb17d5f4241f265a792a35becde8d56f326b49c85047b7638acb4764b1fd', 'deriveBits', 320);
 
-            cipher = new GostR3411({name: 'GOST R 34.11', version: 1994, mode: 'PBKDF2', salt: gostCoding.Chars.decode('sa\0lt'), iterations: 4096});
+            cipher = new GostDigest({name: 'GOST R 34.11', version: 1994, mode: 'PBKDF2', salt: gostCoding.Chars.decode('sa\0lt'), iterations: 4096});
             tests += perform(cipher, ++i,
                     gostCoding.Chars.decode('pass\0word'),
                     '43e06c5590b08c0225242373127edf9c8e9c3291', 'deriveBits', 160);
@@ -168,7 +169,7 @@
             println();
 
 
-            cipher = new GostR3411({name: 'GOST R 34.11', version: 1994});
+            cipher = new GostDigest({name: 'GOST R 34.11', version: 1994});
             println('Million "a" TEST');
             var million_a = new Array(1000001).join('a');
             tests += perform(cipher, ++i,
@@ -184,7 +185,7 @@
         i = 0;
         println('GOST R 34.11-2012 TEST', true);
 
-        cipher = new GostR3411();
+        cipher = new GostDigest();
         tests2 += perform(cipher, ++i,
                 gostCoding.Chars.decode('012345678901234567890123456789012345678901234567890123456789012'),
                 '9d151eefd8590b89daa6ba6cb74af9275dd051026bb149a452fd84e5e57b5500');
@@ -199,13 +200,13 @@
                 'df1fda9ce83191390537358031db2ecaa6aa54cd0eda241dc107105e13636b95');
         println();
 
-        cipher = new GostR3411({name: 'GOST R 34.11', mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 1000});
+        cipher = new GostDigest({name: 'GOST R 34.11', mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 1000});
         tests += perform(cipher, ++i,
                 gostCoding.Chars.decode('password'),
                 'c5f66589be62e183038e5dee22ea3d7a32afb314abd9970dc8f66858d1a924f4', 'deriveKey');
         println();
-        
-        cipher = new GostR3411({name: 'GOST R 34.11', length: 512});
+
+        cipher = new GostDigest({name: 'GOST R 34.11', length: 512});
 
         tests2 += perform(cipher, ++i, gostCoding.Chars.decode('012345678901234567890123456789012345678901234567890123456789012'),
                 '1b54d01a4af5b9d5cc3d86d68d285462b19abc2475222f35c085122be4ba1ffa00ad30f8767b3a82384c6574f024c311e2a481332b08ef7f41797891c1646f48');
@@ -222,29 +223,29 @@
         if (performance) {
 
             println('PBKDF2 4096 iterations tests');
-            cipher = new GostR3411({name: 'GOST R 34.11', mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 4096});
+            cipher = new GostDigest({name: 'GOST R 34.11', mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 4096});
             tests += perform(cipher, ++i,
                     gostCoding.Chars.decode('password'),
                     'd744dc35ddfe10c7679af205ceb6492fb3680f861db598ee8110b30e3a0f3cb4', 'deriveKey');
 
-            cipher = new GostR3411({name: 'GOST R 34.11', mode: 'PBKDF2', salt: gostCoding.Chars.decode('saltSALTsaltSALTsaltSALTsaltSALTsalt'), iterations: 4096});
+            cipher = new GostDigest({name: 'GOST R 34.11', mode: 'PBKDF2', salt: gostCoding.Chars.decode('saltSALTsaltSALTsaltSALTsaltSALTsalt'), iterations: 4096});
             tests += perform(cipher, ++i,
                     gostCoding.Chars.decode('passwordPASSWORDpassword'),
                     '8452d34400e6404864f12206a2ac3f932fe7fe55026b1dd8f21a645cf340cbf0cca377e603024e82', 'deriveBits', 320);
 
-            cipher = new GostR3411({name: 'GOST R 34.11', mode: 'PBKDF2', salt: gostCoding.Chars.decode('sa\0lt'), iterations: 4096});
+            cipher = new GostDigest({name: 'GOST R 34.11', mode: 'PBKDF2', salt: gostCoding.Chars.decode('sa\0lt'), iterations: 4096});
             tests += perform(cipher, ++i,
                     gostCoding.Chars.decode('pass\0word'),
                     '5023f9b3cc41e5aa491ea3e9eb65b6c01ffbeb63', 'deriveBits', 160);
 
             println();
 
-            cipher = new GostR3411();
+            cipher = new GostDigest();
             println('Million "a" TEST');
             var million_a = gostCoding.Chars.decode(new Array(1000001).join('a'));
             tests += perform(cipher, ++i, million_a,
                     '841af1a0b2f92a800fb1b7e4aabc8e48763153c448a0fc57c90ba830e130f152');
-            cipher = new GostR3411({name: 'GOST R 34.11', length: '512'});
+            cipher = new GostDigest({name: 'GOST R 34.11', length: '512'});
             tests += perform(cipher, ++i, million_a,
                     'd396a40b126b1f324465bfa7aa159859ab33fac02dcdd4515ad231206396a266d0102367e4c544ef47d2294064e1a25342d0cd25ae3d904b45abb1425ae41095');
             println();
@@ -252,6 +253,81 @@
 
         println('TOTAL ' + (tests2 ? tests2 + ' ERRORS' : 'OK'));
         println();
+
+        // SHA-1 tests
+        var tests3 = 0;
+        i = 0;
+        println('SHA-1 TEST', true);
+
+        var cipher = new GostDigest({name: 'SHA', version: 1});
+        tests3 += perform(cipher, ++i,
+                gostCoding.Chars.decode('abc'),
+                'a9993e364706816aba3e25717850C26c9cd0d89d');
+        tests3 += perform(cipher, ++i,
+                gostCoding.Chars.decode('abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq'),
+                '84983e441c3bd26ebaae4aa1f95129e5e54670f1');
+
+        tests3 += perform(cipher, ++i,
+                gostCoding.Chars.decode(new Array(11).join('0123456701234567012345670123456701234567012345670123456701234567')),
+                'dea356a2cddd90c7a7ecedc5ebb563934f460452');
+
+        println();
+
+        println('PBKDF2 tests');
+        cipher = new GostDigest({name: 'SHA', version: 1, mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 1});
+        tests3 += perform(cipher, ++i,
+                gostCoding.Chars.decode('password'),
+                '0c60c80f961f0e71f3a9b524af6012062fe037a6', 'deriveKey');
+        cipher = new GostDigest({name: 'SHA', version: 1, mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 2});
+        tests3 += perform(cipher, ++i,
+                gostCoding.Chars.decode('password'),
+                'ea6c014dc72d6f8ccd1ed92ace1d41f0d8de8957', 'deriveKey');
+        cipher = new GostDigest({name: 'SHA', version: 1, mode: 'PFXKDF', salt: gostCoding.Hex.decode('0A58CF64530D823F'), iterations: 1});
+        tests3 += perform(cipher, ++i,
+                gostCoding.Hex.decode('0073006D006500670000'),
+                '8aaae6297b6cb04642ab5b077851284eb7128f1a2a7fbca3', 'deriveBits', 192);
+        cipher = new GostDigest({name: 'SHA', version: 1, mode: 'PFXKDF', salt: gostCoding.Hex.decode('0A58CF64530D823F'), iterations: 1, diversifier: 2});
+        tests3 += perform(cipher, ++i,
+                gostCoding.Hex.decode('0073006D006500670000'),
+                '79993dfe048d3b76', 'deriveBits', 64);
+        cipher = new GostDigest({name: 'SHA', version: 1, mode: 'PFXKDF', salt: gostCoding.Hex.decode('3D83C0E4546AC140'), iterations: 1, diversifier: 3});
+        tests3 += perform(cipher, ++i,
+                gostCoding.Hex.decode('0073006D006500670000'),
+                '8D967D88F6CAA9D714800AB3D48051D63F73A312', 'deriveBits', 160);
+        cipher = new GostDigest({name: 'SHA', version: 1, mode: 'PFXKDF', salt: gostCoding.Hex.decode('05DEC959ACFF72F7'), iterations: 1000, diversifier: 1});
+        tests3 += perform(cipher, ++i,
+                gostCoding.Hex.decode('007100750065006500670000'),
+                'ED2034E36328830FF09DF1E1A07DD357185DAC0D4F9EB3D4', 'deriveBits', 192);
+        println();
+
+        if (performance) {
+            println('PBKDF2 4096 iterations tests');
+            cipher = new GostDigest({name: 'SHA', version: 1, mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 4096});
+            tests3 += perform(cipher, ++i,
+                    gostCoding.Chars.decode('password'),
+                    '4b007901b765489abead49d926f721d065a429c1', 'deriveKey');
+            cipher = new GostDigest({name: 'SHA', version: 1, mode: 'PBKDF2', salt: gostCoding.Chars.decode('saltSALTsaltSALTsaltSALTsaltSALTsalt'), iterations: 4096});
+            tests3 += perform(cipher, ++i,
+                    gostCoding.Chars.decode('passwordPASSWORDpassword'),
+                    '3d2eec4fe41c849b80c8d83662c0e44a8b291a964cf2f07038', 'deriveBits', 200);
+            cipher = new GostDigest({name: 'SHA', version: 1, mode: 'PBKDF2', salt: gostCoding.Chars.decode('sa\0lt'), iterations: 4096});
+            tests3 += perform(cipher, ++i,
+                    gostCoding.Chars.decode('pass\0word'),
+                    '56fa6aa75548099dcc37d7f03425e0c3', 'deriveBits', 128);
+            println();
+
+            println('Million "a" TEST');
+            var million_a = new Array(1000001).join('a');
+            tests3 += perform(cipher, ++i,
+                    gostCoding.Chars.decode(million_a),
+                    '34aa973cd4c4daa4f61eeb2bdbad27316534016f');
+            println();
+        }
+        
+        println('TOTAL ' + (tests3 ? tests3 + ' ERRORS' : 'OK'));
+        println();
+
+
 
         return tests + tests2;
     };

@@ -1,6 +1,6 @@
 /**
- * @file Coding algorithms: Base64, Hex, Chars, BER, PEM
- * @version 0.99
+ * @file Coding algorithms: Base64, Hex, Int16, Chars, BER and PEM
+ * @version 1.70
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -30,56 +30,61 @@
  * 
  */
 
-(function(root, factory) {
+(function (root, factory) {
 
     /*
      * Module imports and exports
      * 
      */ // <editor-fold defaultstate="collapsed">
     if (typeof define === 'function' && define.amd) {
-        define(factory);
+        define(['gostCrypto'], factory);
     } else if (typeof exports === 'object') {
-        module.exports = factory();
+        module.exports = factory(require('gostCrypto'));
     } else {
-        root.gostCoding = factory();
+        root.GostCoding = factory(root.gostCrypto);
     }
     // </editor-fold>
 
-}(this, function() {
+}(this, function (gostCrypto) {
 
     /**
-     * The Coding interface provides string converting methods.
-     * @namespace gostCoding
+     * The Coding interface provides string converting methods: Base64, Hex, 
+     * Int16, Chars, BER and PEM
+     * @class GostCoding
      * 
      */ // <editor-fold defaultstate="collapsed">
     var root = this;
+    var DataError = root.DataError || root.Error;
+    var CryptoOperationData = root.ArrayBuffer;
+    var Date = root.Date;
 
     function buffer(d) {
-        if (d instanceof ArrayBuffer)
+        if (d instanceof CryptoOperationData)
             return d;
-        else if (d && d.buffer && d.buffer instanceof ArrayBuffer)
+        else if (d && d.buffer && d.buffer instanceof CryptoOperationData)
             return d.byteOffset === 0 && d.byteLength === d.buffer.byteLength ?
                     d.buffer : new Uint8Array(new Uint8Array(d, d.byteOffset, d.byteLength)).buffer;
         else
-            throw new (root.DataError || Error)('ArrayBuffer or TypedArray required');
+            throw new DataError('CryptoOperationData required');
     } // </editor-fold>
 
-    var gostCoding = {};
+    function GostCoding() {
+    }
 
     /**
      * BASE64 conversion
      * 
-     * @class gostCoding.Base64
+     * @class GostCoding.Base64
      */
-    gostCoding.Base64 = {// <editor-fold defaultstate="collapsed">
+    var Base64 = {// <editor-fold defaultstate="collapsed">
         /**
-         * Base64.decode convert BASE64 string s to ArrayBuffer
+         * Base64.decode convert BASE64 string s to CryptoOperationData
          * 
-         * @memberOf gostCoding.Base64
+         * @memberOf GostCoding.Base64
          * @param {String} s BASE64 encoded string value
-         * @returns {ArrayBuffer} Binary decoded data
+         * @returns {CryptoOperationData} Binary decoded data
          */
-        decode: function(s) {
+        decode: function (s) {
             s = s.replace(/[^A-Za-z0-9\+\/]/g, '');
             var n = s.length,
                     k = n * 3 + 1 >> 2, r = new Uint8Array(k);
@@ -107,13 +112,13 @@
             return r.buffer;
         },
         /**
-         * Base64.encode(data) convert ArrayBuffer data to BASE64 string
+         * Base64.encode(data) convert CryptoOperationData data to BASE64 string
          * 
-         * @memberOf gostCoding.Base64
-         * @param {(ArrayBuffer|TypedArray)} data Bynary data for encoding
+         * @memberOf GostCoding.Base64
+         * @param {CryptoOperationData} data Bynary data for encoding
          * @returns {String} BASE64 encoded data
          */
-        encode: function(data) {
+        encode: function (data) {
             var slen = 8, d = new Uint8Array(buffer(data));
             var m3 = 2, s = '';
             for (var n = d.length, u24 = 0, i = 0; i < n; i++) {
@@ -136,13 +141,21 @@
     };
 
     /**
-     * Text string conversion
+     * BASE64 conversion
      * 
+     * @memberOf GostCoding
+     * @insnance
+     * @type GostCoding.Base64
+     */
+    GostCoding.prototype.Base64 = Base64;
+
+    /**
+     * Text string conversion <br>
      * Methods support charsets: ascii, win1251, utf8, utf16 (ucs2, unicode), utf32 (ucs4)
      * 
-     * @class gostCoding.Chars
+     * @class GostCoding.Chars
      */
-    gostCoding.Chars = (function() { // <editor-fold defaultstate="collapsed">
+    var Chars = (function () { // <editor-fold defaultstate="collapsed">
 
         var _win1251_ = {
             0x402: 0x80, 0x403: 0x81, 0x201A: 0x82, 0x453: 0x83, 0x201E: 0x84, 0x2026: 0x85, 0x2020: 0x86, 0x2021: 0x87,
@@ -162,14 +175,14 @@
 
         return {
             /**
-             * Chars.decode(s, charset) convert string s with defined charset to ArrayBuffer 
+             * Chars.decode(s, charset) convert string s with defined charset to CryptoOperationData 
              * 
-             * @memberOf gostCoding.Chars
+             * @memberOf GostCoding.Chars
              * @param {string} s Javascript string
              * @param {string} charset Charset, default 'win1251'
-             * @returns {ArrayBuffer} Decoded binary data
+             * @returns {CryptoOperationData} Decoded binary data
              */
-            decode: function(s, charset) {
+            decode: function (s, charset) {
                 charset = (charset || 'win1251').toLowerCase().replace('-', '');
                 var r = [];
                 for (var i = 0, j = s.length; i < j; i++) {
@@ -235,14 +248,14 @@
                 return new Uint8Array(r).buffer;
             },
             /**
-             * Chars.encode(data, charset) convert ArrayBuffer data to string with defined charset
+             * Chars.encode(data, charset) convert CryptoOperationData data to string with defined charset
              * 
-             * @memberOf gostCoding.Chars
-             * @param {(ArrayBuffer|TypedArray)} data Binary data
+             * @memberOf GostCoding.Chars
+             * @param {CryptoOperationData} data Binary data
              * @param {string} charset Charset, default win1251
              * @returns {string} Encoded javascript string
              */
-            encode: function(data, charset) {
+            encode: function (data, charset) {
                 charset = (charset || 'win1251').toLowerCase().replace('-', '');
                 var r = [], d = new Uint8Array(buffer(data));
                 for (var i = 0, n = d.length; i < n; i++) {
@@ -288,20 +301,29 @@
     })();
 
     /**
+     * Text string conversion
+     * 
+     * @memberOf GostCoding
+     * @insnance
+     * @type GostCoding.Chars
+     */
+    GostCoding.prototype.Chars = Chars;
+
+    /**
      * HEX conversion
      * 
-     * @class gostCoding.Hex
+     * @class GostCoding.Hex
      */
-    gostCoding.Hex = {// <editor-fold defaultstate="collapsed">
+    var Hex = {// <editor-fold defaultstate="collapsed">
         /**
-         * Hex.decode(s, endean) convert HEX string s to ArrayBuffer in endean mode
+         * Hex.decode(s, endean) convert HEX string s to CryptoOperationData in endean mode
          * 
-         * @memberOf gostCoding.Hex
+         * @memberOf GostCoding.Hex
          * @param {string} s Hex encoded string
          * @param {boolean} endean Little or Big Endean, default Little
-         * @returns {ArrayBuffer} Decoded binary data
+         * @returns {CryptoOperationData} Decoded binary data
          */
-        decode: function(s, endean) {
+        decode: function (s, endean) {
             s = s.replace(/[^A-fa-f0-9]/g, '');
             var n = Math.ceil(s.length / 2), r = new Uint8Array(n);
             s = (s.length % 2 > 0 ? '0' : '') + s;
@@ -315,14 +337,14 @@
             return r.buffer;
         },
         /**
-         * Hex.encode(data, endean) convert ArrayBuffer data to HEX string in endean mode
+         * Hex.encode(data, endean) convert CryptoOperationData data to HEX string in endean mode
          * 
-         * @memberOf gostCoding.Hex 
-         * @param {(ArrayBuffer|TypedArray)} data Binary data
+         * @memberOf GostCoding.Hex 
+         * @param {CryptoOperationData} data Binary data
          * @param {boolean} endean Little/Big Endean, default Little
          * @returns {string} Hex decoded string
          */
-        encode: function(data, endean) {
+        encode: function (data, endean) {
             var s = [], d = new Uint8Array(buffer(data)), n = d.length;
             if (endean && ((typeof endean !== 'string') ||
                     (endean.toLowerCase().indexOf('little') < 0)))
@@ -340,19 +362,27 @@
     };
 
     /**
+     *  HEX conversion
+     * @memberOf GostCoding
+     * @insnance
+     * @type GostCoding.Hex
+     */
+    GostCoding.prototype.Hex = Hex;
+
+    /**
      * String hex-encoded integer conversion
      * 
-     * @class gostCoding.Int16
+     * @class GostCoding.Int16
      */
-    gostCoding.Int16 = {// <editor-fold defaultstate="collapsed">
+    var Int16 = {// <editor-fold defaultstate="collapsed">
         /**
-         * Int16.decode(s) convert hex big insteger s to ArrayBuffer
+         * Int16.decode(s) convert hex big insteger s to CryptoOperationData
          * 
-         * @memberOf gostCoding.Int16 
+         * @memberOf GostCoding.Int16 
          * @param {string} s Int16 string 
-         * @returns {ArrayBuffer} Decoded binary data
+         * @returns {CryptoOperationData} Decoded binary data
          */
-        decode: function(s) {
+        decode: function (s) {
             s = (s || '').replace(/[^\-A-fa-f0-9]/g, '');
             if (s.length === 0)
                 s = '0';
@@ -385,13 +415,13 @@
             return r.buffer;
         },
         /**
-         * Int16.encode(data) convert ArrayBuffer data to big integer hex string
+         * Int16.encode(data) convert CryptoOperationData data to big integer hex string
          * 
-         * @memberOf gostCoding.Int16
-         * @param {(ArrayBuffer|TypedArray)} data Binary data
+         * @memberOf GostCoding.Int16
+         * @param {CryptoOperationData} data Binary data
          * @returns {string} Int16 encoded string
          */
-        encode: function(data) {
+        encode: function (data) {
             var d = new Uint8Array(buffer(data)), n = d.length;
             if (d.length === 0)
                 return '0x00';
@@ -412,11 +442,19 @@
     };
 
     /**
+     * String hex-encoded integer conversion
+     * @memberOf GostCoding
+     * @insnance
+     * @type GostCoding.Int16
+     */
+    GostCoding.prototype.Int16 = Int16;
+
+    /**
      * BER, DER, CER conversion
      * 
-     * @class gostCoding.BER
+     * @class GostCoding.BER
      */
-    gostCoding.BER = (function() { // <editor-fold defaultstate="collapsed">
+    var BER = (function () { // <editor-fold defaultstate="collapsed">
 
         var BERtypes = {
             0x00: 'EOC',
@@ -449,71 +487,58 @@
         };
 
         // Predefenition block
-        function encodeBER(s, format) {
+        function encodeBER(source, format) {
             // Correct primitive type
-            if (typeof s === 'undefined' || s === null)
-                s = new String('');
-            else if (typeof s === 'string')
-                s = new String(s);
-            else if (typeof s === 'number')
-                s = new Number(s);
-            else if (typeof s === 'boolean')
-                s = new Boolean(s);
+            var object = source.object;
+            if (object === undefined)
+                object = source;
 
             // Determinate tagClass
-            var tagClass = s.tagClass = s.tagClass || 0; // Universial default
+            var tagClass = source.tagClass = source.tagClass || 0; // Universial default
 
             // Determinate tagNumber. Use only for Universal class
-            var tagNumber;
-            if (tagClass === 0)
-                tagNumber = s.tagNumber;
-            if (typeof tagNumber === 'undefined') {
-
-                if (s instanceof String) {
-                    if (tagClass === 0) { // Universal class
-                        if (s.toString() === '')   // NULL
+            if (tagClass === 0) {
+                var tagNumber = source.tagNumber;
+                if (typeof tagNumber === 'undefined') {
+                    if (typeof object === 'string') {
+                        if (object === '')   // NULL
                             tagNumber = 0x05;
-                        else if (/^\-?0x[0-9a-fA-F]+$/.test(s)) // INTEGER
+                        else if (/^\-?0x[0-9a-fA-F]+$/.test(object)) // INTEGER
                             tagNumber = 0x02;
-                        else if (/^(\d+\.)+\d+$/.test(s)) // OID
+                        else if (/^(\d+\.)+\d+$/.test(object)) // OID
                             tagNumber = 0x06;
-                        else if (/^[01]+$/.test(s)) // BIT STRING
+                        else if (/^[01]+$/.test(object)) // BIT STRING
                             tagNumber = 0x03;
-                        else if (/^(true|false)$/.test(s)) // BOOLEAN
+                        else if (/^(true|false)$/.test(object)) // BOOLEAN
                             tagNumber = 0x01;
-                        else if (/^[0-9a-fA-F]+$/.test(s)) // OCTET STRING
+                        else if (/^[0-9a-fA-F]+$/.test(object)) // OCTET STRING
                             tagNumber = 0x04;
                         else
                             tagNumber = 0x13; // Printable string (later can be changed to UTF8String)
-                    } else { // Other class
-                        if (/^[0-9a-fA-F]+$/.test(s)) // OCTET STRING
-                            tagNumber = 0x04; // Other classes must encoded string as hex string
-                        else
-                            tagNumber = 0x13; // Possibly it is a mistake, but needs to encode for any case
-                    }
-                } else if (s instanceof Number) { // INTEGER
-                    tagNumber = 0x02;
-                } else if (s instanceof Date) { // GeneralizedTime
-                    tagNumber = 0x18;
-                } else if (s instanceof Boolean) { // BOOLEAN
-                    tagNumber = 0x01;
-                } else if (s instanceof Array) { // SEQUENCE
-                    tagNumber = 0x10;
-                } else if (s instanceof ArrayBuffer || s.buffer instanceof ArrayBuffer) {
-                    tagNumber = 0x04;
-                } else
-                    throw new (root.DataError || Error)('Unrecognized type for ' + s);
+                    } else if (typeof object === 'number') { // INTEGER
+                        tagNumber = 0x02;
+                    } else if (typeof object === 'boolean') { // BOOLEAN
+                        tagNumber = 0x01;
+                    } else if (object instanceof Array) { // SEQUENCE
+                        tagNumber = 0x10;
+                    } else if (object instanceof Date) { // GeneralizedTime
+                        tagNumber = 0x18;
+                    } else if (object instanceof CryptoOperationData || (object && object.buffer instanceof CryptoOperationData)) {
+                        tagNumber = 0x04;
+                    } else
+                        throw new DataError('Unrecognized type for ' + object);
+                }
             }
 
             // Determinate constructed
-            var tagConstructed = s.tagConstructed;
+            var tagConstructed = source.tagConstructed;
             if (typeof tagConstructed === 'undefined')
-                tagConstructed = s.tagConstructed = s instanceof Array;
+                tagConstructed = source.tagConstructed = object instanceof Array;
 
             // Create content
             var content;
-            if (s instanceof ArrayBuffer || s.buffer instanceof ArrayBuffer) { // Direct
-                content = new Uint8Array(buffer(s));
+            if (object instanceof CryptoOperationData || (object && object.buffer instanceof CryptoOperationData)) { // Direct
+                content = new Uint8Array(buffer(object));
                 if (tagNumber === 0x03) { // BITSTRING
                     // Set unused bits
                     var a = new Uint8Array(buffer(content));
@@ -522,13 +547,22 @@
                     content.set(a, 1);
                 }
             } else if (tagConstructed) { // Sub items coding
-                if (s instanceof Array) {
+                if (object instanceof Array) {
                     var bytelen = 0, ba = [], offset = 0;
-                    for (var i = 0, n = s.length; i < n; i++) {
-                        ba[i] = encodeBER(s[i], format);
+                    for (var i = 0, n = object.length; i < n; i++) {
+                        ba[i] = encodeBER(object[i], format);
                         bytelen += ba[i].length;
                     }
-                    if (tagConstructed && format === 'CER') { // final for CER 00 00
+                    if (tagNumber === 0x11)
+                        ba.sort(function (a, b) { // Sort order for SET components
+                            for (var i = 0, n = Math.min(a.length, b.length); i < n; i++) {
+                                var r = a[i] - b[i];
+                                if (r !== 0)
+                                    return r;
+                            }
+                            return a.length - b.length;
+                        });
+                    if (format === 'CER') { // final for CER 00 00
                         ba[n] = new Uint8Array(2);
                         bytelen += 2;
                     }
@@ -538,42 +572,42 @@
                         offset = offset + ba[i].length;
                     }
                 } else
-                    throw new (root.DataError || Error)('Constracted block can\'t be primitive');
+                    throw new DataError('Constracted block can\'t be primitive');
             } else {
                 switch (tagNumber) {
                     // 0x00: // EOC
                     case 0x01: // BOOLEAN
                         content = new Uint8Array(1);
-                        content[0] = s.toString() === 'true' ? 1 : 0;
+                        content[0] = object ? 0xff : 0;
                         break;
                     case 0x02: // INTEGER
                     case 0x0a: // ENUMIRATED
-                        content = gostCoding.Int16.decode(
-                                s instanceof Number ? '0x' + s.toString(16) : s.toString());
+                        content = Int16.decode(
+                                typeof object === 'number' ? '0x' + object.toString(16) : object);
                         break;
                     case 0x03: // BIT STRING
-                        if (typeof s === 'string' || s instanceof String) {
-                            var unusedBits = 7 - (s.length + 7) % 8;
-                            var n = Math.ceil(s.length / 8);
+                        if (typeof object === 'string') {
+                            var unusedBits = 7 - (object.length + 7) % 8;
+                            var n = Math.ceil(object.length / 8);
                             content = new Uint8Array(n + 1);
                             content[0] = unusedBits;
                             for (var i = 0; i < n; i++) {
                                 var c = 0;
                                 for (var j = 0; j < 8; j++) {
                                     var k = i * 8 + j;
-                                    c = (c << 1) + (k < s.length ? (s.charAt(k) === '1' ? 1 : 0) : 0);
+                                    c = (c << 1) + (k < object.length ? (object.charAt(k) === '1' ? 1 : 0) : 0);
                                 }
                                 content[i + 1] = c;
                             }
                         }
                         break;
                     case 0x04:
-                        content = gostCoding.Hex.decode(
-                                s instanceof Number ? s.toString(16) : s);
+                        content = Hex.decode(
+                                typeof object === 'number' ? object.toString(16) : object);
                         break;
                         // case 0x05: // NULL
                     case 0x06: // OBJECT IDENTIFIER
-                        var a = s.match(/\d+/g), r = [];
+                        var a = object.match(/\d+/g), r = [];
                         for (var i = 1; i < a.length; i++) {
                             var n = +a[i], r1 = [];
                             if (i === 1)
@@ -594,7 +628,7 @@
                         // case 0x0A: // ENUMERATED
                         // case 0x0B: // EMBEDDED PDV
                     case 0x0C: // UTF8String
-                        content = gostCoding.Chars.decode(s, 'utf8');
+                        content = Chars.decode(object, 'utf8');
                         break;
                         // case 0x10: // SEQUENCE
                         // case 0x11: // SET
@@ -607,45 +641,95 @@
                     case 0x1A: // VisibleString // ASCII subset
                     case 0x1B: // GeneralString
                         // Reflect on character encoding
-                        for (var i = 0, n = s.length; i < n; i++)
-                            if (s.charCodeAt(i) > 255)
+                        for (var i = 0, n = object.length; i < n; i++)
+                            if (object.charCodeAt(i) > 255)
                                 tagNumber = 0x0C;
                         if (tagNumber === 0x0C)
-                            content = gostCoding.Chars.decode(s, 'utf8');
+                            content = Chars.decode(object, 'utf8');
                         else
-                            content = gostCoding.Chars.decode(s, 'ascii');
+                            content = Chars.decode(object, 'ascii');
                         break;
                     case 0x17: // UTCTime
                     case 0x18: // GeneralizedTime
-                        var d = new Date(s);
-                        d.setMinutes(d.getMinutes() + d.getTimezoneOffset()); // to UTC
-                        var r = (tagNumber === 0x17 ? d.getYear().toString().slice(-2) : d.getFullYear().toString()) +
-                                ('00' + (d.getMonth() + 1)).slice(-2) +
-                                ('00' + d.getDate()).slice(-2) +
-                                ('00' + d.getHours()).slice(-2) +
-                                ('00' + d.getMinutes()).slice(-2) +
-                                ('00' + d.getSeconds()).slice(-2) + 'Z';
-                        content = gostCoding.Chars.decode(r, 'ascii');
+                        var result = object.original;
+                        if (!result) {
+                            var date = new Date(object);
+                            date.setMinutes(date.getMinutes() + date.getTimezoneOffset()); // to UTC
+                            var ms = date.getMilliseconds().toString(); // Milliseconds, remove trailing zeros
+                            while (ms.length > 0 && ms.charAt(ms.length - 1) === '0')
+                                ms = ms.substring(0, ms.length - 1);
+                            if (ms.length > 0)
+                                ms = '.' + ms;
+                            result = (tagNumber === 0x17 ? date.getYear().toString().slice(-2) : date.getFullYear().toString()) +
+                                    ('00' + (date.getMonth() + 1)).slice(-2) +
+                                    ('00' + date.getDate()).slice(-2) +
+                                    ('00' + date.getHours()).slice(-2) +
+                                    ('00' + date.getMinutes()).slice(-2) +
+                                    ('00' + date.getSeconds()).slice(-2) + ms + 'Z';
+                        }
+                        content = Chars.decode(result, 'ascii');
                         break;
                     case 0x1C: // UniversalString
-                        content = gostCoding.Chars.decode(s, 'utf32');
+                        content = Chars.decode(object, 'utf32');
                         break;
                     case 0x1E: // BMPString
-                        content = gostCoding.Chars.decode(s, 'utf16');
+                        content = Chars.decode(object, 'utf16');
                         break;
                 }
             }
+
             if (!content)
                 content = new Uint8Array(0);
-            if (content instanceof ArrayBuffer)
+            if (content instanceof CryptoOperationData)
                 content = new Uint8Array(content);
+
+            if (!tagConstructed && format === 'CER') {
+                // Encoding CER-form for string types
+                var k;
+                switch (tagNumber) {
+                    case 0x03: // BIT_STRING
+                        k = 1; // ingnore unused bit for bit string
+                    case 0x04: // OCTET_STRING
+                    case 0x0C: // UTF8String
+                    case 0x12: // NumericString
+                    case 0x13: // PrintableString
+                    case 0x14: // TeletexString
+                    case 0x15: // VideotexString
+                    case 0x16: // IA5String
+                    case 0x19: // GraphicString
+                    case 0x1A: // VisibleString
+                    case 0x1B: // GeneralString
+                    case 0x1C: // UniversalString
+                    case 0x1E: // BMPString
+                        k = k || 0;
+                        // Split content on 1000 octet len parts 
+                        var size = 1000;
+                        var bytelen = 0, ba = [], offset = 0;
+                        for (var i = k, n = content.length; i < n; i += size - k) {
+                            ba[i] = encodeBER({
+                                object: new Unit8Array(content.buffer, i, Math.min(size - k, n - i)),
+                                tagNumber: tagNumber,
+                                tagClass: 0,
+                                tagConstructed: false
+                            }, format);
+                            bytelen += ba[i].length;
+                        }
+                        ba[n] = new Uint8Array(2); // final for CER 00 00
+                        bytelen += 2;
+                        content = new Uint8Array(bytelen);
+                        for (var i = 0, n = ba.length; i < n; i++) {
+                            content.set(ba[i], offset);
+                            offset = offset + ba[i].length;
+                        }
+                }
+            }
 
             // Restore tagNumber for all classes
             if (tagClass === 0)
-                s.tagNumber = tagNumber;
+                source.tagNumber = tagNumber;
             else
-                s.tagNumber = tagNumber = (s.tagNumber || 0);
-            s.content = content;
+                source.tagNumber = tagNumber = source.tagNumber || 0;
+            source.content = content;
 
             // Create header
             // tagNumber
@@ -687,14 +771,14 @@
                     ha.push(len);
                 }
             }
-            var header = s.header = new Uint8Array(ha);
+            var header = source.header = new Uint8Array(ha);
 
             // type name
             var typeName = tagClass === 1 ? 'Application_' + tagNumber :
                     tagClass === 2 ? '[' + tagNumber.toString() + ']' : // Context
                     tagClass === 3 ? 'Private_' + tagNumber :
                     BERtypes[tagNumber] || "Universal_" + tagNumber.toString();
-            s.typeName = typeName;
+            source.typeName = typeName;
 
             // Result - complete buffer
             var block = new Uint8Array(header.length + content.length);
@@ -717,7 +801,7 @@
                 tagNumber = 0;
                 do {
                     if (tagNumber > 0x1fffffffffff80)
-                        throw new (root.DataError || Error)('Convertor not supported tag number more then (2^53 - 1) at position ' + offset);
+                        throw new DataError('Convertor not supported tag number more then (2^53 - 1) at position ' + offset);
                     buf = d[pos++];
                     tagNumber = (tagNumber << 7) + (buf & 0x7f);
                 } while (buf & 0x80);
@@ -728,7 +812,7 @@
             var len = buf & 0x7f;
             if (len !== buf) {
                 if (len > 6) // no reason to use Int10, as it would be a huge buffer anyways
-                    throw new (root.DataError || Error)('Length over 48 bits not supported at position ' + offset);
+                    throw new DataError('Length over 48 bits not supported at position ' + offset);
                 if (len === 0)
                     len = null; // undefined
                 else {
@@ -753,7 +837,7 @@
                         pos += s.header.length + s.content.length;
                     }
                     if (pos !== end)
-                        throw new (root.DataError || Error)('Content size is not correct for container starting at offset ' + start);
+                        throw new DataError('Content size is not correct for container starting at offset ' + start);
                 } else {
                     // undefined length
                     try {
@@ -766,52 +850,98 @@
                         }
                         len = pos - start;
                     } catch (e) {
-                        throw new (root.DataError || Error)('Exception ' + e + ' while decoding undefined length content at offset ' + start);
+                        throw new DataError('Exception ' + e + ' while decoding undefined length content at offset ' + start);
                     }
                 }
             }
-            var value = new String(''),
+            var object = '',
                     header = new Uint8Array(d.buffer, offset, start - offset),
-                    content = new Uint8Array(d.buffer, start, len);
+                    content = new Uint8Array(d.buffer, start, len),
+                    buffer = content;
+
+            // Constructed types - check for string concationation
+            if (sub !== null && tagClass === 0) {
+                var k;
+                switch (tagNumber) {
+                    case 0x03: // BIT_STRING
+                        k = 1; // ingnore unused bit for bit string
+                    case 0x04: // OCTET_STRING
+                    case 0x0C: // UTF8String
+                    case 0x12: // NumericString
+                    case 0x13: // PrintableString
+                    case 0x14: // TeletexString
+                    case 0x15: // VideotexString
+                    case 0x16: // IA5String
+                    case 0x19: // GraphicString
+                    case 0x1A: // VisibleString
+                    case 0x1B: // GeneralString
+                    case 0x1C: // UniversalString
+                    case 0x1E: // BMPString
+                        k = k || 0;
+                        // Concatination
+                        if (sub.length === 0)
+                            throw new DataError('No constructed encoding content of string type at offset ' + start);
+                        len = k;
+                        for (var i = 0, n = sub.length; i < n; i++) {
+                            var s = sub[i];
+                            if (s.tagClass !== tagClass || s.tagNumber !== tagNumber || s.tagConstructed)
+                                throw new DataError('Invalid constructed encoding of string type at offset ' + start);
+                            len += s.content.length - k;
+                        }
+                        buffer = new Uint8Array(len);
+                        for (var i = 0, n = sub.length, j = k; i < n; i++) {
+                            var s = sub[i];
+                            if (k > 0)
+                                buffer.set(s.content.subarray(1), j);
+                            else
+                                buffer.set(s.content, j);
+                            j += s.content.length - k;
+                        }
+                        constructed = false; // follow not required
+                        sub = null;
+                        break;
+                }
+            }
+            // Primitive types
             if (sub === null) {
                 if (len === null)
-                    throw new (root.DataError || Error)('Invalid tag with undefined length at offset ' + start);
+                    throw new DataError('Invalid tag with undefined length at offset ' + start);
 
                 if (tagClass === 0) {
                     switch (tagNumber) {
                         case 0x01: // BOOLEAN
-                            value = new Boolean(d[start] !== 0);
+                            object = buffer[0] !== 0;
                             break;
                         case 0x02: // INTEGER
                         case 0x0a: // ENUMIRATED
                             if (len > 6) {
-                                value = new String(gostCoding.Int16.encode(content));
+                                object = Int16.encode(buffer);
                             } else {
-                                var v = content[0];
-                                if (content[0] > 0x7f)
+                                var v = buffer[0];
+                                if (buffer[0] > 0x7f)
                                     v = v - 256;
                                 for (var i = 1; i < len; i++)
-                                    v = v * 256 + content[i];
-                                value = new Number(v);
+                                    v = v * 256 + buffer[i];
+                                object = v;
                             }
                             break;
                         case 0x03: // BIT_STRING
                             if (len > 5) { // Content buffer
-                                value = new Uint8Array(content.subarray(1)).buffer;
+                                object = new Uint8Array(buffer.subarray(1)).buffer;
                             } else { // Max bit mask only for 32 bit
-                                var unusedBit = content[0],
+                                var unusedBit = buffer[0],
                                         skip = unusedBit, s = [];
                                 for (var i = len - 1; i >= 1; --i) {
-                                    var b = content[i];
+                                    var b = buffer[i];
                                     for (var j = skip; j < 8; ++j)
                                         s.push((b >> j) & 1 ? '1' : '0');
                                     skip = 0;
                                 }
-                                value = new String(s.reverse().join(''));
+                                object = s.reverse().join('');
                             }
                             break;
                         case 0x04: // OCTET_STRING
-                            value = new Uint8Array(content).buffer; // new String(gostCoding.Hex.encode(content));
+                            object = new Uint8Array(buffer).buffer;
                             break;
                             //  case 0x05: // NULL
                         case 0x06: // OBJECT_IDENTIFIER
@@ -819,7 +949,7 @@
                                     n = 0,
                                     bits = 0;
                             for (var i = 0; i < len; ++i) {
-                                var v = content[i];
+                                var v = buffer[i];
                                 n = (n << 7) + (v & 0x7F);
                                 bits += 7;
                                 if (!(v & 0x80)) { // finished
@@ -833,8 +963,8 @@
                                 }
                             }
                             if (bits > 0)
-                                throw new (root.DataError || Error)('Incompleted OID at offset ' + start);
-                            value = new String(s);
+                                throw new DataError('Incompleted OID at offset ' + start);
+                            object = s;
                             break;
                             //case 0x07: // ObjectDescriptor
                             //case 0x08: // EXTERNAL
@@ -843,10 +973,10 @@
                             //case 0x0B: // EMBEDDED_PDV
                         case 0x10: // SEQUENCE
                         case 0x11: // SET
-                            value = new Array();
+                            object = [];
                             break;
                         case 0x0C: // UTF8String
-                            value = new String(gostCoding.Chars.encode(content, 'utf8'));
+                            object = Chars.encode(buffer, 'utf8');
                             break;
                         case 0x12: // NumericString
                         case 0x13: // PrintableString
@@ -856,28 +986,28 @@
                         case 0x19: // GraphicString
                         case 0x1A: // VisibleString
                         case 0x1B: // GeneralString
-                            value = new String(gostCoding.Chars.encode(content, 'ascii'));
+                            object = Chars.encode(buffer, 'ascii');
                             break;
                         case 0x1C: // UniversalString
-                            value = new String(gostCoding.Chars.encode(content, 'utf32'));
+                            object = Chars.encode(buffer, 'utf32');
                             break;
                         case 0x1E: // BMPString
-                            value = new String(gostCoding.Chars.encode(content, 'utf16'));
+                            object = Chars.encode(buffer, 'utf16');
                             break;
                         case 0x17: // UTCTime
                         case 0x18: // GeneralizedTime
                             var shortYear = tagNumber === 0x17;
-                            var s = gostCoding.Chars.encode(content, 'ascii'),
+                            var s = Chars.encode(buffer, 'ascii'),
                                     m = (shortYear ?
                                             /^(\d\d)(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])([01]\d|2[0-3])(?:([0-5]\d)(?:([0-5]\d)(?:[.,](\d{1,3}))?)?)?(Z|[-+](?:[0]\d|1[0-2])([0-5]\d)?)?$/ :
                                             /^(\d\d\d\d)(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])([01]\d|2[0-3])(?:([0-5]\d)(?:([0-5]\d)(?:[.,](\d{1,3}))?)?)?(Z|[-+](?:[0]\d|1[0-2])([0-5]\d)?)?$/).exec(s);
                             if (!m)
-                                throw new (root.DataError || Error)('Unrecognized time format "' + s + '" at offset ' + start);
+                                throw new DataError('Unrecognized time format "' + s + '" at offset ' + start);
                             if (shortYear) {
-                                // to avoid querying the timer, use the fixed range [1970, 2069]
-                                // it will conform with ITU X.400 [-10, +40] sliding window until 2030
+                                // Where YY is greater than or equal to 50, the year SHALL be interpreted as 19YY; and
+                                // Where YY is less than 50, the year SHALL be interpreted as 20YY                                
                                 m[1] = +m[1];
-                                m[1] += (m[1] < 70) ? 2000 : 1900;
+                                m[1] += (m[1] < 50) ? 2000 : 1900;
                             }
                             var dt = new Date(m[1], +m[2] - 1, +m[3], +(m[4] || '0'), +(m[5] || '0'), +(m[6] || '0'), +(m[7] || '0')),
                                     tz = dt.getTimezoneOffset();
@@ -887,13 +1017,14 @@
                                 }
                                 dt.setMinutes(dt.getMinutes() - tz);
                             }
-                            value = dt;
+                            dt.original = s;
+                            object = dt;
                             break;
                     }
                 } else // OCTET_STRING
-                    value = new Uint8Array(content).buffer; // new String(gostCoding.Hex.encode(content));
+                    object = new Uint8Array(buffer).buffer;
             } else
-                value = sub;
+                object = sub;
 
             // type name
             var typeName = tagClass === 1 ? 'Application_' + tagNumber :
@@ -902,18 +1033,20 @@
                     BERtypes[tagNumber] || "Universal_" + tagNumber.toString();
 
             // result
-            value.tagConstructed = constructed;
-            value.tagClass = tagClass;
-            value.tagNumber = tagNumber;
-            value.header = header;
-            value.content = content;
-            value.typeName = typeName;
-            return value;
+            return {
+                tagConstructed: constructed,
+                tagClass: tagClass,
+                tagNumber: tagNumber,
+                header: header,
+                content: content,
+                typeName: typeName,
+                object: object
+            };
         }
 
         return {
             /**
-             * BER.decode(object, format) convert javascript object to ASN.1 format ArrayBuffer<br><br>
+             * BER.decode(object, format) convert javascript object to ASN.1 format CryptoOperationData<br><br>
              * If object has members tagNumber, tagClass and tagConstructed
              * it is clear define encoding rules. Else method use defaul rules:
              * <ul>
@@ -928,7 +1061,7 @@
              *   <li>Number - INTEGER</li>
              *   <li>Date - GeneralizedTime</li>
              *   <li>Boolean - SEQUENCE</li>
-             *   <li>ArrayBuffer or TypedArray - OCTET STRING</li>
+             *   <li>CryptoOperationData - OCTET STRING</li>
              * </ul>
              * SEQUENCE or SET arrays recursively encoded for each item.<br>
              * OCTET STRING and BIT STRING can presents as array with one item. 
@@ -937,16 +1070,16 @@
              * If CONTEXT or APPLICATION classes item presents as array with one 
              * item we use EXPLICIT encoding for element, else IMPLICIT encoding.<br>
              * 
-             * @memberOf gostCoding.BER
+             * @memberOf GostCoding.BER
              * @param {Object} object Object to encoding
              * @param {string} format Encoding rule: 'DER' or 'CER', default 'DER'
-             * @returns {ArrayBuffer} BER encoded data
+             * @returns {CryptoOperationData} BER encoded data
              */
-            encode: function(object, format) {
+            encode: function (object, format) {
                 return encodeBER(object, format).buffer;
             },
             /**
-             * BER.encode(data) convert ASN.1 format ArrayBuffer data to javascript object<br><br>
+             * BER.encode(data) convert ASN.1 format CryptoOperationData data to javascript object<br><br>
              * 
              * Conversion rules to javascript object:
              *  <ul>
@@ -961,45 +1094,53 @@
              *          BMPString - encoded String</li>
              *      <li>UTCTime, GeneralizedTime - Date</li>
              *  </ul>
-             * @memberOf gostCoding.BER
-             * @param {(ArrayBuffer|TypedArray)} data Binary data to decode
+             * @memberOf GostCoding.BER
+             * @param {CryptoOperationData} data Binary data to decode
              * @returns {Object} Javascript object with result of decoding
              */
-            decode: function(data) {
+            decode: function (data) {
                 return decodeBER(new Uint8Array(buffer(data)), 0);
             }
         }; // </editor-fold>
     })();
 
     /**
-     * PEM conversion
-     * 
-     * @class gostCoding.PEM
+     * BER, DER, CER conversion
+     * @memberOf GostCoding
+     * @insnance
+     * @type GostCoding.BER
      */
-    gostCoding.PEM = {// <editor-fold defaultstate="collapsed">
+    GostCoding.prototype.BER = BER;
+
+    /**
+     * PEM conversion
+     * @class GostCoding.PEM
+     */
+    var PEM = {// <editor-fold defaultstate="collapsed">
         /**
-         * PEM.encode(data, name) encode ArrayObject data to PEM format with name label
+         * PEM.encode(data, name) encode CryptoOperationData to PEM format with name label
          * 
-         * @memberOf gostCoding.PEM
-         * @param {(Object|ArrayBuffer)} data Java script object or BER-encoded binary data
+         * @memberOf GostCoding.PEM
+         * @param {(Object|CryptoOperationData)} data Java script object or BER-encoded binary data
          * @param {string} name Name of PEM object: 'certificate', 'private key' etc.
          * @returns {string} Encoded object
          */
-        encode: function(data, name) {
+        encode: function (data, name) {
             return (name ? '-----BEGIN ' + name.toUpperCase() + '-----\r\n' : '') +
-                    gostCoding.Base64.encode(data instanceof ArrayBuffer ? data : gostCoding.BER.encode(data)) +
+                    Base64.encode(data instanceof CryptoOperationData ? data : BER.encode(data)) +
                     (name ? '\r\n-----END ' + name.toUpperCase() + '-----' : '');
         },
         /**
-         * PEM.decode(s, name, deep) decode PEM format s labeled name to ArrayBuffer or javascript object in according to deep parameter
+         * PEM.decode(s, name, deep) decode PEM format s labeled name to CryptoOperationData or javascript object in according to deep parameter
          * 
-         * @memberOf gostCoding.PEM
+         * @memberOf GostCoding.PEM
          * @param {string} s PEM encoded string
          * @param {string} name Name of PEM object: 'certificate', 'private key' etc.
-         * @param {boolea} deep If true method do BER-decoding, else only BASE64 decoding
-         * @returns {(Object|ArrayBuffer)} Decoded javascript object if deep=true, else ArrayBuffer for father BER decoding
+         * @param {boolean} deep If true method do BER-decoding, else only BASE64 decoding
+         * @param {integer} index Index of decoded value
+         * @returns {(Object|CryptoOperationData)} Decoded javascript object if deep=true, else CryptoOperationData for father BER decoding
          */
-        decode: function(s, name, deep) {
+        decode: function (s, name, deep, index) {
             // Try clear base64
             var re1 = /([A-Za-z0-9\+\/\s\=]+)/g,
                     valid = re1.exec(s);
@@ -1016,23 +1157,38 @@
             if (!valid) {
                 // Try with some name
                 var re3 = new RegExp(
-                                '-----\\s?BEGIN [A-Z0-9\\s]+' +
-                                '-----([A-Za-z0-9\\+\\/\\s\\=]+)-----\\s?END ' +
-                                '[A-Z0-9\\s]+-----', 'g');
+                        '-----\\s?BEGIN [A-Z0-9\\s]+' +
+                        '-----([A-Za-z0-9\\+\\/\\s\\=]+)-----\\s?END ' +
+                        '[A-Z0-9\\s]+-----', 'g');
                 valid = re3.exec(s);
             }
-            if (valid) 
-                s = valid[1];
-            else
-                throw new (root.DataError || Error)('Not valid PEM format');
-            var out = gostCoding.Base64.decode(s);
+            var r = valid && valid[1 + (index || 0)];
+            if (!r)
+                throw new DataError('Not valid PEM format');
+            var out = Base64.decode(r);
             if (deep)
-                out = gostCoding.BER.decode(out);
+                out = BER.decode(out);
             return out;
         } // </editor-fold>
     };
 
-    return gostCoding;
+    /**
+     * PEM conversion
+     * @memberOf GostCoding
+     * @insnance
+     * @type GostCoding.PEM
+     */
+    GostCoding.prototype.PEM = PEM;
+
+    /**
+     * Coding algorithms: Base64, Hex, Int16, Chars, BER and PEM
+     * 
+     * @memberOf gostCrypto
+     * @type GostCoding
+     */
+     gostCrypto.coding = new GostCoding();
+
+    return GostCoding;
 
 }));
 

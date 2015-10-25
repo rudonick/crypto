@@ -1,6 +1,6 @@
 /**
  * @file GOST 34.10-2012 signature function with 1024/512 bits digest
- * @version 0.99
+ * @version 1.70
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -33,28 +33,24 @@
  * 
  */
 
-(function(root, factory) {
-    
+(function (root, factory) {
+
     /*
      * Module imports and exports
      * 
      */ // <editor-fold defaultstate="collapsed">
     if (typeof define === 'function' && define.amd) {
-        define(['gostRandom', 'gostR3411'], factory);
+        define(['gostRandom', 'gostDigest'], factory);
     } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostRandom'), require('gostR3411'));
+        module.exports = factory(require('gostRandom'), require('gostDigest'));
     } else {
-        if (typeof importScripts !== 'undefined') {
-            if (!(root.gostRandom && root.GostR3411))
-                importScripts('gostRandom.js', 'gostR3411.js');
-        }
-        root.GostR3410 = factory(root.gostRandom, root.GostR3411);
+        root.GostSign = factory(root.GostRandom, root.GostDigest);
     }
     // </editor-fold>
-    
-}(this, function(gostRandom, GostR3411) {
 
-    
+}(this, function (GostRandom, GostDigest) {
+
+
     /*
      * Predefined curves and params collection
      * 
@@ -708,26 +704,26 @@
      */ // <editor-fold defaultstate="collapsed"> 
 
     // Classic reduction
-    var Classic = function(m) {
+    var Classic = function (m) {
         this.m = m;
     };
 
     extend(Classic, {
-        convert: function(x) {
+        convert: function (x) {
             if (x.s < 0 || compare(x, this.m) >= 0)
                 return mod(x, this.m);
             else
                 return x;
         },
         revert: nothing,
-        reduce: function(x) {
+        reduce: function (x) {
             modTo(x, this.m, x);
         },
-        sqrTo: function(x, r) {
+        sqrTo: function (x, r) {
             sqrTo(x, r);
             this.reduce(r);
         },
-        mulTo: function(x, y, r) {
+        mulTo: function (x, y, r) {
             mulTo(x, y, r);
             this.reduce(r);
         }
@@ -748,7 +744,7 @@
     }
 
     // Montgomery reduction
-    var Montgomery = function(m) {
+    var Montgomery = function (m) {
         this.m = m;
         this.mp = invDig(m);
         this.mpl = this.mp & 0x7fff;
@@ -759,7 +755,7 @@
 
     extend(Montgomery, {
         // xR mod m
-        convert: function(x) {
+        convert: function (x) {
             var r = nbi(x.t);
             dshlTo(abs(x), this.m.t, r);
             divRemTo(r, this.m, null, r);
@@ -768,14 +764,14 @@
             return r;
         },
         // x/R mod m
-        revert: function(x) {
+        revert: function (x) {
             var r = nbi(x.t);
             copyTo(x, r);
             this.reduce(r);
             return r;
         },
         // x = x/R mod m (HAC 14.32)
-        reduce: function(x) {
+        reduce: function (x) {
             while (x.t <= this.mt2)
                 x[x.t++] = 0;
             for (var i = 0; i < this.m.t; ++i) {
@@ -794,12 +790,12 @@
                 subTo(x, this.m, x);
         },
         // r = "x^2/R mod m"; x != r
-        sqrTo: function(x, r) {
+        sqrTo: function (x, r) {
             sqrTo(x, r);
             this.reduce(r);
         },
         // r = "xy/R mod m"; x,y != r
-        mulTo: function(x, y, r) {
+        mulTo: function (x, y, r) {
             mulTo(x, y, r);
             this.reduce(r);
         }
@@ -856,7 +852,7 @@
     }
 
     extend(Barrett, {
-        convert: function(x) {
+        convert: function (x) {
             if (x.s < 0 || x.t > 2 * this.m.t)
                 return mod(x, this.m);
             else if (compare(x, this.m) < 0)
@@ -868,11 +864,11 @@
                 return r;
             }
         },
-        revert: function(x) {
+        revert: function (x) {
             return x;
         },
         // x = x mod m (HAC 14.42)
-        reduce: function(x) {
+        reduce: function (x) {
             dshrTo(x, this.m.t - 1, this.r2);
             if (x.t > this.m.t + 1) {
                 x.t = this.m.t + 1;
@@ -887,12 +883,12 @@
                 subTo(x, this.m, x);
         },
         // r = x^2 mod m; x != r
-        sqrTo: function(x, r) {
+        sqrTo: function (x, r) {
             sqrTo(x, r);
             this.reduce(r);
         },
         // r = x*y mod m; x,y != r
-        mulTo: function(x, y, r) {
+        mulTo: function (x, y, r) {
             mulTo(x, y, r);
             this.reduce(r);
         }
@@ -1039,7 +1035,7 @@
 
     function invFE(a) {
         return copyFE(a, invMod(a, a.q));
-    } 
+    }
 
     // EC Points
     function newEC(curve, x, y, z) {
@@ -1234,8 +1230,8 @@
         }
 
         return R;
-    } 
-    
+    }
+
     // EC Curve
     function newCurve(q, a, b) {
         var curve = {};
@@ -1373,7 +1369,7 @@
                     r += d.toString(16);
             }
         }
-        return m ? r : "0";
+        return "0x" + (m ? r : "0");
     }
 
     // biginteger to big-endian integer bytearray
@@ -1448,9 +1444,12 @@
 
     // Calculate hash of data
     function hash(d) {
-        if (this.hash) 
+        if (this.hash)
             d = this.hash.digest(d);
-        return this.swaphash ? swap(d) : d;
+        // Swap hash for SignalCom
+        if (this.procreator === 'SC')
+            d = swap(d);
+        return d;
     }
 
     // Check buffer
@@ -1483,16 +1482,11 @@
     }
 
     function getSeed(length) {
-        // Check random
-        if (!gostRandom) {
-            gostRandom = root.gostRandom;
-            if (!gostRandom && rootCrypto && rootCrypto.getRandomValues)
-                gostRandom = rootCrypto;
-        }
-
-        if (gostRandom) {
+        GostRandom = GostRandom || root.GostRandom;
+        var randomSource = GostRandom ? new (GostRandom || root.GostRandom) : rootCrypto;
+        if (randomSource.getRandomValues) {
             var d = new Uint8Array(Math.ceil(length / 8));
-            gostRandom.getRandomValues(d);
+            randomSource.getRandomValues(d);
             return d;
         } else
             throw new NotSupportedError('Random generator not found');
@@ -1503,7 +1497,7 @@
      * 
      * The sign method returns sign data generated with the supplied privateKey.<br>
      * 
-     * @memberOf GostR3410
+     * @memberOf GostSign
      * @method sign
      * @instance
      * @param {(ArrayBuffer|TypedArray)} privateKey Private key
@@ -1551,7 +1545,19 @@
         // Stage 6
         // console.log('s', bitoh(s));
         // console.log('r', bitoh(r));
-        var zetta = from2(r, s, this.bitLength);
+        var zetta;
+        // Integer structure for SignalCom algorithm
+        if (this.procreator === 'SC') {
+            zetta = {
+                r: bitoh(r),
+                s: bitoh(s)
+            };
+        } else {
+            zetta = from2(r, s, this.bitLength);
+            // Swap bytes for CryptoPro algorithm
+            if (this.procreator === 'CP')
+                zetta = swap(zetta);
+        }
         return zetta;
     } // </editor-fold>
 
@@ -1560,7 +1566,7 @@
      * 
      * The verify method returns signature verification for the supplied publicKey.<br>
      * 
-     * @memberOf GostR3410
+     * @memberOf GostSign
      * @method sign
      * @instance
      * @param {(ArrayBuffer|TypedArray)} publicKey Public key
@@ -1573,9 +1579,19 @@
 
         // Stage 1
         var q = this.q;
-        var zetta = to2(signature),
-                s = zetta[1], //  first 32 octets contain the big-endian representation of s 
-                r = zetta[0]; //  and second 32 octets contain the big-endian representation of r
+        var r, s;
+        // Ready int for SignalCom algorithm
+        if (this.procreator === 'SC') {
+            r = htobi(signature.r);
+            s = htobi(signature.s);
+        } else {
+            if (this.procreator === 'CP')
+                signature = swap(signature);
+            var zetta = to2(signature);
+            // Swap bytes for CryptoPro algorithm
+            s = zetta[1]; //  first 32 octets contain the big-endian representation of s 
+            r = zetta[0]; //  and second 32 octets contain the big-endian representation of r
+        }
         if (compare(r, q) >= 0 || compare(s, q) >= 0)
             return false;
         // Stage 2
@@ -1617,17 +1633,17 @@
      * The generateKey method returns a new generated key using the specified 
      * AlgorithmIdentifier.
      * 
-     * @memberOf GostR3410
-     * @method verify
+     * @memberOf GostSign
+     * @method generateKey
      * @instance
      * @returns {Object} Object with two ArrayBuffer members: privateKey and publicKey
      */
     function generateKey() // <editor-fold defaultstate="collapsed">
     {
+        var curve = this.curve;
+        if (curve) {
 
-        if (this.curve) {
-
-            var Q = this.curve.infinity;
+            var Q = curve.infinity;
             while (isInfinity(Q)) {
 
                 // Generate random private key
@@ -1660,11 +1676,59 @@
     /**
      * Algorithm name GOST R 34.10<br><br>
      * 
+     * Unwrap private key from private key and ukm (mask)
+     * 
+     * @memberOf GostSign
+     * @method unwrap
+     * @instance
+     * @param {(ArrayBuffer|TypedArray)} baseKey Unwrapping key
+     * @param {(ArrayBuffer|TypedArray)} data Wrapped key
+     * @returns {Object} ArrayBuffer unwrapped privateKey
+     */
+    function unwrapKey(baseKey, data) {
+        var curve = this.curve;
+        if (curve) {
+            var q = this.q;
+            var x = mod(atobi(buffer(data)), q);
+            var y = mod(atobi(buffer(baseKey)), q);
+            var z = mod(mul(x, invMod(y, q)), q);
+            return bitoa(z);
+        } else
+            throw new NotSupportedError('Key wrapping GOST R 34.10-94 not supported');
+    }
+
+    /**
+     * Algorithm name GOST R 34.10<br><br>
+     * 
+     * Wrap private key with private key and ukm (mask)
+     * 
+     * @memberOf GostSign
+     * @method unwrap
+     * @instance
+     * @param {(ArrayBuffer|TypedArray)} baseKey Wrapping key
+     * @param {(ArrayBuffer|TypedArray)} data Key
+     * @returns {Object} ArrayBuffer unwrapped privateKey
+     */
+    function wrapKey(baseKey, data) {
+        var curve = this.curve;
+        if (curve) {
+            var q = this.q;
+            var x = mod(atobi(buffer(data)), q);
+            var y = mod(atobi(buffer(baseKey)), q);
+            var z = mod(mul(x, y), q);
+            return bitoa(z);
+        } else
+            throw new NotSupportedError('Key wrapping GOST R 34.10-94 not supported');
+    }
+
+    /**
+     * Algorithm name GOST R 34.10<br><br>
+     * 
      * This algorithm creates a key encryption key (KEK) using 64 bit UKM,   
      * the sender’s private key, and the recipient’s public key (or the   
      * reverse of the latter pair
      * 
-     * @memberOf GostR3410
+     * @memberOf GostSign
      * @method derive
      * @instance
      * @private
@@ -1700,7 +1764,7 @@
             k = bitoa(expMod(this.peer_y, x, p));
         }
         // 2) Calculate a 256-bit hash of K(x,y,UKM):      
-        // KEK(x,y,UKM) = gostR3411 (K(x,y,UKM)
+        // KEK(x,y,UKM) = gostSign (K(x,y,UKM)
         return hash.call(this, k);
     } // </editor-fold>
 
@@ -1709,7 +1773,7 @@
      * 
      * The deriveBits method returns length bits on baseKey.
      * 
-     * @memberOf GostR3410
+     * @memberOf GostSign
      * @method deriveBits
      * @instance
      * @param {(ArrayBuffer|TypedArray)} baseKey Key for deriviation
@@ -1733,7 +1797,7 @@
      * 
      * The deriveKey method returns 256 bit Key encryption key on baseKey.
      * 
-     * @memberOf GostR3410
+     * @memberOf GostSign
      * @method deriveBits
      * @instance
      * @param {(ArrayBuffer|TypedArray)} baseKey Key for deriviation
@@ -1818,10 +1882,10 @@
      *      </li>
      *  </ul>
      *  
-     * @class GostR3410
+     * @class GostSign
      * @param {AlgorithmIndentifier} algorithm
      */
-    function GostR3410(algorithm) // <editor-fold defaultstate="collapsed">
+    function GostSign(algorithm) // <editor-fold defaultstate="collapsed">
     {
         algorithm = algorithm || {};
         this.name = (algorithm.name || 'GOST R 34.10') + '-' +
@@ -1845,43 +1909,36 @@
                 this.deriveKey = deriveKey;
                 this.generateKey = generateKey;
                 break;
+            case 'KW':
+                this.wrapKey = wrapKey;
+                this.unwrapKey = unwrapKey;
+                this.generateKey = generateKey;
+                break;
         }
 
         // Define parameters
         if (version === 1994) {
             // Named or parameters algorithm
-            if (algorithm.p && algorithm.q && algorithm.a) {
-                this.modulusLength = algorithm.modulusLength || 1024;
-                this.p = atobi(algorithm.p);
-                this.q = atobi(algorithm.q);
-                this.a = atobi(algorithm.a);
-            } else {
-                var param = GostParams[this.namedParam = (algorithm.namedParam || 'S-A').toUpperCase()];
-                this.modulusLength = param.modulusLength;
-                this.p = htobi(param.p);
-                this.q = htobi(param.q);
-                this.a = htobi(param.a);
-            }
+            var param = algorithm.param;
+            if (!param)
+                param = GostParams[this.namedParam = (algorithm.namedParam || 'S-A').toUpperCase()];
+            this.modulusLength = algorithm.modulusLength || param.modulusLength || 1024;
+            this.p = htobi(param.p);
+            this.q = htobi(param.q);
+            this.a = htobi(param.a);
             // Public key for derive
             if (algorithm['public'])
                 this.peer_y = atobi(algorithm['public']);
         } else {
             // Named or parameters algorithm
-            if (algorithm.p && algorithm.q && algorithm.a &&
-                    algorithm.b && algorithm.x && algorithm.y) {
-                var curve = this.curve = newCurve(atobi(algorithm.p), atobi(algorithm.a), atobi(algorithm.b));
-                this.P = newEC(curve,
-                        newFE(curve, atobi(algorithm.x)),
-                        newFE(curve, atobi(algorithm.y)));
-                this.q = atobi(algorithm.q);
-            } else {
-                var param = ECGostParams[this.namedCurve = (algorithm.namedCurve || 'S-256-A').toUpperCase()];
-                var curve = this.curve = newCurve(htobi(param.p), htobi(param.a), htobi(param.b));
-                this.P = newEC(curve,
-                        newFE(curve, htobi(param.x)),
-                        newFE(curve, htobi(param.y)));
-                this.q = htobi(param.q);
-            }
+            var param = algorithm.curve;
+            if (!param)
+                param = ECGostParams[this.namedCurve = (algorithm.namedCurve || 'S-256-A').toUpperCase()];
+            var curve = this.curve = newCurve(htobi(param.p), htobi(param.a), htobi(param.b));
+            this.P = newEC(curve,
+                    newFE(curve, htobi(param.x)),
+                    newFE(curve, htobi(param.y)));
+            this.q = htobi(param.q);
             // Public key for derive
             if (algorithm['public']) {
                 var k2 = to2(algorithm['public']);
@@ -1915,8 +1972,8 @@
         this.bitLength = hashLen;
         this.keyLength = keyLen;
 
-        // Swap hash for SignalCom algorithms
-        this.swaphash = algorithm.procreator === 'SC';
+        // Algorithm proceator for result conversion
+        this.procreator = algorithm.procreator;
 
         // Hash function definition
         var hash = algorithm.hash;
@@ -1932,23 +1989,22 @@
                 hash.length = hashLen;
             }
             hash.procreator = hash.procreator || algorithm.procreator;
-            
-            this.swaphash = this.swaphash || (hash.procreator === 'SC');
-                    
-            if (!GostR3411)
-                GostR3411 = root.GostR3411;
-            if (!GostR3411)
-                throw new NotSupportedError('Object GostR3411 not found');
 
-            this.hash = new GostR3411(hash);
+            if (!GostDigest)
+                GostDigest = root.GostDigest;
+            if (!GostDigest)
+                throw new NotSupportedError('Object GostDigest not found');
+
+            this.hash = new GostDigest(hash);
         }
-        
+
         // Pregenerated seed for key exchange algorithms
         if (algorithm.ukm) // Now don't check size 
             this.ukm = algorithm.ukm;
+
     } // </editor-fold>
 
-    return GostR3410;
+    return GostSign;
 
 }));
 

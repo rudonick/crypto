@@ -1,6 +1,6 @@
 /**
- * @file GOST 28147-89 Encryption Algorithm
- * @version 0.99
+ * @file GOST 28147-89/GOST R 34.12-2015/GOST R 32.13-2015 Encryption Algorithm
+ * @version 1.70
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -30,7 +30,7 @@
  * 
  */
 
-(function(root, factory) {
+(function (root, factory) {
 
     /*
      * Module imports and exports
@@ -41,15 +41,11 @@
     } else if (typeof exports === 'object') {
         module.exports = factory(require('gostRandom'));
     } else {
-        if (typeof importScripts !== 'undefined') {
-            if (!root.gostRandom)
-                importScripts('gostRandom.js');
-        }
-        root.Gost28147 = factory(root.gostRandom);
+        root.GostCipher = factory(root.GostRandom);
     }
 // </editor-fold>
 
-}(this, function(gostRandom) {
+}(this, function (GostRandom) {
 
     /*
      * Initial parameters and common algortithms of GOST 28147-89 
@@ -60,16 +56,17 @@
 
     var root = this;
     var rootCrypto = root.crypto || root.msCrypto;
-    var SyntaxError = root.SyntaxError || Error,
-            DataError = root.DataError || Error,
-            NotSupportedError = root.NotSupportedError || Error;
+    var CryptoOperationData = root.ArrayBuffer;
+    var SyntaxError = root.SyntaxError || root.Error,
+            DataError = root.DataError || root.Error,
+            NotSupportedError = root.NotSupportedError || root.Error;
     /*
      * Check supported
      * This implementation support only Little Endian arhitecture
      */
 
-    var littleEndian = (function() {
-        var buffer = new ArrayBuffer(2);
+    var littleEndian = (function () {
+        var buffer = new CryptoOperationData(2);
         new DataView(buffer).setInt16(0, 256, true);
         return new Int16Array(buffer)[0] === 256;
     })();
@@ -79,16 +76,6 @@
 
     // Predefined sBox collection
     var sBoxes = {
-        'E-DEFAULT': [// This is default S-box in according to draft of new standard
-            0xc, 0x4, 0x6, 0x2, 0xa, 0x5, 0xb, 0x9, 0xe, 0x8, 0xd, 0x7, 0x0, 0x3, 0xf, 0x1,
-            0x6, 0x8, 0x2, 0x3, 0x9, 0xa, 0x5, 0xc, 0x1, 0xe, 0x4, 0x7, 0xb, 0xd, 0x0, 0xf,
-            0xb, 0x3, 0x5, 0x8, 0x2, 0xf, 0xa, 0xd, 0xe, 0x1, 0x7, 0x4, 0xc, 0x9, 0x6, 0x0,
-            0xc, 0x8, 0x2, 0x1, 0xd, 0x4, 0xf, 0x6, 0x7, 0x0, 0xa, 0x5, 0x3, 0xe, 0x9, 0xb,
-            0x7, 0xf, 0x5, 0xa, 0x8, 0x1, 0x6, 0xd, 0x0, 0x9, 0x3, 0xe, 0xb, 0x4, 0x2, 0xc,
-            0x5, 0xd, 0xf, 0x6, 0x9, 0x2, 0xc, 0xa, 0xb, 0x7, 0x8, 0x1, 0x4, 0x3, 0xe, 0x0,
-            0x8, 0xe, 0x2, 0x5, 0x6, 0x9, 0x1, 0xc, 0xf, 0x4, 0xb, 0x0, 0xd, 0xa, 0x3, 0x7,
-            0x1, 0x7, 0xe, 0xd, 0x0, 0x5, 0x8, 0x3, 0x4, 0xf, 0xa, 0x6, 0x9, 0xc, 0xb, 0x2
-        ],
         'E-TEST': [
             0x4, 0x2, 0xF, 0x5, 0x9, 0x1, 0x0, 0x8, 0xE, 0x3, 0xB, 0xC, 0xD, 0x7, 0xA, 0x6,
             0xC, 0x9, 0xF, 0xE, 0x8, 0x1, 0x3, 0xA, 0x2, 0x7, 0x4, 0xD, 0x6, 0x0, 0xB, 0x5,
@@ -149,15 +136,15 @@
             0x0, 0x2, 0xe, 0xc, 0x9, 0x1, 0x4, 0x7, 0x3, 0xf, 0x6, 0x8, 0xa, 0xd, 0xb, 0x5,
             0x5, 0x2, 0xb, 0x8, 0x4, 0xc, 0x7, 0x1, 0xa, 0x6, 0xe, 0x0, 0x9, 0x3, 0xd, 0xf
         ],
-        'E-Z': [// http://www.tc26.ru/methods/recommendation/%D0%A2%D0%9A26%D0%A3%D0%97.pdf
-            0x1, 0x8, 0x5, 0x7, 0xc, 0xb, 0x6, 0xc, 0x7, 0xe, 0xd, 0xf, 0x8, 0x3, 0x8, 0x4,
-            0xe, 0x2, 0xf, 0x5, 0x2, 0x5, 0x2, 0x6, 0xd, 0x5, 0x6, 0xa, 0x1, 0x8, 0x3, 0x2,
-            0x0, 0x6, 0x9, 0x8, 0xd, 0x2, 0x9, 0xa, 0x5, 0x9, 0x2, 0x1, 0x4, 0xf, 0xa, 0x5,
-            0x8, 0x1, 0xc, 0x6, 0xf, 0xa, 0x5, 0xb, 0x3, 0xc, 0xa, 0xd, 0x6, 0xd, 0xc, 0x9,
-            0x4, 0xf, 0xb, 0x0, 0x7, 0xe, 0x1, 0xe, 0xf, 0x4, 0x7, 0x9, 0x0, 0x1, 0xe, 0x8,
-            0xa, 0xb, 0x8, 0x3, 0xa, 0x7, 0x4, 0xd, 0x6, 0x0, 0x1, 0xe, 0x5, 0x4, 0x7, 0x7,
-            0x9, 0xd, 0x4, 0xb, 0x3, 0xc, 0xb, 0x0, 0xc, 0xa, 0x3, 0x4, 0xe, 0x9, 0xd, 0x3,
-            0xb, 0x3, 0xe, 0x2, 0x9, 0x6, 0x0, 0xf, 0x2, 0x7, 0x0, 0xc, 0xb, 0x0, 0xf, 0x1
+        'E-Z': [// This is default S-box in according to draft of new standard
+            0xc, 0x4, 0x6, 0x2, 0xa, 0x5, 0xb, 0x9, 0xe, 0x8, 0xd, 0x7, 0x0, 0x3, 0xf, 0x1,
+            0x6, 0x8, 0x2, 0x3, 0x9, 0xa, 0x5, 0xc, 0x1, 0xe, 0x4, 0x7, 0xb, 0xd, 0x0, 0xf,
+            0xb, 0x3, 0x5, 0x8, 0x2, 0xf, 0xa, 0xd, 0xe, 0x1, 0x7, 0x4, 0xc, 0x9, 0x6, 0x0,
+            0xc, 0x8, 0x2, 0x1, 0xd, 0x4, 0xf, 0x6, 0x7, 0x0, 0xa, 0x5, 0x3, 0xe, 0x9, 0xb,
+            0x7, 0xf, 0x5, 0xa, 0x8, 0x1, 0x6, 0xd, 0x0, 0x9, 0x3, 0xe, 0xb, 0x4, 0x2, 0xc,
+            0x5, 0xd, 0xf, 0x6, 0x9, 0x2, 0xc, 0xa, 0xb, 0x7, 0x8, 0x1, 0x4, 0x3, 0xe, 0x0,
+            0x8, 0xe, 0x2, 0x5, 0x6, 0x9, 0x1, 0xc, 0xf, 0x4, 0xb, 0x0, 0xd, 0xa, 0x3, 0x7,
+            0x1, 0x7, 0xe, 0xd, 0x0, 0x5, 0x8, 0x3, 0x4, 0xf, 0xa, 0x6, 0x9, 0xc, 0xb, 0x2
         ],
         //S-box for digest
         'D-TEST': [
@@ -210,24 +197,23 @@
     // Set random values into Uint8Arry
     // Random generator
     function randomSeed(e) {
-        gostRandom = gostRandom || root.gostRandom;
-        if (!gostRandom && rootCrypto && rootCrypto.getRandomValues)
-            gostRandom = rootCrypto;
-        if (gostRandom)
-            gostRandom.getRandomValues(e);
+        GostRandom = GostRandom || root.GostRandom;
+        var randomSource = GostRandom ? new (GostRandom || root.GostRandom) : rootCrypto;
+        if (randomSource.getRandomValues)
+            randomSource.getRandomValues(e);
         else
             throw new NotSupportedError('Random generator not found');
     }
 
     // Get buffer
     function buffer(d) {
-        if (d instanceof ArrayBuffer)
+        if (d instanceof CryptoOperationData)
             return d;
-        else if (d && d.buffer && d.buffer instanceof ArrayBuffer)
+        else if (d && d.buffer && d.buffer instanceof CryptoOperationData)
             return d.byteOffset === 0 && d.byteLength === d.buffer.byteLength ?
                     d.buffer : new Uint8Array(new Uint8Array(d, d.byteOffset, d.byteLength)).buffer;
         else
-            throw new DataError('ArrayBuffer or ArrayBufferView required');
+            throw new DataError('CryptoOperationData or CryptoOperationDataView required');
     }
 
     // Get byte array
@@ -257,7 +243,7 @@
     // </editor-fold>
 
     /*
-     * Initial parameters and common algortithms of new GOST 28147-15 
+     * Initial parameters and common algortithms of GOST R 34.12-15 
      * Algorithm "Kuznechik" 128bit
      * 
      */ // <editor-fold defaultstate="collapsed">
@@ -266,7 +252,7 @@
     var defaultIV128 = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
     // Mult table for R function
-    var multTable = (function() {
+    var multTable = (function () {
 
         // Multiply two numbers in the GF(2^8) finite field defined 
         // by the polynomial x^8 + x^7 + x^6 + x + 1 = 0 */
@@ -342,7 +328,7 @@
         89, 166, 116, 210, 230, 244, 180, 192, 209, 102, 175, 194, 57, 75, 99, 182
     ];
 
-    var kReversePi = (function() {
+    var kReversePi = (function () {
         var m = [];
         for (var i = 0, n = kPi.length; i < n; i++)
             m[kPi[i]] = i;
@@ -403,9 +389,9 @@
     // </editor-fold>
 
     /**
-     * Key schedule for 128bits
+     * Key schedule for GOST R 34.12-15 128bits
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @private
      * @instance
      * @method keySchedule
@@ -429,9 +415,9 @@
     } // </editor-fold>
 
     /**
-     * GOST 128 bits encrypt/decrypt process 
+     * GOST R 34.12-15 128 bits encrypt/decrypt process 
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @private
      * @instance
      * @method round
@@ -460,7 +446,7 @@
     /**
      * One GOST encryption round
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @private
      * @instance
      * @method round
@@ -491,7 +477,7 @@
     /**
      * Process encrypt/decrypt block with key K using GOST 28147-89
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @private
      * @instance
      * @method process
@@ -514,9 +500,9 @@
     } // </editor-fold>
 
     /**
-     * Process encrypt/decrypt block with key K using GOST 28147-15 64bit block
+     * Process encrypt/decrypt block with key K using GOST R 34.12-15 64bit block
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @private
      * @instance
      * @method process
@@ -541,9 +527,9 @@
     } // </editor-fold>
 
     /**
-     * Key keySchedule algorithm for 1989 64bit cipher
+     * Key keySchedule algorithm for GOST 28147-89 64bit cipher
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @private
      * @instance
      * @method process
@@ -580,9 +566,9 @@
     } // </editor-fold>
 
     /**
-     * Key keySchedule algorithm for 2015 64bit cipher
+     * Key keySchedule algorithm for GOST R 34.12-15 64bit cipher
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @private
      * @instance
      * @method process
@@ -618,18 +604,156 @@
         return sch;
     } // </editor-fold>
 
+    /**
+     * Key schedule for RC2
+     * 
+     * https://tools.ietf.org/html/rfc2268
+     * 
+     * @memberOf GostCipher
+     * @private
+     * @instance
+     * @method keySchedule
+     * @param {Uint8Array} k
+     * @returns {Uint16Array}
+     */
+    var keyScheduleRC2 = (function () // <editor-fold defaultstate="collapsed">
+    {
+        // an array of "random" bytes based on the digits of PI = 3.14159...
+        var PITABLE = new Uint8Array([
+            0xd9, 0x78, 0xf9, 0xc4, 0x19, 0xdd, 0xb5, 0xed, 0x28, 0xe9, 0xfd, 0x79, 0x4a, 0xa0, 0xd8, 0x9d,
+            0xc6, 0x7e, 0x37, 0x83, 0x2b, 0x76, 0x53, 0x8e, 0x62, 0x4c, 0x64, 0x88, 0x44, 0x8b, 0xfb, 0xa2,
+            0x17, 0x9a, 0x59, 0xf5, 0x87, 0xb3, 0x4f, 0x13, 0x61, 0x45, 0x6d, 0x8d, 0x09, 0x81, 0x7d, 0x32,
+            0xbd, 0x8f, 0x40, 0xeb, 0x86, 0xb7, 0x7b, 0x0b, 0xf0, 0x95, 0x21, 0x22, 0x5c, 0x6b, 0x4e, 0x82,
+            0x54, 0xd6, 0x65, 0x93, 0xce, 0x60, 0xb2, 0x1c, 0x73, 0x56, 0xc0, 0x14, 0xa7, 0x8c, 0xf1, 0xdc,
+            0x12, 0x75, 0xca, 0x1f, 0x3b, 0xbe, 0xe4, 0xd1, 0x42, 0x3d, 0xd4, 0x30, 0xa3, 0x3c, 0xb6, 0x26,
+            0x6f, 0xbf, 0x0e, 0xda, 0x46, 0x69, 0x07, 0x57, 0x27, 0xf2, 0x1d, 0x9b, 0xbc, 0x94, 0x43, 0x03,
+            0xf8, 0x11, 0xc7, 0xf6, 0x90, 0xef, 0x3e, 0xe7, 0x06, 0xc3, 0xd5, 0x2f, 0xc8, 0x66, 0x1e, 0xd7,
+            0x08, 0xe8, 0xea, 0xde, 0x80, 0x52, 0xee, 0xf7, 0x84, 0xaa, 0x72, 0xac, 0x35, 0x4d, 0x6a, 0x2a,
+            0x96, 0x1a, 0xd2, 0x71, 0x5a, 0x15, 0x49, 0x74, 0x4b, 0x9f, 0xd0, 0x5e, 0x04, 0x18, 0xa4, 0xec,
+            0xc2, 0xe0, 0x41, 0x6e, 0x0f, 0x51, 0xcb, 0xcc, 0x24, 0x91, 0xaf, 0x50, 0xa1, 0xf4, 0x70, 0x39,
+            0x99, 0x7c, 0x3a, 0x85, 0x23, 0xb8, 0xb4, 0x7a, 0xfc, 0x02, 0x36, 0x5b, 0x25, 0x55, 0x97, 0x31,
+            0x2d, 0x5d, 0xfa, 0x98, 0xe3, 0x8a, 0x92, 0xae, 0x05, 0xdf, 0x29, 0x10, 0x67, 0x6c, 0xba, 0xc9,
+            0xd3, 0x00, 0xe6, 0xcf, 0xe1, 0x9e, 0xa8, 0x2c, 0x63, 0x16, 0x01, 0x3f, 0x58, 0xe2, 0x89, 0xa9,
+            0x0d, 0x38, 0x34, 0x1b, 0xab, 0x33, 0xff, 0xb0, 0xbb, 0x48, 0x0c, 0x5f, 0xb9, 0xb1, 0xcd, 0x2e,
+            0xc5, 0xf3, 0xdb, 0x47, 0xe5, 0xa5, 0x9c, 0x77, 0x0a, 0xa6, 0x20, 0x68, 0xfe, 0x7f, 0xc1, 0xad
+        ]);
+
+        return function (k)
+        {
+            var key = new Uint8Array(buffer(k)),
+                    T = Math.min(key.length, 128),
+                    T1 = this.effectiveLength,
+                    T8 = Math.floor((T1 + 7) / 8),
+                    TM = 0xff % Math.pow(2, 8 + T1 - 8 * T8);
+
+            var L = new Uint8Array(128), K = new Uint16Array(L.buffer);
+            for (var i = 0; i < T; i++)
+                L[i] = key[i];
+            for (var i = T; i < 128; i++)
+                L[i] = PITABLE[(L[i - 1] + L[i - T]) % 256];
+            L[128 - T8] = PITABLE[L[128 - T8] & TM];
+            for (var i = 127 - T8; i >= 0; --i)
+                L[i] = PITABLE[L[i + 1] ^ L[i + T8]];
+            return K;
+        };
+    } // </editor-fold>
+    )();
+
+    /**
+     * RC2 encrypt/decrypt process 
+     * 
+     * https://tools.ietf.org/html/rfc2268
+     * 
+     * @memberOf GostCipher
+     * @private
+     * @instance
+     * @method round
+     * @param {CryptoOperationData} k Scheduled key
+     * @param {CryptoOperationData} d Data
+     * @param {number} ofs Offsec
+     * @param {number} e true - decrypt
+     */
+    var processRC2 = (function () // <editor-fold defaultstate="collapsed">
+    {
+        var K, j, R = new Uint16Array(4),
+                s = new Uint16Array([1, 2, 3, 5]), reverse;
+
+        function rol(R, s) {
+            return (R << s | R >>> (16 - s)) & 0xffff;
+        }
+
+        function ror(R, s) {
+            return (R >>> s | R << (16 - s)) & 0xffff;
+        }
+
+        function mix(i) {
+            if (reverse) {
+                R[i] = ror(R[i], s[i]);
+                R[i] = R[i] - K[j] - (R[(i + 3) % 4] & R[(i + 2) % 4]) - ((~R[(i + 3) % 4]) & R[(i + 1) % 4]);
+                j = j - 1;
+            } else {
+                R[i] = R[i] + K[j] + (R[(i + 3) % 4] & R[(i + 2) % 4]) + ((~R[(i + 3) % 4]) & R[(i + 1) % 4]);
+                j = j + 1;
+                R[i] = rol(R[i], s[i]);
+            }
+        }
+
+        function mash(i) {
+            if (reverse) {
+                R[i] = R[i] - K[R[(i + 3) % 4] & 63];
+            } else {
+                R[i] = R[i] + K[R[(i + 3) % 4] & 63];
+            }
+        }
+
+        function perform(method, count) {
+            count = count || 1;
+            for (var j = 0; j < count; j++) {
+                if (reverse) {
+                    for (var i = 3; i >= 0; --i)
+                        method(i);
+                } else {
+                    for (var i = 0; i < 4; i++)
+                        method(i);
+                }
+            }
+        }
+
+        return function (k, d, ofs, e) {
+            reverse = e;
+            //  1. Initialize words R[0], ..., R[3] to contain the 64-bit
+            //     ciphertext value.
+            R = new Uint16Array(d.buffer, ofs || d.byteOffset, 4);
+            //  2. Expand the key, so that words K[0], ..., K[63] become
+            //     defined.
+            K = k;
+            //  3. Initialize j to zero (enc) j to 63 (dec).
+            j = e ? 63 : 0;
+            //  4. Perform five mixing rounds.
+            perform(mix, 5);
+            //  5. Perform one mashing round.
+            perform(mash);
+            //  6. Perform six mixing rounds.
+            perform(mix, 6);
+            //  7. Perform one mashing round.
+            perform(mash);
+            //  8. Perform five mixing rounds.
+            perform(mix, 5);
+        };
+    } // </editor-fold>
+    )();
 
     /**
      * Algorithm name GOST 28147-ECB<br><br>
      * 
-     * encryptECB (K, D) is D, encrypted with key k using GOST 28147 in 
+     * encryptECB (K, D) is D, encrypted with key k using GOST 28147/GOST R 34.13 in 
      * "prostaya zamena" (Electronic Codebook, ECB) mode. 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method encrypt
      * @instance
-     * @param k {(ArrayBuffer|TypedArray)} 8x32 bit key 
-     * @param d {(ArrayBuffer|TypedArray)} 8 bits message
-     * @return {ArrayBuffer} result
+     * @param k {CryptoOperationData} 8x32 bit key 
+     * @param d {CryptoOperationData} 8 bits message
+     * @return {CryptoOperationData} result
      */
     function encryptECB(k, d) // <editor-fold defaultstate="collapsed">
     {
@@ -647,15 +771,15 @@
     /**
      * Algorithm name GOST 28147-ECB<br><br>
      * 
-     * decryptECB (K, D) is D, decrypted with key K using GOST 28147 in   
+     * decryptECB (K, D) is D, decrypted with key K using GOST 28147/GOST R 34.13 in   
      * "prostaya zamena"  (Electronic Codebook, ECB) mode.
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method decrypt
      * @instance
-     * @param k {(ArrayBuffer|TypedArray)} 8x32 bits key 
-     * @param d {(ArrayBuffer|TypedArray)} 8 bits message
-     * @return {ArrayBuffer} result
+     * @param k {CryptoOperationData} 8x32 bits key 
+     * @param d {CryptoOperationData} 8 bits message
+     * @return {CryptoOperationData} result
      */
     function decryptECB(k, d) // <editor-fold defaultstate="collapsed">
     {
@@ -673,17 +797,17 @@
     /**
      * Algorithm name GOST 28147-CFB<br><br>
      * 
-     * encryptCFB (IV, K, D) is D, encrypted with key K using GOST 28147   
+     * encryptCFB (IV, K, D) is D, encrypted with key K using GOST 28147/GOST R 34.13   
      * in "gammirovanie s obratnoj svyaziyu" (Cipher Feedback, CFB) mode, and IV is   
      * used as the initialization vector.
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method encrypt
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
-     * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv initial vector
-     * @return {ArrayBuffer} result
+     * @param {CryptoOperationData} k 8x32 bits key 
+     * @param {CryptoOperationData} d 8 bits array with data 
+     * @param {CryptoOperationData} iv initial vector
+     * @return {CryptoOperationData} result
      */
     function encryptCFB(k, d, iv) // <editor-fold defaultstate="collapsed">
     {
@@ -726,17 +850,17 @@
     /**
      * Algorithm name GOST 28147-CFB<br><br>
      * 
-     * decryptCFB (IV, K, D) is D, decrypted with key K using GOST 28147   
+     * decryptCFB (IV, K, D) is D, decrypted with key K using GOST 28147/GOST R 34.13   
      * in "gammirovanie s obratnoj svyaziyu po shifrotekstu" (Cipher Feedback, CFB) mode, and IV is   
      * used as the initialization vector.
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method decrypt
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
-     * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv initial vector
-     * @return {ArrayBuffer} result
+     * @param {CryptoOperationData} k 8x32 bits key 
+     * @param {CryptoOperationData} d 8 bits array with data 
+     * @param {CryptoOperationData} iv initial vector
+     * @return {CryptoOperationData} result
      */
     function decryptCFB(k, d, iv) // <editor-fold defaultstate="collapsed">
     {
@@ -781,32 +905,32 @@
     /**
      * Algorithm name GOST 28147-OFB<br><br>
      * 
-     * encryptOFB/decryptOFB (IV, K, D) is D, encrypted with key K using GOST 28147   
+     * encryptOFB/decryptOFB (IV, K, D) is D, encrypted with key K using GOST 28147/GOST R 34.13   
      * in "gammirovanie s obratnoj svyaziyu po vyhodu" (Output Feedback, OFB) mode, and IV is   
      * used as the initialization vector.
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method encrypt
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
-     * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv 8x8 optional bits initial vector
-     * @return {ArrayBuffer} result
+     * @param {CryptoOperationData} k 8x32 bits key 
+     * @param {CryptoOperationData} d 8 bits array with data 
+     * @param {CryptoOperationData} iv 8x8 optional bits initial vector
+     * @return {CryptoOperationData} result
      */
     /**
      * Algorithm name GOST 28147-OFB<br><br>
      * 
-     * encryptOFB/decryptOFB (IV, K, D) is D, encrypted with key K using GOST 28147   
+     * encryptOFB/decryptOFB (IV, K, D) is D, encrypted with key K using GOST 28147/GOST R 34.13   
      * in "gammirovanie s obratnoj svyaziyu po vyhodu" (Output Feedback, OFB) mode, and IV is   
      * used as the initialization vector.
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method decrypt
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
-     * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv initial vector
-     * @return {ArrayBuffer} result
+     * @param {CryptoOperationData} k 8x32 bits key 
+     * @param {CryptoOperationData} d 8 bits array with data 
+     * @param {CryptoOperationData} iv initial vector
+     * @return {CryptoOperationData} result
      */
     function processOFB(k, d, iv) // <editor-fold defaultstate="collapsed">
     {
@@ -853,30 +977,30 @@
     /**
      * Algorithm name GOST 28147-CTR<br><br>
      * 
-     * encryptCTR/decryptCTR (IV, K, D) is D, encrypted with key K using GOST 28147   
+     * encryptCTR/decryptCTR (IV, K, D) is D, encrypted with key K using GOST 28147/GOST R 34.13   
      * in "gammirovanie" (Counter Mode-CTR) mode, and IV is used as the   
      * initialization vector.
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method encrypt
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
-     * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv 8x8 optional bits initial vector
-     * @return {ArrayBuffer} result
+     * @param {CryptoOperationData} k 8x32 bits key 
+     * @param {CryptoOperationData} d 8 bits array with data 
+     * @param {CryptoOperationData} iv 8x8 optional bits initial vector
+     * @return {CryptoOperationData} result
      */
     /**
      * Algorithm name GOST 28147-CTR<br><br>
      * 
-     * encryptCTR/decryptCTR (IV, K, D) is D, encrypted with key K using GOST 28147   
+     * encryptCTR/decryptCTR (IV, K, D) is D, encrypted with key K using GOST 28147/GOST R 34.13   
      * in "gammirovanie" (Counter Mode-CTR) mode, and IV is used as the   
      * initialization vector.
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method decrypt
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
-     * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv initial vector
-     * @return {ArrayBuffer} result
+     * @param {CryptoOperationData} k 8x32 bits key 
+     * @param {CryptoOperationData} d 8 bits array with data 
+     * @param {CryptoOperationData} iv initial vector
+     * @return {CryptoOperationData} result
      */
     function processCTR89(k, d, iv) // <editor-fold defaultstate="collapsed">
     {
@@ -969,17 +1093,17 @@
     /**
      * Algorithm name GOST 28147-CBC<br><br>
      * 
-     * encryptCBC (IV, K, D) is D, encrypted with key K using GOST 28147   
+     * encryptCBC (IV, K, D) is D, encrypted with key K using GOST 28147/GOST R 34.13   
      * in "Prostaya zamena s zatsepleniem" (Cipher-Block-Chaining, CBC) mode and IV is used as the initialization 
      * vector.
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method encrypt
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
-     * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv initial vector
-     * @return {ArrayBuffer} result
+     * @param {CryptoOperationData} k 8x32 bits key 
+     * @param {CryptoOperationData} d 8 bits array with data 
+     * @param {CryptoOperationData} iv initial vector
+     * @return {CryptoOperationData} result
      */
     function encryptCBC(k, d, iv) // <editor-fold defaultstate="collapsed">
     {
@@ -1016,17 +1140,17 @@
     /**
      * Algorithm name GOST 28147-CBC<br><br>
      * 
-     * decryptCBC (IV, K, D) is D, decrypted with key K using GOST 28147   
+     * decryptCBC (IV, K, D) is D, decrypted with key K using GOST 28147/GOST R 34.13   
      * in "Prostaya zamena s zatsepleniem" (Cipher-Block-Chaining, CBC) mode and IV is used as the initialization 
      * vector.
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method decrypt
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
-     * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv initial vector
-     * @return {ArrayBuffer} result
+     * @param {CryptoOperationData} k 8x32 bits key 
+     * @param {CryptoOperationData} d 8 bits array with data 
+     * @param {CryptoOperationData} iv initial vector
+     * @return {CryptoOperationData} result
      */
     function decryptCBC(k, d, iv) // <editor-fold defaultstate="collapsed">
     {
@@ -1058,16 +1182,16 @@
             k = this.keyMeshing(k, s, i, key, 1);
         }
 
-        return this.unpad(c.buffer);
+        return this.unpad(c).buffer;
     } // </editor-fold>
 
     /**
      * The generateKey method returns a new generated key.
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method generateKey
      * @instance
-     * @return {ArrayBuffer} result
+     * @return {CryptoOperationData} result
      */
 
     function generateKey() // <editor-fold defaultstate="collapsed">
@@ -1080,12 +1204,12 @@
 
 
     /**
-     * makeIMIT (K, D) is the 32-bit result of the GOST 28147 in   
+     * makeIMIT (K, D) is the 32-bit result of the GOST 28147/GOST R 34.13 in   
      * "imitovstavka" (MAC) mode, used with D as plaintext, K as key and IV   
      * as initialization vector.  Note that the standard specifies its use   
      * in this mode only with an initialization vector of zero.
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method processMAC
      * @private
      * @instance
@@ -1158,18 +1282,18 @@
     } // </editor-fold>
 
     /**
-     * signMAC (K, D, IV) is the 32-bit result of the GOST 28147 in   
+     * signMAC (K, D, IV) is the 32-bit result of the GOST 28147/GOST R 34.13 in   
      * "imitovstavka" (MAC) mode, used with D as plaintext, K as key and IV   
      * as initialization vector.  Note that the standard specifies its use   
      * in this mode only with an initialization vector of zero.
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method sign
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
-     * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv initial vector
-     * @return {ArrayBuffer} result
+     * @param {CryptoOperationData} k 8x32 bits key 
+     * @param {CryptoOperationData} d 8 bits array with data 
+     * @param {CryptoOperationData} iv initial vector
+     * @return {CryptoOperationData} result
      */
     function signMAC(k, d, iv) // <editor-fold defaultstate="collapsed">
     {
@@ -1185,18 +1309,18 @@
     } // </editor-fold>
 
     /**
-     * verifyMAC (K, M, D, IV) the 32-bit result verification of the GOST 28147 in   
+     * verifyMAC (K, M, D, IV) the 32-bit result verification of the GOST 28147/GOST R 34.13 in   
      * "imitovstavka" (MAC) mode, used with D as plaintext, K as key and IV   
      * as initialization vector.  Note that the standard specifies its use   
      * in this mode only with an initialization vector of zero.
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method verify
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} k 8x32 bits key 
-     * @param {(ArrayBuffer|TypedArray)} m 8 bits array with signature
-     * @param {(ArrayBuffer|TypedArray)} d 8 bits array with data 
-     * @param {(ArrayBuffer|TypedArray)} iv 8x8 optional bits initial vector
+     * @param {CryptoOperationData} k 8x32 bits key 
+     * @param {CryptoOperationData} m 8 bits array with signature
+     * @param {CryptoOperationData} d 8 bits array with data 
+     * @param {CryptoOperationData} iv 8x8 optional bits initial vector
      * @return {boolen} MAC verified = true
      */
     function verifyMAC(k, m, d, iv) // <editor-fold defaultstate="collapsed">
@@ -1214,43 +1338,38 @@
     /**
      * Algorithm name GOST 28147-KW<br><br>
      * 
-     * This algorithm encrypts GOST 28147-89 CEK with a GOST 28147 KEK.
+     * This algorithm encrypts GOST 28147-89 CEK with a GOST 28147/GOST R 34.13 KEK.
      * Ref. rfc4357 6.1 GOST 28147-89 Key Wrap
      * Note: This algorithm MUST NOT be used with a KEK produced by VKO GOST   
      * R 34.10-94, because such a KEK is constant for every sender-recipient   
      * pair.  Encrypting many different content encryption keys on the same   
      * constant KEK may reveal that KEK.
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method wrapKey
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} kek Key encryption key
-     * @param {(ArrayBuffer|TypedArray)} cek Content encryption key
-     * @param {(ArrayBuffer|TypedArray)} ukm Random generated value
-     * @returns {ArrayBuffer} Encrypted cek
+     * @param {CryptoOperationData} kek Key encryption key
+     * @param {CryptoOperationData} cek Content encryption key
+     * @returns {CryptoOperationData} Encrypted cek
      */
-    function wrapKeyGOST(kek, cek, ukm) // <editor-fold defaultstate="collapsed">
+    function wrapKeyGOST(kek, cek) // <editor-fold defaultstate="collapsed">
     {
-        var n = this.blockSize, k = this.keySize, len = n + k + (n >> 1);
+        var n = this.blockSize, k = this.keySize, len = k + (n >> 1);
         // 1) For a unique symmetric KEK, generate 8 octets at random and call 
         // the result UKM.  For a KEK, produced by VKO GOST R 34.10-2001, use 
         // the UKM that was used for key derivation.    
-        if (!ukm) {
-            if (this.ukm)
-                ukm = new Uint8Array(this.ukm);
-            else
-                randomSeed(ukm = new Uint8Array(this.blockSize));
-        }
-        // 2) Compute a 4-byte checksum value, gost28147IMIT (UKM, KEK, CEK).       
+        var ukm = new Uint8Array(this.ukm);
+        if (!ukm) 
+            throw new DataError('UKM must be defined');
+        // 2) Compute a 4-byte checksum value, GOST 28147IMIT (UKM, KEK, CEK).       
         // Call the result CEK_MAC. 
         var mac = signMAC.call(this, kek, cek, ukm);
         // 3) Encrypt the CEK in ECB mode using the KEK.  Call the ciphertext CEK_ENC.
         var enc = encryptECB.call(this, kek, cek);
         // 4) The wrapped content-encryption key is (UKM | CEK_ENC | CEK_MAC).
         var r = new Uint8Array(len);
-        r.set(new Uint8Array(ukm));
-        r.set(new Uint8Array(enc), n);
-        r.set(new Uint8Array(mac), n + k);
+        r.set(new Uint8Array(enc), 0);
+        r.set(new Uint8Array(mac), k);
         return r.buffer;
     } // </editor-fold>
 
@@ -1260,16 +1379,16 @@
      *  This algorithm decrypts GOST 28147-89 CEK with a GOST 28147 KEK.
      *  Ref. rfc4357 6.2 GOST 28147-89 Key Unwrap
      *  
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method unwrapKey
      * @instance
      * @param {type} kek Key encryption key
      * @param {type} data Content encryption key
-     * @return {ArrayBuffer} result
+     * @return {CryptoOperationData} result
      */
     function unwrapKeyGOST(kek, data) // <editor-fold defaultstate="collapsed">
     {
-        var n = this.blockSize, k = this.keySize, len = n + k + (n >> 1);
+        var n = this.blockSize, k = this.keySize, len = k + (n >> 1);
         // 1) If the wrapped content-encryption key is not 44 octets, then error.
         var d = buffer(data);
         if (d.byteLength !== len)
@@ -1277,12 +1396,14 @@
         // 2) Decompose the wrapped content-encryption key into UKM, CEK_ENC, and CEK_MAC.  
         // UKM is the most significant (first) 8 octets. CEK_ENC is next 32 octets, 
         // and CEK_MAC is the least significant (last) 4 octets.    
-        var ukm = new Uint8Array(d, 0, n),
-                enc = new Uint8Array(d, n, k),
-                mac = new Uint8Array(d, n + k, n >> 1);
+        var ukm = new Uint8Array(this.ukm),
+                enc = new Uint8Array(d, 0, k),
+                mac = new Uint8Array(d, k, n >> 1);
+        if (!ukm)
+            throw new DataError('UKM must be defined');
         // 3) Decrypt CEK_ENC in ECB mode using the KEK.  Call the output CEK.
         var cek = decryptECB.call(this, kek, enc);
-        // 4) Compute a 4-byte checksum value, gost28147IMIT (UKM, KEK, CEK), 
+        // 4) Compute a 4-byte checksum value, GOST 28147IMIT (UKM, KEK, CEK), 
         // compare the result with CEK_MAC.  If they are not equal, then error.
         var check = verifyMAC.call(this, kek, mac, cek, ukm);
         if (!check)
@@ -1297,13 +1418,13 @@
      * creates a new GOST 28147-89 key K(UKM).
      * Ref. rfc4357 6.3 CryptoPro KEK Diversification Algorithm
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method diversify
      * @instance
      * @private
-     * @param {(ArrayBuffer|TypedArray)} kek Key encryption key
-     * @param {(ArrayBuffer|TypedArray)} ukm Random generated value
-     * @returns {ArrayBuffer} Diversified kek
+     * @param {CryptoOperationData} kek Key encryption key
+     * @param {CryptoOperationData} ukm Random generated value
+     * @returns {CryptoOperationData} Diversified kek
      */
     function diversifyKEK(kek, ukm) // <editor-fold defaultstate="collapsed">
     {
@@ -1353,41 +1474,36 @@
      * VKO GOST R 34.10-2001) because a unique UKM is used to diversify the KEK.
      * Ref. rfc4357 6.3  CryptoPro Key Wrap
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method wrapKey
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} kek Key encryption key
-     * @param {(ArrayBuffer|TypedArray)} cek Content encryption key
-     * @param {(ArrayBuffer|TypedArray)} ukm Random generated value
-     * @returns {ArrayBuffer} Encrypted cek
+     * @param {CryptoOperationData} kek Key encryption key
+     * @param {CryptoOperationData} cek Content encryption key
+     * @returns {CryptoOperationData} Encrypted cek
      */
-    function wrapKeyCP(kek, cek, ukm) // <editor-fold defaultstate="collapsed">
+    function wrapKeyCP(kek, cek) // <editor-fold defaultstate="collapsed">
     {
-        var n = this.blockSize, k = this.keySize, len = n + k + (n >> 1);
+        var n = this.blockSize, k = this.keySize, len = k + (n >> 1);
         // 1) For a unique symmetric KEK or a KEK produced by VKO GOST R       
         // 34.10-94, generate 8 octets at random.  Call the result UKM.  For       
         // a KEK, produced by VKO GOST R 34.10-2001, use the UKM that was       
         // used for key derivation.
-        if (!ukm) {
-            if (this.ukm)
-                ukm = new Uint8Array(this.ukm);
-            else
-                randomSeed(ukm = new Uint8Array(n));
-        }
+        var ukm = new Uint8Array(this.ukm);
+        if (!ukm) 
+            throw new DataError('UKM must be defined');
         // 2) Diversify KEK, using the CryptoPro KEK Diversification Algorithm,       
         // described in Section 6.5.  Call the result KEK(UKM).
         var dek = diversifyKEK.call(this, kek, ukm);
-        // 3) Compute a 4-byte checksum value, gost28147IMIT (UKM, KEK(UKM),       
+        // 3) Compute a 4-byte checksum value, GOST 28147IMIT (UKM, KEK(UKM),       
         // CEK).  Call the result CEK_MAC.    
-        var mac = signMAC.call(this, kek, cek, ukm);
+        var mac = signMAC.call(this, dek, cek, ukm);
         // 4) Encrypt CEK in ECB mode using KEK(UKM).  Call the ciphertext       
         // CEK_ENC.    
         var enc = encryptECB.call(this, dek, cek);
         // 5) The wrapped content-encryption key is (UKM | CEK_ENC | CEK_MAC).
         var r = new Uint8Array(len);
-        r.set(new Uint8Array(ukm));
-        r.set(new Uint8Array(enc), n);
-        r.set(new Uint8Array(mac), n + k);
+        r.set(new Uint8Array(enc), 0);
+        r.set(new Uint8Array(mac), k);
         return r.buffer;
     } // </editor-fold>
 
@@ -1397,36 +1513,38 @@
      * This algorithm encrypts GOST 28147-89 CEK with a GOST 28147 KEK. 
      * Ref. rfc4357 6.4 CryptoPro Key Unwrap
      *
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method unwrapKey
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} kek Key encryption key
-     * @param {(ArrayBuffer|TypedArray)} data Encrypted content encryption keu
-     * @return {ArrayBuffer} result Decrypted content encryption keu
+     * @param {CryptoOperationData} kek Key encryption key
+     * @param {CryptoOperationData} data Encrypted content encryption keu
+     * @return {CryptoOperationData} result Decrypted content encryption keu
      */
     function unwrapKeyCP(kek, data) // <editor-fold defaultstate="collapsed">
     {
-        var n = this.blockSize, k = this.keySize, len = n + k + (n >> 1);
+        var n = this.blockSize, k = this.keySize, len = k + (n >> 1);
         // 1) If the wrapped content-encryption key is not 44 octets, then error.    
         var d = buffer(data);
-        if (d.byteLength !== 44)
-            throw new DataError('Wrapping key size must be ' + 44 + ' bytes');
+        if (d.byteLength !== len)
+            throw new DataError('Wrapping key size must be ' + len + ' bytes');
         // 2) Decompose the wrapped content-encryption key into UKM, CEK_ENC,       
         // and CEK_MAC.  UKM is the most significant (first) 8 octets.       
         // CEK_ENC is next 32 octets, and CEK_MAC is the least significant       
         // (last) 4 octets.    
-        var ukm = new Uint8Array(d, 0, n),
-                enc = new Uint8Array(d, n, k),
-                mac = new Uint8Array(d, n + k, n >> 1);
+        var ukm = new Uint8Array(this.ukm),
+                enc = new Uint8Array(d, 0, k),
+                mac = new Uint8Array(d, k, n >> 1);
+        if (!ukm)
+            throw new DataError('UKM must be defined');
         // 3) Diversify KEK using the CryptoPro KEK Diversification Algorithm,       
         // described in section 6.5.  Call the result KEK(UKM).    
         var dek = diversifyKEK.call(this, kek, ukm);
         // 4) Decrypt CEK_ENC in ECB mode using KEK(UKM).  Call the output CEK.    
         var cek = decryptECB.call(this, dek, enc);
-        // 5) Compute a 4-byte checksum value, gost28147IMIT (UKM, KEK(UKM),       
+        // 5) Compute a 4-byte checksum value, GOST 28147IMIT (UKM, KEK(UKM),       
         // CEK), compare the result with CEK_MAC.  If they are not equal, 
         // then it is an error.
-        var check = verifyMAC.call(this, kek, mac, cek, ukm);
+        var check = verifyMAC.call(this, dek, mac, cek, ukm);
         if (!check)
             throw new DataError('Error verify MAC of wrapping key');
         return cek;
@@ -1447,14 +1565,17 @@
      * 
      * For usb-token files has names: 
      * a001 - mk.db3, b001 - masks.db3, c001 - kek.opq, d001 - rand.opq
+     * For windows registry
+     * 00000001 - mk.db3, 00000002 - masks.db3, 00000003 - key.opq, 00000004 - rand.opq, 
+     * 00000006 - keys\00000001.key, 0000000A - certificate
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method packKey
      * @instance
      * @private
-     * @param {(ArrayBuffer|TypedArray)} unpacked - clear main key 32 bytes
-     * @param {(ArrayBuffer|TypedArray)} ukm - random vector for packing - 32 bits * (count of masks - 1)
-     * @returns {ArrayBuffer} packed master key - concatination of mk.db3 + masks.db3
+     * @param {CryptoOperationData} unpacked - clear main key 32 bytes
+     * @param {CryptoOperationData} ukm - random vector for packing - 32 bytes * (count of masks - 1)
+     * @returns {CryptoOperationData} packed master key - concatination of mk.db3 + masks.db3
      */
     function packKeySC(unpacked, ukm) // <editor-fold defaultstate="collapsed">
     {
@@ -1464,6 +1585,7 @@
         if (key.byteLength !== k)
             throw new DataError('Wrong cleartext size ' + key.byteLength + ' bytes');
         // Check or generate UKM
+        ukm = ukm || this.ukm;
         if (ukm) {
             ukm = new Uint8Array(buffer(ukm));
             if (ukm.byteLength > 0 && ukm.byteLength % k === 0)
@@ -1495,12 +1617,12 @@
      * 
      * SignalCom master key unpacking algorithm
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method unpackKey
      * @instance
      * @private
-     * @param {(ArrayBuffer|TypedArray)} packed - concatination of mk.db3 + masks.db3
-     * @returns {ArrayBuffer} unpacked master key
+     * @param {CryptoOperationData} packed - concatination of mk.db3 + masks.db3
+     * @returns {CryptoOperationData} unpacked master key
      */
     function unpackKeySC(packed) // <editor-fold defaultstate="collapsed">
     {
@@ -1542,12 +1664,12 @@
      * 
      * SignalCom Key Wrapping algorithm
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method wrapKey
      * @instance
-     * @param {type} kek - clear kek or concatination of mk.db3 + masks.db3
-     * @param {type} cek - key for wrapping 
-     * @returns {ArrayBuffer} wrapped key - file kek.opq
+     * @param {CryptoOperationData} kek - clear kek or concatination of mk.db3 + masks.db3
+     * @param {CryptoOperationData} cek - key for wrapping 
+     * @returns {CryptoOperationData} wrapped key - file kek.opq
      */
     function wrapKeySC(kek, cek) // <editor-fold defaultstate="collapsed">
     {
@@ -1569,12 +1691,12 @@
      * 
      * SignalCom Key UnWrapping algorithm
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method unwrapKey
      * @instance
-     * @param {type} kek - concatination of files mk.db3 + masks.db3 or clear kek 
-     * @param {type} cek - wrapping key - file kek.opq
-     * @return {ArrayBuffer} result
+     * @param {CryptoOperationData} kek - concatination of files mk.db3 + masks.db3 or clear kek 
+     * @param {CryptoOperationData} cek - wrapping key - file kek.opq
+     * @return {CryptoOperationData} result
      */
     function unwrapKeySC(kek, cek) // <editor-fold defaultstate="collapsed">
     {
@@ -1596,10 +1718,10 @@
      * 
      * SignalCom master key generation for wrapping
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method generateKey
      * @instance
-     * @return {ArrayBuffer} result
+     * @return {CryptoOperationData} result
      */
     function generateWrappingKeySC() // <editor-fold defaultstate="collapsed">
     {
@@ -1611,20 +1733,20 @@
      * 
      * Key meshing in according to rfc4357 2.3.2. CryptoPro Key Meshing
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method keyMeshing
      * @instance
      * @private
-     * @param {(Uint8Array|ArrayBuffer)} k 8x8 bit key 
+     * @param {(Uint8Array|CryptoOperationData)} k 8x8 bit key 
      * @param {Uint8Array} s 8x8 bit sync (iv)
      * @param {Integer} i block index
      * @param {Int32Array} key 8x32 bit key schedule 
      * @param {boolean} e true - decrypt
-     * @returns ArrayBuffer next 8x8 bit key
+     * @returns CryptoOperationData next 8x8 bit key
      */
     function keyMeshingCP(k, s, i, key, e) // <editor-fold defaultstate="collapsed">
     {
-        if ((i + 1) % 256 === 0) { // every 256 blocks
+        if ((i + 1) * this.blockSize % 1024 === 0) { // every 1024 octets
             // K[i+1] = decryptECB (K[i], C);
             k = decryptECB.call(this, k, C);
             // IV0[i+1] = encryptECB (K[i+1],IVn[i])
@@ -1638,11 +1760,11 @@
     /**
      *  Null Key Meshing in according to rfc4357 2.3.1
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method keyMeshing
      * @instance
      * @private
-     * @param {(Uint8Array|ArrayBuffer)} k 8x8 bit key 
+     * @param {(Uint8Array|CryptoOperationData)} k 8x8 bit key 
      */
     function noKeyMeshing(k) // <editor-fold defaultstate="collapsed">
     {
@@ -1654,7 +1776,7 @@
      * 
      * No padding.
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method padding
      * @instance
      * @private
@@ -1673,7 +1795,7 @@
      *  8-x.  If there’s no incomplete block, one extra block filled with      
      *  value 8 is added
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method padding
      * @instance
      * @private
@@ -1713,7 +1835,7 @@
      * 
      * Zero padding: 8-x remaining bytes are filled with zero
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method padding
      * @instance
      * @private
@@ -1739,7 +1861,7 @@
      * Bit padding: P* = P || 1 || 000...0 If there’s no incomplete block, 
      * one extra block filled with 1 || 000...0
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method padding
      * @instance
      * @private
@@ -1780,7 +1902,7 @@
      * Random padding: 8-x remaining bytes of the last block are set to      
      * random.
      * 
-     * @memberOf Gost28147
+     * @memberOf GostCipher
      * @method padding
      * @instance
      * @private
@@ -1810,7 +1932,7 @@
      * Normalized algorithm identifier common parameters:
      * 
      *  <ul>
-     *      <li><b>name</b> Algorithm name 'GOST 28147'</li>
+     *      <li><b>name</b> Algorithm name 'GOST 28147' or 'GOST R 34.12'</li>
      *      <li><b>version</b> Algorithm version, number
      *          <ul>
      *              <li><b>1989</b> Current version of standard</li>
@@ -1894,10 +2016,10 @@
      *      </li>
      *  </ul>
      * 
-     * @class Gost28147
+     * @class GostCipher
      * @param {AlgorithmIndentifier} algorithm WebCryptoAPI algorithm identifier
      */
-    function Gost28147(algorithm) // <editor-fold defaultstate="collapsed">
+    function GostCipher(algorithm) // <editor-fold defaultstate="collapsed">
     {
         // Check little endian support
         if (!littleEndian)
@@ -1907,7 +2029,9 @@
         this.blockLength = algorithm.length || 64;
         this.blockSize = this.blockLength >> 3;
 
-        this.name = (algorithm.name || 'GOST 28147') + '-' + ((algorithm.version || 1989) % 100) + '-' +
+        this.name = (algorithm.name || (algorithm.version === 1 ? 'RC2' :
+                algorithm.version === 1989 ? 'GOST 28147' : 'GOST R 34.12')) +
+                (algorithm.version > 4 ? '-' + ((algorithm.version || 1989) % 100) : '') + '-' +
                 (this.blockLength === 64 ? '' : this.blockLength + '-') +
                 ((algorithm.mode === 'MAC') ? 'MAC-' + (algorithm.macLength || this.blockLength >> 1) :
                         (algorithm.mode === 'KW' || algorithm.keyWrapping) ?
@@ -1918,8 +2042,17 @@
                         (algorithm.padding ? '-' + (algorithm.padding || (algorithm.block === 'CTR' ||
                                 algorithm.block === 'CFB' || algorithm.block === 'OFB' ? 'NO' : 'ZERO')) + 'PADDING' : '') +
                         ((algorithm.keyMeshing || 'NO') !== 'NO' ? '-CPKEYMESHING' : '')) +
+                (algorithm.procreator ? '/' + algorithm.procreator : '') +
                 (typeof algorithm.sBox === 'string' ? '/' + algorithm.sBox : '');
         switch (algorithm.version || 1989) {
+            case 1:
+                this.process = processRC2;
+                this.keySchedule = keyScheduleRC2;
+                this.blockLength = 64;
+                this.effectiveLength = algorithm.length || 32;
+                this.keySize = 8 * Math.ceil(this.effectiveLength / 8); // Max 128
+                this.blockSize = this.blockLength >> 3;
+                break;
             case 2015:
                 this.version = 2015;
                 if (this.blockLength === 64) {
@@ -2047,14 +2180,14 @@
         // Define sBox parameter
         var sBox = algorithm.sBox, sBoxName;
         if (!sBox)
-            sBox = this.version === 2015 ? sBoxes['E-DEFAULT'] : sBoxes['E-A'];
+            sBox = this.version === 2015 ? sBoxes['E-Z'] : sBoxes['E-A'];
         else if (typeof sBox === 'string') {
             sBoxName = sBox.toUpperCase();
             sBox = sBoxes[sBoxName];
             if (!sBox)
                 throw new SyntaxError('Unknown sBox name: ' + algorithm.sBox);
-        } else if (!sBox.length || sBox.length !== sBoxes['E-DEFAULT'].length)
-            throw new SyntaxError('Length of sBox must be ' + sBoxes['E-DEFAULT'].length);
+        } else if (!sBox.length || sBox.length !== sBoxes['E-Z'].length)
+            throw new SyntaxError('Length of sBox must be ' + sBoxes['E-Z'].length);
         this.sBox = sBox;
         // Initial vector
         if (algorithm.iv) {
@@ -2075,7 +2208,7 @@
         }
     } // </editor-fold>
 
-    return Gost28147;
+    return GostCipher;
 }));
 
 

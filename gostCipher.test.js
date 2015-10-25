@@ -32,26 +32,26 @@
  * 
  */
 
-(function(root, factory) {
+(function (root, factory) {
 
     if (typeof define === 'function' && define.amd) {
-        define(['gostCoding', 'gost28147'], factory);
+        define(['gostCoding', 'gostCipher'], factory);
     } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostCoding'), require('gost28147'));
+        module.exports = factory(require('gostCoding'), require('gostCipher'));
     } else {
         if (typeof importScripts !== 'undefined') {
             if (!root.onmessage)
-                root.onmessage = function(event) {
+                root.onmessage = function (event) {
                     postMessage((root[event.data.object] || root)[event.data.method].apply(event.data.object || root, event.data.args));
                 };
-            importScripts('gostCoding.js', 'gost28147.js');
+            importScripts('gostCoding.js', 'gostCipher.js');
         }
-        root.Gost28147_test = factory(root.gostCoding, root.Gost28147);
+        root.GostCipher_test = factory(root.GostCoding, root.GostCipher);
     }
 
-}(this, function(gostCoding, Gost28147) {
+}(this, function (GostCoding, GostCipher) {
 
-    var root = this;
+    var root = this, gostCoding;
 
     function println(s, h) {
         if (typeof importScripts !== 'undefined') {
@@ -73,7 +73,7 @@
         if (algorithm.iv)
             (algorithm.iv = Hex.decode(algorithm.iv));
 
-        var cipher = new Gost28147(algorithm);
+        var cipher = new GostCipher(algorithm);
         var result = 'Test ' + ' ' + ('0' + id).slice(-2) + ' ' + (cipher.name + ' ' + new Array(61).join('.')).substring(0, 60) + ' ';
         try {
             var out = Hex.encode(cipher.encrypt(Hex.decode(key), Hex.decode(input)));
@@ -99,7 +99,7 @@
         if (algorithm.iv)
             (algorithm.iv = Hex.decode(algorithm.iv));
 
-        var cipher = new Gost28147(algorithm);
+        var cipher = new GostCipher(algorithm);
         var result = 'Test ' + ' ' + ('0' + id).slice(-2) + ' ' + (cipher.name + ' ' + new Array(61).join('.')).substring(0, 60) + ' ';
         try {
             var out = Hex.encode(cipher.sign(Hex.decode(key), Hex.decode(input)));
@@ -125,18 +125,14 @@
         if (algorithm.ukm)
             (algorithm.ukm = Hex.decode(algorithm.ukm));
 
-        var cipher = new Gost28147(algorithm);
+        var cipher = new GostCipher(algorithm);
         var result = 'Test ' + ' ' + ('0' + id).slice(-2) + ' ' + (cipher.name + ' ' + new Array(61).join('.')).substring(0, 60) + ' ';
         try {
             var out = Hex.encode(cipher.wrapKey(Hex.decode(key), Hex.decode(input)));
-//            out = output; // temporary debug
             var test = 0 + (output && out.replace(/[^\-A-Fa-f0-9]/g, '').toLowerCase() !== output.toLowerCase());
             if (!test) {
                 var out = Hex.encode(cipher.unwrapKey(Hex.decode(key), Hex.decode(out)));
                 test = 0 + (out.replace(/[^\-A-Fa-f0-9]/g, '').toLowerCase() !== input.toLowerCase());
-//                var cipher2 = new Gost28147({name: 'GOST 28147-ECB', sBox: 'E-SC'});
-//                var out = Hex.encode(cipher.decrypt(Hex.decode(out), Hex.decode('34BF9806FD77DF19F2BD0E3085FF53C1E18C3B58A0CD82BDA7466D9CC259FA23')));
-//                println('pk=' + out);
                 if (!test)
                     result += 'PASSED';
                 else
@@ -155,10 +151,11 @@
      * 
      * @returns {unresolved}
      */
-    return function() {
+    return function () {
 
-        gostCoding = gostCoding || root.gostCoding;
-        Gost28147 = Gost28147 || root.Gost28147;
+        GostCoding = GostCoding || root.GostCoding;
+        gostCoding = new GostCoding();
+        GostCipher = GostCipher || root.GostCipher;
 
         var input1 = "0000000000000000";
         var output1 = "1b0bbc32cebcab42";
@@ -183,7 +180,7 @@
 
         // Basic chiper mode tests
         var tests = 0, i = 0;
-        println('GOST 28147-89 TEST', true);
+        println('GOST 28147-89/GOST R 34.12-2015 TEST', true);
 
         tests += perform(++i, {name: 'GOST 28147', sBox: 'D-TEST'},
         '546d203368656c326973652073736e62206167796967747473656865202c3d73', input1, output1);
@@ -215,6 +212,9 @@
         '546d203368656c326973652073736e62206167796967747473656865202c3d73', '0000000000000000', 'c3af96ef788667c5');
         tests += perform(++i, {name: 'GOST 28147', block: 'CTR', iv: '1234567890abcdef', sBox: 'E-A'},
         '4ef72b778f0b0bebeef4f077551cb74a927b470ad7d7f2513454569a247e989d', 'bc350e71aa11345709acde', '1bcc2282707c676fb656dc');
+        tests += perform(++i, {name: 'GOST 28147', block: 'ECB', sBox: 'E-Z'},
+        '8182838485868788898a8b8c8d8e8f80d1d2d3d4d5d6d7d8d9dadbdcdddedfd0',
+                '0102030405060708f1f2f3f4f5f6f7f8', 'ce5a5ed7e0577a5fd0cc85ce31635b8b');
 
         var gkeyBytes5 = "6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49";
         var gkeyBytes6 = "6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49";
@@ -293,46 +293,57 @@
 
         // Tests for new GOST 2015
         println();
-        println('New GOST 2015 64 bits');
+        println('GOST R 34.12-2015/64bits');
         var key64 = 'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff';
         var inp64 = '92def06b3c130a59db54c704f8189d204a98fb2e67a8024c8912409b17b57e41';
-        tests += perform(++i, {name: 'GOST 28147', version: 2015}, key64, 'fedcba9876543210', '4ee901e5c2d8ca3d');
-        tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'ECB'}, key64, inp64,
+        tests += perform(++i, {name: 'GOST R 34.12', version: 2015}, key64, 'fedcba9876543210', '4ee901e5c2d8ca3d');
+        tests += perform(++i, {name: 'GOST R 34.12', version: 2015, block: 'ECB'}, key64, inp64,
                 '2b073f0494f372a0de70e715d3556e4811d8d9e9eacfbc1e7c68260996c67efb');
-        tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'CTR', iv: '12345678'}, key64, inp64,
+        tests += perform(++i, {name: 'GOST R 34.12', version: 2015, block: 'CTR', iv: '12345678'}, key64, inp64,
                 '4e98110c97b7b93c3e250d93d6e85d69136d868807b2dbef568eb680ab52a12d');
-        tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'CBC', iv: '1234567890abcdef234567890abcdef134567890abcdef12'},
+        tests += perform(++i, {name: 'GOST R 34.12', version: 2015, block: 'CBC', iv: '1234567890abcdef234567890abcdef134567890abcdef12'},
         key64, inp64, '96d1b05eea683919aff76129abb937b95058b4a1c4bc001920b78b1a7cd7e667');
-        tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'CFB', iv: '1234567890abcdef234567890abcdef1'},
+        tests += perform(++i, {name: 'GOST R 34.12', version: 2015, block: 'CFB', iv: '1234567890abcdef234567890abcdef1'},
         key64, inp64, 'db37e0e266903c830d46644c1f9a089c24bdd2035315d38bbcc0321421075505');
-        tests += perform(++i, {name: 'GOST 28147', version: 2015, block: 'OFB', iv: '1234567890abcdef234567890abcdef1'},
+        tests += perform(++i, {name: 'GOST R 34.12', version: 2015, block: 'OFB', iv: '1234567890abcdef234567890abcdef1'},
         key64, inp64, 'db37e0e266903c830d46644c1f9a089ca0f83062430e327ec824efb8bd4fdb05');
-        tests += performMac(++i, {name: 'GOST 28147', version: 2015, mode: 'MAC'},
+        tests += performMac(++i, {name: 'GOST R 34.12', version: 2015, mode: 'MAC'},
         key64, inp64, '154e7210');
 
         println();
-        println('New GOST 2015 128 bits');
+        println('GOST R 34.12-2015/128bits');
         var key128 = '8899aabbccddeeff0011223344556677fedcba98765432100123456789abcdef';
         var inp128 = '1122334455667700ffeeddccbbaa998800112233445566778899aabbcceeff0a112233445566778899aabbcceeff0a002233445566778899aabbcceeff0a0011';
-        tests += perform(++i, {name: 'GOST 28147', version: 2015, length: 128}, key128,
+        tests += perform(++i, {name: 'GOST R 34.12', version: 2015, length: 128}, key128,
                 '1122334455667700ffeeddccbbaa9988', '7f679d90bebc24305a468d42b9d4edcd');
-        tests += perform(++i, {name: 'GOST 28147', version: 2015, length: 128}, key128, inp128,
+        tests += perform(++i, {name: 'GOST R 34.12', version: 2015, length: 128}, key128, inp128,
                 '7f679d90bebc24305a468d42b9d4edcdb429912c6e0032f9285452d76718d08bf0ca33549d247ceef3f5a5313bd4b157d0b09ccde830b9eb3a02c4c5aa8ada98');
-        tests += perform(++i, {name: 'GOST 28147', version: 2015, length: 128, block: 'CTR', iv: '1234567890abcef0'}, key128, inp128,
+        tests += perform(++i, {name: 'GOST R 34.12', version: 2015, length: 128, block: 'CTR', iv: '1234567890abcef0'}, key128, inp128,
                 'f195d8bec10ed1dbd57b5fa240bda1b885eee733f6a13e5df33ce4b33c45dee4a5eae88be6356ed3d5e877f13564a3a5cb91fab1f20cbab6d1c6d15820bdba73');
-        tests += perform(++i, {name: 'GOST 28147', version: 2015, length: 128, block: 'OFB',
+        tests += perform(++i, {name: 'GOST R 34.12', version: 2015, length: 128, block: 'OFB',
             iv: '1234567890abcef0a1b2c3d4e5f0011223344556677889901213141516171819'}, key128, inp128,
                 '81800a59b1842b24ff1f795e897abd95ed5b47a7048cfab48fb521369d9326bf66a257ac3ca0b8b1c80fe7fc10288a13203ebbc066138660a0292243f6903150');
-        tests += perform(++i, {name: 'GOST 28147', version: 2015, length: 128, block: 'CBC',
+        tests += perform(++i, {name: 'GOST R 34.12', version: 2015, length: 128, block: 'CBC',
             iv: '1234567890abcef0a1b2c3d4e5f0011223344556677889901213141516171819'}, key128, inp128,
                 '689972d4a085fa4d90e52e3d6d7dcc272826e661b478eca6af1e8e448d5ea5acfe7babf1e91999e85640e8b0f49d90d0167688065a895c631a2d9a1560b63970');
-        tests += perform(++i, {name: 'GOST 28147', version: 2015, length: 128, block: 'CFB',
+        tests += perform(++i, {name: 'GOST R 34.12', version: 2015, length: 128, block: 'CFB',
             iv: '1234567890abcef0a1b2c3d4e5f0011223344556677889901213141516171819'}, key128, inp128,
                 '81800a59b1842b24ff1f795e897abd95ed5b47a7048cfab48fb521369d9326bf79f2a8eb5cc68d38842d264e97a238b54ffebecd4e922de6c75bd9dd44fbf4d1');
-        tests += performMac(++i, {name: 'GOST 28147', version: 2015, length: 128, mode: 'MAC'}, key128, inp128,
+        tests += performMac(++i, {name: 'GOST R 34.12', version: 2015, length: 128, mode: 'MAC'}, key128, inp128,
                 '336f4d296059fbe3');
 
         println();
+        println('RC2');
+        tests += perform(++i, {name: 'RC2', version: 1, length: 63}, '0000000000000000', '0000000000000000', 'ebb773f993278eff');
+        tests += perform(++i, {name: 'RC2', version: 1, length: 64}, 'ffffffffffffffff', 'ffffffffffffffff', '278b27e42e2f0d49');
+        tests += perform(++i, {name: 'RC2', version: 1, length: 64}, '3000000000000000', '1000000000000001', '30649edf9be7d2c2');
+        tests += perform(++i, {name: 'RC2', version: 1, length: 64}, '88', '0000000000000000', '61a8a244adacccf0');
+        tests += perform(++i, {name: 'RC2', version: 1, length: 64}, '88bca90e90875a', '0000000000000000', '6ccf4308974c267f');
+        tests += perform(++i, {name: 'RC2', version: 1, length: 64}, '88bca90e90875a7f0f79c384627bafb2', '0000000000000000', '1a807d272bbe5db1');
+        tests += perform(++i, {name: 'RC2', version: 1, length: 128}, '88bca90e90875a7f0f79c384627bafb2', '0000000000000000', '2269552ab0f85ca6');
+        tests += perform(++i, {name: 'RC2', version: 1, length: 129}, '88bca90e90875a7f0f79c384627bafb216f80a6f85920584c42fceb0be255daf1e', '0000000000000000', '5b78d3a43dfff1f1');
+        println();
+
         println('TOTAL ' + (tests ? tests + ' ERRORS' : 'OK'));
         println();
 
