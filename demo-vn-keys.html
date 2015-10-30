@@ -1,8 +1,9 @@
+
 <!DOCTYPE html>
 <!-- saved from url=(0014)about:internet -->
 <html>
     <head>
-        <title>WebCrypto GOST: CryptoPro PrivateKey Export/Import</title>
+        <title>WebCrypto GOST: ViPNet PrivateKey Export/Import</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
         <script src="scripts/prettify/prettify.js"></script>
@@ -21,15 +22,15 @@
     </head>
     <body>
         <div class="page">
-            <h1><a href="index.html">WebCrypto GOST</a>: CryptoPro PrivateKey Export/Import</h1>
-            <p class="note">Demonstration of decoding and conversion CryptoPro container files. Check <input id="preview" type="checkbox"/> to preview sources</p>
+            <h1><a href="index.html">WebCrypto GOST</a>: ViPNet PrivateKey Export/Import</h1>
+            <p class="note">Demonstration of decoding and conversion ViPNet container files. Check <input id="preview" type="checkbox"/> to preview sources</p>
             <article>
-                <h2>Export CryptoPro PrivateKey</h2>
+                <h2>Export ViPNet PrivateKey</h2>
                 <section>
-                    <p>Find and select all PrivateKey files from HDImageStore or FloppyStore: "header.key", "name.key", "primary.key", "masks.key", "primary2.key", "masks2.key"</p>
+                    <p>Find and select ViPNet container file</p>
                     <div class="fileButton">
-                        <button>Load Container files...</button>
-                        <input id="keyStoreFiles" type="file" multiple accept=".key" onchange="readStoreFiles(this)"/>
+                        <button>Load Container file...</button>
+                        <input id="keyStoreFiles" type="file" onchange="readStoreFile(this)"/>
                     </div>
                     <button id="exportPFXButton" disabled onclick="hideMethod();
                             exportPFX()" 
@@ -46,49 +47,20 @@
                     <input id="showContainerFiles" type="checkbox" onchange="if (this.checked)
                                 containerFiles.classList.remove('hidden')
                             else
-                                containerFiles.classList.add('hidden');"><label for="showContainerFiles">Show the contents of PrivateKey container files</label>
+                                containerFiles.classList.add('hidden');"><label for="showContainerFiles">Show the contents of container file</label>
                     <div id="containerFiles" class="hidden">
-                        <span class="label"><strong>header.key</strong></span>
-                        <pre id="headerKey" contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
-                        <button onclick="gostViewer.openASN1(headerKey)">View ASN.1</button>
-                        <button onclick="gostViewer.openSyntax(headerKey, 'GostKeyContainer')">View JSON</button>
-                        <button onclick="saveFile('header.key');">Save File</button>
-
-                        <span class="label"><strong>name.key</strong></span>
-                        <pre id="nameKey"  contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
-                        <button onclick="gostViewer.openASN1(nameKey)">View ASN.1</button>
-                        <button onclick="gostViewer.openSyntax(nameKey, 'GostKeyContainerName')">View JSON</button>
-                        <button onclick="saveFile('name.key');">Save File</button>
-
-                        <span class="label"><strong>primary.key</strong></span>
-                        <pre id="primaryKey" contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
-                        <button onclick="gostViewer.openASN1(primaryKey)">View ASN.1</button>
-                        <button onclick="gostViewer.openSyntax(primaryKey, 'GostPrivateKeys')">View JSON</button>
-                        <button onclick="saveFile('primary.key');">Save File</button>
-
-                        <span class="label"><strong>masks.key</strong></span>
-                        <pre id="masksKey" contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
-                        <button onclick="gostViewer.openASN1(masksKey)">View ASN.1</button>
-                        <button onclick="gostViewer.openSyntax(masksKey, 'GostPrivateMasks')">View JSON</button>
-                        <button onclick="saveFile('masks.key');">Save File</button>
-
-                        <span class="label"><strong>primary2.key</strong></span>
-                        <pre id="primary2Key" contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
-                        <button onclick="gostViewer.openASN1(primary2Key)">View ASN.1</button>
-                        <button onclick="gostViewer.openSyntax(primary2Key, 'GostPrivateKeys')">View JSON</button>
-                        <button onclick="saveFile('primary2.key');">Save File</button>
-
-                        <span class="label"><strong>masks2.key</strong></span>
-                        <pre id="masks2Key" contenteditable class="encoded" onblur="checkStoreFiles()"></pre>
-                        <button onclick="gostViewer.openASN1(masks2Key)">View ASN.1</button>
-                        <button onclick="gostViewer.openSyntax(masks2Key, 'GostPrivateMasks')">View JSON</button>
-                        <button onclick="saveFile('masks2.key');">Save File</button>
+                        <span class="label"><strong>Container file</strong></span>
+                        <pre id="containerFile" contenteditable class="encoded" onblur="checkStoreFile()"></pre>
+                        <pre id="containerFileHeader" hidden></pre>
+                        <button onclick="saveFile();">Save File</button>
+                        <button onclick="gostViewer.openASN1(containerFileHeader)">View ASN.1</button>
+                        <button onclick="gostViewer.openSyntax(containerFileHeader, 'ViPNetInfo')">View JSON</button>
                         <p></p>
                     </div>
                 </section>
-                <h2>Import CryptoPro PrivateKey</h2>
+                <h2>Import ViPNet PrivateKey</h2>
                 <section>
-                    <p>Complete Private Key and Certificate input for import to the CryptoPro PrivateKey container</p>
+                    <p>Complete Private Key and Certificate input for import to the ViPNet PrivateKey container</p>
                     <button id="generateButton" onclick="hideMethod();
                             generatePrivateKey()" 
                             onmouseover="showMethod(this, generatePrivateKeyMethod.textContent)" 
@@ -104,8 +76,6 @@
                             onmouseover="showMethod(this, importPrivateKeyMethod.textContent)" 
                             onmouseout="hideMethod()">Import Key and Certificate</button>
                     <p id="importMessage"></p>
-                    <span class="label"><strong>Container Name</strong></span>
-                    <pre contenteditable id="containerName" class="encoded" onblur="checkCertAndKey()"></pre>
                     <span class="label"><strong>Certificate</strong></span>
                     <pre contenteditable id="certificate" class="encoded" onblur="checkCertAndKey()"></pre>
                     <div class="fileButton">
@@ -125,9 +95,9 @@
                     <button onclick="gostViewer.openSyntax(privateKey, 'PrivateKeyInfo')">View JSON</button>
 
                 </section>
-                <h2>Change CryptoPro PrivateKey password</h2>
+                <h2>Change ViPNet PrivateKey password</h2>
                 <section>
-                    <p>Enter the new password to encrypt the CryptoPro PrivateKey</p>
+                    <p>Enter the new password to encrypt the ViPNet PrivateKey</p>
                     <label for="newPassword"><strong>New PrivateKey password</strong></label>
                     <input type="password" class="value" id="newPassword"/>
                     <button id="changePasswordButton" disabled onclick="hideMethod();
@@ -141,54 +111,38 @@
         <script id="exportPrivateKeyMethod">
             function exportPrivateKey() {
                 // Create key container object with files
-                var keyContainer = new gostCrypto.keys.CryptoProKeyContainer({
-                    header: headerKey.textContent,
-                    name: nameKey.textContent,
-                    primary: primaryKey.textContent,
-                    masks: masksKey.textContent,
-                    primary2: primary2Key.textContent,
-                    masks2: masks2Key.textContent
-                });
-                // Verify key container and password
-                return keyContainer.verify(password.value).then(function () {
-                    // Container name
-                    containerName.textContent = keyContainer.getContainerName();
-                    // Get certificate from container
-                    return keyContainer.getCertificate();
-                }).then(function (cert) {
-                    certificate.textContent = cert.encode('PEM');
+                try {
+                    var keyContainer = new gostCrypto.keys.ViPNetContainer(containerFile.textContent);
                     // Get private key from container
-                    return keyContainer.getKey(password.value);
-                }).then(function (key) {
-                    privateKey.textContent = key.encode('PEM');
-                    checkCertAndKey();
-                    message.innerHTML = '<span>Success: The private key has been exported.</span>';
-                    passwordMessage.innerHTML = '';
-                }).catch(function (e) {
+                    return keyContainer.getKey(password.value).then(function (key) {
+                        privateKey.textContent = key.encode('PEM');
+                        // Get certificate from container
+                        return keyContainer.getCertificate();
+                    }).then(function (cert) {
+                        certificate.textContent = cert ? cert.encode('PEM') : '';
+                        checkCertAndKey();
+                        message.innerHTML = '<span>Success: The private key has been exported.</span>';
+                        passwordMessage.innerHTML = '';
+                    }).catch(function (e) {
+                        alert(e.message);
+                    });
+                } catch (e) {
                     alert(e.message);
-                });
+                }
             }
         </script>
         <script id="importPrivateKeyMethod">
             function importPrivateKey() {
                 // Create empty key container 
-                var keyContainer = new gostCrypto.keys.CryptoProKeyContainer();
+                var keyContainer = new gostCrypto.keys.ViPNetContainer();
                 // Add key to conatiner
                 return keyContainer.setKey(privateKey.textContent, password.value).then(function () {
                     // Add certificate to container
                     return keyContainer.setCertificate(certificate.textContent);
                 }).then(function () {
-                    // Set container name
-                    keyContainer.setContainerName(containerName.textContent);
-                    // Generate files
-                    var files = keyContainer.encode('PEM');
-                    headerKey.textContent = files.header;
-                    nameKey.textContent = files.name;
-                    primaryKey.textContent = files.primary;
-                    masksKey.textContent = files.masks;
-                    primary2Key.textContent = files.primary2;
-                    masks2Key.textContent = files.masks2;
-                    checkStoreFiles();
+                    // Generate file
+                    containerFile.textContent = keyContainer.encode('PEM');
+                    checkStoreFile();
                     importMessage.innerHTML = '<span>Success: The private key has been imported.</span>';
                     passwordMessage.innerHTML = '';
                 }).catch(function (e) {
@@ -199,14 +153,12 @@
         <script id="generatePrivateKeyMethod">
             function generatePrivateKey() {
                 // Create empty key container 
-                var keyContainer = new gostCrypto.keys.CryptoProKeyContainer();
-                if (!containerName.textContent)
-                    containerName.textContent = 'Alias';
+                var keyContainer = new gostCrypto.keys.ViPNetContainer();
                 // Generate private key and certificate
                 return keyContainer.generate({
                     subject: {
                         countryName: 'RU',
-                        commonName: containerName.textContent
+                        commonName: 'Alias'
                     },
                     attributes: {
                         extensionRequest: {
@@ -215,17 +167,9 @@
                         }
                     }
                 }, password.value).then(function (req) {
-                    // Set container name
-                    keyContainer.setContainerName(containerName.textContent);
-                    // Generate files
-                    var files = keyContainer.encode('PEM');
-                    headerKey.textContent = files.header;
-                    nameKey.textContent = files.name;
-                    primaryKey.textContent = files.primary;
-                    masksKey.textContent = files.masks;
-                    primary2Key.textContent = files.primary2;
-                    masks2Key.textContent = files.masks2;
-                    checkStoreFiles();
+                    // Generate file
+                    containerFile.textContent = keyContainer.encode('PEM');
+                    checkStoreFile();
                     return exportPrivateKey();
                 }).then(function () {
                     importMessage.innerHTML = '<span>Success: The private key has been generated.</span>';
@@ -238,24 +182,11 @@
         <script id="changeKeyPasswordMethod">
             function changeKeyPassword() {
                 // Change password
-                // Create key container object with files
-                var keyContainer = new gostCrypto.keys.CryptoProKeyContainer({
-                    header: headerKey.textContent,
-                    name: nameKey.textContent,
-                    primary: primaryKey.textContent,
-                    masks: masksKey.textContent,
-                    primary2: primary2Key.textContent,
-                    masks2: masks2Key.textContent
-                });
+                // Create key container object with file
+                var keyContainer = new gostCrypto.keys.ViPNetContainer(containerFile.textContent);
                 return keyContainer.changePassword(password.value, newPassword.value).then(function () {
                     // Generate files
-                    var files = keyContainer.encode('PEM');
-                    headerKey.textContent = files.header;
-                    nameKey.textContent = files.name;
-                    primaryKey.textContent = files.primary;
-                    masksKey.textContent = files.masks;
-                    primary2Key.textContent = files.primary2;
-                    masks2Key.textContent = files.masks2;
+                    containerFile.textContent = keyContainer.encode('PEM');
                     password.value = newPassword.value;
                     passwordMessage.innerHTML = '<span>Success: The private key password has been changed</span>';
                 }).catch(function (e) {
@@ -265,29 +196,18 @@
         </script>
         <script id="exportPFXMethod">
             function exportPFX() {
-                // Create key container object with files
-                var keyContainer = new gostCrypto.keys.CryptoProKeyContainer({
-                    header: headerKey.textContent,
-                    name: nameKey.textContent,
-                    primary: primaryKey.textContent,
-                    masks: masksKey.textContent,
-                    primary2: primary2Key.textContent,
-                    masks2: masks2Key.textContent
-                });
+                // Create key container object with file
+                var keyContainer = new gostCrypto.keys.ViPNetContainer(containerFile.textContent);
                 // Create empty PFX key store
                 var keyStore = new gostCrypto.keys.KeyStore(), privateKey;
-                // Verify password
-                keyContainer.verify(password.value).then(function () {
-                    // Get private key from container
-                    return keyContainer.getKey(password.value);
-                }).then(function (key) {
+                // Get private key from container
+                return keyContainer.getKey(password.value).then(function (key) {
                     privateKey = key;
                     // Get certificate from container
                     return keyContainer.getCertificate();
                 }).then(function (cert) {
                     // Set key store entry
-                    var alias = keyContainer.getContainerName();
-                    keyStore.setEntry(alias, {
+                    keyStore.setEntry('key', {
                         key: privateKey,
                         certs: [cert]
                     });
@@ -305,14 +225,11 @@
         <script id="importPFXMethod">
             function importPFX(content) {
                 // Create empty key container 
-                var keyContainer = new gostCrypto.keys.CryptoProKeyContainer();
+                var keyContainer = new gostCrypto.keys.ViPNetContainer();
                 // Load PFX key store
                 var keyStore = new gostCrypto.keys.KeyStore(), keyEntry;
                 return keyStore.load(content, password.value).then(function () {
-                    // Container name
-                    var alias = keyStore.aliases()[0];
-                    keyContainer.setContainerName(alias);
-                    keyEntry = keyStore.getEntry(alias);
+                    keyEntry = keyStore.getEntry(keyStore.aliases()[0]);
                     // Add key to conatiner
                     if (keyEntry.key)
                         return keyContainer.setKey(keyEntry.key, password.value);
@@ -321,15 +238,9 @@
                     if (keyEntry.certs)
                         return keyContainer.setCertificate(keyEntry.certs[0]);
                 }).then(function () {
-                    // Generate files
-                    var files = keyContainer.encode('PEM');
-                    headerKey.textContent = files.header;
-                    nameKey.textContent = files.name;
-                    primaryKey.textContent = files.primary;
-                    masksKey.textContent = files.masks;
-                    primary2Key.textContent = files.primary2;
-                    masks2Key.textContent = files.masks2;
-                    checkStoreFiles();
+                    // Generate file
+                    containerFile.textContent = keyContainer.encode('PEM');
+                    checkStoreFile();
                     return exportPrivateKey();
                 }).then(function () {
                     importMessage.innerHTML = '<span>Success: The PFX file has been imported.</span>';
@@ -340,9 +251,18 @@
             }
         </script>
         <script>
-            function saveFile(filename) {
-                var name = filename.replace('.key', 'Key');
-                saveAs(new Blob([gostCrypto.coding.Base64.decode(document.getElementById(name).textContent)],
+            // Generate new alias
+            function generateUUID() {
+                var r = new Uint8Array(getSeed(16)), s = '';
+                for (var i = 0; i < 16; i++)
+                    s += ('00' + r[i].toString(16)).slice(-2);
+                return s.substr(0, 8) + '-' + s.substr(8, 4) + '-4' + s.substr(13, 3) +
+                        '-9' + s.substr(17, 3) + '-' + s.substr(20, 12);
+            }
+
+            function saveFile() {
+                var filename = generateUUID();
+                saveAs(new Blob([gostCrypto.coding.Base64.decode(containerFile.textContent)],
                         {type: 'application/octet-binary'}), filename);
             }
 
@@ -350,29 +270,17 @@
                 saveAs(new Blob([content], {type: 'application/octet-binary'}), filename);
             }
 
-            function checkStoreFiles() {
-                var exists = [], absents = [];
-                ['headerKey', 'nameKey', 'primaryKey', 'masksKey', 'primary2Key', 'masks2Key'].forEach(function (name) {
-                    var filename = name.replace('Key', '.key');
-                    if (document.getElementById(name).textContent === '')
-                        absents.push(filename);
-                    else
-                        exists.push(filename);
-                });
+            function checkStoreFile() {
                 var text;
-                if (exists.length === 0) {
-                    text = 'No container files loaded.';
-                    exportButton.setAttribute('disabled', true);
-                    exportPFXButton.setAttribute('disabled', true);
-                    changePasswordButton.setAttribute('disabled', true);
-                } else if (absents.length > 0) {
-                    text = 'Loaded files: "<strong>' + exists.join('</strong>", "<strong>') + '</strong>"' +
-                            '. It remains to load files : "<strong>' + absents.join('</strong>", "<strong>') + '</strong>".';
+                if (containerFile.textContent === '') {
+                    text = 'Container file is not loaded.';
                     exportButton.setAttribute('disabled', true);
                     exportPFXButton.setAttribute('disabled', true);
                     changePasswordButton.setAttribute('disabled', true);
                 } else {
-                    text = 'All the required files are loaded and ready to export.';
+                    var buffer = gostCrypto.coding.Base64.decode(containerFile.textContent);
+                    containerFileHeader.textContent = gostCrypto.coding.Base64.encode(new Uint8Array(buffer, 16, buffer.byteLength - 16));
+                    text = 'Container file loader and ready to export.';
                     exportButton.removeAttribute('disabled');
                     exportPFXButton.removeAttribute('disabled');
                     changePasswordButton.removeAttribute('disabled');
@@ -382,7 +290,7 @@
 
             function checkCertAndKey() {
                 var text;
-                if (certificate.textContent === '' || privateKey.textContent === '' || containerName.textContent === '') {
+                if (certificate.textContent === '' || privateKey.textContent === '') {
                     importButton.setAttribute('disabled', true);
                     text = 'Input container name, load X.509 certificate and PKCS#8 private key files';
                 } else {
@@ -392,24 +300,15 @@
                 importMessage.innerHTML = '<span>' + text + '</span>';
             }
 
-            function readStoreFiles(input) {
-                var count = input.files.length;
-                for (var i = 0, n = input.files.length; i < n; i++) {
-                    (function (file) {
-                        var reader = new FileReader(),
-                                name = file.name.replace('.key', 'Key');
-                        reader.onload = function (e) {
-                            document.getElementById(name).textContent =
-                                    gostCrypto.coding.Base64.encode(e.target.result);
-                            count--;
-                            if (!count) {
-                                checkStoreFiles();
-                                input.value = '';
-                            }
-                        };
-                        reader.readAsArrayBuffer(file);
-                    })(input.files[i]);
-                }
+            function readStoreFile(input) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    containerFile.textContent = gostCrypto.coding.Base64.encode(e.target.result);
+                    checkStoreFile();
+                    input.value = '';
+                };
+                if (input.files.length > 0)
+                    reader.readAsArrayBuffer(input.files[0]);
             }
 
             function readPFXFile(input) {

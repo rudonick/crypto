@@ -1,6 +1,6 @@
 /**
  * @file Coding algorithms: Base64, Hex, Int16, Chars, BER and PEM
- * @version 1.70
+ * @version 1.73
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -456,38 +456,8 @@
      */
     var BER = (function () { // <editor-fold defaultstate="collapsed">
 
-        var BERtypes = {
-            0x00: 'EOC',
-            0x01: 'BOOLEAN',
-            0x02: 'INTEGER',
-            0x03: 'BIT STRING',
-            0x04: 'OCTET STRING',
-            0x05: 'NULL',
-            0x06: 'OBJECT IDENTIFIER',
-            0x07: 'ObjectDescriptor',
-            0x08: 'EXTERNAL',
-            0x09: 'REAL',
-            0x0A: 'ENUMERATED',
-            0x0B: 'EMBEDDED PDV',
-            0x0C: 'UTF8String',
-            0x10: 'SEQUENCE',
-            0x11: 'SET',
-            0x12: 'NumericString',
-            0x13: 'PrintableString', // ASCII subset
-            0x14: 'TeletexString', // aka T61String
-            0x15: 'VideotexString',
-            0x16: 'IA5String', // ASCII
-            0x17: 'UTCTime',
-            0x18: 'GeneralizedTime',
-            0x19: 'GraphicString',
-            0x1A: 'VisibleString', // ASCII subset
-            0x1B: 'GeneralString',
-            0x1C: 'UniversalString',
-            0x1E: 'BMPString'
-        };
-
         // Predefenition block
-        function encodeBER(source, format) {
+        function encodeBER(source, format, onlyContent) {
             // Correct primitive type
             var object = source.object;
             if (object === undefined)
@@ -583,7 +553,7 @@
                     case 0x02: // INTEGER
                     case 0x0a: // ENUMIRATED
                         content = Int16.decode(
-                                typeof object === 'number' ? '0x' + object.toString(16) : object);
+                                typeof object === 'number' ? object.toString(16) : object);
                         break;
                     case 0x03: // BIT STRING
                         if (typeof object === 'string') {
@@ -731,6 +701,9 @@
                 source.tagNumber = tagNumber = source.tagNumber || 0;
             source.content = content;
 
+            if (onlyContent)
+                return content;
+
             // Create header
             // tagNumber
             var ha = [], first = tagClass === 3 ? 0xC0 : tagClass === 2 ? 0x80 :
@@ -773,13 +746,6 @@
             }
             var header = source.header = new Uint8Array(ha);
 
-            // type name
-            var typeName = tagClass === 1 ? 'Application_' + tagNumber :
-                    tagClass === 2 ? '[' + tagNumber.toString() + ']' : // Context
-                    tagClass === 3 ? 'Private_' + tagNumber :
-                    BERtypes[tagNumber] || "Universal_" + tagNumber.toString();
-            source.typeName = typeName;
-
             // Result - complete buffer
             var block = new Uint8Array(header.length + content.length);
             block.set(header, 0);
@@ -787,77 +753,97 @@
             return block;
         }
 
-        function decodeBER(d, offset) {
+        function decodeBER(source, offset) {
 
             // start pos
-            var pos = offset || 0;
+            var pos = offset || 0, start = pos;
+            var tagNumber, tagClass, tagConstructed,
+                    content, header, buffer, sub, len;
 
-            // Read tag
-            var buf = d[pos++],
-                    tagClass = buf >> 6,
-                    constructed = (buf & 0x20) !== 0;
-            var tagNumber = buf & 0x1f;
-            if (tagNumber === 0x1f) { // long tag
-                tagNumber = 0;
-                do {
-                    if (tagNumber > 0x1fffffffffff80)
-                        throw new DataError('Convertor not supported tag number more then (2^53 - 1) at position ' + offset);
-                    buf = d[pos++];
-                    tagNumber = (tagNumber << 7) + (buf & 0x7f);
-                } while (buf & 0x80);
-            }
+            if (source.object) {
+                // Ready from source
+                tagNumber = source.tagNumber;
+                tagClass = source.tagClass;
+                tagConstructed = source.tagConstructed;
+                content = source.content;
+                header = source.header;
+                buffer = source.object instanceof CryptoOperationData ?
+                        new Uint8Array(source.object) : null;
+                sub = source.object instanceof Array ? source.object : null;
+                len = buffer && buffer.length || null;
+            } else {
+                // Decode header
+                var d = source;
 
-            // Read len        
-            buf = d[pos++];
-            var len = buf & 0x7f;
-            if (len !== buf) {
-                if (len > 6) // no reason to use Int10, as it would be a huge buffer anyways
-                    throw new DataError('Length over 48 bits not supported at position ' + offset);
-                if (len === 0)
-                    len = null; // undefined
-                else {
-                    buf = 0;
-                    for (var i = 0; i < len; ++i)
-                        buf = (buf << 8) + d[pos++];
-                    len = buf;
+                // Read tag
+                var buf = d[pos++];
+                tagNumber = buf & 0x1f;
+                tagClass = buf >> 6;
+                tagConstructed = (buf & 0x20) !== 0;
+                if (tagNumber === 0x1f) { // long tag
+                    tagNumber = 0;
+                    do {
+                        if (tagNumber > 0x1fffffffffff80)
+                            throw new DataError('Convertor not supported tag number more then (2^53 - 1) at position ' + offset);
+                        buf = d[pos++];
+                        tagNumber = (tagNumber << 7) + (buf & 0x7f);
+                    } while (buf & 0x80);
                 }
-            }
 
-            var start = pos, sub = null;
-
-            if (constructed) {
-                // must have valid content
-                sub = [];
-                if (len !== null) {
-                    // definite length
-                    var end = start + len;
-                    while (pos < end) {
-                        var s = decodeBER(d, pos);
-                        sub.push(s);
-                        pos += s.header.length + s.content.length;
+                // Read len        
+                buf = d[pos++];
+                len = buf & 0x7f;
+                if (len !== buf) {
+                    if (len > 6) // no reason to use Int10, as it would be a huge buffer anyways
+                        throw new DataError('Length over 48 bits not supported at position ' + offset);
+                    if (len === 0)
+                        len = null; // undefined
+                    else {
+                        buf = 0;
+                        for (var i = 0; i < len; ++i)
+                            buf = (buf << 8) + d[pos++];
+                        len = buf;
                     }
-                    if (pos !== end)
-                        throw new DataError('Content size is not correct for container starting at offset ' + start);
-                } else {
-                    // undefined length
-                    try {
-                        for (; ; ) {
+                }
+
+                start = pos;
+                sub = null;
+
+                if (tagConstructed) {
+                    // must have valid content
+                    sub = [];
+                    if (len !== null) {
+                        // definite length
+                        var end = start + len;
+                        while (pos < end) {
                             var s = decodeBER(d, pos);
-                            pos += s.header.length + s.content.length;
-                            if (s.tagClass === 0x00 && s.tagNumber === 0x00)
-                                break;
                             sub.push(s);
+                            pos += s.header.length + s.content.length;
                         }
-                        len = pos - start;
-                    } catch (e) {
-                        throw new DataError('Exception ' + e + ' while decoding undefined length content at offset ' + start);
+                        if (pos !== end)
+                            throw new DataError('Content size is not correct for container starting at offset ' + start);
+                    } else {
+                        // undefined length
+                        try {
+                            for (; ; ) {
+                                var s = decodeBER(d, pos);
+                                pos += s.header.length + s.content.length;
+                                if (s.tagClass === 0x00 && s.tagNumber === 0x00)
+                                    break;
+                                sub.push(s);
+                            }
+                            len = pos - start;
+                        } catch (e) {
+                            throw new DataError('Exception ' + e + ' while decoding undefined length content at offset ' + start);
+                        }
                     }
                 }
+
+                // Header and content
+                header = new Uint8Array(d.buffer, offset, start - offset);
+                content = new Uint8Array(d.buffer, start, len);
+                buffer = content;
             }
-            var object = '',
-                    header = new Uint8Array(d.buffer, offset, start - offset),
-                    content = new Uint8Array(d.buffer, start, len),
-                    buffer = content;
 
             // Constructed types - check for string concationation
             if (sub !== null && tagClass === 0) {
@@ -897,12 +883,13 @@
                                 buffer.set(s.content, j);
                             j += s.content.length - k;
                         }
-                        constructed = false; // follow not required
+                        tagConstructed = false; // follow not required
                         sub = null;
                         break;
                 }
             }
             // Primitive types
+            var object = '';
             if (sub === null) {
                 if (len === null)
                     throw new DataError('Invalid tag with undefined length at offset ' + start);
@@ -1026,20 +1013,13 @@
             } else
                 object = sub;
 
-            // type name
-            var typeName = tagClass === 1 ? 'Application_' + tagNumber :
-                    tagClass === 2 ? '[' + tagNumber.toString() + ']' : // Context
-                    tagClass === 3 ? 'Private_' + tagNumber :
-                    BERtypes[tagNumber] || "Universal_" + tagNumber.toString();
-
             // result
             return {
-                tagConstructed: constructed,
+                tagConstructed: tagConstructed,
                 tagClass: tagClass,
                 tagNumber: tagNumber,
                 header: header,
                 content: content,
-                typeName: typeName,
                 object: object
             };
         }
@@ -1073,10 +1053,11 @@
              * @memberOf GostCoding.BER
              * @param {Object} object Object to encoding
              * @param {string} format Encoding rule: 'DER' or 'CER', default 'DER'
+             * @param {boolean} onlyContent Encode content only, without header
              * @returns {CryptoOperationData} BER encoded data
              */
-            encode: function (object, format) {
-                return encodeBER(object, format).buffer;
+            encode: function (object, format, onlyContent) {
+                return encodeBER(object, format, onlyContent).buffer;
             },
             /**
              * BER.encode(data) convert ASN.1 format CryptoOperationData data to javascript object<br><br>
@@ -1095,11 +1076,11 @@
              *      <li>UTCTime, GeneralizedTime - Date</li>
              *  </ul>
              * @memberOf GostCoding.BER
-             * @param {CryptoOperationData} data Binary data to decode
+             * @param {(CryptoOperationData|GostCoding.BER)} data Binary data to decode
              * @returns {Object} Javascript object with result of decoding
              */
             decode: function (data) {
-                return decodeBER(new Uint8Array(buffer(data)), 0);
+                return decodeBER(data.object ? data : new Uint8Array(buffer(data)), 0);
             }
         }; // </editor-fold>
     })();
@@ -1180,15 +1161,15 @@
      */
     GostCoding.prototype.PEM = PEM;
 
-    /**
-     * Coding algorithms: Base64, Hex, Int16, Chars, BER and PEM
-     * 
-     * @memberOf gostCrypto
-     * @type GostCoding
-     */
-     gostCrypto.coding = new GostCoding();
+    if (gostCrypto)
+        /**
+         * Coding algorithms: Base64, Hex, Int16, Chars, BER and PEM
+         * 
+         * @memberOf gostCrypto
+         * @type GostCoding
+         */
+        gostCrypto.coding = new GostCoding();
 
     return GostCoding;
 
 }));
-

@@ -12,7 +12,7 @@
             <h1><a href="index.html">WebCrypto GOST</a> Library</h1>
             <p class="note">Pure Javascript implementation of WebCrypto API interfaces and Public Key 
                 Infrastructure for GOST algorithms (Russian Cryptographic Standards)</p>
-            <p class="note">Current version 1.70</p>
+            <p class="note">Current version 1.73</p>
             <article>
                 <h2>Download</h2>
                 <section>
@@ -34,7 +34,7 @@
                         <li><a href="doc/SubtleCrypto.html">WebCrypto API</a> basic cryptographic operations JavaScript API</li>
                         <li><a href="doc/GostCert.html">Public Key Infrastructure</a> using X.509 provides facilities for handling certificates, CRLs, etc.</li>
                         <li><a href="doc/GostCMS.html">Cryptographic Message Syntax</a> implementats RFC-5652 specification.</li>
-                        <li><a href="doc/GostKeys.html">Private Key Management</a> provides the ability to use the key store formats: PFX, CryptoPro and SignalCom.</li>
+                        <li><a href="doc/GostKeys.html">Private Key Management</a> provides the ability to use the key store formats: PFX, CryptoPro, SignalCom and ViPNet.</li>
                     </ol>
                 </section>
                 <h2>Tests, examples and demonstration</h2>
@@ -48,27 +48,28 @@
                         <li><a href="example-encrypt.html">Example2</a> Password based contents encryption</li>
                         <li><a href="example-derivekey.html">Example3</a> Encryption for delivery messages through open channel</li>
                     </ol>
-                    <p>Demonstration and experimental tools</p>
-                    <ol start="5">
-                        <li><a href="tool-coding.html">Convert</a> data from/to different formats (char, hex, base64) and encodings (win1251, utf8, ascii)</li>
-                        <li><a href="tool-publickey.html">Calculate</a> public key for pregenerated private key</li>
-                        <li><a href="tool-verify.html">Verify</a> signature for different sources and algorithm parameters</li>
-                        <li><a href="tool-asn1.html">View ASN.1</a> contents of BER-encoded data</li>
-                        <li><a href="tool-syntax.html">View Syntax</a> JavaScript object of BER-encoded data</li>
-                    </ol>
                     <p>Integration with PKI work experimental tools</p>
-                    <ol start="9">
+                    <ol start="4">
                         <li><a href="pki-ca.html">Self-signed certificate</a> generation in according to X.509 CA</li>
                         <li><a href="pki-certreq.html">Certification request</a> PKCS#10 format and certificate issue</li>
                         <li><a href="pki-crl.html">Certificate revocation</a> and generation of X.509 CRL</li>
                         <li><a href="pki-sign.html">Sign and verify document</a> PKCS#7 format complex example</li>
                         <li><a href="pki-encrypt.html">Encrypt and decrypt document</a> PKCS#7 format complex example</li>
-                        <!-- <li><a href="pki-store.html">Export and import key store</a> PKCS#12 format complex example</li> -->
+                        <li><a href="pki-store.html">Export and import key store</a> PKCS#12 format complex example</li> 
                     </ol>
                     <p>Demonstration of tools to work with key containers</p>
-                    <ol start="14">
+                    <ol start="10">
                         <li><a href="demo-cp-keys.html">Export and import CryptoPro</a> PrivateKey Container</li>
                         <li><a href="demo-sc-keys.html">Export and import SignalCom</a> PrivateKey Container</li>
+                        <li><a href="demo-vn-keys.html">Export and import ViPNet</a> PrivateKey Container</li>
+                    </ol>
+                    <p>Demonstration and experimental tools</p>
+                    <ol start="13">
+                        <li><a href="tool-coding.html">Convert</a> data from/to different formats (char, hex, base64) and encodings (win1251, utf8, ascii)</li>
+                        <li><a href="tool-publickey.html">Calculate</a> public key for pregenerated private key</li>
+                        <li><a href="tool-verify.html">Verify</a> signature for different sources and algorithm parameters</li>
+                        <li><a href="tool-asn1.html">View ASN.1</a> contents of BER-encoded data</li>
+                        <li><a href="tool-syntax.html">View Syntax</a> JavaScript object of BER-encoded data</li>
                     </ol>
                 </section>
                 <h2>Summary</h2>
@@ -79,6 +80,7 @@
                         <li><a href="http://www.cryptopro.ru/products/csp">Crypto-Pro CSP</a> v4.0: GOST R 34.10-2012</li> 
                         <li><a href="http://www.cryptopro.ru/products/csp">Crypto-Pro CSP</a> v4.0: GOST R 34.10-2012 Strong</li> 
                         <li><a href="http://signal-com.ru/products/crypt/signal-com">Signal-COM CSP</a> and <a href="http://signal-com.ru/products/crypt/message_pro">Message-PRO</a></li>
+                        <li><a href="https://www.infotecs.ru/products/line/box.php">ViPNet CSP</a> v.3.2 and v.4</li>
                     </ul>
                     The library supports the following high-level cryptographic protocols:
                     <p><a href="doc/GostCert.html">Public Key Infrastructure Using X.509</a>
@@ -113,7 +115,7 @@
                         <li>Export/Import Private and Secret Keys in the following formats: raw, p8, p8e, p12</li>
                         <li>Password-based Encryption of Asymmetric and Symmetric keys in Store</li>
                         <li>Encode/Decode PrivateKeyInfo for a various GOST-based CSPs</li>
-                        <li>Binary compatibility of key container formats for the CryptoPro CSPs and the SignalCom CSPs</li>
+                        <li>Binary compatibility of key container formats for the CryptoPro CSPs, the SignalCom CSPs and ViPNet CSPs</li>
                         <li>Ability to use an external Key Store for PKI operations</li>
                     </ul>
                     <p><a href="doc/GostASN1.html">Support Syntax of Certificate Management over CMS (CMC)</a>
@@ -140,16 +142,6 @@
                     </ol>
                     <p>Library contains polyfill methods of Crypto and CryptoSubtle interfaces and extends algorithms for GOST-oriented crypto scenarios. For non-GOST algorithms execution passthrough to native CryptoSubtle method.</p>
                     <p>The library implements GOST methods and algorithms described in the following references</p>
-                    <ol start="2">
-                        <li><a href="http://tools.ietf.org/html/rfc5830">RFC 5830</a> GOST 28147-89: RFC 5830 Encryption, Decryption, and Message Authentication Code (MAC) Algorithms</li>
-                        <li><a href="http://tools.ietf.org/html/rfc5832">RFC 5832</a> GOST R 34.10-2001: Digital Signature Algorithm (deprecated)</li>
-                        <li><a href="http://tools.ietf.org/html/rfc7091">RFC 7091</a> GOST R 34.10-2012: Digital Signature Algorithm</li>
-                        <li><a href="http://tools.ietf.org/html/rfc5831">RFC 5831</a> GOST R 34.11-94: Hash Function Algorithm (deprecated)</li>
-                        <li><a href="http://tools.ietf.org/html/rfc6986">RFC 6986</a> GOST R 34.11-2012: Hash Function Algorithm</li>
-                        <li><a href="http://tools.ietf.org/html/rfc4357">RFC 4357</a> Additional Cryptographic Algorithms for Use with GOST 28147-89, GOST R 34.10-94, GOST R 34.10-2001, and GOST R 34.11-94 Algorithms</li>
-                        <li><a href="http://tools.ietf.org/html/rfc4490">RFC 4490</a> Using the GOST 28147-89, GOST R 34.11-94, GOST R 34.10-94, and GOST R 34.10-2001 Algorithms with Cryptographic Message Syntax (CMS)</li>
-                        <li><a href="http://tools.ietf.org/html/rfc4491">RFC 4491</a> Using the GOST R 34.10-94, GOST R 34.10-2001, and GOST R 34.11-94 Algorithms with the Internet X.509 Public Key Infrastructure Certificate and CRL Profile</li>
-                    </ol>
                     <ol start="2">
                         <li><a href="http://tools.ietf.org/html/rfc5830">RFC 5830</a> GOST 28147-89: RFC 5830 Encryption, Decryption, and Message Authentication Code (MAC) Algorithms</li>
                         <li><a href="http://tools.ietf.org/html/rfc5832">RFC 5832</a> GOST R 34.10-2001: Digital Signature Algorithm (deprecated)</li>

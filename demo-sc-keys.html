@@ -5,6 +5,8 @@
         <title>WebCrypto GOST: SignalCom PrivateKey Export/Import</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=0" />
+        <script src="scripts/prettify/prettify.js"></script>
+        <script src="scripts/prettify/lang-css.js"></script>
         <script src="scripts/gost/gostCrypto.js"></script>
         <script src="scripts/gost/gostCoding.js"></script>
         <script src="scripts/gost/gostSecurity.js"></script>
@@ -20,7 +22,7 @@
     <body>
         <div class="page">
             <h1><a href="index.html">WebCrypto GOST</a>: SignalCom PrivateKey Export/Import</h1>
-            <p class="note">Demonstration of decoding and conversion SignalCom container files</p>
+            <p class="note">Demonstration of decoding and conversion SignalCom container files. Check <input id="preview" type="checkbox"/> to preview sources</p>
             <article>
                 <h2>Export SignalCom PrivateKey</h2>
                 <section>
@@ -33,7 +35,14 @@
                         <button>Load PrivateKey file...</button>
                         <input id="privateKeyFile" type="file" accept=".key" multiple onchange="readKeyFile(this)"/>
                     </div>
-                    <button id="exportButton" disabled onclick="exportPrivateKey()">Export PrivateKey</button>
+                    <button id="exportPFXButton" disabled onclick="hideMethod();
+                            exportPFX()" 
+                            onmouseover="showMethod(this, exportPFXMethod.textContent)" 
+                            onmouseout="hideMethod()">Export PFX file</button>
+                    <button id="exportButton" disabled onclick="hideMethod();
+                            exportPrivateKey()" 
+                            onmouseover="showMethod(this, exportPrivateKeyMethod.textContent)" 
+                            onmouseout="hideMethod()">Export PrivateKey</button>
                     <p id="message"></p>
                     <label for="password"><strong>PrivateKey password</strong></label>
                     <input type="password" class="value" id="password"/>
@@ -72,8 +81,20 @@
                 <h2>Import SignalCom PrivateKey</h2>
                 <section>
                     <p>Complete Private Key input for import to the SignalCom PrivateKey container</p>
-                    <button id="generateButton" onclick="generatePrivateKey()">Generate PrivateKey</button>
-                    <button id="importButton" disabled onclick="importPrivateKey()">Import PrivateKey</button>
+                    <button id="generateButton" onclick="hideMethod();
+                            generatePrivateKey()" 
+                            onmouseover="showMethod(this, generatePrivateKeyMethod.textContent)" 
+                            onmouseout="hideMethod()">Generate PrivateKey and Container</button>
+                    <div class="fileButton" onclick="hideMethod();"
+                         onmouseover="showMethod(this, importPFXMethod.textContent)" 
+                         onmouseout="hideMethod()">
+                        <button >Import PFX file...</button>
+                        <input type="file" onchange="readPFXFile(this)"/>
+                    </div>
+                    <button id="importButton" disabled onclick="hideMethod();
+                            importPrivateKey()" 
+                            onmouseover="showMethod(this, importPrivateKeyMethod.textContent)" 
+                            onmouseout="hideMethod()">Import PrivateKey</button>
                     <p id="importMessage"></p>
 
                     <span class="label"><strong>Private Key</strong></span>
@@ -84,6 +105,14 @@
                     </div>
                     <button onclick="gostViewer.openASN1(privateKey)">View ASN.1</button>
                     <button onclick="gostViewer.openSyntax(privateKey, 'PrivateKeyInfo')">View JSON</button>
+                    <span class="label"><strong>Certificate</strong></span>
+                    <pre contenteditable id="certificate" class="encoded" onblur="checkCertificate()"></pre>
+                    <div class="fileButton">
+                        <button>Open</button>
+                        <input type="file" onchange="readFile(this, certificate, 'CERTIFICATE')"/>
+                    </div>
+                    <button onclick="gostViewer.openASN1(certificate)">View ASN.1</button>
+                    <button onclick="gostViewer.openSyntax(certificate, 'Certificate')">View JSON</button>
 
                 </section>
                 <h2>Change SignalCom PrivateKey password</h2>
@@ -91,7 +120,10 @@
                     <p>Enter the new password to encrypt the SignalCom PrivateKey</p>
                     <label for="newPassword"><strong>New PrivateKey password</strong></label>
                     <input type="password" class="value" id="newPassword"/>
-                    <button id="changePasswordButton" disabled onclick="changeKeyPassword()">Change PrivateKey password</button>
+                    <button id="changePasswordButton" disabled onclick="hideMethod();
+                            changeKeyPassword()" 
+                            onmouseover="showMethod(this, changeKeyPasswordMethod.textContent, true)" 
+                            onmouseout="hideMethod()">Change PrivateKey password</button>
                     <p id="passwordMessage"></p>
                 </section>
             </article>
@@ -104,7 +136,8 @@
             function setValue(name, value) {
                 document.getElementById(name).textContent = gostCrypto.coding.Hex.encode(value);
             }
-
+        </script>
+        <script id="exportPrivateKeyMethod">
             function exportPrivateKey() {
                 // Create key container object with files
                 var keyContainer = new gostCrypto.keys.SignalComPrivateKeyInfo(getValue('keyFile'), {
@@ -123,7 +156,8 @@
                     alert(e.message);
                 });
             }
-
+        </script>
+        <script id="importPrivateKeyMethod">
             function importPrivateKey() {
                 // Create empty key container 
                 var keyContainer = new gostCrypto.keys.SignalComPrivateKeyInfo();
@@ -142,10 +176,12 @@
                     alert(e.message);
                 });
             }
-
+        </script>
+        <script id="generatePrivateKeyMethod">
             function generatePrivateKey() {
                 // Create empty key container 
                 var keyContainer = new gostCrypto.keys.SignalComPrivateKeyInfo();
+                var request;
                 // Generate private key and certificate
                 return keyContainer.generate({
                     subject: {
@@ -153,6 +189,7 @@
                         commonName: 'Alias'
                     }
                 }, password.value).then(function (req) {
+                    request = req;
                     // Generate files
                     setValue('mk_db3', keyContainer['mk.db3']);
                     setValue('masks_db3', keyContainer['masks.db3']);
@@ -164,13 +201,18 @@
                 }).then(function () {
                     importMessage.innerHTML = '<span>Success: The private key has been generated.</span>';
                     passwordMessage.innerHTML = '';
+                    var key = new gostCrypto.keys.PKCS8(privateKey.textContent);
+                    var cert = new gostCrypto.cert.X509(request);
+                    return cert.sign(key);
+                }).then(function (cert) {
+                    certificate.textContent = cert.encode('PEM');
                 }).catch(function (e) {
                     alert(e.message);
                 });
             }
-
+        </script>
+        <script id="changeKeyPasswordMethod">
             function changeKeyPassword() {
-                // Change password
                 // Create key container object with files
                 var keyContainer = new gostCrypto.keys.SignalComPrivateKeyInfo(getValue('keyFile'), {
                     'mk.db3': getValue('mk_db3'),
@@ -191,7 +233,68 @@
                     alert(e.message);
                 });
             }
-
+        </script>
+        <script id="exportPFXMethod">
+            function exportPFX() {
+                // Create key container object with files
+                var keyContainer = new gostCrypto.keys.SignalComPrivateKeyInfo(getValue('keyFile'), {
+                    'mk.db3': getValue('mk_db3'),
+                    'masks.db3': getValue('masks_db3'),
+                    'kek.opq': getValue('kek_opq'),
+                    'rand.opq': getValue('rand_opq')
+                });
+                // Create empty PFX key store
+                var keyStore = new gostCrypto.keys.KeyStore();
+                // Get private key from container
+                return keyContainer.getKey(password.value).then(function (key) {
+                    // Set key store entry
+                    keyStore.setEntry('key', {
+                        key: key,
+                        certs: [certificate.textContent]
+                    });
+                    // Export key store
+                    return keyStore.store(password.value);
+                }).then(function (pfx) {
+                    // Save pfx file
+                    saveAs(new Blob([pfx.encode()], {type: 'application/octet-binary'}), 'data.pfx');
+                    message.innerHTML = '<span>Success: The PFX file has been exported.</span>';
+                }).catch(function (e) {
+                    alert(e.message);
+                });
+            }
+        </script>
+        <script id="importPFXMethod">
+            function importPFX(content) {
+                // Create empty key container 
+                var keyContainer = new gostCrypto.keys.SignalComPrivateKeyInfo();
+                // Load PFX key store
+                var keyStore = new gostCrypto.keys.KeyStore(), keyEntry;
+                return keyStore.load(content, password.value).then(function () {
+                    keyEntry = keyStore.getEntry(keyStore.aliases()[0]);
+                    // Add key to conatiner
+                    if (keyEntry.key)
+                        return keyContainer.setKey(keyEntry.key, password.value);
+                }).then(function () {
+                    // Add certificate to container
+                    if (keyEntry.certs)
+                        certificate.textContent = keyEntry.certs[0].encode('PEM');
+                    // Generate files
+                    setValue('mk_db3', keyContainer['mk.db3']);
+                    setValue('masks_db3', keyContainer['masks.db3']);
+                    setValue('kek_opq', keyContainer['kek.opq']);
+                    setValue('rand_opq', keyContainer['rand.opq']);
+                    setValue('keyFile', keyContainer.encode());
+                    checkStoreFiles();
+                    return exportPrivateKey();
+                }).then(function () {
+                    importMessage.innerHTML = '<span>Success: The PFX file has been imported.</span>';
+                    passwordMessage.innerHTML = '';
+                }).catch(function (e) {
+                    alert(e.message);
+                });
+            }
+        </script>
+        <script>
             function checkStoreFiles() {
                 var exists = [], absents = [];
                 ['mk.db3', 'masks.db3', 'kek.opq', 'rand.opq'].forEach(function (filename) {
@@ -219,6 +322,10 @@
                     exportButton.removeAttribute('disabled');
                     changePasswordButton.removeAttribute('disabled');
                 }
+                if (!exportButton.hasAttribute('disabled') && certificate.textContent)
+                    exportPFXButton.removeAttribute('disabled');
+                else
+                    exportPFXButton.setAttribute('disabled', true);
                 message.innerHTML = '<span>' + text + '</span>';
             }
 
@@ -233,6 +340,13 @@
                 }
                 importMessage.innerHTML = '<span>' + text + '</span>';
             }
+            
+            function checkCertificate() {
+                if (!exportButton.hasAttribute('disabled') && certificate.textContent)
+                    exportPFXButton.removeAttribute('disabled');
+                else
+                    exportPFXButton.setAttribute('disabled', true);
+            }
 
             function readStoreFiles(input) {
                 var count = input.files.length;
@@ -243,8 +357,10 @@
                         reader.onload = function (e) {
                             setValue(name.replace('.', '_'), e.target.result);
                             count--;
-                            if (!count)
+                            if (!count) {
                                 checkStoreFiles();
+                                input.value = '';
+                            }
                         };
                         reader.readAsArrayBuffer(file);
                     })(input.files[i]);
@@ -264,6 +380,7 @@
                     reader.onload = function (e) {
                         setValue('keyFile', e.target.result);
                         checkStoreFiles();
+                        input.value = '';
                     };
                     reader.readAsArrayBuffer(file);
                 }
@@ -272,6 +389,21 @@
             function saveKeyFile() {
                 saveAs(new Blob([getValue('keyFile')],
                         {type: 'application/octet-binary'}), keyFileName.textContent);
+            }
+
+            function savePFXFile(filename, content) {
+                saveAs(new Blob([content], {type: 'application/octet-binary'}), filename);
+            }
+
+            function readPFXFile(input) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var data = e.target.result;
+                    importPFX(data);
+                    input.value = '';
+                };
+                if (input.files.length > 0)
+                    reader.readAsArrayBuffer(input.files[0]);
             }
 
             function readFile(input, node, name) {
@@ -285,10 +417,32 @@
                         text = gostCrypto.coding.Base64.encode(data);
                     }
                     node.textContent = text;
+                    input.value = '';
                 };
-                reader.readAsArrayBuffer(input.files[0]);
+                if (input.files.length > 0)
+                    reader.readAsArrayBuffer(input.files[0]);
             }
 
+            function showMethod(button, content, up) {
+                var el = document.getElementById('methodBox');
+                if (el)
+                    el.parentNode.removeChild(el);
+                if (preview.checked) {
+                    el = document.createElement('div');
+                    el.id = 'methodBox';
+                    el.innerHTML = '<pre class="procedure prettyprint" contenteditable style="width: 100%; height: auto; left: 0; ' +
+                            (up ? 'bottom: ' + (document.body.clientHeight - button.offsetTop) : 'top: ' + (button.offsetTop + 40)) +
+                            'px; position: absolute; background: white; z-index: 100">' + content + '</pre>';
+                    button.parentNode.appendChild(el);
+                    prettyPrint();
+                }
+            }
+
+            function hideMethod() {
+                var el = document.getElementById('methodBox');
+                if (el)
+                    el.parentNode.removeChild(el);
+            }
         </script>
     </body>
 </html>

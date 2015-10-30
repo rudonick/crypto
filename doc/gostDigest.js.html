@@ -28,7 +28,7 @@
         <article>
             <pre class="prettyprint source linenums"><code>/**
  * @file GOST R 34.11-94 / GOST R 34.11-12 implementation
- * @version 1.70
+ * @version 1.73
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -575,11 +575,11 @@
             process.call(this, Sum, 0);
 
             var h = H.buffer;
-            
+
             // Swap hash for SignalCom
-            if (this.procreator === 'SC') 
+            if (this.procreator === 'SC')
                 h = swap(h);
-            
+
             return h;
         };
 
@@ -917,24 +917,27 @@
      */
     function deriveBitsKDF(baseKey, length) // &lt;editor-fold defaultstate="collapsed">
     {
-        if (length > this.bitLength || length % 8 > 0)
-            throw new DataError('Length can\'t be more than ' + this.bitLength + ' bits and multiple of 8');
-        var rlen = length / 8, label, context = new Uint8Array(buffer(this.context));
+        if (length % 8 > 0)
+            throw new DataError('Length must be multiple of 8');
+        var rlen = length / 8, label, context = new Uint8Array(buffer(this.context)),
+                blen = this.bitLength / 8, n = Math.ceil(rlen / blen);
         if (this.label)
             label = new Uint8Array(buffer(this.label));
         else
             label = new Uint8Array([0x26, 0xBD, 0xB8, 0x78]);
-        var data = new Uint8Array(label.length + context.length + 4);
-        data[0] = 0x01;
-        data.set(label, 1);
-        data[label.length + 1] = 0x00;
-        data.set(context, label.length + 2);
-        data[data.length - 2] = 0x01;
-        data[data.length - 1] = 0x00;
-        var result = signHMAC.call(this, baseKey, data);
-        if (result.byteLength > rlen)
-            result = new Uint8Array(new Uint8Array(result, 0, rlen));
-        return result;
+        var result = new Uint8Array(rlen);
+        for (var i = 0; i &lt; n; i++) {
+            var data = new Uint8Array(label.length + context.length + 4);
+            data[0] = i + 1;
+            data.set(label, 1);
+            data[label.length + 1] = 0x00;
+            data.set(context, label.length + 2);
+            data[data.length - 2] = length >>> 8;
+            data[data.length - 1] = length &amp; 0xff;
+            result.set(new Uint8Array(signHMAC.call(this, baseKey, data), 0,
+                    i &lt; n - 1 ? blen : rlen - i * blen), i * blen);
+        }
+        return result.buffer;
     } // &lt;/editor-fold>
 
     /**
@@ -990,6 +993,8 @@
      */
     function deriveBitsPBKDF2(baseKey, length) // &lt;editor-fold defaultstate="collapsed">
     {
+        var diversifier = this.diversifier || 1; // For PKCS12 MAC required 3*length
+        length = length * diversifier;
         if (length &lt; this.bitLength / 2 || length % 8 > 0)
             throw new DataError('Length must be more than ' + this.bitLength / 2 + ' bits and multiple of 8');
         var hLen = this.bitLength / 8, dkLen = length / 8,
@@ -1019,8 +1024,12 @@
             var ofs = (i - 1) * hLen;
             arraycopy(Z, 0, DK, ofs, Math.min(hLen, dkLen - ofs));
         }
-
-        return DK.buffer;
+        if (diversifier > 1) {
+            var rLen = dkLen / diversifier, R = new Uint8Array(rLen);
+            arraycopy(DK, dkLen - rLen, R, 0, rLen);
+            return R.buffer;
+        } else
+            return DK.buffer;
     } // &lt;/editor-fold>
 
     /**
@@ -1063,7 +1072,7 @@
         var c = 'DENEFH028.760246785.IUEFHWUIO.EF';
         for (var i = 0; i &lt; c.length; i++)
             k[i] = c.charCodeAt(i);
-        
+
         d = new Uint8Array(2 * (b + l));
         for (var j = 0; j &lt; iterations; j++) {
             for (var i = 0; i &lt; b; i++) {
@@ -1169,6 +1178,7 @@
      *          &lt;ul>
      *              &lt;li>&lt;b>salt&lt;/b> {@link CryptoOperationData} Random salt as input for HMAC algorithm&lt;/li>
      *              &lt;li>&lt;b>iterations&lt;/b> Iteration count. GOST recomended value 1000 (default) or 2000&lt;/li>
+     *              &lt;li>&lt;b>diversifier&lt;/b> Deversifier, ID=1 - key material for performing encryption or decryption, ID=3 - integrity key for MACing&lt;/li>
      *          &lt;/ul>
      *      &lt;/li>
      *      &lt;li>DeriveBits/DeriveKey PFXKDF mode
@@ -1194,7 +1204,7 @@
     {
 
         algorithm = algorithm || {};
-        
+
         this.name = (algorithm.name || 'GOST R 34.10') + '-' + ((algorithm.version || 2012) % 100) +
                 ((algorithm.version || 2012) > 1 ? '-' + (algorithm.length || 256) : '') +
                 (((algorithm.mode || 'HASH') !== 'HASH') ? '-' + algorithm.mode : '') +
@@ -1203,9 +1213,9 @@
 
         // SignalCom algorithms
         this.procreator = algorithm.procreator;
-        
+
         // Bit length
-        this.bitLength =  algorithm.length || 256; 
+        this.bitLength = algorithm.length || 256;
 
         switch (algorithm.version || 2012) {
             case 1: // SHA-1
@@ -1236,7 +1246,7 @@
             default:
                 throw new NotSupportedError('Algorithm version ' + algorithm.version + ' not supported');
         }
-        
+
         // Key size
         this.keySize = algorithm.keySize || (this.bitLength / 8);
 
@@ -1260,6 +1270,7 @@
                 this.generateKey = generateKey;
                 this.salt = algorithm.salt;
                 this.iterations = algorithm.iterations || 2000;
+                this.diversifier = algorithm.diversifier || 1;
                 break;
             case 'PFXKDF':
                 this.deriveKey = deriveKey;
@@ -1294,13 +1305,13 @@
 </div>
 
 <nav id="nav">
-    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="GostASN1.html">GostASN1</a></li><li><a href="GostASN1.AttributeCertificate.html">AttributeCertificate</a></li><li><a href="GostASN1.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="GostASN1.Attributes.html">Attributes</a></li><li><a href="GostASN1.AuthenticatedData.html">AuthenticatedData</a></li><li><a href="GostASN1.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="GostASN1.Certificate.html">Certificate</a></li><li><a href="GostASN1.CertificateList.html">CertificateList</a></li><li><a href="GostASN1.CertificationRequest.html">CertificationRequest</a></li><li><a href="GostASN1.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="GostASN1.ContentInfo.html">ContentInfo</a></li><li><a href="GostASN1.DigestedData.html">DigestedData</a></li><li><a href="GostASN1.EncryptedData.html">EncryptedData</a></li><li><a href="GostASN1.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="GostASN1.EnvelopedData.html">EnvelopedData</a></li><li><a href="GostASN1.Extensions.html">Extensions</a></li><li><a href="GostASN1.GostEncryptedKey.html">GostEncryptedKey</a></li><li><a href="GostASN1.GostKeyContainer.html">GostKeyContainer</a></li><li><a href="GostASN1.GostKeyContainerName.html">GostKeyContainerName</a></li><li><a href="GostASN1.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="GostASN1.GostPrivateKeys.html">GostPrivateKeys</a></li><li><a href="GostASN1.GostPrivateMasks.html">GostPrivateMasks</a></li><li><a href="GostASN1.GostSignature.html">GostSignature</a></li><li><a href="GostASN1.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="GostASN1.GostWrappedPrivateKey.html">GostWrappedPrivateKey</a></li><li><a href="GostASN1.Name.html">Name</a></li><li><a href="GostASN1.PFX.html">PFX</a></li><li><a href="GostASN1.PKIData.html">PKIData</a></li><li><a href="GostASN1.PKIResponse.html">PKIResponse</a></li><li><a href="GostASN1.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="GostASN1.SafeContents.html">SafeContents</a></li><li><a href="GostASN1.Sequence.html">Sequence</a></li><li><a href="GostASN1.Set.html">Set</a></li><li><a href="GostASN1.SignedAttributes.html">SignedAttributes</a></li><li><a href="GostASN1.SignedData.html">SignedData</a></li><li><a href="GostASN1.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="GostASN1.TBSCertificate.html">TBSCertificate</a></li><li><a href="GostASN1.TBSCertList.html">TBSCertList</a></li><li><a href="GostASN1.UnsignedAttributes.html">UnsignedAttributes</a></li><li><a href="GostASN1.Validity.html">Validity</a></li><li><a href="GostCert.html">GostCert</a></li><li><a href="GostCert.CertificateTrustPolicy.html">CertificateTrustPolicy</a></li><li><a href="GostCert.CertPath.html">CertPath</a></li><li><a href="GostCert.CertStore.html">CertStore</a></li><li><a href="GostCert.CRL.html">CRL</a></li><li><a href="GostCert.Request.html">Request</a></li><li><a href="GostCert.TrustedCAPolicy.html">TrustedCAPolicy</a></li><li><a href="GostCert.X509.html">X509</a></li><li><a href="GostCipher.html">GostCipher</a></li><li><a href="GostCMS.html">GostCMS</a></li><li><a href="GostCMS.DataContentInfo.html">DataContentInfo</a></li><li><a href="GostCMS.DigestedDataContentInfo.html">DigestedDataContentInfo</a></li><li><a href="GostCMS.EncryptedDataContentInfo.html">EncryptedDataContentInfo</a></li><li><a href="GostCMS.EnvelopedDataContentInfo.html">EnvelopedDataContentInfo</a></li><li><a href="GostCMS.SignedDataContentInfo.html">SignedDataContentInfo</a></li><li><a href="GostCoding.html">GostCoding</a></li><li><a href="GostCoding.Base64.html">Base64</a></li><li><a href="GostCoding.BER.html">BER</a></li><li><a href="GostCoding.Chars.html">Chars</a></li><li><a href="GostCoding.Hex.html">Hex</a></li><li><a href="GostCoding.Int16.html">Int16</a></li><li><a href="GostCoding.PEM.html">PEM</a></li><li><a href="GostDigest.html">GostDigest</a></li><li><a href="GostKeys.html">GostKeys</a></li><li><a href="GostKeys.CryptoProKeyContainer.html">CryptoProKeyContainer</a></li><li><a href="GostKeys.PKCS8.html">PKCS8</a></li><li><a href="GostKeys.PKCS8Encrypted.html">PKCS8Encrypted</a></li><li><a href="GostKeys.PKCS12.html">PKCS12</a></li><li><a href="GostKeys.SignalComKeyContainer.html">SignalComKeyContainer</a></li><li><a href="GostKeys.SignalComPrivateKeyInfo.html">SignalComPrivateKeyInfo</a></li><li><a href="GostRandom.html">GostRandom</a></li><li><a href="GostSecurity.html">GostSecurity</a></li><li><a href="GostSign.html">GostSign</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
+    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="GostASN1.html">GostASN1</a></li><li><a href="GostASN1.AttributeCertificate.html">AttributeCertificate</a></li><li><a href="GostASN1.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="GostASN1.Attributes.html">Attributes</a></li><li><a href="GostASN1.AuthenticatedData.html">AuthenticatedData</a></li><li><a href="GostASN1.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="GostASN1.Certificate.html">Certificate</a></li><li><a href="GostASN1.CertificateList.html">CertificateList</a></li><li><a href="GostASN1.CertificationRequest.html">CertificationRequest</a></li><li><a href="GostASN1.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="GostASN1.ContentInfo.html">ContentInfo</a></li><li><a href="GostASN1.DigestedData.html">DigestedData</a></li><li><a href="GostASN1.EncryptedData.html">EncryptedData</a></li><li><a href="GostASN1.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="GostASN1.EnvelopedData.html">EnvelopedData</a></li><li><a href="GostASN1.Extensions.html">Extensions</a></li><li><a href="GostASN1.GostEncryptedKey.html">GostEncryptedKey</a></li><li><a href="GostASN1.GostKeyContainer.html">GostKeyContainer</a></li><li><a href="GostASN1.GostKeyContainerName.html">GostKeyContainerName</a></li><li><a href="GostASN1.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="GostASN1.GostPrivateKeys.html">GostPrivateKeys</a></li><li><a href="GostASN1.GostPrivateMasks.html">GostPrivateMasks</a></li><li><a href="GostASN1.GostSignature.html">GostSignature</a></li><li><a href="GostASN1.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="GostASN1.GostWrappedPrivateKey.html">GostWrappedPrivateKey</a></li><li><a href="GostASN1.Name.html">Name</a></li><li><a href="GostASN1.PFX.html">PFX</a></li><li><a href="GostASN1.PKIData.html">PKIData</a></li><li><a href="GostASN1.PKIResponse.html">PKIResponse</a></li><li><a href="GostASN1.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="GostASN1.SafeContents.html">SafeContents</a></li><li><a href="GostASN1.Sequence.html">Sequence</a></li><li><a href="GostASN1.Set.html">Set</a></li><li><a href="GostASN1.SignedAttributes.html">SignedAttributes</a></li><li><a href="GostASN1.SignedData.html">SignedData</a></li><li><a href="GostASN1.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="GostASN1.TBSCertificate.html">TBSCertificate</a></li><li><a href="GostASN1.TBSCertList.html">TBSCertList</a></li><li><a href="GostASN1.UnsignedAttributes.html">UnsignedAttributes</a></li><li><a href="GostASN1.Validity.html">Validity</a></li><li><a href="GostASN1.ViPNetInfo.html">ViPNetInfo</a></li><li><a href="GostCert.html">GostCert</a></li><li><a href="GostCert.CertificateTrustPolicy.html">CertificateTrustPolicy</a></li><li><a href="GostCert.CertPath.html">CertPath</a></li><li><a href="GostCert.CertStore.html">CertStore</a></li><li><a href="GostCert.CRL.html">CRL</a></li><li><a href="GostCert.Request.html">Request</a></li><li><a href="GostCert.TrustedCAPolicy.html">TrustedCAPolicy</a></li><li><a href="GostCert.X509.html">X509</a></li><li><a href="GostCipher.html">GostCipher</a></li><li><a href="GostCMS.html">GostCMS</a></li><li><a href="GostCMS.DataContentInfo.html">DataContentInfo</a></li><li><a href="GostCMS.DigestedDataContentInfo.html">DigestedDataContentInfo</a></li><li><a href="GostCMS.EncryptedDataContentInfo.html">EncryptedDataContentInfo</a></li><li><a href="GostCMS.EnvelopedDataContentInfo.html">EnvelopedDataContentInfo</a></li><li><a href="GostCMS.SignedDataContentInfo.html">SignedDataContentInfo</a></li><li><a href="GostCoding.html">GostCoding</a></li><li><a href="GostCoding.Base64.html">Base64</a></li><li><a href="GostCoding.BER.html">BER</a></li><li><a href="GostCoding.Chars.html">Chars</a></li><li><a href="GostCoding.Hex.html">Hex</a></li><li><a href="GostCoding.Int16.html">Int16</a></li><li><a href="GostCoding.PEM.html">PEM</a></li><li><a href="GostDigest.html">GostDigest</a></li><li><a href="GostKeys.html">GostKeys</a></li><li><a href="GostKeys.CryptoProKeyContainer.html">CryptoProKeyContainer</a></li><li><a href="GostKeys.KeyEntry.html">KeyEntry</a></li><li><a href="GostKeys.KeyStore.html">KeyStore</a></li><li><a href="GostKeys.PKCS8.html">PKCS8</a></li><li><a href="GostKeys.PKCS8Encrypted.html">PKCS8Encrypted</a></li><li><a href="GostKeys.PKCS12.html">PKCS12</a></li><li><a href="GostKeys.SignalComKeyContainer.html">SignalComKeyContainer</a></li><li><a href="GostKeys.SignalComPrivateKeyInfo.html">SignalComPrivateKeyInfo</a></li><li><a href="GostKeys.ViPNetContainer.html">ViPNetContainer</a></li><li><a href="GostKeys.ViPNetContainerEntry.html">ViPNetContainerEntry</a></li><li><a href="GostRandom.html">GostRandom</a></li><li><a href="GostSecurity.html">GostSecurity</a></li><li><a href="GostSign.html">GostSign</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
 </nav>
 
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Sun Oct 25 2015 02:48:17 GMT+0300 (MSK)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Oct 30 2015 23:59:10 GMT+0300 (MSK)
 </footer>
 
 </div>

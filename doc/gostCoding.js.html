@@ -28,7 +28,7 @@
         <article>
             <pre class="prettyprint source linenums"><code>/**
  * @file Coding algorithms: Base64, Hex, Int16, Chars, BER and PEM
- * @version 1.70
+ * @version 1.73
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -484,38 +484,8 @@
      */
     var BER = (function () { // &lt;editor-fold defaultstate="collapsed">
 
-        var BERtypes = {
-            0x00: 'EOC',
-            0x01: 'BOOLEAN',
-            0x02: 'INTEGER',
-            0x03: 'BIT STRING',
-            0x04: 'OCTET STRING',
-            0x05: 'NULL',
-            0x06: 'OBJECT IDENTIFIER',
-            0x07: 'ObjectDescriptor',
-            0x08: 'EXTERNAL',
-            0x09: 'REAL',
-            0x0A: 'ENUMERATED',
-            0x0B: 'EMBEDDED PDV',
-            0x0C: 'UTF8String',
-            0x10: 'SEQUENCE',
-            0x11: 'SET',
-            0x12: 'NumericString',
-            0x13: 'PrintableString', // ASCII subset
-            0x14: 'TeletexString', // aka T61String
-            0x15: 'VideotexString',
-            0x16: 'IA5String', // ASCII
-            0x17: 'UTCTime',
-            0x18: 'GeneralizedTime',
-            0x19: 'GraphicString',
-            0x1A: 'VisibleString', // ASCII subset
-            0x1B: 'GeneralString',
-            0x1C: 'UniversalString',
-            0x1E: 'BMPString'
-        };
-
         // Predefenition block
-        function encodeBER(source, format) {
+        function encodeBER(source, format, onlyContent) {
             // Correct primitive type
             var object = source.object;
             if (object === undefined)
@@ -611,7 +581,7 @@
                     case 0x02: // INTEGER
                     case 0x0a: // ENUMIRATED
                         content = Int16.decode(
-                                typeof object === 'number' ? '0x' + object.toString(16) : object);
+                                typeof object === 'number' ? object.toString(16) : object);
                         break;
                     case 0x03: // BIT STRING
                         if (typeof object === 'string') {
@@ -759,6 +729,9 @@
                 source.tagNumber = tagNumber = source.tagNumber || 0;
             source.content = content;
 
+            if (onlyContent)
+                return content;
+
             // Create header
             // tagNumber
             var ha = [], first = tagClass === 3 ? 0xC0 : tagClass === 2 ? 0x80 :
@@ -801,13 +774,6 @@
             }
             var header = source.header = new Uint8Array(ha);
 
-            // type name
-            var typeName = tagClass === 1 ? 'Application_' + tagNumber :
-                    tagClass === 2 ? '[' + tagNumber.toString() + ']' : // Context
-                    tagClass === 3 ? 'Private_' + tagNumber :
-                    BERtypes[tagNumber] || "Universal_" + tagNumber.toString();
-            source.typeName = typeName;
-
             // Result - complete buffer
             var block = new Uint8Array(header.length + content.length);
             block.set(header, 0);
@@ -815,77 +781,97 @@
             return block;
         }
 
-        function decodeBER(d, offset) {
+        function decodeBER(source, offset) {
 
             // start pos
-            var pos = offset || 0;
+            var pos = offset || 0, start = pos;
+            var tagNumber, tagClass, tagConstructed,
+                    content, header, buffer, sub, len;
 
-            // Read tag
-            var buf = d[pos++],
-                    tagClass = buf >> 6,
-                    constructed = (buf &amp; 0x20) !== 0;
-            var tagNumber = buf &amp; 0x1f;
-            if (tagNumber === 0x1f) { // long tag
-                tagNumber = 0;
-                do {
-                    if (tagNumber > 0x1fffffffffff80)
-                        throw new DataError('Convertor not supported tag number more then (2^53 - 1) at position ' + offset);
-                    buf = d[pos++];
-                    tagNumber = (tagNumber &lt;&lt; 7) + (buf &amp; 0x7f);
-                } while (buf &amp; 0x80);
-            }
+            if (source.object) {
+                // Ready from source
+                tagNumber = source.tagNumber;
+                tagClass = source.tagClass;
+                tagConstructed = source.tagConstructed;
+                content = source.content;
+                header = source.header;
+                buffer = source.object instanceof CryptoOperationData ?
+                        new Uint8Array(source.object) : null;
+                sub = source.object instanceof Array ? source.object : null;
+                len = buffer &amp;&amp; buffer.length || null;
+            } else {
+                // Decode header
+                var d = source;
 
-            // Read len        
-            buf = d[pos++];
-            var len = buf &amp; 0x7f;
-            if (len !== buf) {
-                if (len > 6) // no reason to use Int10, as it would be a huge buffer anyways
-                    throw new DataError('Length over 48 bits not supported at position ' + offset);
-                if (len === 0)
-                    len = null; // undefined
-                else {
-                    buf = 0;
-                    for (var i = 0; i &lt; len; ++i)
-                        buf = (buf &lt;&lt; 8) + d[pos++];
-                    len = buf;
+                // Read tag
+                var buf = d[pos++];
+                tagNumber = buf &amp; 0x1f;
+                tagClass = buf >> 6;
+                tagConstructed = (buf &amp; 0x20) !== 0;
+                if (tagNumber === 0x1f) { // long tag
+                    tagNumber = 0;
+                    do {
+                        if (tagNumber > 0x1fffffffffff80)
+                            throw new DataError('Convertor not supported tag number more then (2^53 - 1) at position ' + offset);
+                        buf = d[pos++];
+                        tagNumber = (tagNumber &lt;&lt; 7) + (buf &amp; 0x7f);
+                    } while (buf &amp; 0x80);
                 }
-            }
 
-            var start = pos, sub = null;
-
-            if (constructed) {
-                // must have valid content
-                sub = [];
-                if (len !== null) {
-                    // definite length
-                    var end = start + len;
-                    while (pos &lt; end) {
-                        var s = decodeBER(d, pos);
-                        sub.push(s);
-                        pos += s.header.length + s.content.length;
+                // Read len        
+                buf = d[pos++];
+                len = buf &amp; 0x7f;
+                if (len !== buf) {
+                    if (len > 6) // no reason to use Int10, as it would be a huge buffer anyways
+                        throw new DataError('Length over 48 bits not supported at position ' + offset);
+                    if (len === 0)
+                        len = null; // undefined
+                    else {
+                        buf = 0;
+                        for (var i = 0; i &lt; len; ++i)
+                            buf = (buf &lt;&lt; 8) + d[pos++];
+                        len = buf;
                     }
-                    if (pos !== end)
-                        throw new DataError('Content size is not correct for container starting at offset ' + start);
-                } else {
-                    // undefined length
-                    try {
-                        for (; ; ) {
+                }
+
+                start = pos;
+                sub = null;
+
+                if (tagConstructed) {
+                    // must have valid content
+                    sub = [];
+                    if (len !== null) {
+                        // definite length
+                        var end = start + len;
+                        while (pos &lt; end) {
                             var s = decodeBER(d, pos);
-                            pos += s.header.length + s.content.length;
-                            if (s.tagClass === 0x00 &amp;&amp; s.tagNumber === 0x00)
-                                break;
                             sub.push(s);
+                            pos += s.header.length + s.content.length;
                         }
-                        len = pos - start;
-                    } catch (e) {
-                        throw new DataError('Exception ' + e + ' while decoding undefined length content at offset ' + start);
+                        if (pos !== end)
+                            throw new DataError('Content size is not correct for container starting at offset ' + start);
+                    } else {
+                        // undefined length
+                        try {
+                            for (; ; ) {
+                                var s = decodeBER(d, pos);
+                                pos += s.header.length + s.content.length;
+                                if (s.tagClass === 0x00 &amp;&amp; s.tagNumber === 0x00)
+                                    break;
+                                sub.push(s);
+                            }
+                            len = pos - start;
+                        } catch (e) {
+                            throw new DataError('Exception ' + e + ' while decoding undefined length content at offset ' + start);
+                        }
                     }
                 }
+
+                // Header and content
+                header = new Uint8Array(d.buffer, offset, start - offset);
+                content = new Uint8Array(d.buffer, start, len);
+                buffer = content;
             }
-            var object = '',
-                    header = new Uint8Array(d.buffer, offset, start - offset),
-                    content = new Uint8Array(d.buffer, start, len),
-                    buffer = content;
 
             // Constructed types - check for string concationation
             if (sub !== null &amp;&amp; tagClass === 0) {
@@ -925,12 +911,13 @@
                                 buffer.set(s.content, j);
                             j += s.content.length - k;
                         }
-                        constructed = false; // follow not required
+                        tagConstructed = false; // follow not required
                         sub = null;
                         break;
                 }
             }
             // Primitive types
+            var object = '';
             if (sub === null) {
                 if (len === null)
                     throw new DataError('Invalid tag with undefined length at offset ' + start);
@@ -1054,20 +1041,13 @@
             } else
                 object = sub;
 
-            // type name
-            var typeName = tagClass === 1 ? 'Application_' + tagNumber :
-                    tagClass === 2 ? '[' + tagNumber.toString() + ']' : // Context
-                    tagClass === 3 ? 'Private_' + tagNumber :
-                    BERtypes[tagNumber] || "Universal_" + tagNumber.toString();
-
             // result
             return {
-                tagConstructed: constructed,
+                tagConstructed: tagConstructed,
                 tagClass: tagClass,
                 tagNumber: tagNumber,
                 header: header,
                 content: content,
-                typeName: typeName,
                 object: object
             };
         }
@@ -1101,10 +1081,11 @@
              * @memberOf GostCoding.BER
              * @param {Object} object Object to encoding
              * @param {string} format Encoding rule: 'DER' or 'CER', default 'DER'
+             * @param {boolean} onlyContent Encode content only, without header
              * @returns {CryptoOperationData} BER encoded data
              */
-            encode: function (object, format) {
-                return encodeBER(object, format).buffer;
+            encode: function (object, format, onlyContent) {
+                return encodeBER(object, format, onlyContent).buffer;
             },
             /**
              * BER.encode(data) convert ASN.1 format CryptoOperationData data to javascript object&lt;br>&lt;br>
@@ -1123,11 +1104,11 @@
              *      &lt;li>UTCTime, GeneralizedTime - Date&lt;/li>
              *  &lt;/ul>
              * @memberOf GostCoding.BER
-             * @param {CryptoOperationData} data Binary data to decode
+             * @param {(CryptoOperationData|GostCoding.BER)} data Binary data to decode
              * @returns {Object} Javascript object with result of decoding
              */
             decode: function (data) {
-                return decodeBER(new Uint8Array(buffer(data)), 0);
+                return decodeBER(data.object ? data : new Uint8Array(buffer(data)), 0);
             }
         }; // &lt;/editor-fold>
     })();
@@ -1208,19 +1189,18 @@
      */
     GostCoding.prototype.PEM = PEM;
 
-    /**
-     * Coding algorithms: Base64, Hex, Int16, Chars, BER and PEM
-     * 
-     * @memberOf gostCrypto
-     * @type GostCoding
-     */
-     gostCrypto.coding = new GostCoding();
+    if (gostCrypto)
+        /**
+         * Coding algorithms: Base64, Hex, Int16, Chars, BER and PEM
+         * 
+         * @memberOf gostCrypto
+         * @type GostCoding
+         */
+        gostCrypto.coding = new GostCoding();
 
     return GostCoding;
 
-}));
-
-</code></pre>
+}));</code></pre>
         </article>
     </section>
 
@@ -1230,13 +1210,13 @@
 </div>
 
 <nav id="nav">
-    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="GostASN1.html">GostASN1</a></li><li><a href="GostASN1.AttributeCertificate.html">AttributeCertificate</a></li><li><a href="GostASN1.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="GostASN1.Attributes.html">Attributes</a></li><li><a href="GostASN1.AuthenticatedData.html">AuthenticatedData</a></li><li><a href="GostASN1.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="GostASN1.Certificate.html">Certificate</a></li><li><a href="GostASN1.CertificateList.html">CertificateList</a></li><li><a href="GostASN1.CertificationRequest.html">CertificationRequest</a></li><li><a href="GostASN1.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="GostASN1.ContentInfo.html">ContentInfo</a></li><li><a href="GostASN1.DigestedData.html">DigestedData</a></li><li><a href="GostASN1.EncryptedData.html">EncryptedData</a></li><li><a href="GostASN1.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="GostASN1.EnvelopedData.html">EnvelopedData</a></li><li><a href="GostASN1.Extensions.html">Extensions</a></li><li><a href="GostASN1.GostEncryptedKey.html">GostEncryptedKey</a></li><li><a href="GostASN1.GostKeyContainer.html">GostKeyContainer</a></li><li><a href="GostASN1.GostKeyContainerName.html">GostKeyContainerName</a></li><li><a href="GostASN1.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="GostASN1.GostPrivateKeys.html">GostPrivateKeys</a></li><li><a href="GostASN1.GostPrivateMasks.html">GostPrivateMasks</a></li><li><a href="GostASN1.GostSignature.html">GostSignature</a></li><li><a href="GostASN1.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="GostASN1.GostWrappedPrivateKey.html">GostWrappedPrivateKey</a></li><li><a href="GostASN1.Name.html">Name</a></li><li><a href="GostASN1.PFX.html">PFX</a></li><li><a href="GostASN1.PKIData.html">PKIData</a></li><li><a href="GostASN1.PKIResponse.html">PKIResponse</a></li><li><a href="GostASN1.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="GostASN1.SafeContents.html">SafeContents</a></li><li><a href="GostASN1.Sequence.html">Sequence</a></li><li><a href="GostASN1.Set.html">Set</a></li><li><a href="GostASN1.SignedAttributes.html">SignedAttributes</a></li><li><a href="GostASN1.SignedData.html">SignedData</a></li><li><a href="GostASN1.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="GostASN1.TBSCertificate.html">TBSCertificate</a></li><li><a href="GostASN1.TBSCertList.html">TBSCertList</a></li><li><a href="GostASN1.UnsignedAttributes.html">UnsignedAttributes</a></li><li><a href="GostASN1.Validity.html">Validity</a></li><li><a href="GostCert.html">GostCert</a></li><li><a href="GostCert.CertificateTrustPolicy.html">CertificateTrustPolicy</a></li><li><a href="GostCert.CertPath.html">CertPath</a></li><li><a href="GostCert.CertStore.html">CertStore</a></li><li><a href="GostCert.CRL.html">CRL</a></li><li><a href="GostCert.Request.html">Request</a></li><li><a href="GostCert.TrustedCAPolicy.html">TrustedCAPolicy</a></li><li><a href="GostCert.X509.html">X509</a></li><li><a href="GostCipher.html">GostCipher</a></li><li><a href="GostCMS.html">GostCMS</a></li><li><a href="GostCMS.DataContentInfo.html">DataContentInfo</a></li><li><a href="GostCMS.DigestedDataContentInfo.html">DigestedDataContentInfo</a></li><li><a href="GostCMS.EncryptedDataContentInfo.html">EncryptedDataContentInfo</a></li><li><a href="GostCMS.EnvelopedDataContentInfo.html">EnvelopedDataContentInfo</a></li><li><a href="GostCMS.SignedDataContentInfo.html">SignedDataContentInfo</a></li><li><a href="GostCoding.html">GostCoding</a></li><li><a href="GostCoding.Base64.html">Base64</a></li><li><a href="GostCoding.BER.html">BER</a></li><li><a href="GostCoding.Chars.html">Chars</a></li><li><a href="GostCoding.Hex.html">Hex</a></li><li><a href="GostCoding.Int16.html">Int16</a></li><li><a href="GostCoding.PEM.html">PEM</a></li><li><a href="GostDigest.html">GostDigest</a></li><li><a href="GostKeys.html">GostKeys</a></li><li><a href="GostKeys.CryptoProKeyContainer.html">CryptoProKeyContainer</a></li><li><a href="GostKeys.PKCS8.html">PKCS8</a></li><li><a href="GostKeys.PKCS8Encrypted.html">PKCS8Encrypted</a></li><li><a href="GostKeys.PKCS12.html">PKCS12</a></li><li><a href="GostKeys.SignalComKeyContainer.html">SignalComKeyContainer</a></li><li><a href="GostKeys.SignalComPrivateKeyInfo.html">SignalComPrivateKeyInfo</a></li><li><a href="GostRandom.html">GostRandom</a></li><li><a href="GostSecurity.html">GostSecurity</a></li><li><a href="GostSign.html">GostSign</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
+    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="GostASN1.html">GostASN1</a></li><li><a href="GostASN1.AttributeCertificate.html">AttributeCertificate</a></li><li><a href="GostASN1.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="GostASN1.Attributes.html">Attributes</a></li><li><a href="GostASN1.AuthenticatedData.html">AuthenticatedData</a></li><li><a href="GostASN1.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="GostASN1.Certificate.html">Certificate</a></li><li><a href="GostASN1.CertificateList.html">CertificateList</a></li><li><a href="GostASN1.CertificationRequest.html">CertificationRequest</a></li><li><a href="GostASN1.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="GostASN1.ContentInfo.html">ContentInfo</a></li><li><a href="GostASN1.DigestedData.html">DigestedData</a></li><li><a href="GostASN1.EncryptedData.html">EncryptedData</a></li><li><a href="GostASN1.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="GostASN1.EnvelopedData.html">EnvelopedData</a></li><li><a href="GostASN1.Extensions.html">Extensions</a></li><li><a href="GostASN1.GostEncryptedKey.html">GostEncryptedKey</a></li><li><a href="GostASN1.GostKeyContainer.html">GostKeyContainer</a></li><li><a href="GostASN1.GostKeyContainerName.html">GostKeyContainerName</a></li><li><a href="GostASN1.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="GostASN1.GostPrivateKeys.html">GostPrivateKeys</a></li><li><a href="GostASN1.GostPrivateMasks.html">GostPrivateMasks</a></li><li><a href="GostASN1.GostSignature.html">GostSignature</a></li><li><a href="GostASN1.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="GostASN1.GostWrappedPrivateKey.html">GostWrappedPrivateKey</a></li><li><a href="GostASN1.Name.html">Name</a></li><li><a href="GostASN1.PFX.html">PFX</a></li><li><a href="GostASN1.PKIData.html">PKIData</a></li><li><a href="GostASN1.PKIResponse.html">PKIResponse</a></li><li><a href="GostASN1.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="GostASN1.SafeContents.html">SafeContents</a></li><li><a href="GostASN1.Sequence.html">Sequence</a></li><li><a href="GostASN1.Set.html">Set</a></li><li><a href="GostASN1.SignedAttributes.html">SignedAttributes</a></li><li><a href="GostASN1.SignedData.html">SignedData</a></li><li><a href="GostASN1.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="GostASN1.TBSCertificate.html">TBSCertificate</a></li><li><a href="GostASN1.TBSCertList.html">TBSCertList</a></li><li><a href="GostASN1.UnsignedAttributes.html">UnsignedAttributes</a></li><li><a href="GostASN1.Validity.html">Validity</a></li><li><a href="GostASN1.ViPNetInfo.html">ViPNetInfo</a></li><li><a href="GostCert.html">GostCert</a></li><li><a href="GostCert.CertificateTrustPolicy.html">CertificateTrustPolicy</a></li><li><a href="GostCert.CertPath.html">CertPath</a></li><li><a href="GostCert.CertStore.html">CertStore</a></li><li><a href="GostCert.CRL.html">CRL</a></li><li><a href="GostCert.Request.html">Request</a></li><li><a href="GostCert.TrustedCAPolicy.html">TrustedCAPolicy</a></li><li><a href="GostCert.X509.html">X509</a></li><li><a href="GostCipher.html">GostCipher</a></li><li><a href="GostCMS.html">GostCMS</a></li><li><a href="GostCMS.DataContentInfo.html">DataContentInfo</a></li><li><a href="GostCMS.DigestedDataContentInfo.html">DigestedDataContentInfo</a></li><li><a href="GostCMS.EncryptedDataContentInfo.html">EncryptedDataContentInfo</a></li><li><a href="GostCMS.EnvelopedDataContentInfo.html">EnvelopedDataContentInfo</a></li><li><a href="GostCMS.SignedDataContentInfo.html">SignedDataContentInfo</a></li><li><a href="GostCoding.html">GostCoding</a></li><li><a href="GostCoding.Base64.html">Base64</a></li><li><a href="GostCoding.BER.html">BER</a></li><li><a href="GostCoding.Chars.html">Chars</a></li><li><a href="GostCoding.Hex.html">Hex</a></li><li><a href="GostCoding.Int16.html">Int16</a></li><li><a href="GostCoding.PEM.html">PEM</a></li><li><a href="GostDigest.html">GostDigest</a></li><li><a href="GostKeys.html">GostKeys</a></li><li><a href="GostKeys.CryptoProKeyContainer.html">CryptoProKeyContainer</a></li><li><a href="GostKeys.KeyEntry.html">KeyEntry</a></li><li><a href="GostKeys.KeyStore.html">KeyStore</a></li><li><a href="GostKeys.PKCS8.html">PKCS8</a></li><li><a href="GostKeys.PKCS8Encrypted.html">PKCS8Encrypted</a></li><li><a href="GostKeys.PKCS12.html">PKCS12</a></li><li><a href="GostKeys.SignalComKeyContainer.html">SignalComKeyContainer</a></li><li><a href="GostKeys.SignalComPrivateKeyInfo.html">SignalComPrivateKeyInfo</a></li><li><a href="GostKeys.ViPNetContainer.html">ViPNetContainer</a></li><li><a href="GostKeys.ViPNetContainerEntry.html">ViPNetContainerEntry</a></li><li><a href="GostRandom.html">GostRandom</a></li><li><a href="GostSecurity.html">GostSecurity</a></li><li><a href="GostSign.html">GostSign</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
 </nav>
 
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Sun Oct 25 2015 02:48:17 GMT+0300 (MSK)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Oct 30 2015 23:59:10 GMT+0300 (MSK)
 </footer>
 
 </div>

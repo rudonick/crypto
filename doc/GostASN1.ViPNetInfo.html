@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>WebCrypto GOST: Class: TrustedCAPolicy</title>
+    <title>WebCrypto GOST: Class: ViPNetInfo</title>
 
     <script src="../scripts/prettify/prettify.js"> </script>
     <script src="../scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title"><a href="../index.html">WebCrypto GOST</a> Class: TrustedCAPolicy</h1>
+    <h1 class="page-title"><a href="../index.html">WebCrypto GOST</a> Class: ViPNetInfo</h1>
 
     
 
@@ -29,9 +29,9 @@
 <header>
     
         <h2>
-            <span class="ancestors"><a href="GostCert.html">GostCert</a>.</span>
+            <span class="ancestors"><a href="GostASN1.html">GostASN1</a>.</span>
         
-        TrustedCAPolicy
+        ViPNetInfo
         </h2>
         
     
@@ -47,7 +47,7 @@
         <h2>Constructor</h2>
         
 
-        <h4 class="name" id="TrustedCAPolicy"><span class="type-signature"></span>new TrustedCAPolicy<span class="signature">(trustedCACerts, requireCRL, requireCA)</span><span class="type-signature"></span></h4>
+        <h4 class="name" id="ViPNetInfo"><span class="type-signature"></span>new ViPNetInfo<span class="signature">()</span><span class="type-signature"></span></h4>
 
         
     
@@ -56,20 +56,7 @@
 
     
     <div class="description">
-        A certificate trust policy based on a set of trusted root CAs.<br><br>
-
-In this policy, a certificate will be trusted if and only if it is part of a 
-valid certificate chain which terminates in one of the trusted root CAs. <br><br>
-
-This policy has two options for certificate chain verification:
-<ul>
-     <li>requireCRL - If true, then for every certificate in a chain 
-         (unless it is one of the trusted root CA certificates) a valid CRL 
-         must be provided to determine its revocation status. The default is false.</li>
-     <li>requireCAFlag - If true, then every intermediate CA certificate (excluding 
-         the root CA or the end entity certificate) must contain a Basic Constraints 
-         extension, with the CA flag set. The default for this option is true.</li>
-</ul>
+        ViPNet key container info
     </div>
     
 
@@ -79,100 +66,6 @@ This policy has two options for certificate chain verification:
 
     
 
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>trustedCACerts</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;<a href="GostCert.X509.html">GostCert.X509</a>></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>requireCRL</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>requireCA</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
     
 
     
@@ -207,7 +100,7 @@ This policy has two options for certificate chain verification:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCert.js.html">gostCert.js</a>, <a href="gostCert.js.html#line1158">line 1158</a>
+        <a href="gostASN1.js.html">gostASN1.js</a>, <a href="gostASN1.js.html#line3486">line 3486</a>
     </li></ul></dd>
     
 
@@ -244,7 +137,7 @@ This policy has two options for certificate chain verification:
 
 
     <ul>
-        <li><a href="GostCert.CertificateTrustPolicy.html">GostCert.CertificateTrustPolicy</a></li>
+        <li><a href="GostASN1.Sequence.html">GostASN1.Sequence</a></li>
     </ul>
 
 
@@ -269,7 +162,7 @@ This policy has two options for certificate chain verification:
     
         
 
-        <h4 class="name" id="getValidCertificate"><span class="type-signature"></span>getValidCertificate<span class="signature">(selector, certificates, crls, date)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+        <h4 class="name" id="check"><span class="type-signature"></span>check<span class="signature">()</span><span class="type-signature"></span></h4>
 
         
     
@@ -278,12 +171,98 @@ This policy has two options for certificate chain verification:
 
     
     <div class="description">
-        Returns a certificate, known to be valid (according to criteria dependent 
-on the verification scheme), which has the given selector, certificate and 
-CRL lists to implement a particular certificate verification  scheme, 
-such a forming valid certificate chains.<br>
-Second and third argument to this method may be undefined, and such a case 
-must be treated exactly the same as if the particular argument was an empty array.
+        Check the object structure
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+    <dt class="inherited-from">Inherited From:</dt>
+    <dd class="inherited-from"><ul class="dummy"><li>
+        <a href="GostASN1.Sequence.html#check">GostASN1.Sequence#check</a>
+    </li></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostASN1.js.html">gostASN1.js</a>, <a href="gostASN1.js.html#line608">line 608</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="decode"><span class="type-signature"></span>decode<span class="signature">(source)</span><span class="type-signature"></span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Decode the source to self object
     </div>
     
 
@@ -319,13 +298,13 @@ must be treated exactly the same as if the particular argument was an empty arra
 
         <tr>
             
-                <td class="name"><code>selector</code></td>
+                <td class="name"><code>source</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">GostCert.CertificateSelector</span>
+<span class="param-type"><a href="FormatedData.html">FormatedData</a></span>
 
 
             
@@ -335,76 +314,7 @@ must be treated exactly the same as if the particular argument was an empty arra
 
             
 
-            <td class="description last">Certificate selector</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>certificates</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;<a href="GostASN1.Certificate.html">GostASN1.Certificate</a>></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Certificates</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>crls</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;<a href="GostASN1.CertificateList.html">GostASN1.CertificateList</a>></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">CLRs</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>date</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Date</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Validation date. Default today</td>
+            <td class="description last">Encoded data</td>
         </tr>
 
     
@@ -422,12 +332,12 @@ must be treated exactly the same as if the particular argument was an empty arra
     
 
     
-
-    
-    <dt class="tag-overrides">Overrides:</dt>
-    <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="GostCert.CertificateTrustPolicy.html#getValidCertificate">GostCert.CertificateTrustPolicy#getValidCertificate</a>
+    <dt class="inherited-from">Inherited From:</dt>
+    <dd class="inherited-from"><ul class="dummy"><li>
+        <a href="GostASN1.Sequence.html#decode">GostASN1.Sequence#decode</a>
     </li></dd>
+    
+
     
 
     
@@ -449,7 +359,146 @@ must be treated exactly the same as if the particular argument was an empty arra
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCert.js.html">gostCert.js</a>, <a href="gostCert.js.html#line1204">line 1204</a>
+        <a href="gostASN1.js.html">gostASN1.js</a>, <a href="gostASN1.js.html#line599">line 599</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="encode"><span class="type-signature"></span>encode<span class="signature">(format)</span><span class="type-signature"> &rarr; {<a href="FormatedData.html">FormatedData</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Encode the object
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>format</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Encoding format 'DER', 'CER' or 'PEM'</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+    <dt class="inherited-from">Inherited From:</dt>
+    <dd class="inherited-from"><ul class="dummy"><li>
+        <a href="GostASN1.Sequence.html#encode">GostASN1.Sequence#encode</a>
+    </li></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostASN1.js.html">gostASN1.js</a>, <a href="gostASN1.js.html#line578">line 578</a>
     </li></ul></dd>
     
 
@@ -475,10 +524,6 @@ must be treated exactly the same as if the particular argument was an empty arra
     <h5>Returns:</h5>
     
             
-<div class="param-desc">
-    Promise to return valid <a href="GostCert.X509.html">GostCert.X509</a>
-</div>
-
 
 
 <dl>
@@ -487,7 +532,7 @@ must be treated exactly the same as if the particular argument was an empty arra
     </dt>
     <dd>
         
-<span class="param-type"><a href="Promise.html">Promise</a></span>
+<span class="param-type"><a href="FormatedData.html">FormatedData</a></span>
 
 
     </dd>
@@ -520,7 +565,7 @@ must be treated exactly the same as if the particular argument was an empty arra
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Oct 30 2015 23:59:15 GMT+0300 (MSK)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Oct 30 2015 23:59:14 GMT+0300 (MSK)
 </footer>
 
 </div>

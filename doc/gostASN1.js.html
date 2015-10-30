@@ -28,7 +28,7 @@
         <article>
             <pre class="prettyprint source linenums"><code>/**
  * @file PKCS ASN.1 message syntax and converters
- * @version 1.70
+ * @version 1.73
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -230,13 +230,16 @@
 
         tagClass = tagClass || 0;
         tagConstructed = tagConstructed || false;
-        // Restore context formats
+        // Restore context implicit formats
         if (source.tagNumber === undefined) {
             source = encode(true, source.object, tagNumber, tagClass,
                     source.object instanceof Array);
-            if (tagNumber !== 0x10 &amp;&amp; tagNumber !== 0x11 &amp;&amp;
-                    (tagNumber !== 0x04 || source.tagConstructed))
-                source = BER.decode(BER.encode(source));
+            source = BER.decode(source);
+           
+//            if (tagNumber !== 0x10 &amp;&amp; tagNumber !== 0x11 &amp;&amp;
+//                    (tagNumber !== 0x04 || source.tagConstructed)) {
+//                source = BER.decode(BER.encode(source));
+//            }
         }
 
         // Check format
@@ -769,6 +772,59 @@
         }
     });
 
+    var IMPLICIT = function (Class) {
+        Class = Class || ANY;
+        // Add constracted tag
+        return extend(Class, {
+            encode: function (format) {
+                // Format encoding without CTX header
+                var source = Class.method('encode').call(this, format);
+                if (typeof source === 'string' || source instanceof CryptoOperationData)
+                    return source;
+                if (source.tagNumber !== 0x04 &amp;&amp; source.tagClass === 0 &amp;&amp;
+                        !(source.object instanceof Array))
+                    // Encode primitive source
+                    return {object: BER.encode(source, 'DER', true)};
+                else
+                    return {object: source.object};
+            }
+        }, {
+            decode: function (source) {
+                if (typeof source === 'string' || source instanceof CryptoOperationData) {
+                    return Class.decode.call(this, source);
+                } else {
+                    source = {
+                        object: source.object,
+                        header: source.header,
+                        content: source.content
+                    };
+                    return Class.decode.call(this, source);
+                }
+            }
+        });
+    };
+
+    var EXPLICIT = function (Class) {
+        Class = Class || ANY;
+        // Add constracted tag
+        return extend(Class, {
+            encode: function (format) {
+                // Format encoding without CTX header
+                var source = Class.method('encode').call(this, format);
+                if (typeof source === 'string' || source instanceof CryptoOperationData)
+                    return source;
+                return {object: [source]};
+            }
+        }, {
+            decode: function (source) {
+                if (typeof source === 'string' || source instanceof CryptoOperationData) {
+                    return Class.decode.call(this, source);
+                } else
+                    return Class.decode.call(this, source.object[0]);
+            }
+        });
+    };
+
     var CTX = function (number, ContentClass) {
         function CTX() {
             ContentClass.apply(this, arguments);
@@ -779,12 +835,6 @@
                 var source = ContentClass.method('encode').call(this, format);
                 if (typeof source === 'string' || source instanceof CryptoOperationData)
                     return source;
-                // Restore primitive source
-                if (source.tagNumber !== 0x04 &amp;&amp; source.tagClass === 0 &amp;&amp;
-                        !(source.object instanceof Array))
-                    source = {object: BER.decode(BER.encode(source)).content};
-                else
-                    source = {object: source.object};
                 source.tagNumber = number;
                 source.tagClass = 0x02;
                 source.tagConstructed = source.object instanceof Array;
@@ -793,10 +843,8 @@
         }, {
             decode: function (source) {
                 // Format decoding without CTX
-                if (source.tagNumber !== undefined) {
-                    assert(source.tagClass !== 0x02 || source.tagNumber !== number);
-                    source = {object: source.object};
-                }
+                assert(source.tagNumber !== undefined &amp;&amp; 
+                        (source.tagClass !== 0x02 || source.tagNumber !== number));
                 return ContentClass.decode.call(this, source);
             }
         });
@@ -1039,6 +1087,12 @@
                             }
                             return encode(format, source, tagNumber, 0, true);
                         },
+                        decode: function (source) {
+                            this.object = this.constructor.decode(source);
+                        },
+                        check: function () {
+                            this.constructor.decode(this.encode(true));
+                        },
                         reset: function () {
                             // remove unused properties
                             for (var i = 0, n = this.items.length; i &lt; n; i++)
@@ -1055,6 +1109,9 @@
                             }
                         }
                     }, {
+                        encode: function (object, format) {
+                            return new this(object).encode(format);
+                        },
                         decode: function (source) {
                             source = decode(source, tagNumber, 0, true);
                             var result = new this();
@@ -1080,12 +1137,28 @@
     var ENCLOSURE = function (BaseClass, modifier) {
         if (modifier) {
             var Class = extend(ASN1Object, {
+                object: {
+                    get: function () {
+                        if (this.item)
+                            return modifier.decode(this.item.object);
+                        else
+                            return undefined;
+                    },
+                    set: function (object) {
+                        if (object !== undefined)
+                            this.item = new BaseClass(modifier.encode(object));
+                        else
+                            delete this.item;
+                    }
+                },
                 encode: function (format) {
-                    return new BaseClass(modifier.encode(this.object)).encode(format);
+                    return this.item.encode(format);
                 }
             }, {
                 decode: function (source) {
-                    return new this(modifier.decode(BaseClass.decode(source).object));
+                    var result = new this();
+                    result.item = BaseClass.decode(source);
+                    return result;
                 }
             });
             for (var name in BaseClass)
@@ -1165,37 +1238,6 @@
             },
             decode: function (source) {
                 return WrappedClass.decode.call(this, BER.decode(source));
-            }
-        });
-    };
-
-    var IMPLICIT = function (Class) {
-        return Class || ANY;
-    };
-
-    var EXPLICIT = function (Class) {
-        Class = Class || ANY;
-        // Add constracted tag
-        return extend(Class, {
-            encode: function (format) {
-                // Format encoding without CTX header
-                var source = Class.method('encode').call(this, format);
-                if (typeof source === 'string' || source instanceof CryptoOperationData)
-                    return source;
-                return {object: [source]};
-            }
-        }, {
-            decode: function (source) {
-                if (typeof source === 'string' || source instanceof CryptoOperationData) {
-                    // Decode PEM
-                    if (typeof source === 'string')
-                        source = PEM.decode(source, undefined, false);
-                    // Decode binary data
-                    if (source instanceof CryptoOperationData)
-                        source = BER.decode(source);
-                    return Class.decode.call(this, source);
-                } else
-                    return Class.decode.call(this, source.object[0]);
             }
         });
     };
@@ -1486,6 +1528,56 @@
             parameters: OPTIONAL(paramType)}), modifier);
     };
 
+//    var AlgorithmIdentifier = (function () {
+//
+//        var DefaultAlgorithm = Algorithm(ANY),
+//                Class = extend(ASN1Object, function (object) {
+//                    if (this instanceof Class)
+//                        Class.super.apply(this, arguments);
+//                    else
+//                        return DEFINE(object);
+//                }, {
+//                    encode: function (format) {
+//                        return new DefaultAlgorithm(this.object).encode(format);
+//                    }
+//                }, {
+//                    decode: function (source) {
+//                        return new this(DefaultAlgorithm.decode(source).object);
+//                    }
+//                });
+//
+//        var DEFINE = function (algorithmSet) {
+//
+//            return extend(ASN1Object, {
+//                encode: function (format) {
+//                    var object = this.object;
+//                    var AlgorithmType = algorithmSet[object.id];
+//                    if (AlgorithmType)
+//                        return new AlgorithmType(object).encode(format);
+//                    else
+//                        throw new Error('Algorithm not supported');
+//                }
+//            }, {
+//                decode: function (source) {
+//                    // Decode PEM
+//                    if (typeof source === 'string')
+//                        source = PEM.decode(source, undefined, false);
+//                    // Decode binary data
+//                    if (source instanceof CryptoOperationData)
+//                        source = BER.decode(source);
+//                    var AlgorithmType = algorithmSet[names[source.object[0].object]];
+//                    if (AlgorithmType)
+//                        return new this(AlgorithmType.decode(source).object);
+//                    else
+//                        throw new Error('Algorithm not supported');
+//                }
+//            });
+//        };
+//
+//        return Class;
+//    })();
+//
+
     var AlgorithmIdentifier = (function () {
 
         var DefaultAlgorithm = Algorithm(ANY),
@@ -1507,13 +1599,25 @@
         var DEFINE = function (algorithmSet) {
 
             return extend(ASN1Object, {
+                object: {
+                    get: function () {
+                        if (this.item)
+                            return this.item.object;
+                        else
+                            return undefined;
+                    },
+                    set: function (object) {
+                        if (object) {
+                            var ItemClass = algorithmSet[object.id];
+                            if (!ItemClass)
+                                throw new Error('Algorithm not supported');
+                            this.item = new ItemClass(object);
+                        } else
+                            delete this.item;
+                    }
+                },
                 encode: function (format) {
-                    var object = this.object;
-                    var AlgorithmType = algorithmSet[object.id];
-                    if (AlgorithmType)
-                        return new AlgorithmType(object).encode(format);
-                    else
-                        throw new Error('Algorithm not supported');
+                    return this.item.encode(format);
                 }
             }, {
                 decode: function (source) {
@@ -1523,10 +1627,12 @@
                     // Decode binary data
                     if (source instanceof CryptoOperationData)
                         source = BER.decode(source);
-                    var AlgorithmType = algorithmSet[names[source.object[0].object]];
-                    if (AlgorithmType)
-                        return new this(AlgorithmType.decode(source).object);
-                    else
+                    var ItemClass = algorithmSet[names[source.object[0].object]];
+                    if (ItemClass) {
+                        var result = new this();
+                        result.item = ItemClass.decode(source);
+                        return result;
+                    } else
                         throw new Error('Algorithm not supported');
                 }
             });
@@ -1637,12 +1743,17 @@
         encode: function (value) {
             return {
                 algorithm: value.id,
-                parameters: attributes['sBox'][value.sBox || 'D-A']
+                parameters: attributes['sBox'][value.sBox || (value.hash &amp;&amp; value.hash.sBox) || 'D-A']
             };
         },
         decode: function (value) {
-            return expand(algorithms[value.algorithm],
-                    parameters[value.parameters]);
+            var algorithm = expand(algorithms[value.algorithm]),
+                    parameter = parameters[value.parameters];
+            if (algorithm.hash)
+                algorithm.hash = expand(algorithm.hash, parameter);
+            else
+                algorithm = expand(algorithm, parameter);
+            return algorithm;
         }
     });
 
@@ -1786,57 +1897,15 @@
         }
     });
 
-    var KeyEncryptionAlgorithmIdentifier = AlgorithmIdentifier({
-        ecdsa: ECDHKeyAlgorithm,
-        rsaEncryption: AlgorithmWithNullParam,
-        // Base encryption
-        'id-sc-gost28147-gfb': SCGostAlgorithm,
-        'id-Gost28147-89': Gost2814789Algorithm,
-        // Key transport algorithms
-        'id-sc-gostR3410-2001': ECDHKeyAlgorithm,
-        'id-GostR3410-2001': GostKeyAlgorithm,
-        'id-GostR3410-94': GostKeyAlgorithm,
-        'id-tc26-gost3410-12-256': GostKeyAlgorithm,
-        'id-tc26-gost3410-12-512': GostKeyAlgorithm,
-        // Key agreement algorithms
-        'id-GostR3410-94-CryptoPro-ESDH': GostKeyAgreementAlgorithm,
-        'id-GostR3410-2001-CryptoPro-ESDH': GostKeyAgreementAlgorithm,
-        'id-tc26-agreement-gost-3410-12-256': GostKeyAgreementAlgorithm,
-        'id-tc26-agreement-gost-3410-12-512': GostKeyAgreementAlgorithm,
-        'id-sc-r3410-ESDH-r3411kdf': AlgorithmWithNullParam,
-        // Key encryption key algorithms
-        'id-Gost28147-89-None-KeyWrap': GostKeyWrapAlgorithm, // Add ukm to algorithm
-        'id-Gost28147-89-CryptoPro-KeyWrap': GostKeyWrapAlgorithm,
-        'id-sc-cmsGostWrap': AlgorithmWithNoParam, // SC don't use ukm
-        'id-sc-cmsGost28147Wrap': AlgorithmWithNoParam,
-        // Password based encryption
-        'pbeWithSHAAndAES128-CBC': PBES1Algorithm,
-        'pbeWithSHAAndAES192-CBC': PBES1Algorithm,
-        'pbeWithSHAAndAES256-CBC': PBES1Algorithm,
-        'pbeWithSHA256AndAES128-CBC': PBES1Algorithm,
-        'pbeWithSHA256AndAES192-CBC': PBES1Algorithm,
-        'pbeWithSHA256AndAES256-CBC': PBES1Algorithm,
-        'id-sc-pbeWithGost3411AndGost28147': PBES1Algorithm,
-        'id-sc-pbeWithGost3411AndGost28147CFB': PBES1Algorithm,
-        // PKCS12 PBES1 
-        'pbeWithSHAAnd3-KeyTripleDES-CBC': PBES1Algorithm,
-        'pbeWithSHAAnd2-KeyTripleDES-CBC': PBES1Algorithm,
-        'pbeWithSHAAnd128BitRC2-CBC': PBES1Algorithm,
-        'pbewithSHAAnd40BitRC2-CBC': PBES1Algorithm,
-        'pbeUnknownGost': PBES1Algorithm,
-        // PBES2
-        'PBES2': PBES2Algorithm
-    });
-
     var BaseEncryptionAlgorithmIdentifier = AlgorithmIdentifier({
         'id-sc-gost28147-gfb': SCGostAlgorithm,
         'id-Gost28147-89': Gost2814789Algorithm});
 
     var MessageAuthenticationCodeAlgorithm = AlgorithmIdentifier({
         'id-Gost28147-89-MAC': Gost2814789Parameters,
-        'id-HMACGostR3411-94': AlgorithmWithNoParam,
-        'id-tc26-hmac-gost-3411-12-256': AlgorithmWithNoParam,
-        'id-tc26-hmac-gost-3411-12-512': AlgorithmWithNoParam,
+        'id-HMACGostR3411-94': Gost341194DigestAlgorithm,
+        'id-tc26-hmac-gost-3411-12-256': Gost341194DigestAlgorithm,
+        'id-tc26-hmac-gost-3411-12-512': Gost341194DigestAlgorithm,
         'hmacWithSHA1': AlgorithmWithNoParam,
         'hmacWithSHA224': AlgorithmWithNoParam,
         'hmacWithSHA256': AlgorithmWithNoParam,
@@ -1946,6 +2015,48 @@
         'pbeUnknownGost': PBES1Algorithm,
         // PBES2
         'PBES2': PBES2Algorithm});
+
+    var KeyEncryptionAlgorithmIdentifier = AlgorithmIdentifier({
+        ecdsa: ECDHKeyAlgorithm,
+        rsaEncryption: AlgorithmWithNullParam,
+        // Base encryption
+        'id-sc-gost28147-gfb': SCGostAlgorithm,
+        'id-Gost28147-89': Gost2814789Algorithm,
+        // Key transport algorithms
+        'id-sc-gostR3410-2001': ECDHKeyAlgorithm,
+        'id-GostR3410-2001': GostKeyAlgorithm,
+        'id-GostR3410-94': GostKeyAlgorithm,
+        'id-tc26-gost3410-12-256': GostKeyAlgorithm,
+        'id-tc26-gost3410-12-512': GostKeyAlgorithm,
+        // Key agreement algorithms
+        'id-GostR3410-94-CryptoPro-ESDH': GostKeyAgreementAlgorithm,
+        'id-GostR3410-2001-CryptoPro-ESDH': GostKeyAgreementAlgorithm,
+        'id-tc26-agreement-gost-3410-12-256': GostKeyAgreementAlgorithm,
+        'id-tc26-agreement-gost-3410-12-512': GostKeyAgreementAlgorithm,
+        'id-sc-r3410-ESDH-r3411kdf': AlgorithmWithNullParam,
+        // Key encryption key algorithms
+        'id-Gost28147-89-None-KeyWrap': GostKeyWrapAlgorithm, // Add ukm to algorithm
+        'id-Gost28147-89-CryptoPro-KeyWrap': GostKeyWrapAlgorithm,
+        'id-sc-cmsGostWrap': AlgorithmWithNoParam, // SC don't use ukm
+        'id-sc-cmsGost28147Wrap': AlgorithmWithNoParam,
+        // Password based encryption
+        'pbeWithSHAAndAES128-CBC': PBES1Algorithm,
+        'pbeWithSHAAndAES192-CBC': PBES1Algorithm,
+        'pbeWithSHAAndAES256-CBC': PBES1Algorithm,
+        'pbeWithSHA256AndAES128-CBC': PBES1Algorithm,
+        'pbeWithSHA256AndAES192-CBC': PBES1Algorithm,
+        'pbeWithSHA256AndAES256-CBC': PBES1Algorithm,
+        'id-sc-pbeWithGost3411AndGost28147': PBES1Algorithm,
+        'id-sc-pbeWithGost3411AndGost28147CFB': PBES1Algorithm,
+        // PKCS12 PBES1 
+        'pbeWithSHAAnd3-KeyTripleDES-CBC': PBES1Algorithm,
+        'pbeWithSHAAnd2-KeyTripleDES-CBC': PBES1Algorithm,
+        'pbeWithSHAAnd128BitRC2-CBC': PBES1Algorithm,
+        'pbewithSHAAnd40BitRC2-CBC': PBES1Algorithm,
+        'pbeUnknownGost': PBES1Algorithm,
+        // PBES2
+        'PBES2': PBES2Algorithm
+    });
 
     var PBMAC1params = SEQUENCE({
         keyDerivationFunc: KeyDerivationAlgorithmIdentifier, // {{PBMAC1-KDFs}},
@@ -2080,7 +2191,7 @@
          * @extends GostASN1.SubjectPublicKeyInfo
          * @extends Key
          */
-        return extend(ENCLOSURE(ATTRIBUTE({
+        return ENCLOSURE(ATTRIBUTE({
             algorithm: KeyAlgorithmIdentifier,
             subjectPublicKey: ANY},
         'algorithm', 'subjectPublicKey')(function (algorithm) {
@@ -2100,16 +2211,6 @@
                     usages: ['verify', 'deriveKey', 'deriveBits'],
                     buffer: value.subjectPublicKey
                 };
-            }
-        }), {
-            object: {
-                get: function () {
-                    return this;
-                },
-                set: function (object) {
-                    for (var name in object)
-                        this[name] = object[name];
-                }
             }
         });
     })({
@@ -2257,7 +2358,7 @@
          * @extends GostASN1.PrivateKeyInfo
          * @extends Key
          */
-        return extend(ENCLOSURE(ATTRIBUTE({
+        return ENCLOSURE(ATTRIBUTE({
             version: Version,
             privateKeyAlgorithm: KeyAlgorithmIdentifier,
             privateKey: ANY,
@@ -2280,16 +2381,6 @@
                     usages: ['sign', 'deriveKey', 'deriveBits'],
                     buffer: value.privateKey
                 };
-            }
-        }), {
-            object: {
-                get: function () {
-                    return this;
-                },
-                set: function (object) {
-                    for (var name in object)
-                        this[name] = object[name];
-                }
             }
         });
     })({
@@ -3396,6 +3487,47 @@
     // &lt;/editor-fold>
 
     /*
+     * ViPNet Gost Private Key Store
+     */ // &lt;editor-fold defaultstate="collapsed">
+
+    var ViPNetKeyInfo = SEQUENCE({
+        keyClass: INTEGER,
+        keyType: INTEGER,
+        algorithm: OPTIONAL(CTX(0, EXPLICIT(KeyAlgorithmIdentifier))),
+        serialNumber: OPTIONAL(CTX(1, EXPLICIT(OCTET_STRING))),
+        addSerialNumber: OPTIONAL(CTX(2, EXPLICIT(OCTET_STRING))),
+        certSerialNumber: OPTIONAL(CTX(3, EXPLICIT(OCTET_STRING))),
+        subjectUID: OPTIONAL(CTX(4, EXPLICIT(OCTET_STRING))),
+        recipientUID: OPTIONAL(CTX(5, EXPLICIT(OCTET_STRING))),
+        validity: OPTIONAL(CTX(6, EXPLICIT(CHOICE({
+            validity: Validity,
+            keyValidity: SEQUENCE({
+                notBefore: OPTIONAL(CTX(0, IMPLICIT(GeneralizedTime))),
+                notAfter: OPTIONAL(CTX(1, IMPLICIT(GeneralizedTime)))})
+        }, function () {
+            return 'keyValidity';
+        })))),
+        keyUID: OPTIONAL(CTX(7, EXPLICIT(BIT_STRING))),
+        flags: OPTIONAL(CTX(10, EXPLICIT(INTEGER)))
+    });
+
+    /**
+     * ViPNet key container info
+     * 
+     * @class GostASN1.ViPNetInfo
+     * @extends GostASN1.Sequence
+     */
+    var ViPNetInfo = SEQUENCE({
+        version: INTEGER,
+        keyInfo: ViPNetKeyInfo,
+        defenceKeyInfo: ViPNetKeyInfo,
+        certificate: OPTIONAL(CTX(0, EXPLICIT(Certificate))),
+        publicKey: OPTIONAL(CTX(1, EXPLICIT(OCTET_STRING)))
+    });
+
+    // &lt;/editor-fold>
+
+    /*
      * Cryptographic Message Syntax
      * 
      * http://tools.ietf.org/html/rfc5652
@@ -4029,11 +4161,11 @@
         bagAttributes: OPTIONAL(PKCS12Attributes)
     }, 'bagId', 'bagValue')(function (type) {
         return ({
-            keyBag: COMBINE(KeyBag),
-            pkcs8ShroudedKeyBag: COMBINE(PKCS8ShroudedKeyBag),
-            certBag: COMBINE(CertBag),
-            crlBag: COMBINE(CRLBag),
-            secretBag: COMBINE(SecretBag),
+            keyBag: KeyBag,
+            pkcs8ShroudedKeyBag: PKCS8ShroudedKeyBag,
+            certBag: CertBag,
+            crlBag: CRLBag,
+            secretBag: SecretBag,
             safeContentsBag: SafeContents // recursion
         })[type];
     });
@@ -4674,6 +4806,14 @@
          */
         GostPrivateMasks: GostPrivateMasks,
         /**
+         * ViPNet key container
+         * 
+         * @memberOf GostASN1
+         * @instance
+         * @type GostASN1.ViPNetInfo
+         */
+        ViPNetInfo: ViPNetInfo,
+        /**
          * Gost Signature encoders
          * 
          * @memberOf GostASN1
@@ -4872,13 +5012,13 @@
 </div>
 
 <nav id="nav">
-    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="GostASN1.html">GostASN1</a></li><li><a href="GostASN1.AttributeCertificate.html">AttributeCertificate</a></li><li><a href="GostASN1.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="GostASN1.Attributes.html">Attributes</a></li><li><a href="GostASN1.AuthenticatedData.html">AuthenticatedData</a></li><li><a href="GostASN1.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="GostASN1.Certificate.html">Certificate</a></li><li><a href="GostASN1.CertificateList.html">CertificateList</a></li><li><a href="GostASN1.CertificationRequest.html">CertificationRequest</a></li><li><a href="GostASN1.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="GostASN1.ContentInfo.html">ContentInfo</a></li><li><a href="GostASN1.DigestedData.html">DigestedData</a></li><li><a href="GostASN1.EncryptedData.html">EncryptedData</a></li><li><a href="GostASN1.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="GostASN1.EnvelopedData.html">EnvelopedData</a></li><li><a href="GostASN1.Extensions.html">Extensions</a></li><li><a href="GostASN1.GostEncryptedKey.html">GostEncryptedKey</a></li><li><a href="GostASN1.GostKeyContainer.html">GostKeyContainer</a></li><li><a href="GostASN1.GostKeyContainerName.html">GostKeyContainerName</a></li><li><a href="GostASN1.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="GostASN1.GostPrivateKeys.html">GostPrivateKeys</a></li><li><a href="GostASN1.GostPrivateMasks.html">GostPrivateMasks</a></li><li><a href="GostASN1.GostSignature.html">GostSignature</a></li><li><a href="GostASN1.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="GostASN1.GostWrappedPrivateKey.html">GostWrappedPrivateKey</a></li><li><a href="GostASN1.Name.html">Name</a></li><li><a href="GostASN1.PFX.html">PFX</a></li><li><a href="GostASN1.PKIData.html">PKIData</a></li><li><a href="GostASN1.PKIResponse.html">PKIResponse</a></li><li><a href="GostASN1.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="GostASN1.SafeContents.html">SafeContents</a></li><li><a href="GostASN1.Sequence.html">Sequence</a></li><li><a href="GostASN1.Set.html">Set</a></li><li><a href="GostASN1.SignedAttributes.html">SignedAttributes</a></li><li><a href="GostASN1.SignedData.html">SignedData</a></li><li><a href="GostASN1.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="GostASN1.TBSCertificate.html">TBSCertificate</a></li><li><a href="GostASN1.TBSCertList.html">TBSCertList</a></li><li><a href="GostASN1.UnsignedAttributes.html">UnsignedAttributes</a></li><li><a href="GostASN1.Validity.html">Validity</a></li><li><a href="GostCert.html">GostCert</a></li><li><a href="GostCert.CertificateTrustPolicy.html">CertificateTrustPolicy</a></li><li><a href="GostCert.CertPath.html">CertPath</a></li><li><a href="GostCert.CertStore.html">CertStore</a></li><li><a href="GostCert.CRL.html">CRL</a></li><li><a href="GostCert.Request.html">Request</a></li><li><a href="GostCert.TrustedCAPolicy.html">TrustedCAPolicy</a></li><li><a href="GostCert.X509.html">X509</a></li><li><a href="GostCipher.html">GostCipher</a></li><li><a href="GostCMS.html">GostCMS</a></li><li><a href="GostCMS.DataContentInfo.html">DataContentInfo</a></li><li><a href="GostCMS.DigestedDataContentInfo.html">DigestedDataContentInfo</a></li><li><a href="GostCMS.EncryptedDataContentInfo.html">EncryptedDataContentInfo</a></li><li><a href="GostCMS.EnvelopedDataContentInfo.html">EnvelopedDataContentInfo</a></li><li><a href="GostCMS.SignedDataContentInfo.html">SignedDataContentInfo</a></li><li><a href="GostCoding.html">GostCoding</a></li><li><a href="GostCoding.Base64.html">Base64</a></li><li><a href="GostCoding.BER.html">BER</a></li><li><a href="GostCoding.Chars.html">Chars</a></li><li><a href="GostCoding.Hex.html">Hex</a></li><li><a href="GostCoding.Int16.html">Int16</a></li><li><a href="GostCoding.PEM.html">PEM</a></li><li><a href="GostDigest.html">GostDigest</a></li><li><a href="GostKeys.html">GostKeys</a></li><li><a href="GostKeys.CryptoProKeyContainer.html">CryptoProKeyContainer</a></li><li><a href="GostKeys.PKCS8.html">PKCS8</a></li><li><a href="GostKeys.PKCS8Encrypted.html">PKCS8Encrypted</a></li><li><a href="GostKeys.PKCS12.html">PKCS12</a></li><li><a href="GostKeys.SignalComKeyContainer.html">SignalComKeyContainer</a></li><li><a href="GostKeys.SignalComPrivateKeyInfo.html">SignalComPrivateKeyInfo</a></li><li><a href="GostRandom.html">GostRandom</a></li><li><a href="GostSecurity.html">GostSecurity</a></li><li><a href="GostSign.html">GostSign</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
+    <h2><a href="index.html">Table of contents</a></h2><h3>Namespaces</h3><ul><li><a href="gostCrypto.html">gostCrypto</a></li><li><a href="gostEngine.html">gostEngine</a></li></ul><h3>Classes</h3><ul><li><a href="Algorithm.html">Algorithm</a></li><li><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></li><li><a href="CryptoOperationData.html">CryptoOperationData</a></li><li><a href="FormatedData.html">FormatedData</a></li><li><a href="GostASN1.html">GostASN1</a></li><li><a href="GostASN1.AttributeCertificate.html">AttributeCertificate</a></li><li><a href="GostASN1.AttributeCertificateInfo.html">AttributeCertificateInfo</a></li><li><a href="GostASN1.Attributes.html">Attributes</a></li><li><a href="GostASN1.AuthenticatedData.html">AuthenticatedData</a></li><li><a href="GostASN1.AuthenticatedSafe.html">AuthenticatedSafe</a></li><li><a href="GostASN1.Certificate.html">Certificate</a></li><li><a href="GostASN1.CertificateList.html">CertificateList</a></li><li><a href="GostASN1.CertificationRequest.html">CertificationRequest</a></li><li><a href="GostASN1.CertificationRequestInfo.html">CertificationRequestInfo</a></li><li><a href="GostASN1.ContentInfo.html">ContentInfo</a></li><li><a href="GostASN1.DigestedData.html">DigestedData</a></li><li><a href="GostASN1.EncryptedData.html">EncryptedData</a></li><li><a href="GostASN1.EncryptedPrivateKeyInfo.html">EncryptedPrivateKeyInfo</a></li><li><a href="GostASN1.EnvelopedData.html">EnvelopedData</a></li><li><a href="GostASN1.Extensions.html">Extensions</a></li><li><a href="GostASN1.GostEncryptedKey.html">GostEncryptedKey</a></li><li><a href="GostASN1.GostKeyContainer.html">GostKeyContainer</a></li><li><a href="GostASN1.GostKeyContainerName.html">GostKeyContainerName</a></li><li><a href="GostASN1.GostPrivateKeyInfo.html">GostPrivateKeyInfo</a></li><li><a href="GostASN1.GostPrivateKeys.html">GostPrivateKeys</a></li><li><a href="GostASN1.GostPrivateMasks.html">GostPrivateMasks</a></li><li><a href="GostASN1.GostSignature.html">GostSignature</a></li><li><a href="GostASN1.GostSubjectPublicKeyInfo.html">GostSubjectPublicKeyInfo</a></li><li><a href="GostASN1.GostWrappedPrivateKey.html">GostWrappedPrivateKey</a></li><li><a href="GostASN1.Name.html">Name</a></li><li><a href="GostASN1.PFX.html">PFX</a></li><li><a href="GostASN1.PKIData.html">PKIData</a></li><li><a href="GostASN1.PKIResponse.html">PKIResponse</a></li><li><a href="GostASN1.PrivateKeyInfo.html">PrivateKeyInfo</a></li><li><a href="GostASN1.SafeContents.html">SafeContents</a></li><li><a href="GostASN1.Sequence.html">Sequence</a></li><li><a href="GostASN1.Set.html">Set</a></li><li><a href="GostASN1.SignedAttributes.html">SignedAttributes</a></li><li><a href="GostASN1.SignedData.html">SignedData</a></li><li><a href="GostASN1.SubjectPublicKeyInfo.html">SubjectPublicKeyInfo</a></li><li><a href="GostASN1.TBSCertificate.html">TBSCertificate</a></li><li><a href="GostASN1.TBSCertList.html">TBSCertList</a></li><li><a href="GostASN1.UnsignedAttributes.html">UnsignedAttributes</a></li><li><a href="GostASN1.Validity.html">Validity</a></li><li><a href="GostASN1.ViPNetInfo.html">ViPNetInfo</a></li><li><a href="GostCert.html">GostCert</a></li><li><a href="GostCert.CertificateTrustPolicy.html">CertificateTrustPolicy</a></li><li><a href="GostCert.CertPath.html">CertPath</a></li><li><a href="GostCert.CertStore.html">CertStore</a></li><li><a href="GostCert.CRL.html">CRL</a></li><li><a href="GostCert.Request.html">Request</a></li><li><a href="GostCert.TrustedCAPolicy.html">TrustedCAPolicy</a></li><li><a href="GostCert.X509.html">X509</a></li><li><a href="GostCipher.html">GostCipher</a></li><li><a href="GostCMS.html">GostCMS</a></li><li><a href="GostCMS.DataContentInfo.html">DataContentInfo</a></li><li><a href="GostCMS.DigestedDataContentInfo.html">DigestedDataContentInfo</a></li><li><a href="GostCMS.EncryptedDataContentInfo.html">EncryptedDataContentInfo</a></li><li><a href="GostCMS.EnvelopedDataContentInfo.html">EnvelopedDataContentInfo</a></li><li><a href="GostCMS.SignedDataContentInfo.html">SignedDataContentInfo</a></li><li><a href="GostCoding.html">GostCoding</a></li><li><a href="GostCoding.Base64.html">Base64</a></li><li><a href="GostCoding.BER.html">BER</a></li><li><a href="GostCoding.Chars.html">Chars</a></li><li><a href="GostCoding.Hex.html">Hex</a></li><li><a href="GostCoding.Int16.html">Int16</a></li><li><a href="GostCoding.PEM.html">PEM</a></li><li><a href="GostDigest.html">GostDigest</a></li><li><a href="GostKeys.html">GostKeys</a></li><li><a href="GostKeys.CryptoProKeyContainer.html">CryptoProKeyContainer</a></li><li><a href="GostKeys.KeyEntry.html">KeyEntry</a></li><li><a href="GostKeys.KeyStore.html">KeyStore</a></li><li><a href="GostKeys.PKCS8.html">PKCS8</a></li><li><a href="GostKeys.PKCS8Encrypted.html">PKCS8Encrypted</a></li><li><a href="GostKeys.PKCS12.html">PKCS12</a></li><li><a href="GostKeys.SignalComKeyContainer.html">SignalComKeyContainer</a></li><li><a href="GostKeys.SignalComPrivateKeyInfo.html">SignalComPrivateKeyInfo</a></li><li><a href="GostKeys.ViPNetContainer.html">ViPNetContainer</a></li><li><a href="GostKeys.ViPNetContainerEntry.html">ViPNetContainerEntry</a></li><li><a href="GostRandom.html">GostRandom</a></li><li><a href="GostSecurity.html">GostSecurity</a></li><li><a href="GostSign.html">GostSign</a></li><li><a href="Key.html">Key</a></li><li><a href="KeyAlgorithm.html">KeyAlgorithm</a></li><li><a href="KeyFormat.html">KeyFormat</a></li><li><a href="KeyPair.html">KeyPair</a></li><li><a href="KeyType.html">KeyType</a></li><li><a href="KeyUsages.html">KeyUsages</a></li><li><a href="Promise.html">Promise</a></li><li><a href="SubtleCrypto.html">SubtleCrypto</a></li></ul>
 </nav>
 
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Sun Oct 25 2015 02:48:17 GMT+0300 (MSK)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Oct 30 2015 23:59:10 GMT+0300 (MSK)
 </footer>
 
 </div>

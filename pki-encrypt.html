@@ -173,7 +173,7 @@
                     <span class="label"><strong>Enveloped data</strong> CMS PKCS#7 format</span>
                     <pre contenteditable id="encryptedData" class="encoded"></pre>
                     <button onclick="
-                            saveAs(new Blob([gostCrypto.coding.Chars.decode(encryptedData.textContent, 'ascii')], {type: 'text/plain'}), 'data.sig');
+                            saveAs(new Blob([gostCrypto.coding.Chars.decode(encryptedData.textContent, 'ascii')], {type: 'text/plain'}), 'data.enc');
                             ">Save contents to file</button>
                     <button onclick="encryptedData.innerHTML = ''">Clear</button>
                     <button onclick="gostViewer.openASN1(encryptedData)">View ASN.1</button>

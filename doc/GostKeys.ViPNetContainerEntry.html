@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>WebCrypto GOST: Class: EncryptedDataContentInfo</title>
+    <title>WebCrypto GOST: Class: ViPNetContainerEntry</title>
 
     <script src="../scripts/prettify/prettify.js"> </script>
     <script src="../scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title"><a href="../index.html">WebCrypto GOST</a> Class: EncryptedDataContentInfo</h1>
+    <h1 class="page-title"><a href="../index.html">WebCrypto GOST</a> Class: ViPNetContainerEntry</h1>
 
     
 
@@ -29,9 +29,9 @@
 <header>
     
         <h2>
-            <span class="ancestors"><a href="GostCMS.html">GostCMS</a>.</span>
+            <span class="ancestors"><a href="GostKeys.html">GostKeys</a>.</span>
         
-        EncryptedDataContentInfo
+        ViPNetContainerEntry
         </h2>
         
     
@@ -47,7 +47,7 @@
         <h2>Constructor</h2>
         
 
-        <h4 class="name" id="EncryptedDataContentInfo"><span class="type-signature"></span>new EncryptedDataContentInfo<span class="signature">(contentInfo)</span><span class="type-signature"></span></h4>
+        <h4 class="name" id="ViPNetContainerEntry"><span class="type-signature"></span>new ViPNetContainerEntry<span class="signature">(entry)</span><span class="type-signature"></span></h4>
 
         
     
@@ -56,7 +56,7 @@
 
     
     <div class="description">
-        This class encapsulates a CMS object of content type encrypted-data.
+        A class for password-encrypted private keys in ViPNet container entry
     </div>
     
 
@@ -92,7 +92,7 @@
 
         <tr>
             
-                <td class="name"><code>contentInfo</code></td>
+                <td class="name"><code>entry</code></td>
             
 
             <td class="type">
@@ -101,7 +101,7 @@
 <span class="param-type"><a href="FormatedData.html">FormatedData</a></span>
 |
 
-<span class="param-type"><a href="GostASN1.ContentInfo.html">GostASN1.ContentInfo</a></span>
+<span class="param-type"><a href="GostKeys.ViPNetContainerEntry.html">GostKeys.ViPNetContainerEntry</a></span>
 
 
             
@@ -111,7 +111,7 @@
 
             
 
-            <td class="description last">The encrypted data content.</td>
+            <td class="description last"></td>
         </tr>
 
     
@@ -151,7 +151,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCMS.js.html">gostCMS.js</a>, <a href="gostCMS.js.html#line876">line 876</a>
+        <a href="gostKeys.js.html">gostKeys.js</a>, <a href="gostKeys.js.html#line1407">line 1407</a>
     </li></ul></dd>
     
 
@@ -188,9 +188,7 @@
 
 
     <ul>
-        <li><a href="GostCMS.DataContentInfo.html">GostCMS.DataContentInfo</a></li>
-    
-        <li><a href="GostASN1.EncryptedData.html">GostASN1.EncryptedData</a></li>
+        <li><a href="GostASN1.ViPNetInfo.html">GostASN1.ViPNetInfo</a></li>
     </ul>
 
 
@@ -210,6 +208,337 @@
         <h3 class="subsection-title">Methods</h3>
 
         <dl>
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="decode"><span class="type-signature">(static) </span>decode<span class="signature">(entry)</span><span class="type-signature"> &rarr; {<a href="GostKeys.ViPNetContainer.html">GostKeys.ViPNetContainer</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Decode container entry
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>entry</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="FormatedData.html">FormatedData</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostKeys.js.html">gostKeys.js</a>, <a href="gostKeys.js.html#line1647">line 1647</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="GostKeys.ViPNetContainer.html">GostKeys.ViPNetContainer</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="changePassword"><span class="type-signature"></span>changePassword<span class="signature">(oldKeyPassword, newKeyPassword)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Change key password
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>oldKeyPassword</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Old key password</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>newKeyPassword</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">New key password</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostKeys.js.html">gostKeys.js</a>, <a href="gostKeys.js.html#line1832">line 1832</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise to return self object after change password
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
             
 <dt>
     
@@ -445,7 +774,7 @@
     
         
 
-        <h4 class="name" id="encloseContent"><span class="type-signature"></span>encloseContent<span class="signature">(contentInfo, contentEncryptionKey, encryptionAlgorithm)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+        <h4 class="name" id="encode"><span class="type-signature"></span>encode<span class="signature">(format)</span><span class="type-signature"> &rarr; {<a href="CryptoOperationData.html">CryptoOperationData</a>}</span></h4>
 
         
     
@@ -454,223 +783,7 @@
 
     
     <div class="description">
-        Encrypt the content with given encryption algorithm, secret key or password
-    </div>
-    
-
-    
-
-    
-
-    
-
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>contentInfo</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="FormatedData.html">FormatedData</a></span>
-|
-
-<span class="param-type"><a href="GostASN1.ContentInfo.html">GostASN1.ContentInfo</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The content data to be enclosed.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>contentEncryptionKey</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Key.html">Key</a></span>
-|
-
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">content The encryption key or password for derive key</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>encryptionAlgorithm</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></span>
-|
-
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The encryption algorithm or provider name</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-    
-
-    
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-overrides">Overrides:</dt>
-    <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="GostCMS.DataContentInfo.html#encloseContent">GostCMS.DataContentInfo#encloseContent</a>
-    </li></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCMS.js.html">gostCMS.js</a>, <a href="gostCMS.js.html#line907">line 907</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    Promise to return self object after encrypt content
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="Promise.html">Promise</a></span>
-
-
-    </dd>
-</dl>
-
-        
-
-    
-</dd>
-
-        
-            
-<dt>
-    
-        
-
-        <h4 class="name" id="encode"><span class="type-signature"></span>encode<span class="signature">(format)</span><span class="type-signature"> &rarr; {<a href="FormatedData.html">FormatedData</a>}</span></h4>
-
-        
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        Encode the object
+        Encode container entry
     </div>
     
 
@@ -722,7 +835,7 @@
 
             
 
-            <td class="description last">Encoding format 'DER', 'CER' or 'PEM'</td>
+            <td class="description last">The encoded data format</td>
         </tr>
 
     
@@ -740,12 +853,12 @@
     
 
     
-    <dt class="inherited-from">Inherited From:</dt>
-    <dd class="inherited-from"><ul class="dummy"><li>
-        <a href="GostASN1.Sequence.html#encode">GostASN1.Sequence#encode</a>
-    </li></dd>
-    
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="GostASN1.ViPNetInfo.html#encode">GostASN1.ViPNetInfo#encode</a>
+    </li></dd>
     
 
     
@@ -767,7 +880,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostASN1.js.html">gostASN1.js</a>, <a href="gostASN1.js.html#line578">line 578</a>
+        <a href="gostKeys.js.html">gostKeys.js</a>, <a href="gostKeys.js.html#line1626">line 1626</a>
     </li></ul></dd>
     
 
@@ -801,7 +914,7 @@
     </dt>
     <dd>
         
-<span class="param-type"><a href="FormatedData.html">FormatedData</a></span>
+<span class="param-type"><a href="CryptoOperationData.html">CryptoOperationData</a></span>
 
 
     </dd>
@@ -818,7 +931,7 @@
     
         
 
-        <h4 class="name" id="getEnclosed"><span class="type-signature"></span>getEnclosed<span class="signature">(decryptionKey, contentInfo)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+        <h4 class="name" id="generate"><span class="type-signature"></span>generate<span class="signature">(req, keyPassword, keyAlgorithm)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
 
         
     
@@ -827,7 +940,7 @@
 
     
     <div class="description">
-        Returns the decrypted content.
+        Generate private key, certificate and return certification request
     </div>
     
 
@@ -863,13 +976,42 @@
 
         <tr>
             
-                <td class="name"><code>decryptionKey</code></td>
+                <td class="name"><code>req</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="FormatedData.html">FormatedData</a></span>
+|
+
+<span class="param-type"><a href="GostASN1.CertificationRequest.html">GostASN1.CertificationRequest</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The request templates</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>keyPassword</code></td>
             
 
             <td class="type">
             
                 
 <span class="param-type"><a href="Key.html">Key</a></span>
+|
+
+<span class="param-type"><a href="CryptoOperationData.html">CryptoOperationData</a></span>
 |
 
 <span class="param-type">string</span>
@@ -882,23 +1024,23 @@
 
             
 
-            <td class="description last">The decryption key or password for derive key</td>
+            <td class="description last">The secret key or password for decryption</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>contentInfo</code></td>
+                <td class="name"><code>keyAlgorithm</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><a href="FormatedData.html">FormatedData</a></span>
+<span class="param-type"><a href="AlgorithmIdentifier.html">AlgorithmIdentifier</a></span>
 |
 
-<span class="param-type"><a href="GostASN1.ContentInfo.html">GostASN1.ContentInfo</a></span>
+<span class="param-type">string</span>
 
 
             
@@ -908,7 +1050,7 @@
 
             
 
-            <td class="description last">The detached content (optional).</td>
+            <td class="description last">The name of provider or algorithm</td>
         </tr>
 
     
@@ -927,11 +1069,6 @@
 
     
 
-    
-    <dt class="tag-overrides">Overrides:</dt>
-    <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="GostCMS.DataContentInfo.html#getEnclosed">GostCMS.DataContentInfo#getEnclosed</a>
-    </li></dd>
     
 
     
@@ -953,7 +1090,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCMS.js.html">gostCMS.js</a>, <a href="gostCMS.js.html#line993">line 993</a>
+        <a href="gostKeys.js.html">gostKeys.js</a>, <a href="gostKeys.js.html#line1851">line 1851</a>
     </li></ul></dd>
     
 
@@ -980,7 +1117,7 @@
     
             
 <div class="param-desc">
-    Promise to return enclosed object {@ling GostASN1.ContentInfo} after decrypt content
+    Promise to return <a href="GostCert.Request.html">GostCert.Request</a>
 </div>
 
 
@@ -1008,7 +1145,7 @@
     
         
 
-        <h4 class="name" id="setEnclosed"><span class="type-signature"></span>setEnclosed<span class="signature">(contentInfo)</span><span class="type-signature"></span></h4>
+        <h4 class="name" id="getPrivateKey"><span class="type-signature"></span>getPrivateKey<span class="signature">(keyPassword)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
 
         
     
@@ -1017,9 +1154,7 @@
 
     
     <div class="description">
-        Sets the content of attached document.<br><br>
-
-This is necessary only in detached mode.
+        Get the private key
     </div>
     
 
@@ -1055,16 +1190,13 @@ This is necessary only in detached mode.
 
         <tr>
             
-                <td class="name"><code>contentInfo</code></td>
+                <td class="name"><code>keyPassword</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><a href="FormatedData.html">FormatedData</a></span>
-|
-
-<span class="param-type"><a href="GostASN1.ContentInfo.html">GostASN1.ContentInfo</a></span>
+<span class="param-type">string</span>
 
 
             
@@ -1074,7 +1206,7 @@ This is necessary only in detached mode.
 
             
 
-            <td class="description last">The encapsulated CMS Object.</td>
+            <td class="description last">The password of secrect key for decryption</td>
         </tr>
 
     
@@ -1091,11 +1223,6 @@ This is necessary only in detached mode.
 
     
 
-    
-    <dt class="inherited-from">Inherited From:</dt>
-    <dd class="inherited-from"><ul class="dummy"><li>
-        <a href="GostCMS.DataContentInfo.html#setEnclosed">GostCMS.DataContentInfo#setEnclosed</a>
-    </li></dd>
     
 
     
@@ -1119,7 +1246,7 @@ This is necessary only in detached mode.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCMS.js.html">gostCMS.js</a>, <a href="gostCMS.js.html#line481">line 481</a>
+        <a href="gostKeys.js.html">gostKeys.js</a>, <a href="gostKeys.js.html#line1467">line 1467</a>
     </li></ul></dd>
     
 
@@ -1142,6 +1269,28 @@ This is necessary only in detached mode.
     
 
     
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise to return the <a href="Key.html">Key</a>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
 
     
 </dd>
@@ -1152,7 +1301,7 @@ This is necessary only in detached mode.
     
         
 
-        <h4 class="name" id="writeDetached"><span class="type-signature"></span>writeDetached<span class="signature">(createDetached)</span><span class="type-signature"></span></h4>
+        <h4 class="name" id="setPrivateKey"><span class="type-signature"></span>setPrivateKey<span class="signature">(privateKey, keyPassword, days)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
 
         
     
@@ -1161,7 +1310,7 @@ This is necessary only in detached mode.
 
     
     <div class="description">
-        Indicates if an external (detached) signature must be created.
+        Set the private key
     </div>
     
 
@@ -1197,13 +1346,13 @@ This is necessary only in detached mode.
 
         <tr>
             
-                <td class="name"><code>createDetached</code></td>
+                <td class="name"><code>privateKey</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">boolean</span>
+<span class="param-type"><a href="Key.html">Key</a></span>
 
 
             
@@ -1213,7 +1362,53 @@ This is necessary only in detached mode.
 
             
 
-            <td class="description last">True if detached; false otherwise.</td>
+            <td class="description last">The private key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>keyPassword</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The secret key encryption</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>days</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Validity days. Default 7305 days (20 years)</td>
         </tr>
 
     
@@ -1230,11 +1425,6 @@ This is necessary only in detached mode.
 
     
 
-    
-    <dt class="inherited-from">Inherited From:</dt>
-    <dd class="inherited-from"><ul class="dummy"><li>
-        <a href="GostCMS.DataContentInfo.html#writeDetached">GostCMS.DataContentInfo#writeDetached</a>
-    </li></dd>
     
 
     
@@ -1258,7 +1448,7 @@ This is necessary only in detached mode.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCMS.js.html">gostCMS.js</a>, <a href="gostCMS.js.html#line432">line 432</a>
+        <a href="gostKeys.js.html">gostKeys.js</a>, <a href="gostKeys.js.html#line1542">line 1542</a>
     </li></ul></dd>
     
 
@@ -1281,6 +1471,253 @@ This is necessary only in detached mode.
     
 
     
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise to return the self object after set the key
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+</dd>
+
+        
+            
+<dt>
+    
+        
+
+        <h4 class="name" id="setPrivateKey"><span class="type-signature"></span>setPrivateKey<span class="signature">(privateKey, keyPassword, index, days)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
+
+        
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Set the private key
+    </div>
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>privateKey</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Key.html">Key</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The private key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>keyPassword</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The secret key encryption</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>index</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Index of the entriy. Default 0</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>days</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Validity days. Default 7305 days (20 years)</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="gostKeys.js.html">gostKeys.js</a>, <a href="gostKeys.js.html#line1812">line 1812</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Promise to return the self object after set the key
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Promise.html">Promise</a></span>
+
+
+    </dd>
+</dl>
+
+        
 
     
 </dd>
@@ -1307,7 +1744,7 @@ This is necessary only in detached mode.
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Oct 30 2015 23:59:15 GMT+0300 (MSK)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Oct 30 2015 23:59:16 GMT+0300 (MSK)
 </footer>
 
 </div>

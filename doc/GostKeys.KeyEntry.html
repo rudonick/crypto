@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>WebCrypto GOST: Class: TrustedCAPolicy</title>
+    <title>WebCrypto GOST: Class: KeyEntry</title>
 
     <script src="../scripts/prettify/prettify.js"> </script>
     <script src="../scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title"><a href="../index.html">WebCrypto GOST</a> Class: TrustedCAPolicy</h1>
+    <h1 class="page-title"><a href="../index.html">WebCrypto GOST</a> Class: KeyEntry</h1>
 
     
 
@@ -29,9 +29,9 @@
 <header>
     
         <h2>
-            <span class="ancestors"><a href="GostCert.html">GostCert</a>.</span>
+            <span class="ancestors"><a href="GostKeys.html">GostKeys</a>.</span>
         
-        TrustedCAPolicy
+        KeyEntry
         </h2>
         
     
@@ -47,7 +47,7 @@
         <h2>Constructor</h2>
         
 
-        <h4 class="name" id="TrustedCAPolicy"><span class="type-signature"></span>new TrustedCAPolicy<span class="signature">(trustedCACerts, requireCRL, requireCA)</span><span class="type-signature"></span></h4>
+        <h4 class="name" id="KeyEntry"><span class="type-signature"></span>new KeyEntry<span class="signature">()</span><span class="type-signature"></span></h4>
 
         
     
@@ -56,20 +56,9 @@
 
     
     <div class="description">
-        A certificate trust policy based on a set of trusted root CAs.<br><br>
-
-In this policy, a certificate will be trusted if and only if it is part of a 
-valid certificate chain which terminates in one of the trusted root CAs. <br><br>
-
-This policy has two options for certificate chain verification:
-<ul>
-     <li>requireCRL - If true, then for every certificate in a chain 
-         (unless it is one of the trusted root CA certificates) a valid CRL 
-         must be provided to determine its revocation status. The default is false.</li>
-     <li>requireCAFlag - If true, then every intermediate CA certificate (excluding 
-         the root CA or the end entity certificate) must contain a Basic Constraints 
-         extension, with the CA flag set. The default for this option is true.</li>
-</ul>
+        This type of entry holds a cryptographic PrivateKey, which is optionally stored 
+in a protected format to prevent unauthorized access. It is also accompanied by 
+a certificate chain for the corresponding public key.
     </div>
     
 
@@ -80,10 +69,15 @@ This policy has two options for certificate chain verification:
     
 
     
-        <h5>Parameters:</h5>
-        
 
-<table class="params">
+    
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    <dl>
+
+<table class="props">
     <thead>
     <tr>
         
@@ -105,7 +99,33 @@ This policy has two options for certificate chain verification:
 
         <tr>
             
-                <td class="name"><code>trustedCACerts</code></td>
+                <td class="name"><code>key</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="GostKeys.PKCS8.html">GostKeys.PKCS8</a></span>
+|
+
+<span class="param-type"><a href="GostKeys.PKCS8Encrypted.html">GostKeys.PKCS8Encrypted</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The Private Key</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>certs</code></td>
             
 
             <td class="type">
@@ -121,20 +141,20 @@ This policy has two options for certificate chain verification:
 
             
 
-            <td class="description last"></td>
+            <td class="description last">The X.509 Certificates chain</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>requireCRL</code></td>
+                <td class="name"><code>crls</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">boolean</span>
+<span class="param-type">Array.&lt;<a href="GostCert.CRL.html">GostCert.CRL</a>></span>
 
 
             
@@ -144,38 +164,14 @@ This policy has two options for certificate chain verification:
 
             
 
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>requireCA</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
+            <td class="description last">The X.509 CRLs for certificate chain</td>
         </tr>
 
     
     </tbody>
 </table>
-    
+</dl>
 
-    
 
 
 <dl class="details">
@@ -207,7 +203,7 @@ This policy has two options for certificate chain verification:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCert.js.html">gostCert.js</a>, <a href="gostCert.js.html#line1158">line 1158</a>
+        <a href="gostKeys.js.html">gostKeys.js</a>, <a href="gostKeys.js.html#line2130">line 2130</a>
     </li></ul></dd>
     
 
@@ -236,17 +232,6 @@ This policy has two options for certificate chain verification:
 
     
     </div>
-
-    
-        <h3 class="subsection-title">Extends</h3>
-
-        
-
-
-    <ul>
-        <li><a href="GostCert.CertificateTrustPolicy.html">GostCert.CertificateTrustPolicy</a></li>
-    </ul>
-
 
     
 
@@ -260,245 +245,6 @@ This policy has two options for certificate chain verification:
 
     
 
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        <dl>
-            
-<dt>
-    
-        
-
-        <h4 class="name" id="getValidCertificate"><span class="type-signature"></span>getValidCertificate<span class="signature">(selector, certificates, crls, date)</span><span class="type-signature"> &rarr; {<a href="Promise.html">Promise</a>}</span></h4>
-
-        
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        Returns a certificate, known to be valid (according to criteria dependent 
-on the verification scheme), which has the given selector, certificate and 
-CRL lists to implement a particular certificate verification  scheme, 
-such a forming valid certificate chains.<br>
-Second and third argument to this method may be undefined, and such a case 
-must be treated exactly the same as if the particular argument was an empty array.
-    </div>
-    
-
-    
-
-    
-
-    
-
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>selector</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">GostCert.CertificateSelector</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Certificate selector</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>certificates</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;<a href="GostASN1.Certificate.html">GostASN1.Certificate</a>></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Certificates</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>crls</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;<a href="GostASN1.CertificateList.html">GostASN1.CertificateList</a>></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">CLRs</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>date</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Date</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Validation date. Default today</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-    
-
-    
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-overrides">Overrides:</dt>
-    <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="GostCert.CertificateTrustPolicy.html#getValidCertificate">GostCert.CertificateTrustPolicy#getValidCertificate</a>
-    </li></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="gostCert.js.html">gostCert.js</a>, <a href="gostCert.js.html#line1204">line 1204</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    Promise to return valid <a href="GostCert.X509.html">GostCert.X509</a>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="Promise.html">Promise</a></span>
-
-
-    </dd>
-</dl>
-
-        
-
-    
-</dd>
-
-        </dl>
     
 
     
@@ -520,7 +266,7 @@ must be treated exactly the same as if the particular argument was an empty arra
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Oct 30 2015 23:59:15 GMT+0300 (MSK)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Oct 30 2015 23:59:16 GMT+0300 (MSK)
 </footer>
 
 </div>

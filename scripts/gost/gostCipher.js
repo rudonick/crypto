@@ -1,6 +1,6 @@
 /**
  * @file GOST 28147-89/GOST R 34.12-2015/GOST R 32.13-2015 Encryption Algorithm
- * @version 1.70
+ * @version 1.73
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -213,7 +213,7 @@
             return d.byteOffset === 0 && d.byteLength === d.buffer.byteLength ?
                     d.buffer : new Uint8Array(new Uint8Array(d, d.byteOffset, d.byteLength)).buffer;
         else
-            throw new DataError('CryptoOperationData or CryptoOperationDataView required');
+            throw new DataError('CryptoOperationData required');
     }
 
     // Get byte array
@@ -1728,6 +1728,55 @@
         return packKeySC.call(this, generateKey.call(this));
     } // </editor-fold>
 
+    function maskKey(mask, key, inverse, keySize) // <editor-fold defaultstate="collapsed">
+    {
+        var k = keySize / 4, 
+                m32 = new Int32Array(buffer(mask)),
+                k32 = new Int32Array(buffer(key)), 
+                r32 = new Int32Array(k);
+        if (inverse)
+            for (var i = 0; i < k; i++) 
+                r32[i] = (k32[i] + m32[i]) & 0xffffffff;
+        else
+            for (var i = 0; i < k; i++) 
+                r32[i] = (k32[i] - m32[i]) & 0xffffffff;
+        return r32.buffer;
+    } // </editor-fold>
+
+    /**
+     * Algorithm name GOST 28147-MASK<br><br>
+     * 
+     * This algorithm wrap key mask
+     * 
+     * @memberOf GostCipher
+     * @method wrapKey
+     * @instance
+     * @param {CryptoOperationData} mask The mask
+     * @param {CryptoOperationData} key The key
+     * @returns {CryptoOperationData} The masked key
+     */
+    function wrapKeyMask(mask, key) // <editor-fold defaultstate="collapsed">
+    {
+        return maskKey(mask, key, this.inverse, this.keySize);
+    } // </editor-fold>
+
+    /**
+     * Algorithm name GOST 28147-CPKW<br><br>
+     * 
+     * This algorithm unwrap key mask
+     *
+     * @memberOf GostCipher
+     * @method unwrapKey
+     * @instance
+     * @param {CryptoOperationData} mask The mask
+     * @param {CryptoOperationData} key The masked key
+     * @return {CryptoOperationData} result The key
+     */
+    function unwrapKeyMask(mask, key) // <editor-fold defaultstate="collapsed">
+    {
+        return maskKey(mask, key, !this.inverse, this.keySize);
+    } // </editor-fold>
+    
     /**
      * Algorithm name GOST 28147-CPKM<br><br>
      * 
@@ -2171,7 +2220,13 @@
                     default:
                         this.wrapKey = wrapKeyGOST;
                         this.unwrapKey = unwrapKeyGOST;
+                        this.generateKey = generateKey;
                 }
+                break;
+            case 'MASK':
+                this.wrapKey = wrapKeyMask;
+                this.unwrapKey = unwrapKeyMask;
+                this.generateKey = generateKey;
                 break;
             default:
                 throw new NotSupportedError('Mode ' + algorithm.mode + ' not supported');
@@ -2206,6 +2261,9 @@
             if (this.ukm.byteLength * 8 !== this.blockLength)
                 throw new SyntaxError('Length of ukm must be ' + this.blockLength + ' bits');
         }
+        // Inverse mask mode
+        if (algorithm.inverse)
+            this.inverse = algorithm.inverse;
     } // </editor-fold>
 
     return GostCipher;

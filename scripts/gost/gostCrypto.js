@@ -1,6 +1,6 @@
 /**
  * @file Implementation Web Crypto interfaces for GOST algorithms
- * @version 1.70
+ * @version 1.73
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -106,7 +106,7 @@
             na = {
                 name: 'GOST R 34.10',
                 version: 2012, // 1994, 2001
-                mode: (algorithm.mode || (// SIGN, DH, KW
+                mode: (algorithm.mode || (// SIGN, DH, MASK
                         (method === 'deriveKey' || method === 'deriveBits') ? 'DH' : 'SIGN')).toUpperCase(),
                 length: algorithm.length || 256 // 512
             };
@@ -184,7 +184,7 @@
 
                 // Encription GOST 28147 or GOST R 34.12
             } else if (na.name === 'GOST 28147' || na.name === 'GOST R 34.12' || na.name === 'RC2') {
-                if (['ES', 'MAC', 'KW'].indexOf(mode) >= 0) {
+                if (['ES', 'MAC', 'KW', 'MASK'].indexOf(mode) >= 0) {
                     na.mode = mode;
                 } else if (['ECB', 'CFB', 'OFB', 'CTR', 'CBC'].indexOf(mode) >= 0) {
                     na.mode = 'ES';
@@ -211,7 +211,7 @@
                 var hash = mode.replace(/[\.\s]/g, '');
                 if (hash.indexOf('GOST') >= 0 && hash.indexOf('3411') >= 0)
                     na.hash = mode;
-                else if (['SIGN', 'DH', 'KW'].indexOf(mode))
+                else if (['SIGN', 'DH', 'MASK'].indexOf(mode))
                     na.mode = mode;
                 else
                     throw new NotSupportedError('Algorithm ' + na.name + ' mode ' + mode + ' not supported');
@@ -304,6 +304,9 @@
                 algorithm.ukm && (na.ukm = algorithm.ukm);
                 algorithm['public'] && (na['public'] = algorithm['public']);
                 break;
+            case 'MASK':
+                algorithm.inverse && (na.inverse = algorithm.inverse);
+                break;
             case 'SIGN':
             case 'KW':
                 algorithm.ukm && (na.ukm = algorithm.ukm);
@@ -319,6 +322,7 @@
             case 'PBKDF2':
                 algorithm.salt && (na.salt = algorithm.salt);
                 algorithm.iterations && (na.iterations = algorithm.iterations);
+                algorithm.diversifier && (na.diversifier = algorithm.diversifier);
                 break;
             case 'PFXKDF':
                 algorithm.salt && (na.salt = algorithm.salt);
@@ -334,7 +338,8 @@
         // Verification method and modes
         if (method && (
                 ((na.mode !== 'ES' && na.mode !== 'SIGN' && na.mode !== 'MAC' &&
-                        na.mode !== 'HMAC' && na.mode !== 'KW' && na.mode !== 'DH') &&
+                        na.mode !== 'HMAC' && na.mode !== 'KW' && na.mode !== 'DH'
+                        && na.mode !== 'MASK') &&
                         (method === 'generateKey')) ||
                 ((na.mode !== 'ES') &&
                         (method === 'encrypt' || method === 'decrypt')) ||
@@ -342,7 +347,7 @@
                         (method === 'sign' || method === 'verify')) ||
                 ((na.mode !== 'HASH') &&
                         (method === 'digest')) ||
-                ((na.mode !== 'KW') &&
+                ((na.mode !== 'KW' && na.mode !== 'MASK') &&
                         (method === 'wrapKey' || method === 'unwrapKey')) ||
                 ((na.mode !== 'DH' && na.mode !== 'PBKDF2' && na.mode !== 'PFXKDF' &&
                         na.mode !== 'CPKDF' && na.mode !== 'KDF') &&
@@ -375,13 +380,13 @@
             return false;
         name = name.toUpperCase();
         // Digest algorithm for key derivation
-        if (name.indexOf('KDF') > 0 && algorithm.hash)
+        if ((name.indexOf('KDF') >= 0 || name.indexOf('HMAC') >= 0) && algorithm.hash)
             return checkNative(algorithm.hash);
         // True if no supported names
         return name.indexOf('GOST') === -1 &&
-                name.indexOf('SHA') === -1 &&
+                name.indexOf('SHA-1') === -1 &&
                 name.indexOf('RC2') === -1 &&
-                name.indexOf('DES') === -1;
+                name.indexOf('?DES') === -1;
     }
     // </editor-fold>
 
@@ -454,6 +459,9 @@
                 case 'MAC':
                     params = ['sBox'];
                     break;
+                case 'MASK':
+                    params = ['inverse'];
+                    break;
                 case 'KW':
                     params = ['keyWrapping', 'ukm'];
                     break;
@@ -484,7 +492,7 @@
     // Make key definition
     function convertKey(algorithm, extractable, keyUsages, keyData, keyType) {
         var key = {
-            type: keyType || 'secret',
+            type: keyType || (algorithm.name === 'GOST R 34.10' ? 'private' : 'secret'),
             extractable: extractable || 'false',
             algorithm: algorithm,
             usages: keyUsages || [],
@@ -1118,7 +1126,7 @@
             algorithm = normalize(algorithm, 'sign');
             var value = execute(algorithm, 'sign',
                     [extractKey('sign', algorithm, key), data]).then(function (data) {
-                return algorithm.procreator === 'SC' ?
+                return algorithm.procreator === 'SC' && algorithm.mode === 'SIGN' ?
                         gostCrypto.asn1.GostSignature.encode(data) : data;
             });
             return value;
@@ -1162,7 +1170,7 @@
             algorithm = normalize(algorithm, 'verify');
             return execute(algorithm, 'verify',
                     [extractKey('verify', algorithm, key),
-                        algorithm.procreator === 'SC' ?
+                        algorithm.procreator === 'SC' && algorithm.mode === 'SIGN' ?
                                 gostCrypto.asn1.GostSignature.decode(signature) : signature, data]);
         });
     }; // </editor-fold>
@@ -1396,9 +1404,9 @@
             } else {
 
                 if (format === 'pkcs8')
-                    key = gostCrypto.asn1.GostPrivateKeyInfo.decode(keyData);
+                    key = gostCrypto.asn1.GostPrivateKeyInfo.decode(keyData).object;
                 else if (format === 'spki')
-                    key = gostCrypto.asn1.GostSubjectPublicKeyInfo.decode(keyData);
+                    key = gostCrypto.asn1.GostSubjectPublicKeyInfo.decode(keyData).object;
                 else
                     throw new NotSupportedError('Key format not supported');
 
@@ -1484,6 +1492,9 @@
      *  <ul>
      *      <li><b>GOST 28147-KW</b> Key Wrapping GOST 28147 modes</li>
      *      <li><b>GOST R 34.12-KW</b> Key Wrapping GOST R 34.12 modes</li>
+     *      <li><b>GOST 28147-MASK</b> Key Mask GOST 28147 modes</li>
+     *      <li><b>GOST R 34.12-MASK</b> Key Mask GOST R 34.12 modes</li>
+     *      <li><b>GOST R 34.10-MASK</b> Key Mask GOST R 34.10 modes</li>
      *  </ul>
      *  For additional modes see {@link GostCipher}<br>
      * 
@@ -1524,6 +1535,9 @@
      *  <ul>
      *      <li><b>GOST 28147-KW</b> Key Wrapping GOST 28147 modes</li>
      *      <li><b>GOST R 34.12-KW</b> Key Wrapping GOST R 34.12 modes</li>
+     *      <li><b>GOST 28147-MASK</b> Key Mask GOST 28147 modes</li>
+     *      <li><b>GOST R 34.12-MASK</b> Key Mask GOST R 34.12 modes</li>
+     *      <li><b>GOST R 34.10-MASK</b> Key Mask GOST R 34.10 modes</li>
      *  </ul>
      *  For additional modes see {@link GostCipher}<br>
      * 
