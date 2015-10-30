@@ -1,6 +1,6 @@
 /**
  * @file Implements the Cryptographic Message Syntax as specified in RFC-2630.
- * @version 1.70
+ * @version 1.73
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -198,7 +198,6 @@
         var content = object.content;
         switch (object.contentType) {
             case 'data':
-                object.contentType = data.contentType;
                 object.content = data.content;
                 break;
             case 'digestedData':
@@ -462,7 +461,7 @@
          * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo
          * @returns {Promise} Promise to return self object after enclose content
          */
-        encloseСontent: function (contentInfo) // <editor-fold defaultstate="collapsed">
+        encloseContent: function (contentInfo) // <editor-fold defaultstate="collapsed">
         {
             var self = this;
             return new Promise(call).then(function () {

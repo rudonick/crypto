@@ -200,6 +200,18 @@
                 'df1fda9ce83191390537358031db2ecaa6aa54cd0eda241dc107105e13636b95');
         println();
 
+        cipher = new GostDigest({name: 'GOST R 34.11', version: 2012, mode: 'KDF', context: gostCoding.Hex.decode('af21434145656378'), 
+            label: gostCoding.Hex.decode('26bdb878')});
+        tests += perform(cipher, ++i,
+                gostCoding.Hex.decode('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'),
+                'a1aa5f7de402d7b3d323f2991c8d4534013137010a83754fd0af6d7cd4922ed9', 'deriveKey');
+        cipher = new GostDigest({name: 'GOST R 34.11', version: 2012, mode: 'KDF', context: gostCoding.Hex.decode('af21434145656378'), 
+            label: gostCoding.Hex.decode('26bdb878')});
+        tests += perform(cipher, ++i,
+                gostCoding.Hex.decode('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'),
+                '22b6837845c6bef65ea71672b265831086d3c76aebe6dae91cad51d83f79d16b074c9330599d7f8d712fca54392f4ddde93751206b3584c8f43f9e6dc51531f9', 'deriveBits', 512);
+        println();
+
         cipher = new GostDigest({name: 'GOST R 34.11', mode: 'PBKDF2', salt: gostCoding.Chars.decode('salt'), iterations: 1000});
         tests += perform(cipher, ++i,
                 gostCoding.Chars.decode('password'),

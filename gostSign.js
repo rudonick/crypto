@@ -1,6 +1,6 @@
 /**
  * @file GOST 34.10-2012 signature function with 1024/512 bits digest
- * @version 1.70
+ * @version 1.73
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -1630,7 +1630,7 @@
     /**
      * Algorithm name GOST R 34.10<br><br>
      * 
-     * The generateKey method returns a new generated key using the specified 
+     * The generateKey method returns a new generated key pair using the specified 
      * AlgorithmIdentifier.
      * 
      * @memberOf GostSign
@@ -1674,6 +1674,31 @@
     } // </editor-fold>
 
     /**
+     * Algorithm name GOST R 34.10 mode MASK<br><br>
+     * 
+     * The generateMaskKey method returns a new generated key mask using for wrapping.
+     * 
+     * @memberOf GostSign
+     * @method generateMaskKey
+     * @instance
+     * @returns {Object} Object with two ArrayBuffer members: privateKey and publicKey
+     */
+    function generateMaskKey() // <editor-fold defaultstate="collapsed">
+    {
+        var curve = this.curve;
+        if (curve) {
+            // Generate random private key
+            var d = ZERO;
+            while (isZero(d))
+                d = mod(atobi(getSeed(this.bitLength)), this.q); // 0 < d < q
+
+            // Return result
+            return bitoa(d, this.bitLength);
+        } else
+            throw new NotSupportedError('Key generation for GOST R 34.10-94 not supported');
+    } // </editor-fold>
+
+    /**
      * Algorithm name GOST R 34.10<br><br>
      * 
      * Unwrap private key from private key and ukm (mask)
@@ -1691,7 +1716,7 @@
             var q = this.q;
             var x = mod(atobi(buffer(data)), q);
             var y = mod(atobi(buffer(baseKey)), q);
-            var z = mod(mul(x, invMod(y, q)), q);
+            var z = this.inverse ? mod(mul(x, y), q) : mod(mul(x, invMod(y, q)), q);
             return bitoa(z);
         } else
             throw new NotSupportedError('Key wrapping GOST R 34.10-94 not supported');
@@ -1715,7 +1740,7 @@
             var q = this.q;
             var x = mod(atobi(buffer(data)), q);
             var y = mod(atobi(buffer(baseKey)), q);
-            var z = mod(mul(x, y), q);
+            var z = this.inverse ? mod(mul(x, invMod(y, q)), q) : mod(mul(x, y), q);
             return bitoa(z);
         } else
             throw new NotSupportedError('Key wrapping GOST R 34.10-94 not supported');
@@ -1723,10 +1748,6 @@
 
     /**
      * Algorithm name GOST R 34.10<br><br>
-     * 
-     * This algorithm creates a key encryption key (KEK) using 64 bit UKM,   
-     * the sender’s private key, and the recipient’s public key (or the   
-     * reverse of the latter pair
      * 
      * @memberOf GostSign
      * @method derive
@@ -1797,8 +1818,12 @@
      * 
      * The deriveKey method returns 256 bit Key encryption key on baseKey.
      * 
+     * This algorithm creates a key encryption key (KEK) using 64 bit UKM,   
+     * the sender’s private key, and the recipient’s public key (or the   
+     * reverse of the latter pair
+     * 
      * @memberOf GostSign
-     * @method deriveBits
+     * @method deriveKey
      * @instance
      * @param {(ArrayBuffer|TypedArray)} baseKey Key for deriviation
      * @returns {ArrayBuffer} result
@@ -1909,10 +1934,10 @@
                 this.deriveKey = deriveKey;
                 this.generateKey = generateKey;
                 break;
-            case 'KW':
+            case 'MASK':
                 this.wrapKey = wrapKey;
                 this.unwrapKey = unwrapKey;
-                this.generateKey = generateKey;
+                this.generateKey = generateMaskKey;
                 break;
         }
 
@@ -1997,6 +2022,10 @@
 
             this.hash = new GostDigest(hash);
         }
+
+        // Inverse mask mode
+        if (algorithm.inverse)
+                this.inverse = algorithm.inverse;
 
         // Pregenerated seed for key exchange algorithms
         if (algorithm.ukm) // Now don't check size 

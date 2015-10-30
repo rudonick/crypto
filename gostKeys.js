@@ -1,6 +1,6 @@
 /** 
  * @file Key and Certificate Store methods
- * @version 1.70
+ * @version 1.73
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -65,8 +65,9 @@
     var cms = gostCrypto.cms;
 
     // Expand javascript object
-    function expand(r) {
-        for (var i = 1, n = arguments.length; i < n; i++) {
+    function expand() {
+        var r = {};
+        for (var i = 0, n = arguments.length; i < n; i++) {
             var item = arguments[i];
             if (typeof item === 'object')
                 for (var name in item)
@@ -135,12 +136,29 @@
         }
     }
 
-    // Today date + n days
+
+    // Get buffer
+    function buffer(d) {
+        if (d instanceof CryptoOperationData)
+            return d;
+        else if (d && d.buffer && d.buffer instanceof CryptoOperationData)
+            return d.byteOffset === 0 && d.byteLength === d.buffer.byteLength ?
+                    d.buffer : new Uint8Array(new Uint8Array(d, d.byteOffset, d.byteLength)).buffer;
+        else
+            throw new DataError('CryptoOperationData required');
+    }
+    // Today date + n days with time
     function now(n) {
         var date = new Date();
-        // date.setHours(0, 0, 0, 0);
         if (n)
             date.setDate(date.getDate() + n);
+        return date;
+    }
+
+    // Today date + n days
+    function today(n) {
+        var date = now(n);
+        date.setHours(0, 0, 0, 0);
         return date;
     }
 
@@ -154,6 +172,30 @@
             if (s1[i] !== s2[i])
                 return false;
         return true;
+    }
+
+    // Generate new alias
+    function generateUUID() {
+        var r = new Uint8Array(getSeed(16)), s = '';
+        for (var i = 0; i < 16; i++)
+            s += ('00' + r[i].toString(16)).slice(-2);
+        return s.substr(0, 8) + '-' + s.substr(8, 4) + '-4' + s.substr(13, 3) +
+                '-9' + s.substr(17, 3) + '-' + s.substr(20, 12);
+    }
+
+    // Return get32 from buffer
+    function get32(buffer, offset) {
+        var r = new Uint8Array(buffer, offset, 4);
+        return (r[3] << 24) | (r[2] << 16) | (r[1] << 8) | r[0];
+    }
+
+    function set32(buffer, offset, int) {
+        var r = new Uint8Array(buffer, offset, 4);
+        r[3] = int >>> 24;
+        r[2] = int >>> 16 & 0xff;
+        r[1] = int >>> 8 & 0xff;
+        r[0] = int & 0xff;
+        return r;
     }
 
     // Salt size
@@ -328,6 +370,7 @@
                         encryptedContent: self.encryptedData
                     }
                 });
+                // keyPassword = coding.Chars.decode(keyPassword + '\0', 'unicode')
                 return engine.getEnclosed(keyPassword);
             }).then(function (contentInfo) {
                 // Create key object
@@ -364,7 +407,7 @@
             return new Promise(call).then(function () {
                 keyInfo = new PKCS8(keyInfo);
                 engine = new cms.EncryptedDataContentInfo();
-                return engine.encloseContent(keyPassword, keyInfo.encode(), encryptionAlgorithm || options.providerName);
+                return engine.encloseContent(keyInfo.encode(), keyPassword, encryptionAlgorithm || options.providerName);
             }).then(function () {
                 self.encryptionAlgorithm = engine.encryptedContentInfo.contentEncryptionAlgorithm;
                 self.encryptedData = engine.encryptedContentInfo.encryptedContent;
@@ -474,7 +517,7 @@
                                 derivation, false, ['deriveKey', 'deriveBits']).then(function (integrityKey) {
                             return subtle.deriveKey(expand(derivation,
                                     {salt: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])}),
-                            integrityKey, encryption, false, ['decrypt']);
+                                    integrityKey, encryption, false, ['decrypt']);
                         }).then(function (encryptionKey) {
                             var encrypted = new cms.EncryptedDataContentInfo(masks);
                             return encrypted.getEnclosed(encryptionKey);
@@ -541,7 +584,7 @@
                     }).then(function (integrityKey) {
                         return subtle.deriveKey(expand(derivation,
                                 {salt: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])}),
-                        integrityKey, encryption, false, ['encrypt']);
+                                integrityKey, encryption, false, ['encrypt']);
                     }).then(function (encryptionKey) {
                         // Encrypt data with password
                         return encrypted.encloseContent(digested, encryptionKey, encryption);
@@ -587,7 +630,7 @@
      * @extends GostASN1.GostWrappedPrivateKey
      * @extends GostKeys.SignalComKeyContainer
      * @param {GostASN1.PrivateKeyInfo} keyInfo 
-     * @param {SignalComKeyContainer} container 
+     * @param {GostKeys.SignalComKeyContainer} container 
      */
     function SignalComPrivateKeyInfo(keyInfo, container) // <editor-fold defaultstate="collapsed"> 
     {
@@ -858,9 +901,15 @@
 
         // Generate mask
         function generateMasks(algorithm) {
-            var mask = getSeed(isKeySize512(algorithm) ? 64 : 32),
-                    status = getSeed(12);
-            return computeMaskMAC(algorithm, mask, status).then(function (hmac) {
+            var wrapAlgorithm = expand(algorithm, {mode: 'MASK'}),
+                    mask, status = getSeed(12);
+            wrapAlgorithm.name = wrapAlgorithm.name.replace('-DH', '');
+            return subtle.generateKey(wrapAlgorithm, true, ['wrapKey', 'unwrapKey']).then(function (key) {
+                return subtle.exportKey('raw', key);
+            }).then(function (data) {
+                mask = data;
+                return computeMaskMAC(algorithm, mask, status);
+            }).then(function (hmac) {
                 return new asn1.GostPrivateMasks({
                     mask: mask,
                     randomStatus: status,
@@ -880,7 +929,7 @@
         // Unwrap private key
         function unwrapKey(algorithm, encryptionKey, key, mask, fp) {
             var encryption = {name: 'GOST 28147-ECB', sBox: algorithm.encParams && algorithm.encParams.sBox},
-            unwrapAlgorithm = expand(algorithm, {mode: 'KW'}), privateKey;
+            unwrapAlgorithm = expand(algorithm, {mode: 'MASK'}), privateKey;
             unwrapAlgorithm.name = unwrapAlgorithm.name.replace('-DH', '');
             var wrappedKey;
 
@@ -910,7 +959,7 @@
         // Wrap private key
         function wrapKey(algorithm, encryptionKey, privateKey, mask) {
             var encryption = {name: 'GOST 28147-ECB', sBox: algorithm.encParams && algorithm.encParams.sBox},
-            wrapAlgorithm = expand(algorithm, {mode: 'KW'});
+            wrapAlgorithm = expand(algorithm, {mode: 'MASK'});
             wrapAlgorithm.name = wrapAlgorithm.name.replace('-DH', '');
 
             // Import mask key
@@ -1045,7 +1094,7 @@
              * @param {(FormatedData|GostKeys.PKCS8)} keyInfo The private key info 
              * @param {string} keyPassword The assword for encryption
              * @param {boolean} secondary True for set secondary key
-             * @param {integer} days Validity days. Default 7305 days (20 years)
+             * @param {number} days Validity days. Default 7305 days (20 years)
              * @returns {Promise} Promise to return self object after set key
              */
             setKey: function (keyInfo, keyPassword, secondary, days) // <editor-fold defaultstate="collapsed">
@@ -1063,7 +1112,7 @@
              * @param {Key} privateKey The private key
              * @param {string} keyPassword The secret key encryption 
              * @param {boolean} secondary True for set secondary key
-             * @param {integer} days Validity days. Default 7305 days (20 years)
+             * @param {number} days Validity days. Default 7305 days (20 years)
              * @returns {Promise} Promise to return self object after set key
              */
             setPrivateKey: function (privateKey, keyPassword, secondary, days) // <editor-fold defaultstate="collapsed">
@@ -1169,7 +1218,7 @@
              * @instance
              * @param {(FormatedData|GostCert.X509)} certificate The certificate
              * @param {boolean} secondary True for set secondary certificate
-             * @param {integer} days Validity days. Default 7305 days (20 years)
+             * @param {number} days Validity days. Default 7305 days (20 years)
              * @returns {Promise} Promise to return self object after set certificate
              */
             setCertificate: function (certificate, secondary, days) // <editor-fold defaultstate="collapsed">
@@ -1356,6 +1405,588 @@
     GostKeys.prototype.CryptoProKeyContainer = CryptoProKeyContainer;
 
     /**
+     * A class for password-encrypted private keys in ViPNet container entry
+     * 
+     * @class GostKeys.ViPNetContainerEntry
+     * @extends GostASN1.ViPNetInfo
+     * @param {(FormatedData|GostKeys.ViPNetContainerEntry)} entry 
+     */
+    function ViPNetContainerEntry(entry) // <editor-fold defaultstate="collapsed">
+    {
+        asn1.ViPNetInfo.call(this, entry || {
+            version: 3,
+            keyInfo: {
+                keyClass: 1,
+                keyType: 43556,
+                flags: 1
+            },
+            defenceKeyInfo: {
+                keyClass: 1024,
+                keyType: 24622,
+                keyUID: getSeed(32),
+                flags: -2147483648
+            }
+        });
+    } // </editor-fold>
+
+    extend(asn1.ViPNetInfo, ViPNetContainerEntry, (function () {
+
+        function getKeyPassword(keyPassword) // <editor-fold defaultstate="collapsed">
+        {
+            if (keyPassword === undefined)
+                keyPassword = '';
+            // Generate key data
+            var passwordData = coding.Chars.decode(keyPassword, 'win1251'), keyData;
+            return subtle.digest('GOST R 34.11-94', passwordData).then(function (data) {
+                keyData = data;
+                // Generate mask data
+                var secodeData = new Uint8Array(passwordData.byteLength + keyData.byteLength);
+                secodeData.set(new Uint8Array(passwordData), 0);
+                secodeData.set(new Uint8Array(keyData), passwordData.byteLength);
+                return subtle.digest('GOST R 34.11-94', secodeData);
+            }).then(function (data) {
+                // Remove mask
+                return subtle.importKey('raw', data, 'GOST 28147', false, ['unwrapKey']);
+            }).then(function (unwrappingKey) {
+                // Unwrap secret key
+                return subtle.unwrapKey('raw', keyData, unwrappingKey,
+                        {name: 'GOST 28147-MASK', inverse: true}, 'GOST 28147-89',
+                        'false', ['encrypt', 'decrypt', 'sign', 'verify']);
+            });
+        } // </editor-fold>
+
+        return {
+            /**
+             * Get the private key
+             * 
+             * @memberOf GostKeys.ViPNetContainerEntry
+             * @instance
+             * @param {string} keyPassword The password of secrect key for decryption 
+             * @returns {Promise} Promise to return the {@link Key}
+             */
+            getPrivateKey: function (keyPassword) // <editor-fold defaultstate="collapsed">
+            {
+                var self = this, keyPart, encryptedKey;
+                // Decrypt key
+                return new Promise(call).then(function () {
+                    return !keyPassword || typeof keyPassword === 'string' ?
+                            getKeyPassword(keyPassword) : keyPassword;
+                }).then(function (key) {
+                    keyPassword = key;
+                    // Verify password    
+                    keyPart = self.keyPart;
+                    encryptedKey = new Uint8Array(keyPart, 0, keyPart.byteLength - 4 - 8);
+                    var macKey = new Uint8Array(keyPart, encryptedKey.byteLength, 4),
+                            encodedKeyInfo = self.keyInfo.encode(),
+                            data = new Uint8Array(encryptedKey.byteLength + encodedKeyInfo.byteLength);
+                    data.set(new Uint8Array(encryptedKey), 0);
+                    data.set(new Uint8Array(encodedKeyInfo), encryptedKey.byteLength);
+                    return subtle.verify({name: 'GOST 28147-89-MAC'}, keyPassword, macKey, data);
+                }).then(function (result) {
+                    if (!result)
+                        throw new Error('Invalid key password');
+                    var iv = new Uint8Array(keyPart, keyPart.byteLength - 8, 8);
+                    // Decrypt key data
+                    return subtle.decrypt({name: 'GOST 28147-89-CFB', iv: iv}, keyPassword, encryptedKey);
+                }).then(function (keyData) {
+                    var l2 = keyData.byteLength / 2;
+                    if (self.keyInfo.keyClass & 0x3 === 0) {
+                        // Secret key. Remove mask and import
+                        return subtle.importKey('raw', new Int32Array(keyData, l2, l2), 'GOST 28147', false,
+                                ['unwrapKey']).then(function (unwrappingKey) {
+                            // Unwrap secret key
+                            return subtle.unwrapKey('raw', new Int32Array(keyData, 0, l2), unwrappingKey,
+                                    {name: 'GOST 28147-MASK', inverse: true}, 'GOST 28147-89',
+                                    'false', ['encrypt', 'decrypt', 'sign', 'verify']);
+                        });
+                    } else {
+                        // Private key
+                        var algorithm = self.keyInfo.algorithm ||
+                                (self.certificate && self.certificate.subjectPublicKeyInfo.algorithm);
+                        if (!algorithm)
+                            throw new Error('Algorithm is not specified');
+                        var unwrapAlgorithm = expand(algorithm, {mode: 'MASK', inverse: true});
+                        unwrapAlgorithm.name = unwrapAlgorithm.name.replace('-DH', '');
+                        var wrapped = new Uint8Array(keyData, 0, l2),
+                                mask = new Uint8Array(keyData, l2, l2);
+                        // Import mask key
+                        return subtle.importKey('raw', mask, unwrapAlgorithm, 'false', ['sign', 'unwrapKey']).then(function (unwrappingKey) {
+                            // Unwrap private key
+                            return subtle.unwrapKey('raw', wrapped, unwrappingKey, unwrapAlgorithm, algorithm, 'true', ['sign', 'deriveBits', 'deriveKey']);
+                        }).then(function (privateKey) {
+                            // Generate key pair
+                            if (self.publicKey)
+                                return subtle.generateKey(expand(privateKey.algorithm, {ukm: privateKey.buffer}),
+                                        privateKey.extractable, privateKey.usages);
+                            else
+                                return {privateKey: privateKey};
+                        }).then(function (keyPair) {
+                            // Compare public key
+                            if (self.publicKey && !equalBuffers(keyPair.publicKey.buffer, self.publicKey))
+                                throw new Error('Check public key failed');
+                            return keyPair.privateKey;
+                        });
+                    }
+                });
+            }, // </editor-fold>
+            /**
+             * Set the private key
+             * 
+             * @memberOf GostKeys.ViPNetContainerEntry
+             * @instance
+             * @param {Key} privateKey The private key
+             * @param {string} keyPassword The secret key encryption 
+             * @param {number} days Validity days. Default 7305 days (20 years)
+             * @returns {Promise} Promise to return the self object after set the key
+             */
+            setPrivateKey: function (privateKey, keyPassword, days) // <editor-fold defaultstate="collapsed">
+            {
+                var self = this, wrapAlgorithm, wrappingKey, keyData, keyPart;
+                // Decrypt key
+                return new Promise(call).then(function () {
+                    return !keyPassword || typeof keyPassword === 'string' ?
+                            getKeyPassword(keyPassword) : keyPassword;
+                }).then(function (key) {
+                    keyPassword = key;
+                    var algorithm = privateKey.algorithm;
+                    self.keyInfo.algorithm = algorithm;
+                    self.keyInfo.serialNumber = getSeed(16);
+                    self.keyInfo.keyUID = getSeed(8);
+                    self.keyInfo.validity = {
+                        notBefore: today(),
+                        notAfter: today(days || options.days)
+                    };
+                    if (privateKey.type === 'private') {
+                        // Generate mask
+                        wrapAlgorithm = expand(algorithm, {mode: 'MASK', inverse: true});
+                        wrapAlgorithm.name = wrapAlgorithm.name.replace('-DH', '');
+                        self.keyInfo.keyClass = 1;
+                        self.keyInfo.keyType = 43556;
+                        // Generate public key
+                        return subtle.generateKey(expand(algorithm, {ukm: privateKey.buffer}), true,
+                                ['sign', 'verify']).then(function (keyPair) {
+                            self.publicKey = keyPair.publicKey.buffer;
+                            // Check certificate
+                            if (self.certificate) {
+                                var spki = self.certificate.subjectPublicKeyInfo;
+                                return subtle.importKey('spki', spki.encode(), spki.algorithm, true, ['verify']);
+                            }
+                        }).then(function (publicKey) {
+                            if (publicKey && !equalBuffers(publicKey.buffer, self.publicKey))
+                                delete self.certificate; // Remove not valid certificate
+                        });
+                    } else if (privateKey.type === 'secret') {
+                        wrapAlgorithm = {name: 'GOST 28147', mode: 'MASK', inverse: true};
+                        delete self.certificate;
+                        delete self.publicKey;
+                        self.keyInfo.keyClass = 64;
+                        self.keyInfo.keyType = 24622;
+                    } else
+                        throw new Error('Invalid key type');
+                }).then(function () {
+                    // Generate mask
+                    return subtle.generateKey(wrapAlgorithm, true, ['wrapKey', 'unwrapKey']);
+                }).then(function (key) {
+                    wrappingKey = key;
+                    // Wrap private key with mask
+                    return subtle.wrapKey('raw', privateKey, wrappingKey, wrapAlgorithm);
+                }).then(function (data) {
+                    keyData = new Uint8Array(data.byteLength * 2);
+                    keyData.set(new Uint8Array(data));
+                    return subtle.exportKey('raw', wrappingKey);
+                }).then(function (data) {
+                    keyData.set(new Uint8Array(data), data.byteLength);
+                    keyPart = new Uint8Array(keyData.byteLength + 12);
+                    // Encrypt key
+                    var encyption = {name: 'GOST 28147-CFB', iv: getSeed(8)};
+                    keyPart.set(new Uint8Array(encyption.iv), keyPart.byteLength - 8);
+                    return subtle.encrypt(encyption, keyPassword, keyData);
+                }).then(function (encryptedKey) {
+                    keyPart.set(new Uint8Array(encryptedKey));
+                    // Calculate MAC
+                    var encodedKeyInfo = self.keyInfo.encode(),
+                            data = new Uint8Array(encryptedKey.byteLength + encodedKeyInfo.byteLength);
+                    data.set(new Uint8Array(encryptedKey), 0);
+                    data.set(new Uint8Array(encodedKeyInfo), encryptedKey.byteLength);
+                    return subtle.sign({name: 'GOST 28147-89-MAC'}, keyPassword, data);
+                }).then(function (macKey) {
+                    keyPart.set(new Uint8Array(macKey), keyPart.byteLength - 12);
+                    self.keyPart = keyPart.buffer;
+                    return self;
+                });
+            }, // </editor-fold>
+            /**
+             * Encode container entry
+             * 
+             * @memberOf GostKeys.ViPNetContainerEntry
+             * @instance
+             * @param {string} format The encoded data format
+             * @returns {CryptoOperationData}
+             */
+            encode: function (format) // <editor-fold defaultstate="collapsed"> 
+            {
+                var header = asn1.ViPNetInfo.method('encode').call(this),
+                        result = new Uint8Array(8 + header.byteLength + this.keyPart.byteLength);
+                set32(result.buffer, 0, 4 + header.byteLength + this.keyPart.byteLength);
+                result.set(new Uint8Array(header), 4);
+                set32(result.buffer, 4 + header.byteLength, this.keyPart.byteLength);
+                result.set(new Uint8Array(this.keyPart), 8 + header.byteLength);
+                if (format === 'PEM')
+                    return coding.Base64.encode(result.buffer);
+                return result.buffer;
+            } // </editor-fold>
+        };
+    })(), {
+        /**
+         * Decode container entry
+         * 
+         * @memberOf GostKeys.ViPNetContainerEntry
+         * @param {FormatedData} entry
+         * @returns {GostKeys.ViPNetContainer}
+         */
+        decode: function (entry) // <editor-fold defaultstate="collapsed">
+        {
+            if (typeof entry === 'string')
+                entry = coding.Base64.decode(entry);
+            entry = buffer(entry);
+            // Entry size 
+            var entrySize = get32(entry, 0);
+            if (entry.byteLength !== entrySize + 4)
+                throw new Error('Invalid container entry size');
+            // Decode header info
+            var source = coding.BER.decode(new Uint8Array(entry, 4, entrySize));
+            var result = asn1.ViPNetInfo.decode.call(this, source);
+            // Decode key info
+            var headerSize = source.header.byteLength + source.content.byteLength,
+                    keyPartSize = get32(entry, 4 + headerSize);
+            if (entry.byteLength !== headerSize + keyPartSize + 8)
+                throw new Error('Invalid container key part size');
+            result.keyPart = new Uint8Array(new Uint8Array(entry, headerSize + 8, keyPartSize)).buffer;
+            // Key Info buffer - can be used in case error of format encoding
+            // var keyInfoSource = source.object[1];
+            // result.encodedKeyInfo = new Uint8Array(new Uint8Array(keyInfoSource.header.buffer, 
+            //    keyInfoSource.header.byteOffset, keyInfoSource.header.byteLength + keyInfoSource.content.byteLength)).buffer;
+            return result;
+        } // </editor-fold>
+    });
+
+    /**
+     * A class for password-encrypted private keys in CryptoPro container
+     * 
+     * @memberOf GostKeys
+     * @type GostKeys.SignalComPrivateKeyInfo
+     */
+    GostKeys.prototype.ViPNetContainerEntry = ViPNetContainerEntry;
+
+    /**
+     * A class for password-encrypted private keys in ViPNet container
+     * 
+     * @class GostKeys.ViPNetContainer
+     * @param {(FormatedData|GostKeys.ViPNetContainer)} container 
+     */
+    function ViPNetContainer(container) // <editor-fold defaultstate="collapsed">
+    {
+        if (container && (container instanceof CryptoOperationData ||
+                container.buffer instanceof CryptoOperationData ||
+                typeof container === 'string'))
+            this.decode(container);
+        else {
+            container = container || {};
+            this.fileType = container.fileType || 'ITCS';
+            this.fileVersion = container.fileVersion || 0x10;
+            if (container.applicationHeader)
+                this.applicationHeader = container.applicationHeader;
+            this.entries = container.entries || [];
+        }
+    } // </editor-fold>
+
+
+    extend(Object, ViPNetContainer, {
+        /**
+         * Get the certificate from the container
+         * 
+         * @memberOf GostKeys.ViPNetContainer
+         * @instance
+         * @param {number} index Index of the entriy. Default 0
+         * @returns {Promise} Promise to return {@link GostCert.X509} 
+         */
+        getCertificate: function (index) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this;
+            return new Promise(call).then(function () {
+                var entry = self.entries[index || 0];
+                if (!entry)
+                    throw new Error('Entry not defined');
+                if (entry.certificate)
+                    return new cert.X509(entry.certificate);
+            });
+        }, // </editor-fold>
+        /**
+         * Get the private key info
+         * 
+         * @memberOf GostKeys.ViPNetContainer
+         * @instance
+         * @param {string} keyPassword The password for decryption 
+         * @param {number} index Index of the entriy. Default 0
+         * @returns {Promise} Promise to return {@link GostKeys.PKCS8}
+         */
+        getKey: function (keyPassword, index) // <editor-fold defaultstate="collapsed">
+        {
+            return this.getPrivateKey(keyPassword, index).then(function (privateKey) {
+                return new PKCS8().setPrivateKey(privateKey);
+            });
+        }, // </editor-fold>
+        /**
+         * Get the private key
+         * 
+         * @memberOf GostKeys.ViPNetContainer
+         * @instance
+         * @param {string} keyPassword The password of secrect key for decryption 
+         * @param {number} index Index of the entriy. Default 0
+         * @returns {Promise} Promise to return the {@link Key}
+         */
+        getPrivateKey: function (keyPassword, index) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this;
+            return new Promise(call).then(function () {
+                var entry = self.entries[index || 0];
+                if (!entry)
+                    throw new Error('Entry not defined');
+                return entry.getPrivateKey(keyPassword);
+            });
+        }, // </editor-fold>
+        /**
+         * Set the certificate to the container
+         * 
+         * @memberOf GostKeys.ViPNetContainer
+         * @instance
+         * @param {(FormatedData|GostCert.X509)} certificate The certificate
+         * @param {number} index Index of the entriy. Default 0
+         * @returns {Promise} Promise to return self object after set certificate
+         */
+        setCertificate: function (certificate, index) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this, entry, certificate;
+            return new Promise(call).then(function () {
+                entry = self.entries[index || 0] ||
+                        (self.entries[index || 0] = new ViPNetContainerEntry());
+                certificate = new cert.X509(certificate);
+                if (entry.publicKey)
+                    return certificate.getPublicKey();
+            }).then(function (publicKey) {
+                if (publicKey && !equalBuffers(entry.publicKey, publicKey.buffer))
+                    throw new Error('Invalid certificate for private key');
+                entry.certificate = certificate;
+                return self;
+            });
+        }, // </editor-fold>
+        /**
+         * Set the key to the container
+         * 
+         * @memberOf GostKeys.ViPNetContainer
+         * @instance
+         * @param {(FormatedData|GostKeys.PKCS8)} keyInfo The key
+         * @param {string} keyPassword The password for decryption 
+         * @param {number} index Index of the entriy. Default 0
+         * @param {number} days Validity days. Default 7305 days (20 years)
+         * @returns {Promise} Promise to return self object after set the key
+         */
+        setKey: function (keyInfo, keyPassword, index, days) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this;
+            return new PKCS8(keyInfo).getPrivateKey().then(function (privateKey) {
+                return self.setPrivateKey(privateKey, keyPassword, index, days);
+            });
+        }, // </editor-fold>
+        /**
+         * Set the private key
+         * 
+         * @memberOf GostKeys.ViPNetContainerEntry
+         * @instance
+         * @param {Key} privateKey The private key
+         * @param {string} keyPassword The secret key encryption 
+         * @param {number} index Index of the entriy. Default 0
+         * @param {number} days Validity days. Default 7305 days (20 years)
+         * @returns {Promise} Promise to return the self object after set the key
+         */
+        setPrivateKey: function (privateKey, keyPassword, index, days) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this;
+            return new Promise(call).then(function () {
+                var entry = self.entries[index || 0] ||
+                        (self.entries[index || 0] = new ViPNetContainerEntry());
+                return entry.setPrivateKey(privateKey, keyPassword, days);
+            }).then(function() {
+                return self;
+            });
+        }, // </editor-fold>
+        /**
+         * Change key password
+         * 
+         * @memberOf GostKeys.ViPNetContainerEntry
+         * @instance
+         * @param {string} oldKeyPassword Old key password
+         * @param {string} newKeyPassword New key password
+         * @returns {Promise} Promise to return self object after change password
+         */
+        changePassword: function (oldKeyPassword, newKeyPassword) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this;
+            return new Promise(call).then(function () {
+                return self.getPrivateKey(oldKeyPassword).then(function (privateKey) {
+                    return self.setPrivateKey(privateKey, newKeyPassword);
+                });
+            });
+        }, // </editor-fold>
+        /**
+         * Generate private key, certificate and return certification request
+         * 
+         * @memberOf GostKeys.ViPNetContainerEntry
+         * @instance
+         * @param {(FormatedData|GostASN1.CertificationRequest)} req The request templates
+         * @param {(Key|CryptoOperationData|string)} keyPassword The secret key or password for decryption 
+         * @param {(AlgorithmIdentifier|string)} keyAlgorithm The name of provider or algorithm
+         * @returns {Promise} Promise to return {@link GostCert.Request}
+         */
+        generate: function (req, keyPassword, keyAlgorithm) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this, certificate, keyInfo;
+            return new Promise(call).then(function () {
+                if (!(req instanceof cert.Request))
+                    req = new cert.Request(req);
+                // Generate request
+                return req.generate(keyAlgorithm);
+            }).then(function (key) {
+                keyInfo = key;
+                return self.setKey(keyInfo, keyPassword);
+            }).then(function () {
+                // Create the new certificate
+                certificate = new cert.X509(req);
+                return certificate.sign(keyInfo);
+            }).then(function () {
+                return self.setCertificate(certificate);
+            }).then(function () {
+                return req;
+            });
+        }, // </editor-fold>
+        /**
+         * Encode objet to container
+         * 
+         * @memberOf GostKeys.ViPNetContainer
+         * @instance
+         * @param {string} format The encoded data format
+         * @returns {CryptoOperationData}
+         */
+        encode: function (format) // <editor-fold defaultstate="collapsed">
+        {
+            // Encode entries
+            var entries = [], entriesSize = 0;
+            this.entries.forEach(function (entry) {
+                var encoded = entry.encode();
+                entriesSize += encoded.byteLength;
+                entries.push(encoded);
+            });
+            var headerSize = this.applicationHeader ? this.applicationHeader.byteLength : 0,
+                    result = new Uint8Array(12 + headerSize + entriesSize);
+            result.set(new Uint8Array(coding.Chars.decode(this.fileType)));
+            set32(result.buffer, 4, this.fileVersion);
+            set32(result.buffer, 8, headerSize);
+            if (headerSize > 0)
+                result.set(new Uint8Array(this.applicationHeader), 12);
+            var offset = 12 + headerSize;
+            entries.forEach(function (entry) {
+                result.set(new Uint8Array(entry), offset);
+                offset += entry.byteLength;
+            });
+            if (format === 'PEM')
+                return coding.Base64.encode(result.buffer);
+            return result.buffer;
+        }, // </editor-fold>
+        /**
+         * Decode container to the object
+         * 
+         * @memberOf GostKeys.ViPNetContainer
+         * @instance
+         * @param {FormatedData} container
+         * @returns {GostKeys.ViPNetContainer}
+         */
+        decode: function (container) // <editor-fold defaultstate="collapsed">
+        {
+            container = this.constructor.decode(container);
+            this.fileType = container.fileType;
+            this.fileVersion = container.fileVersion;
+            if (container.applicationHeader)
+                this.applicationHeader = container.applicationHeader;
+            this.entries = container.entries;
+        } // </editor-fold>
+    }, {
+        /**
+         * Encode object
+         * 
+         * @memberOf GostKeys.ViPNetContainer
+         * @instance
+         * @param {GostKeys.ViPNetContainer} object
+         * @param {string} format The encoded data format
+         * @returns {CryptoOperationData}
+         */
+        encode: function (object, format) // <editor-fold defaultstate="collapsed"> 
+        {
+            return new this(object).encode(format);
+        }, // </editor-fold>
+        /**
+         * Decode container
+         * 
+         * @memberOf GostKeys.ViPNetContainer
+         * @instance
+         * @param {FormatedData} container
+         * @returns {GostKeys.ViPNetContainer}
+         */
+        decode: function (container) // <editor-fold defaultstate="collapsed">
+        {
+            if (typeof container === 'string')
+                container = coding.Base64.decode(container);
+            container = buffer(container);
+            // File type
+            var fileType = coding.Chars.encode(new Uint8Array(container, 0, 4));
+            if (fileType !== 'ITCS' && fileType !== 'PKEY' && fileType !== '_CCK' && fileType !== '_LCK')
+                throw new Error('Unsupported ViPNet container type');
+            // File version
+            var fileVersion = get32(container, 4),
+                    i = fileVersion >>> 16, j = fileVersion & 0xffff;
+            if ((i !== 0 && i !== 1) || j > 0xff)
+                throw new Error('Unsupported ViPNet container version');
+            // File header
+            var headerSize = get32(container, 8), applicationHeader;
+            if (headerSize > 0)
+                applicationHeader = buffer(new Uint8Array(container, 12, headerSize));
+            // Read entries
+            var offset = 12 + headerSize, entries = [];
+            while (offset < container.byteLength) {
+                // Entry size
+                var entrySize = get32(container, offset);
+                // Decode entry
+                entries.push(ViPNetContainerEntry.decode(
+                        new Uint8Array(container, offset, entrySize + 4)));
+                offset = offset + entrySize + 4;
+            }
+            return new ViPNetContainer({
+                fileType: fileType,
+                fileVersion: fileVersion,
+                applicationHeader: applicationHeader,
+                entries: entries
+            });
+        } // </editor-fold>
+    });
+
+    /**
+     * A class for password-encrypted private keys in CryptoPro container
+     * 
+     * @memberOf GostKeys
+     * @type GostKeys.SignalComPrivateKeyInfo
+     */
+    GostKeys.prototype.ViPNetContainer = ViPNetContainer;
+
+    /**
      * An implementation of PKCS #12 password encryption/integrity modes. Both input and output are implemented.<br><br>
      * 
      * A PFX object may contain multiple authenticated safes (represented as GostASN1.SafeContents objects). 
@@ -1371,7 +2002,7 @@
     function PKCS12(store) // <editor-fold defaultstate="collapsed"> 
     {
         asn1.PFX.call(this, store || {
-            vesion: 3,
+            version: 3,
             authSafe: {
                 contentType: 'data'
             }
@@ -1380,27 +2011,20 @@
 
     extend(asn1.PFX, PKCS12, {
         /**
-         * Enclose the aicontent and calculate the mac with given digest algorithm
+         * Sign the enclosed content with given digest algorithm
          * 
          * @memberOf GostKeys.PKCS12
          * @instance
-         * @param {(FormatedData|GostASN1.AuthenticatedSafe)} authSafe Content data to be enclosed.
-         * @param {type} password The password 
+         * @param {string} password The password 
          * @param {(AlgorithmIdentifier|string)} digestAlgorithm Digest algorithm or provider name
          * @returns {Promise} Promise to return self object after enclose content
          */
-        encloseContent: function (authSafe, password, digestAlgorithm) // <editor-fold defaultstate="collapsed"> 
+        sign: function (password, digestAlgorithm) // <editor-fold defaultstate="collapsed"> 
         {
             var self = this;
             return new Promise(call).then(function () {
-                // Set enclosed data
-                authSafe = new asn1.AuthenticatedSafe(authSafe);
-                self.authSafe = {
-                    contentType: 'data',
-                    content: authSafe.encode()
-                };
                 // Calculate mac for password integrity
-                if (password !== undefined) {
+                if (password) {
                     // Define digeset algorithm
                     var hash, hmac, derivation, digestProvider;
                     if (digestAlgorithm)
@@ -1416,22 +2040,21 @@
                         derivation = {
                             name: hash.name.indexOf('SHA') >= 0 ? 'PFXKDF' : 'PBKDF2',
                             hash: hash,
-                            iterations: 2000,
-                            diversifier: 3};
+                            iterations: 2000};
                         hmac = {name: 'HMAC', hash: hash};
                     }
                     // Add salt
-                    derivation = expand(derivation, {salt: getSeed(saltSize(hash))});
+                    derivation = expand(derivation, {salt: getSeed(saltSize(hash)), diversifier: 3});
                     // Import password for key generation 
                     return subtle.importKey('raw', passwordData(derivation, password),
                             derivation, false, ['deriveKey']).then(function (passwordKey) {
 
                         // Generate key from password. 
-                        return subtle.deriveKey(derivation, passwordKey, hmac, false, ['verify']);
+                        return subtle.deriveKey(derivation, passwordKey, hmac, false, ['sign']);
                     }).then(function (integrityKey) {
 
                         // Sign MAC 
-                        return subtle.sign(hmac, integrityKey, self.autoSafe.content);
+                        return subtle.sign(hmac, integrityKey, self.authSafe.content);
                     }).then(function (digest) {
                         self.macData = {
                             mac: {
@@ -1443,7 +2066,8 @@
                         };
                         return self;
                     });
-                }
+                } else
+                    return self;
             });
         }, // </editor-fold>
         /**
@@ -1462,7 +2086,7 @@
                 if (authSafe.contentType === 'data') {
                     // Check MAC 
                     if (self.macData) {
-                        if (typeof password !== 'string')
+                        if (!password)
                             throw new Error('Password must be defined for the MAC verification');
                         var hash = self.macData.mac.digestAlgorithm, derivation = {
                             name: hash.name.indexOf('SHA') >= 0 ? 'PFXKDF' : 'PBKDF2',
@@ -1485,7 +2109,7 @@
                             return subtle.verify(hmac, integrityKey, self.macData.mac.digest, authSafe.content);
                         }).then(function (verified) {
                             if (!verified)
-                                throw new Error('MAC is not verified');
+                                throw new Error('Invalid password, MAC is not verified');
                             return self;
                         });
                     } // No check with MAC
@@ -1504,7 +2128,360 @@
     GostKeys.prototype.PKCS12 = PKCS12;
 
     /**
-     * Implements the Cryptographic Message Syntax as specified in RFC-2630.
+     * This type of entry holds a cryptographic PrivateKey, which is optionally stored 
+     * in a protected format to prevent unauthorized access. It is also accompanied by 
+     * a certificate chain for the corresponding public key.
+     * 
+     * @class GostKeys.KeyEntry
+     * @property {(GostKeys.PKCS8|GostKeys.PKCS8Encrypted)} key The Private Key
+     * @property {GostCert.X509[]} certs The X.509 Certificates chain
+     * @property {GostCert.CRL[]} crls The X.509 CRLs for certificate chain
+     */
+
+    /**
+     * This class represents a storage facility for cryptographic keys and certificates.
+     * 
+     * @class GostKeys.KeyStore
+     * @param {Object} entries Object contains aliased {@link KeyEntry} objects
+     */
+    function KeyStore(entries) // <editor-fold defaultstate="collapsed"> 
+    {
+        this.entries = {};
+        if (entries)
+            for (var name in entries)
+                this.setEntry(name, entries[name]);
+    } // </editor-fold>
+
+    extend(Object, KeyStore, {
+        /**
+         * Lists all the alias names of this keystore.
+         * 
+         * @memberOf GostKeys.KeyStore
+         * @instance
+         * @returns {string[]}
+         */
+        aliases: function () // <editor-fold defaultstate="collapsed"> 
+        {
+            var result = [];
+            for (var name in this.entries)
+                result.push(name);
+            return result;
+        }, // </editor-fold>
+        /**
+         * Checks if the given alias exists in this keystore.
+         * 
+         * @memberOf GostKeys.KeyStore
+         * @instance
+         * @param {string} alias The alias name
+         * @returns {boolean} True if the alias exists, false otherwise
+         */
+        containsAlias: function (alias) // <editor-fold defaultstate="collapsed"> 
+        {
+            return !!this.entries[alias];
+        }, // </editor-fold>
+        /**
+         * Deletes the entry identified by the given alias from this keystore.
+         * 
+         * @memberOf GostKeys.KeyStore
+         * @instance
+         * @param {string} alias The alias name 
+         */
+        deleteEntry: function (alias) // <editor-fold defaultstate="collapsed"> 
+        {
+            delete this.entries[alias];
+        }, // </editor-fold>
+        /**
+         * Saves a keystore Entry under the specified alias.
+         * 
+         * @memberOf GostKeys.KeyStore
+         * @instance
+         * @param {string} alias The alias name 
+         * @param {GostKeys.KeyEntry} entry The entry
+         */
+        setEntry: function (alias, entry)  // <editor-fold defaultstate="collapsed">
+        {
+            var r = {};
+            // Keys
+            if (entry.key) {
+                try {
+                    r.key = new PKCS8(entry.key, true); // Private key
+                } catch (e) {
+                    try {
+                        r.key = new PKCS8Encrypted(entry.key, true); // Encrypted private key
+                    } catch (e1) {
+                        if (entry.key instanceof CryptoOperationData)
+                            r.key = entry.key; // Secret key
+                        else
+                            throw new Error('Unknown Key format');
+                    }
+                }
+            }
+            // Certs
+            if (entry.certs) {
+                var certs = entry.certs instanceof Array ? entry.certs : [entry.certs];
+                for (var i = 0; i < certs.length; i++)
+                    certs[i] = new cert.X509(certs[i]);
+                r.certs = certs;
+            }
+            // CRLs
+            if (entry.crls) {
+                var crls = entry.crls instanceof Array ? entry.crls : [entry.crls];
+                for (var i = 0; i < crls.length; i++)
+                    crls[i] = new cert.CRL(crls[i]);
+                r.crls = crls;
+            }
+            this.entries[alias] = r;
+        }, // </editor-fold>
+        /**
+         * Gets a keystore Entry for the specified alias 
+         * 
+         * @memberOf GostKeys.KeyStore
+         * @instance
+         * @param {string} alias The alias name 
+         * @returns {GostKeys.KeyEntry} The entry
+         */
+        getEntry: function (alias) // <editor-fold defaultstate="collapsed"> 
+        {
+            return this.entries[alias];
+        }, // </editor-fold>
+        /**
+         * Loads this KeyStore from the given input stream.<br><br>
+         * A password may be given to unlock the keystore (e.g. the keystore resides on a hardware token device), 
+         * or to check the integrity of the keystore data. If a password is not given for integrity checking, 
+         * then integrity checking is not performed.
+         * 
+         * @memberOf GostKeys.KeyStore
+         * @instance
+         * @param {(FormatedData|GostKeys.PKSC12)} store The input stream from which the keystore is loaded
+         * @param {string} password The password used to check the integrity of the keystore, the password used to unlock the keystore
+         * @returns {Promise} Promise to return self object after store loaded
+         */
+        load: function (store, password) // <editor-fold defaultstate="collapsed"> 
+        {
+            var self = this;
+            return new Promise(call).then(function () {
+                // Verify store file
+                store = new PKCS12(store);
+                return store.verify(password);
+            }).then(function () {
+                if (store.authSafe.contentType !== 'data')
+                    throw new Error('Unsupported PFX format');
+                var authSafe = asn1.AuthenticatedSafe.decode(store.authSafe.content).object,
+                        promises = [];
+                // Decrypt encrypted content
+                authSafe.forEach(function (info) {
+                    if (info.contentType === 'data')
+                        promises.push(new cms.DataContentInfo(info));
+                    else if (info.contentType === 'encryptedData')
+                        promises.push(new cms.EncryptedDataContentInfo(info).getEnclosed(password));
+                    else
+                        throw new Error('Unsupported PFX format');
+                });
+                return Promise.all(promises);
+            }).then(function (contents) {
+                // Read bags
+                var entries = {};
+                contents.forEach(function (info) {
+                    var bags = asn1.SafeContents.decode(info.content).object;
+                    bags.forEach(function (bag) {
+                        var keyId = coding.Hex.encode((bag.bagAttributes && bag.bagAttributes.localKeyId)
+                                || getSeed(4), true), entry = entries[keyId] || (entries[keyId] = {});
+                        switch (bag.bagId) {
+                            case 'keyBag':
+                                entry.key = new PKCS8(bag.bagValue);
+                                break;
+                            case 'pkcs8ShroudedKeyBag':
+                                entry.key = new PKCS8Encrypted(bag.bagValue);
+                                break;
+                            case 'secretBag':
+                                if (bag.bagValue.secretTypeId === 'secret')
+                                    entry.key = bag.bagValue.secretValue;
+                                break;
+                            case 'certBag':
+                                var certs = entry.certs || (entry.certs = []);
+                                if (bag.bagValue.certId === 'x509Certificate')
+                                    certs.push(new cert.X509(bag.bagValue.certValue));
+                                break;
+                            case 'crlBag':
+                                var crls = entry.crls || (entry.crls = []);
+                                if (bag.bagValue.crlId === 'x509CRL')
+                                    crls.push(new cert.CRL(bag.bagValue.crlValue));
+                                break;
+                        }
+                        if (bag.bagAttributes && bag.bagAttributes.friendlyName)
+                            entry.friendlyName = bag.bagAttributes.friendlyName;
+                    });
+                });
+                // Decrypt keys
+                var promises = [];
+                for (var name in entries)
+                    promises.push((function (entry) {
+                        // Try to decrypt private key
+                        if (entry.key instanceof PKCS8Encrypted)
+                            return entry.key.getKey(password).then(function (key) {
+                                // Return entry with decrypted key
+                                entry.key = key;
+                                return entry;
+                            }, function () {
+                                // Return entry with encrypted key
+                                return entry;
+                            });
+                        else
+                            return entry;
+                    })(entries[name]));
+                return Promise.all(promises);
+            }).then(function (entries) {
+                // Set alias names
+                entries.forEach(function (entry) {
+                    var friendlyName = entry.friendlyName;
+                    if (friendlyName) {
+                        delete entry.friendlyName;
+                        self.entries[friendlyName] = entry;
+                    } else
+                        self.entries[generateUUID()] = entry;
+                });
+                return self;
+            });
+        }, // </editor-fold>
+        /**
+         * Stores this keystore to the given output stream, and protects its integrity with the given password.
+         * 
+         * @memberOf GostKeys.KeyStore
+         * @instance
+         * @param {string} password The password to generate the keystore integrity check
+         * @param {string} digestAlgortihm The digest algorithm or provider name for integrity check
+         * @param {string} encryptionAlgortihm The encryption algorithm or provider name for encrypt certificates
+         * @returns {Promise} Promise to return {@link GostKeyst.PKCS12} 
+         */
+        store: function (password, digestAlgortihm, encryptionAlgortihm) // <editor-fold defaultstate="collapsed"> 
+        {
+            var self = this, keys = [], contents = [], authSafe = [];
+            return new Promise(call).then(function () {
+                // Define encryption algorithm
+                if (encryptionAlgortihm)
+                    encryptionAlgortihm = providers[encryptionAlgortihm] ?
+                            providers[encryptionAlgortihm].pbes : encryptionAlgortihm;
+                else if (digestAlgortihm)
+                    encryptionAlgortihm = providers[digestAlgortihm] ?
+                            providers[digestAlgortihm].pbes : providers[options.providerName].pbes;
+                else
+                    encryptionAlgortihm = providers[options.providerName].pbes;
+                // Prepare keys and certs
+                var index = 1;
+                for (var name in self.entries) {
+                    var keyId = new Uint32Array([index]), entry = self.entries[name];
+                    if (entry.key) {
+                        (function (key, attributes) {
+                            if (key instanceof CryptoOperationData)
+                                contents.push({
+                                    bagId: 'secretBag',
+                                    bagValue: {
+                                        secretTypeId: 'secret',
+                                        secretValue: key,
+                                        bagAttributes: attributes
+                                    }
+                                });
+                            else if (key instanceof PKCS8) {
+                                if (encryptionAlgortihm && password)
+                                    keys.push(new PKCS8Encrypted().setKey(key, password, encryptionAlgortihm).then(function (encryptedKey) {
+                                        return {
+                                            bagId: 'pkcs8ShroudedKeyBag',
+                                            bagValue: encryptedKey,
+                                            bagAttributes: attributes
+                                        };
+                                    }));
+                                else
+                                    keys.push({
+                                        bagId: 'keyBag',
+                                        bagValue: key,
+                                        bagAttributes: attributes
+                                    });
+                            } else if (key instanceof PKCS8Encrypted)
+                                keys.push({
+                                    bagId: 'pkcs8ShroudedKeyBag',
+                                    bagValue: key,
+                                    bagAttributes: attributes
+                                });
+                        })(entry.key, {
+                            localKeyId: keyId,
+                            friendlyName: name
+                        });
+                    }
+                    if (entry.certs) {
+                        entry.certs.forEach(function (certificate) {
+                            var attributes = {localKeyId: keyId};
+                            if (certificate instanceof cert.X509)
+                                contents.push({
+                                    bagId: 'certBag',
+                                    bagValue: {
+                                        certId: 'x509Certificate',
+                                        certValue: certificate
+                                    },
+                                    bagAttributes: attributes
+                                });
+                        });
+                    }
+                    if (entry.crls) {
+                        entry.crls.forEach(function (crl) {
+                            var attributes = {localKeyId: keyId};
+                            if (crl instanceof cert.CRL)
+                                contents.push({
+                                    bagId: 'crlBag',
+                                    bagValue: {
+                                        crlId: 'x509CRL',
+                                        crlValue: crl
+                                    },
+                                    bagAttributes: attributes
+                                });
+                        });
+                    }
+                }
+                // Encrypt keys
+                if (keys.length > 0)
+                    return Promise.all(keys);
+            }).then(function (bags) {
+                if (bags) {
+                    var keyContents = asn1.SafeContents.encode(bags);
+                    authSafe.push(new cms.DataContentInfo({
+                        contentType: 'data',
+                        content: keyContents
+                    }));
+                }
+
+                // Encrypt certificates and crls
+                if (contents.length > 0) {
+                    contents = asn1.SafeContents.encode(contents);
+                    if (encryptionAlgortihm && password)
+                        return new cms.EncryptedDataContentInfo().encloseContent(
+                                contents, password, encryptionAlgortihm);
+                    else
+                        return new cms.DataContentInfo().encloseContent(contents);
+                }
+            }).then(function (contents) {
+                authSafe.push(contents);
+                // Set enclosed data
+                authSafe = new asn1.AuthenticatedSafe(authSafe);
+                var store = new PKCS12();
+                store.authSafe = {
+                    contentType: 'data',
+                    content: authSafe.encode()
+                };
+                // Return new PKCS12 with enclosed authenificated content
+                return store.sign(password, digestAlgortihm);
+            });
+        } // </editor-fold>
+    });
+
+    /**
+     * This class represents a storage facility for cryptographic keys and certificates.
+     * 
+     * @memberOf GostKeys
+     * @type GostKeys.KeyStore
+     */
+    GostKeys.prototype.KeyStore = KeyStore;
+
+    /**
+     * Implements the Key and Certificate Store methods
      * 
      * @memberOf gostCrypto
      * @type GostKeys

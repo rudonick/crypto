@@ -47,6 +47,36 @@
 
     var printASN1 = (function () {
 
+        var BERtypes = {
+            0x00: 'EOC',
+            0x01: 'BOOLEAN',
+            0x02: 'INTEGER',
+            0x03: 'BIT STRING',
+            0x04: 'OCTET STRING',
+            0x05: 'NULL',
+            0x06: 'OBJECT IDENTIFIER',
+            0x07: 'ObjectDescriptor',
+            0x08: 'EXTERNAL',
+            0x09: 'REAL',
+            0x0A: 'ENUMERATED',
+            0x0B: 'EMBEDDED PDV',
+            0x0C: 'UTF8String',
+            0x10: 'SEQUENCE',
+            0x11: 'SET',
+            0x12: 'NumericString',
+            0x13: 'PrintableString', // ASCII subset
+            0x14: 'TeletexString', // aka T61String
+            0x15: 'VideotexString',
+            0x16: 'IA5String', // ASCII
+            0x17: 'UTCTime',
+            0x18: 'GeneralizedTime',
+            0x19: 'GraphicString',
+            0x1A: 'VisibleString', // ASCII subset
+            0x1B: 'GeneralString',
+            0x1C: 'UniversalString',
+            0x1E: 'BMPString'
+        };
+
         function hex(start, buffer) {
             var s = '', d = new Uint8Array(buffer);
             for (var i = 0; i < d.length; i++) {
@@ -75,15 +105,21 @@
                 throw new Error('Private and Application tags is not supported')
             offset = offset || 0;
             ident = ident || '';
+            // type name
+            var typeName = block.tagClass === 1 ? 'Application_' + block.tagNumber :
+                    block.tagClass === 2 ? '[' + block.tagNumber.toString() + ']' : // Context
+                    block.tagClass === 3 ? 'Private_' + block.tagNumber :
+                    BERtypes[block.tagNumber] || "Universal_" + block.tagNumber.toString();
+
             var start = '             : ',
                     s = ('     ' + offset).slice(-5) +
                     ' ' + ('00' + block.header[0].toString(16)).slice(-2) +
                     ('     ' + block.content.length).slice(-5) + ': ' +
-                    ident + block.typeName;
+                    ident + typeName;
             if (block.tagConstructed)
                 s += childs(block, offset + block.header.length, ident);
             else
-                switch (block.typeName.toUpperCase()) {
+                switch (typeName.toUpperCase()) {
                     case 'OBJECT IDENTIFIER':
                         var id = block.object,
                                 name = names[id];

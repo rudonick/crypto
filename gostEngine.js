@@ -1,6 +1,6 @@
 /**
  * @file GOST 34.10-2012 signature function with 1024/512 bits digest
- * @version 1.70
+ * @version 1.73
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -69,7 +69,7 @@
         var name = algorithm.name, mode = algorithm.mode;
         if ((name === 'GOST 28147' || name === 'GOST R 34.12' || name === 'RC2') && (method === 'generateKey' ||
                 (mode === 'MAC' && (method === 'sign' || method === 'verify')) ||
-                (mode === 'KW' && (method === 'wrapKey' || method === 'unwrapKey')) ||
+                ((mode === 'KW' || mode === 'MASK') && (method === 'wrapKey' || method === 'unwrapKey')) ||
                 ((!mode || mode === 'ES') && (method === 'encrypt' || method === 'decrypt')))) {
             return 'GostCipher';
 
@@ -81,7 +81,7 @@
 
         } else if (name === 'GOST R 34.10' && (method === 'generateKey' ||
                 ((!mode || mode === 'SIGN') && (method === 'sign' || method === 'verify')) ||
-                (mode === 'KW' && (method === 'wrapKey' || method === 'unwrapKey')) ||
+                (mode === 'MASK' && (method === 'wrapKey' || method === 'unwrapKey')) ||
                 (mode === 'DH' && (method === 'deriveKey' || method === 'deriveBits')))) {
             return 'GostSign';
         } else
@@ -154,6 +154,7 @@
          *              <li><b>ES</b> Encryption mode (default)</li>
          *              <li><b>MAC</b> "imitovstavka" (MAC) mode</li>
          *              <li><b>KW</b> Key wrapping mode</li>
+         *              <li><b>MASK</b> Key mask mode</li>
          *          </ul>
          *      </li>
          *      <li><b>sBox</b> Paramset sBox for GOST 28147-89, string. Used only if version = 1989</li>
@@ -182,6 +183,10 @@
          *              <li><b>ukm</b> {@link CryptoOperationData} User key material. Default - random generated value</li>
          *          </ul>
          *      </li>
+         *      <li>Wrap/Unwrap key mode (MASK)
+         *          <ul>
+         *              <li><b>inverse</b> Mode of key mask. True (a32 - b32), overwise (a32 + b32) </li>
+         *          </ul>
          *  </ul>
          *      
          * Supported paramters values:
@@ -329,6 +334,7 @@
          *          <ul>
          *              <li><b>SIGN</b> Digital signature mode (default)</li>
          *              <li><b>DH</b> Diffie-Hellman key generation and key agreement mode</li>
+         *              <li><b>MASK</b> Key mask mode</li>
          *          </ul>
          *      </li>
          *      <li><b>sBox</b> Paramset sBox for GOST 34.11-94. Used only if version = 1994 or 2001</li>
@@ -338,13 +344,18 @@
          * 
          *  <ul>
          *      <li>Sign/Verify mode (SIGN)</li>
+         *      <li>Wrap/Unwrap mode (MASK)
+         *          <ul>
+         *              <li><b>inverse</b> True (a * b) mod q, overwise (a * invMod(b, q)) mod q </li>
+         *          </ul>
+         *      </li>
          *      <li>DeriveKey/DeriveBits mode (DH)
          *          <ul>
          *              <li>{@link CryptoOperationData} <b>ukm</b> User key material. Default - random generated value</li>
          *              <li>{@link CryptoOperationData} <b>public</b> The peer's EC public key data</li>
          *          </ul>
          *      </li>
-         *      <li>GenerateKey mode (SIGN and DH and KW) version = 1994
+         *      <li>GenerateKey mode (SIGN and DH and MASK) version = 1994
          *          <ul>
          *              <li><b>namedParam</b> Paramset for key generation algorithm. If specified no additianal parameters required</li>
          *          </ul>
@@ -356,7 +367,7 @@
          *              <li><b>a</b> {@link CryptoOperationData} Generator, integer, 1<a<p-1, at that aq (mod p) = 1</li>
          *          </ul>
          *      </li>
-         *      <li>GenerateKey mode (SIGN and DH and KW) version = 2001 or 2012
+         *      <li>GenerateKey mode (SIGN and DH and MASK) version = 2001 or 2012
          *          <ul>
          *              <li><b>namedCurve</b> Paramset for key generation algorithm. If specified no additianal parameters required</li>
          *          </ul>

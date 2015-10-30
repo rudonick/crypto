@@ -1,6 +1,6 @@
 /**
  * @file Provides facilities for handling certificates, CRLs, etc.
- * @version 1.70
+ * @version 1.73
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -66,7 +66,7 @@
     var Object = root.Object;
     var CryptoOperationData = root.ArrayBuffer;
     var Date = root.Date;
-    
+
     // Crypto subtle
     var subtle = gostCrypto.subtle;
 
@@ -966,8 +966,8 @@
      */
     function CertStore(certificates, crls) // <editor-fold defaultstate="collapsed">
     {
-        this.certificates = certificates;
-        this.crls = crls;
+        this.certificates = certificates || [];
+        this.crls = crls || [];
     } // </editor-fold>
 
     extend(Object, CertStore, {
@@ -994,6 +994,43 @@
         getCRLs: function (selector) // <editor-fold defaultstate="collapsed">
         {
             return selectCRLs(this.certificates, selector);
+        }, // </editor-fold>
+        /**
+         * Loads this CertStore from the given PKCS#7 formated input stream.
+         * 
+         * @memberOf GostCert.CertStore
+         * @instance
+         * @param {(FormatedData|GostASN1.ContentInfo)} store The input stream from which the certstore is loaded
+         * @returns {GostCert.CertStore} Self object after store loaded
+         */
+        load: function (store) // <editor-fold defaultstate="collapsed"> 
+        {
+            var info = new asn1.ContentInfo(store),
+                    certs = info.certificates, crls = info.crls;
+            for (var i = 0; i < certs.length; i++)
+                this.certificates.push(new X509(certs[i]));
+            for (var i = 0; i < crls.length; i++)
+                this.crls.push(new CRL(crls[i]));
+            return this;
+        }, // </editor-fold>
+        /**
+         * Stores this CertStore to the given output stream in PKCS#7 format.
+         * 
+         * @memberOf GostCert.CertStore
+         * @instance
+         * @returns {GostASN1.ContentInfo} PKCS#7 content info with certificates and crls from CertStore
+         */
+        store: function () // <editor-fold defaultstate="collapsed"> 
+        {
+            return new asn1.ContentInfo({
+                contentType: 'signedData',
+                version: 0,
+                digestAlgorithms: [],
+                encapContentInfo: {contentType: 'data'},
+                certificates: this.certs,
+                crls: this.crls,
+                signerInfos: []
+            });
         } // </editor-fold>
     });
 

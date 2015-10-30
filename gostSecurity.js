@@ -1,6 +1,6 @@
 /**
  * @file GOST and common ASN.1 Object and Algorithm Identifiers 
- * @version 1.70
+ * @version 1.73
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -605,7 +605,7 @@
     };
 
     /**
-     * ASN.1 Object Identifiers for freandly names
+     * ASN.1 Object Identifiers for friandly names
      * Generated automaticly
      * @field identifiers
      * @memberOf GostSecurity
@@ -700,21 +700,21 @@
         'pbeWithSHAAnd2-KeyTripleDES-CBC': {derivation: {name: 'PFXKDF', hash: 'SHA-1'}, encryption: {name: '2DES', block: 'CBC'}},
         'pbeWithSHAAnd128BitRC2-CBC': {derivation: {name: 'PFXKDF', hash: 'SHA-1'}, encryption: {name: 'RC2', block: 'CBC', length: 128}},
         'pbewithSHAAnd40BitRC2-CBC': {derivation: {name: 'PFXKDF', hash: 'SHA-1'}, encryption: {name: 'RC2', block: 'CBC', length: 40}},
-        'pbeUnknownGost': {derivation: {name: 'PFXKDF', hash: 'GOST R 34.11'}, encryption: {name: 'GOST 28147-89-CFB'}},
+        'pbeUnknownGost': {derivation: {name: 'PFXKDF', hash: 'GOST R 34.11-94'}, encryption: {name: 'GOST 28147-89-CFB'}},
         //  Diffie-Hellman Key Exchange Keys
         ecDH: 'ECDH',
         dhKeyAgreement: 'DH',
         // symmetric key algorithm oids
         'aes128-CBC': {name: 'AES-CBC', length: 128},
-        'aes128-CFB': {name: 'AES-CFB', length: 128},
+        'aes128-CFB': {name: 'AES-CFB-8', length: 128},
         'aes128-GCM': {name: 'AES-GCM', length: 128},
         'aes128-wrap': {name: 'AES-KW', length: 128},
         'aes192-CBC': {name: 'AES-CBC', length: 192},
-        'aes192-CFB': {name: 'AES-CFB', length: 192},
+        'aes192-CFB': {name: 'AES-CFB-8', length: 192},
         'aes192-GCM': {name: 'AES-GCM', length: 192},
         'aes192-wrap': {name: 'AES-KW', length: 192},
         'aes256-CBC': {name: 'AES-CBC', length: 256},
-        'aes256-CFB': {name: 'AES-CFB', length: 256},
+        'aes256-CFB': {name: 'AES-CFB-8', length: 256},
         'aes256-GCM': {name: 'AES-GCM', length: 256},
         'aes256-wrap': {name: 'AES-KW', length: 256},
         // hash algorihtms

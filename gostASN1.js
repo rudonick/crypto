@@ -1,6 +1,6 @@
 /**
  * @file PKCS ASN.1 message syntax and converters
- * @version 1.70
+ * @version 1.73
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -202,13 +202,16 @@
 
         tagClass = tagClass || 0;
         tagConstructed = tagConstructed || false;
-        // Restore context formats
+        // Restore context implicit formats
         if (source.tagNumber === undefined) {
             source = encode(true, source.object, tagNumber, tagClass,
                     source.object instanceof Array);
-            if (tagNumber !== 0x10 && tagNumber !== 0x11 &&
-                    (tagNumber !== 0x04 || source.tagConstructed))
-                source = BER.decode(BER.encode(source));
+            source = BER.decode(source);
+           
+//            if (tagNumber !== 0x10 && tagNumber !== 0x11 &&
+//                    (tagNumber !== 0x04 || source.tagConstructed)) {
+//                source = BER.decode(BER.encode(source));
+//            }
         }
 
         // Check format
@@ -741,6 +744,59 @@
         }
     });
 
+    var IMPLICIT = function (Class) {
+        Class = Class || ANY;
+        // Add constracted tag
+        return extend(Class, {
+            encode: function (format) {
+                // Format encoding without CTX header
+                var source = Class.method('encode').call(this, format);
+                if (typeof source === 'string' || source instanceof CryptoOperationData)
+                    return source;
+                if (source.tagNumber !== 0x04 && source.tagClass === 0 &&
+                        !(source.object instanceof Array))
+                    // Encode primitive source
+                    return {object: BER.encode(source, 'DER', true)};
+                else
+                    return {object: source.object};
+            }
+        }, {
+            decode: function (source) {
+                if (typeof source === 'string' || source instanceof CryptoOperationData) {
+                    return Class.decode.call(this, source);
+                } else {
+                    source = {
+                        object: source.object,
+                        header: source.header,
+                        content: source.content
+                    };
+                    return Class.decode.call(this, source);
+                }
+            }
+        });
+    };
+
+    var EXPLICIT = function (Class) {
+        Class = Class || ANY;
+        // Add constracted tag
+        return extend(Class, {
+            encode: function (format) {
+                // Format encoding without CTX header
+                var source = Class.method('encode').call(this, format);
+                if (typeof source === 'string' || source instanceof CryptoOperationData)
+                    return source;
+                return {object: [source]};
+            }
+        }, {
+            decode: function (source) {
+                if (typeof source === 'string' || source instanceof CryptoOperationData) {
+                    return Class.decode.call(this, source);
+                } else
+                    return Class.decode.call(this, source.object[0]);
+            }
+        });
+    };
+
     var CTX = function (number, ContentClass) {
         function CTX() {
             ContentClass.apply(this, arguments);
@@ -751,12 +807,6 @@
                 var source = ContentClass.method('encode').call(this, format);
                 if (typeof source === 'string' || source instanceof CryptoOperationData)
                     return source;
-                // Restore primitive source
-                if (source.tagNumber !== 0x04 && source.tagClass === 0 &&
-                        !(source.object instanceof Array))
-                    source = {object: BER.decode(BER.encode(source)).content};
-                else
-                    source = {object: source.object};
                 source.tagNumber = number;
                 source.tagClass = 0x02;
                 source.tagConstructed = source.object instanceof Array;
@@ -765,10 +815,8 @@
         }, {
             decode: function (source) {
                 // Format decoding without CTX
-                if (source.tagNumber !== undefined) {
-                    assert(source.tagClass !== 0x02 || source.tagNumber !== number);
-                    source = {object: source.object};
-                }
+                assert(source.tagNumber !== undefined && 
+                        (source.tagClass !== 0x02 || source.tagNumber !== number));
                 return ContentClass.decode.call(this, source);
             }
         });
@@ -1011,6 +1059,12 @@
                             }
                             return encode(format, source, tagNumber, 0, true);
                         },
+                        decode: function (source) {
+                            this.object = this.constructor.decode(source);
+                        },
+                        check: function () {
+                            this.constructor.decode(this.encode(true));
+                        },
                         reset: function () {
                             // remove unused properties
                             for (var i = 0, n = this.items.length; i < n; i++)
@@ -1027,6 +1081,9 @@
                             }
                         }
                     }, {
+                        encode: function (object, format) {
+                            return new this(object).encode(format);
+                        },
                         decode: function (source) {
                             source = decode(source, tagNumber, 0, true);
                             var result = new this();
@@ -1052,12 +1109,28 @@
     var ENCLOSURE = function (BaseClass, modifier) {
         if (modifier) {
             var Class = extend(ASN1Object, {
+                object: {
+                    get: function () {
+                        if (this.item)
+                            return modifier.decode(this.item.object);
+                        else
+                            return undefined;
+                    },
+                    set: function (object) {
+                        if (object !== undefined)
+                            this.item = new BaseClass(modifier.encode(object));
+                        else
+                            delete this.item;
+                    }
+                },
                 encode: function (format) {
-                    return new BaseClass(modifier.encode(this.object)).encode(format);
+                    return this.item.encode(format);
                 }
             }, {
                 decode: function (source) {
-                    return new this(modifier.decode(BaseClass.decode(source).object));
+                    var result = new this();
+                    result.item = BaseClass.decode(source);
+                    return result;
                 }
             });
             for (var name in BaseClass)
@@ -1137,37 +1210,6 @@
             },
             decode: function (source) {
                 return WrappedClass.decode.call(this, BER.decode(source));
-            }
-        });
-    };
-
-    var IMPLICIT = function (Class) {
-        return Class || ANY;
-    };
-
-    var EXPLICIT = function (Class) {
-        Class = Class || ANY;
-        // Add constracted tag
-        return extend(Class, {
-            encode: function (format) {
-                // Format encoding without CTX header
-                var source = Class.method('encode').call(this, format);
-                if (typeof source === 'string' || source instanceof CryptoOperationData)
-                    return source;
-                return {object: [source]};
-            }
-        }, {
-            decode: function (source) {
-                if (typeof source === 'string' || source instanceof CryptoOperationData) {
-                    // Decode PEM
-                    if (typeof source === 'string')
-                        source = PEM.decode(source, undefined, false);
-                    // Decode binary data
-                    if (source instanceof CryptoOperationData)
-                        source = BER.decode(source);
-                    return Class.decode.call(this, source);
-                } else
-                    return Class.decode.call(this, source.object[0]);
             }
         });
     };
@@ -1458,6 +1500,56 @@
             parameters: OPTIONAL(paramType)}), modifier);
     };
 
+//    var AlgorithmIdentifier = (function () {
+//
+//        var DefaultAlgorithm = Algorithm(ANY),
+//                Class = extend(ASN1Object, function (object) {
+//                    if (this instanceof Class)
+//                        Class.super.apply(this, arguments);
+//                    else
+//                        return DEFINE(object);
+//                }, {
+//                    encode: function (format) {
+//                        return new DefaultAlgorithm(this.object).encode(format);
+//                    }
+//                }, {
+//                    decode: function (source) {
+//                        return new this(DefaultAlgorithm.decode(source).object);
+//                    }
+//                });
+//
+//        var DEFINE = function (algorithmSet) {
+//
+//            return extend(ASN1Object, {
+//                encode: function (format) {
+//                    var object = this.object;
+//                    var AlgorithmType = algorithmSet[object.id];
+//                    if (AlgorithmType)
+//                        return new AlgorithmType(object).encode(format);
+//                    else
+//                        throw new Error('Algorithm not supported');
+//                }
+//            }, {
+//                decode: function (source) {
+//                    // Decode PEM
+//                    if (typeof source === 'string')
+//                        source = PEM.decode(source, undefined, false);
+//                    // Decode binary data
+//                    if (source instanceof CryptoOperationData)
+//                        source = BER.decode(source);
+//                    var AlgorithmType = algorithmSet[names[source.object[0].object]];
+//                    if (AlgorithmType)
+//                        return new this(AlgorithmType.decode(source).object);
+//                    else
+//                        throw new Error('Algorithm not supported');
+//                }
+//            });
+//        };
+//
+//        return Class;
+//    })();
+//
+
     var AlgorithmIdentifier = (function () {
 
         var DefaultAlgorithm = Algorithm(ANY),
@@ -1479,13 +1571,25 @@
         var DEFINE = function (algorithmSet) {
 
             return extend(ASN1Object, {
+                object: {
+                    get: function () {
+                        if (this.item)
+                            return this.item.object;
+                        else
+                            return undefined;
+                    },
+                    set: function (object) {
+                        if (object) {
+                            var ItemClass = algorithmSet[object.id];
+                            if (!ItemClass)
+                                throw new Error('Algorithm not supported');
+                            this.item = new ItemClass(object);
+                        } else
+                            delete this.item;
+                    }
+                },
                 encode: function (format) {
-                    var object = this.object;
-                    var AlgorithmType = algorithmSet[object.id];
-                    if (AlgorithmType)
-                        return new AlgorithmType(object).encode(format);
-                    else
-                        throw new Error('Algorithm not supported');
+                    return this.item.encode(format);
                 }
             }, {
                 decode: function (source) {
@@ -1495,10 +1599,12 @@
                     // Decode binary data
                     if (source instanceof CryptoOperationData)
                         source = BER.decode(source);
-                    var AlgorithmType = algorithmSet[names[source.object[0].object]];
-                    if (AlgorithmType)
-                        return new this(AlgorithmType.decode(source).object);
-                    else
+                    var ItemClass = algorithmSet[names[source.object[0].object]];
+                    if (ItemClass) {
+                        var result = new this();
+                        result.item = ItemClass.decode(source);
+                        return result;
+                    } else
                         throw new Error('Algorithm not supported');
                 }
             });
@@ -1609,12 +1715,17 @@
         encode: function (value) {
             return {
                 algorithm: value.id,
-                parameters: attributes['sBox'][value.sBox || 'D-A']
+                parameters: attributes['sBox'][value.sBox || (value.hash && value.hash.sBox) || 'D-A']
             };
         },
         decode: function (value) {
-            return expand(algorithms[value.algorithm],
-                    parameters[value.parameters]);
+            var algorithm = expand(algorithms[value.algorithm]),
+                    parameter = parameters[value.parameters];
+            if (algorithm.hash)
+                algorithm.hash = expand(algorithm.hash, parameter);
+            else
+                algorithm = expand(algorithm, parameter);
+            return algorithm;
         }
     });
 
@@ -1758,57 +1869,15 @@
         }
     });
 
-    var KeyEncryptionAlgorithmIdentifier = AlgorithmIdentifier({
-        ecdsa: ECDHKeyAlgorithm,
-        rsaEncryption: AlgorithmWithNullParam,
-        // Base encryption
-        'id-sc-gost28147-gfb': SCGostAlgorithm,
-        'id-Gost28147-89': Gost2814789Algorithm,
-        // Key transport algorithms
-        'id-sc-gostR3410-2001': ECDHKeyAlgorithm,
-        'id-GostR3410-2001': GostKeyAlgorithm,
-        'id-GostR3410-94': GostKeyAlgorithm,
-        'id-tc26-gost3410-12-256': GostKeyAlgorithm,
-        'id-tc26-gost3410-12-512': GostKeyAlgorithm,
-        // Key agreement algorithms
-        'id-GostR3410-94-CryptoPro-ESDH': GostKeyAgreementAlgorithm,
-        'id-GostR3410-2001-CryptoPro-ESDH': GostKeyAgreementAlgorithm,
-        'id-tc26-agreement-gost-3410-12-256': GostKeyAgreementAlgorithm,
-        'id-tc26-agreement-gost-3410-12-512': GostKeyAgreementAlgorithm,
-        'id-sc-r3410-ESDH-r3411kdf': AlgorithmWithNullParam,
-        // Key encryption key algorithms
-        'id-Gost28147-89-None-KeyWrap': GostKeyWrapAlgorithm, // Add ukm to algorithm
-        'id-Gost28147-89-CryptoPro-KeyWrap': GostKeyWrapAlgorithm,
-        'id-sc-cmsGostWrap': AlgorithmWithNoParam, // SC don't use ukm
-        'id-sc-cmsGost28147Wrap': AlgorithmWithNoParam,
-        // Password based encryption
-        'pbeWithSHAAndAES128-CBC': PBES1Algorithm,
-        'pbeWithSHAAndAES192-CBC': PBES1Algorithm,
-        'pbeWithSHAAndAES256-CBC': PBES1Algorithm,
-        'pbeWithSHA256AndAES128-CBC': PBES1Algorithm,
-        'pbeWithSHA256AndAES192-CBC': PBES1Algorithm,
-        'pbeWithSHA256AndAES256-CBC': PBES1Algorithm,
-        'id-sc-pbeWithGost3411AndGost28147': PBES1Algorithm,
-        'id-sc-pbeWithGost3411AndGost28147CFB': PBES1Algorithm,
-        // PKCS12 PBES1 
-        'pbeWithSHAAnd3-KeyTripleDES-CBC': PBES1Algorithm,
-        'pbeWithSHAAnd2-KeyTripleDES-CBC': PBES1Algorithm,
-        'pbeWithSHAAnd128BitRC2-CBC': PBES1Algorithm,
-        'pbewithSHAAnd40BitRC2-CBC': PBES1Algorithm,
-        'pbeUnknownGost': PBES1Algorithm,
-        // PBES2
-        'PBES2': PBES2Algorithm
-    });
-
     var BaseEncryptionAlgorithmIdentifier = AlgorithmIdentifier({
         'id-sc-gost28147-gfb': SCGostAlgorithm,
         'id-Gost28147-89': Gost2814789Algorithm});
 
     var MessageAuthenticationCodeAlgorithm = AlgorithmIdentifier({
         'id-Gost28147-89-MAC': Gost2814789Parameters,
-        'id-HMACGostR3411-94': AlgorithmWithNoParam,
-        'id-tc26-hmac-gost-3411-12-256': AlgorithmWithNoParam,
-        'id-tc26-hmac-gost-3411-12-512': AlgorithmWithNoParam,
+        'id-HMACGostR3411-94': Gost341194DigestAlgorithm,
+        'id-tc26-hmac-gost-3411-12-256': Gost341194DigestAlgorithm,
+        'id-tc26-hmac-gost-3411-12-512': Gost341194DigestAlgorithm,
         'hmacWithSHA1': AlgorithmWithNoParam,
         'hmacWithSHA224': AlgorithmWithNoParam,
         'hmacWithSHA256': AlgorithmWithNoParam,
@@ -1918,6 +1987,48 @@
         'pbeUnknownGost': PBES1Algorithm,
         // PBES2
         'PBES2': PBES2Algorithm});
+
+    var KeyEncryptionAlgorithmIdentifier = AlgorithmIdentifier({
+        ecdsa: ECDHKeyAlgorithm,
+        rsaEncryption: AlgorithmWithNullParam,
+        // Base encryption
+        'id-sc-gost28147-gfb': SCGostAlgorithm,
+        'id-Gost28147-89': Gost2814789Algorithm,
+        // Key transport algorithms
+        'id-sc-gostR3410-2001': ECDHKeyAlgorithm,
+        'id-GostR3410-2001': GostKeyAlgorithm,
+        'id-GostR3410-94': GostKeyAlgorithm,
+        'id-tc26-gost3410-12-256': GostKeyAlgorithm,
+        'id-tc26-gost3410-12-512': GostKeyAlgorithm,
+        // Key agreement algorithms
+        'id-GostR3410-94-CryptoPro-ESDH': GostKeyAgreementAlgorithm,
+        'id-GostR3410-2001-CryptoPro-ESDH': GostKeyAgreementAlgorithm,
+        'id-tc26-agreement-gost-3410-12-256': GostKeyAgreementAlgorithm,
+        'id-tc26-agreement-gost-3410-12-512': GostKeyAgreementAlgorithm,
+        'id-sc-r3410-ESDH-r3411kdf': AlgorithmWithNullParam,
+        // Key encryption key algorithms
+        'id-Gost28147-89-None-KeyWrap': GostKeyWrapAlgorithm, // Add ukm to algorithm
+        'id-Gost28147-89-CryptoPro-KeyWrap': GostKeyWrapAlgorithm,
+        'id-sc-cmsGostWrap': AlgorithmWithNoParam, // SC don't use ukm
+        'id-sc-cmsGost28147Wrap': AlgorithmWithNoParam,
+        // Password based encryption
+        'pbeWithSHAAndAES128-CBC': PBES1Algorithm,
+        'pbeWithSHAAndAES192-CBC': PBES1Algorithm,
+        'pbeWithSHAAndAES256-CBC': PBES1Algorithm,
+        'pbeWithSHA256AndAES128-CBC': PBES1Algorithm,
+        'pbeWithSHA256AndAES192-CBC': PBES1Algorithm,
+        'pbeWithSHA256AndAES256-CBC': PBES1Algorithm,
+        'id-sc-pbeWithGost3411AndGost28147': PBES1Algorithm,
+        'id-sc-pbeWithGost3411AndGost28147CFB': PBES1Algorithm,
+        // PKCS12 PBES1 
+        'pbeWithSHAAnd3-KeyTripleDES-CBC': PBES1Algorithm,
+        'pbeWithSHAAnd2-KeyTripleDES-CBC': PBES1Algorithm,
+        'pbeWithSHAAnd128BitRC2-CBC': PBES1Algorithm,
+        'pbewithSHAAnd40BitRC2-CBC': PBES1Algorithm,
+        'pbeUnknownGost': PBES1Algorithm,
+        // PBES2
+        'PBES2': PBES2Algorithm
+    });
 
     var PBMAC1params = SEQUENCE({
         keyDerivationFunc: KeyDerivationAlgorithmIdentifier, // {{PBMAC1-KDFs}},
@@ -2052,7 +2163,7 @@
          * @extends GostASN1.SubjectPublicKeyInfo
          * @extends Key
          */
-        return extend(ENCLOSURE(ATTRIBUTE({
+        return ENCLOSURE(ATTRIBUTE({
             algorithm: KeyAlgorithmIdentifier,
             subjectPublicKey: ANY},
         'algorithm', 'subjectPublicKey')(function (algorithm) {
@@ -2072,16 +2183,6 @@
                     usages: ['verify', 'deriveKey', 'deriveBits'],
                     buffer: value.subjectPublicKey
                 };
-            }
-        }), {
-            object: {
-                get: function () {
-                    return this;
-                },
-                set: function (object) {
-                    for (var name in object)
-                        this[name] = object[name];
-                }
             }
         });
     })({
@@ -2229,7 +2330,7 @@
          * @extends GostASN1.PrivateKeyInfo
          * @extends Key
          */
-        return extend(ENCLOSURE(ATTRIBUTE({
+        return ENCLOSURE(ATTRIBUTE({
             version: Version,
             privateKeyAlgorithm: KeyAlgorithmIdentifier,
             privateKey: ANY,
@@ -2252,16 +2353,6 @@
                     usages: ['sign', 'deriveKey', 'deriveBits'],
                     buffer: value.privateKey
                 };
-            }
-        }), {
-            object: {
-                get: function () {
-                    return this;
-                },
-                set: function (object) {
-                    for (var name in object)
-                        this[name] = object[name];
-                }
             }
         });
     })({
@@ -3368,6 +3459,47 @@
     // </editor-fold>
 
     /*
+     * ViPNet Gost Private Key Store
+     */ // <editor-fold defaultstate="collapsed">
+
+    var ViPNetKeyInfo = SEQUENCE({
+        keyClass: INTEGER,
+        keyType: INTEGER,
+        algorithm: OPTIONAL(CTX(0, EXPLICIT(KeyAlgorithmIdentifier))),
+        serialNumber: OPTIONAL(CTX(1, EXPLICIT(OCTET_STRING))),
+        addSerialNumber: OPTIONAL(CTX(2, EXPLICIT(OCTET_STRING))),
+        certSerialNumber: OPTIONAL(CTX(3, EXPLICIT(OCTET_STRING))),
+        subjectUID: OPTIONAL(CTX(4, EXPLICIT(OCTET_STRING))),
+        recipientUID: OPTIONAL(CTX(5, EXPLICIT(OCTET_STRING))),
+        validity: OPTIONAL(CTX(6, EXPLICIT(CHOICE({
+            validity: Validity,
+            keyValidity: SEQUENCE({
+                notBefore: OPTIONAL(CTX(0, IMPLICIT(GeneralizedTime))),
+                notAfter: OPTIONAL(CTX(1, IMPLICIT(GeneralizedTime)))})
+        }, function () {
+            return 'keyValidity';
+        })))),
+        keyUID: OPTIONAL(CTX(7, EXPLICIT(BIT_STRING))),
+        flags: OPTIONAL(CTX(10, EXPLICIT(INTEGER)))
+    });
+
+    /**
+     * ViPNet key container info
+     * 
+     * @class GostASN1.ViPNetInfo
+     * @extends GostASN1.Sequence
+     */
+    var ViPNetInfo = SEQUENCE({
+        version: INTEGER,
+        keyInfo: ViPNetKeyInfo,
+        defenceKeyInfo: ViPNetKeyInfo,
+        certificate: OPTIONAL(CTX(0, EXPLICIT(Certificate))),
+        publicKey: OPTIONAL(CTX(1, EXPLICIT(OCTET_STRING)))
+    });
+
+    // </editor-fold>
+
+    /*
      * Cryptographic Message Syntax
      * 
      * http://tools.ietf.org/html/rfc5652
@@ -4001,11 +4133,11 @@
         bagAttributes: OPTIONAL(PKCS12Attributes)
     }, 'bagId', 'bagValue')(function (type) {
         return ({
-            keyBag: COMBINE(KeyBag),
-            pkcs8ShroudedKeyBag: COMBINE(PKCS8ShroudedKeyBag),
-            certBag: COMBINE(CertBag),
-            crlBag: COMBINE(CRLBag),
-            secretBag: COMBINE(SecretBag),
+            keyBag: KeyBag,
+            pkcs8ShroudedKeyBag: PKCS8ShroudedKeyBag,
+            certBag: CertBag,
+            crlBag: CRLBag,
+            secretBag: SecretBag,
             safeContentsBag: SafeContents // recursion
         })[type];
     });
@@ -4645,6 +4777,14 @@
          * @type GostASN1.GostPrivateMasks
          */
         GostPrivateMasks: GostPrivateMasks,
+        /**
+         * ViPNet key container
+         * 
+         * @memberOf GostASN1
+         * @instance
+         * @type GostASN1.ViPNetInfo
+         */
+        ViPNetInfo: ViPNetInfo,
         /**
          * Gost Signature encoders
          * 

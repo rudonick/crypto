@@ -1,6 +1,6 @@
 /**
  * @file GOST R 34.11-94 / GOST R 34.11-12 implementation
- * @version 1.70
+ * @version 1.73
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -547,11 +547,11 @@
             process.call(this, Sum, 0);
 
             var h = H.buffer;
-            
+
             // Swap hash for SignalCom
-            if (this.procreator === 'SC') 
+            if (this.procreator === 'SC')
                 h = swap(h);
-            
+
             return h;
         };
 
@@ -889,24 +889,27 @@
      */
     function deriveBitsKDF(baseKey, length) // <editor-fold defaultstate="collapsed">
     {
-        if (length > this.bitLength || length % 8 > 0)
-            throw new DataError('Length can\'t be more than ' + this.bitLength + ' bits and multiple of 8');
-        var rlen = length / 8, label, context = new Uint8Array(buffer(this.context));
+        if (length % 8 > 0)
+            throw new DataError('Length must be multiple of 8');
+        var rlen = length / 8, label, context = new Uint8Array(buffer(this.context)),
+                blen = this.bitLength / 8, n = Math.ceil(rlen / blen);
         if (this.label)
             label = new Uint8Array(buffer(this.label));
         else
             label = new Uint8Array([0x26, 0xBD, 0xB8, 0x78]);
-        var data = new Uint8Array(label.length + context.length + 4);
-        data[0] = 0x01;
-        data.set(label, 1);
-        data[label.length + 1] = 0x00;
-        data.set(context, label.length + 2);
-        data[data.length - 2] = 0x01;
-        data[data.length - 1] = 0x00;
-        var result = signHMAC.call(this, baseKey, data);
-        if (result.byteLength > rlen)
-            result = new Uint8Array(new Uint8Array(result, 0, rlen));
-        return result;
+        var result = new Uint8Array(rlen);
+        for (var i = 0; i < n; i++) {
+            var data = new Uint8Array(label.length + context.length + 4);
+            data[0] = i + 1;
+            data.set(label, 1);
+            data[label.length + 1] = 0x00;
+            data.set(context, label.length + 2);
+            data[data.length - 2] = length >>> 8;
+            data[data.length - 1] = length & 0xff;
+            result.set(new Uint8Array(signHMAC.call(this, baseKey, data), 0,
+                    i < n - 1 ? blen : rlen - i * blen), i * blen);
+        }
+        return result.buffer;
     } // </editor-fold>
 
     /**
@@ -962,6 +965,8 @@
      */
     function deriveBitsPBKDF2(baseKey, length) // <editor-fold defaultstate="collapsed">
     {
+        var diversifier = this.diversifier || 1; // For PKCS12 MAC required 3*length
+        length = length * diversifier;
         if (length < this.bitLength / 2 || length % 8 > 0)
             throw new DataError('Length must be more than ' + this.bitLength / 2 + ' bits and multiple of 8');
         var hLen = this.bitLength / 8, dkLen = length / 8,
@@ -991,8 +996,12 @@
             var ofs = (i - 1) * hLen;
             arraycopy(Z, 0, DK, ofs, Math.min(hLen, dkLen - ofs));
         }
-
-        return DK.buffer;
+        if (diversifier > 1) {
+            var rLen = dkLen / diversifier, R = new Uint8Array(rLen);
+            arraycopy(DK, dkLen - rLen, R, 0, rLen);
+            return R.buffer;
+        } else
+            return DK.buffer;
     } // </editor-fold>
 
     /**
@@ -1035,7 +1044,7 @@
         var c = 'DENEFH028.760246785.IUEFHWUIO.EF';
         for (var i = 0; i < c.length; i++)
             k[i] = c.charCodeAt(i);
-        
+
         d = new Uint8Array(2 * (b + l));
         for (var j = 0; j < iterations; j++) {
             for (var i = 0; i < b; i++) {
@@ -1141,6 +1150,7 @@
      *          <ul>
      *              <li><b>salt</b> {@link CryptoOperationData} Random salt as input for HMAC algorithm</li>
      *              <li><b>iterations</b> Iteration count. GOST recomended value 1000 (default) or 2000</li>
+     *              <li><b>diversifier</b> Deversifier, ID=1 - key material for performing encryption or decryption, ID=3 - integrity key for MACing</li>
      *          </ul>
      *      </li>
      *      <li>DeriveBits/DeriveKey PFXKDF mode
@@ -1166,7 +1176,7 @@
     {
 
         algorithm = algorithm || {};
-        
+
         this.name = (algorithm.name || 'GOST R 34.10') + '-' + ((algorithm.version || 2012) % 100) +
                 ((algorithm.version || 2012) > 1 ? '-' + (algorithm.length || 256) : '') +
                 (((algorithm.mode || 'HASH') !== 'HASH') ? '-' + algorithm.mode : '') +
@@ -1175,9 +1185,9 @@
 
         // SignalCom algorithms
         this.procreator = algorithm.procreator;
-        
+
         // Bit length
-        this.bitLength =  algorithm.length || 256; 
+        this.bitLength = algorithm.length || 256;
 
         switch (algorithm.version || 2012) {
             case 1: // SHA-1
@@ -1208,7 +1218,7 @@
             default:
                 throw new NotSupportedError('Algorithm version ' + algorithm.version + ' not supported');
         }
-        
+
         // Key size
         this.keySize = algorithm.keySize || (this.bitLength / 8);
 
@@ -1232,6 +1242,7 @@
                 this.generateKey = generateKey;
                 this.salt = algorithm.salt;
                 this.iterations = algorithm.iterations || 2000;
+                this.diversifier = algorithm.diversifier || 1;
                 break;
             case 'PFXKDF':
                 this.deriveKey = deriveKey;
