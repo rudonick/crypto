@@ -1,6 +1,6 @@
 /**
  * @file PKCS ASN.1 message syntax and converters
- * @version 1.73
+ * @version 1.74
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -207,11 +207,6 @@
             source = encode(true, source.object, tagNumber, tagClass,
                     source.object instanceof Array);
             source = BER.decode(source);
-           
-//            if (tagNumber !== 0x10 && tagNumber !== 0x11 &&
-//                    (tagNumber !== 0x04 || source.tagConstructed)) {
-//                source = BER.decode(BER.encode(source));
-//            }
         }
 
         // Check format
@@ -678,16 +673,24 @@
     };
 
     var ATTRIBUTE = function (structure, typeName, valueName, ownerDafaultType, uniformName) {
+
+        var BaseClass = SEQUENCE(structure, uniformName);
+
         // Define attribute sequence
-        return function (typeSet, defaultType) {
+        var DEFINE = function (typeSet, defaultType) {
 
             typeName = typeName || 'type';
             valueName = valueName || 'value';
             defaultType = defaultType || ownerDafaultType || ANY;
 
-            var BaseClass = SEQUENCE(structure, uniformName);
-
-            var Class = extend(BaseClass, {
+            var Class = extend(BaseClass, function (object) {
+                // Constructor - "matrioshka"
+                if (this instanceof Class) {
+                    // Call super
+                    BaseClass.apply(this, arguments);
+                } else
+                    return DEFINE.apply(this, arguments);
+            }, {
                 getItemClass: function (name, items) {
                     var ItemClass = structure[name];
                     if (valueName === name) {
@@ -727,6 +730,7 @@
             return Class;
         };
 
+        return DEFINE();
     };
 
 
@@ -815,7 +819,7 @@
         }, {
             decode: function (source) {
                 // Format decoding without CTX
-                assert(source.tagNumber !== undefined && 
+                assert(source.tagNumber !== undefined &&
                         (source.tagClass !== 0x02 || source.tagNumber !== number));
                 return ContentClass.decode.call(this, source);
             }
@@ -1500,56 +1504,6 @@
             parameters: OPTIONAL(paramType)}), modifier);
     };
 
-//    var AlgorithmIdentifier = (function () {
-//
-//        var DefaultAlgorithm = Algorithm(ANY),
-//                Class = extend(ASN1Object, function (object) {
-//                    if (this instanceof Class)
-//                        Class.super.apply(this, arguments);
-//                    else
-//                        return DEFINE(object);
-//                }, {
-//                    encode: function (format) {
-//                        return new DefaultAlgorithm(this.object).encode(format);
-//                    }
-//                }, {
-//                    decode: function (source) {
-//                        return new this(DefaultAlgorithm.decode(source).object);
-//                    }
-//                });
-//
-//        var DEFINE = function (algorithmSet) {
-//
-//            return extend(ASN1Object, {
-//                encode: function (format) {
-//                    var object = this.object;
-//                    var AlgorithmType = algorithmSet[object.id];
-//                    if (AlgorithmType)
-//                        return new AlgorithmType(object).encode(format);
-//                    else
-//                        throw new Error('Algorithm not supported');
-//                }
-//            }, {
-//                decode: function (source) {
-//                    // Decode PEM
-//                    if (typeof source === 'string')
-//                        source = PEM.decode(source, undefined, false);
-//                    // Decode binary data
-//                    if (source instanceof CryptoOperationData)
-//                        source = BER.decode(source);
-//                    var AlgorithmType = algorithmSet[names[source.object[0].object]];
-//                    if (AlgorithmType)
-//                        return new this(AlgorithmType.decode(source).object);
-//                    else
-//                        throw new Error('Algorithm not supported');
-//                }
-//            });
-//        };
-//
-//        return Class;
-//    })();
-//
-
     var AlgorithmIdentifier = (function () {
 
         var DefaultAlgorithm = Algorithm(ANY),
@@ -1774,7 +1728,7 @@
     });
 
     var DigestAlgorithmIdentifier = AlgorithmIdentifier({
-        sha1: AlgorithmWithNullParam,
+        sha1: AlgorithmWithNoParam,
         sha256: AlgorithmWithNullParam,
         sha384: AlgorithmWithNullParam,
         sha512: AlgorithmWithNullParam,
@@ -1983,7 +1937,7 @@
         'pbeWithSHAAnd3-KeyTripleDES-CBC': PBES1Algorithm,
         'pbeWithSHAAnd2-KeyTripleDES-CBC': PBES1Algorithm,
         'pbeWithSHAAnd128BitRC2-CBC': PBES1Algorithm,
-        'pbewithSHAAnd40BitRC2-CBC': PBES1Algorithm,
+        'pbeWithSHAAnd40BitRC2-CBC': PBES1Algorithm,
         'pbeUnknownGost': PBES1Algorithm,
         // PBES2
         'PBES2': PBES2Algorithm});
@@ -2024,7 +1978,7 @@
         'pbeWithSHAAnd3-KeyTripleDES-CBC': PBES1Algorithm,
         'pbeWithSHAAnd2-KeyTripleDES-CBC': PBES1Algorithm,
         'pbeWithSHAAnd128BitRC2-CBC': PBES1Algorithm,
-        'pbewithSHAAnd40BitRC2-CBC': PBES1Algorithm,
+        'pbeWithSHAAnd40BitRC2-CBC': PBES1Algorithm,
         'pbeUnknownGost': PBES1Algorithm,
         // PBES2
         'PBES2': PBES2Algorithm
@@ -2071,7 +2025,7 @@
         'pbeWithSHAAnd3-KeyTripleDES-CBC': PBES1Algorithm,
         'pbeWithSHAAnd2-KeyTripleDES-CBC': PBES1Algorithm,
         'pbeWithSHAAnd128BitRC2-CBC': PBES1Algorithm,
-        'pbewithSHAAnd40BitRC2-CBC': PBES1Algorithm,
+        'pbeWithSHAAnd40BitRC2-CBC': PBES1Algorithm,
         'pbeUnknownGost': PBES1Algorithm,
         // PBES2
         'PBES2': PBES2Algorithm
@@ -2213,7 +2167,26 @@
         }
     });
 
-    var GostR3410PrivateKey = PrivateKey;
+    var GostR3410KeyValueMask = OCTET_STRING;
+
+    var GostR3410KeyValueInfo = SEQUENCE({
+        keyValueMask: GostR3410KeyValueMask,
+        keyValyePublicKey: OCTET_STRING});
+
+    var GostR3410PrivateKey = CHOICE({
+        privateKey: PrivateKey(ENCAPSULATES(CHOICE({
+            keyValueMask: GostR3410KeyValueMask,
+            keyValueInfo: GostR3410KeyValueInfo
+        }, function (value) {
+            if (isBinary(value))
+                return 'keyValueMask';
+            else
+                return 'keyValueInfo';
+        }))),
+        keyValueMask: GostR3410KeyValueMask
+    }, function (value) {
+        return value.enclosed ? 'keyValueMask' : 'privateKey';
+    });
 
     var GostWrappedPrivateKey = (function (PKTypes) {
 
@@ -2351,7 +2324,8 @@
                     type: 'private',
                     extractable: true,
                     usages: ['sign', 'deriveKey', 'deriveBits'],
-                    buffer: value.privateKey
+                    buffer: isBinary(value.privateKey) ? value.privateKey :
+                            value.privateKey.keyValueMask
                 };
             }
         });
@@ -3551,8 +3525,8 @@
      */
     var SignedAttributes = Attributes({
         contentType: SET_OF_SINGLE(ContentType),
-        messageDigest: SET_OF_SINGLE(OCTET_STRING),
-        signingTime: SET_OF_SINGLE(SigningTime)});
+        signingTime: SET_OF_SINGLE(SigningTime),
+        messageDigest: SET_OF_SINGLE(OCTET_STRING)});
 
     var UnsignedAttributes = Attributes(function (type) {
         /**

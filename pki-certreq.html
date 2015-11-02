@@ -153,10 +153,8 @@ try {
         notBefore.setHours(0, 0, 0, 0);
         var notAfter = new Date(notBefore);
         notAfter.setDate(notAfter.getDate() + parseInt(days.value || '365'));
-        cert.validity = {
-            notBefore: notBefore,
-            notAfter: notAfter
-        };
+        cert.notBefore = notBefore;
+        cert.notAfter = notAfter;
 
         // Sign the new certificate
         return cert.sign(cakey, cacert);

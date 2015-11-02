@@ -1,6 +1,6 @@
 /**
  * @file Provides facilities for handling certificates, CRLs, etc.
- * @version 1.73
+ * @version 1.74
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -388,6 +388,7 @@
                 // Check issuer private key
                 if (!issuerPrivateKey)
                     throw new Error('The private key of the issuer is not defined');
+                        
                 // Certificate can be self signed
                 issuerCertificate = issuerCertificate || self;
 
@@ -446,11 +447,11 @@
                         authorityCertSerialNumber: issuerCertificate.serialNumber};
 
                 // Import the private key
-                return subtle.importKey('pkcs8', asn1.PrivateKeyInfo.encode(issuerPrivateKey), issuerPrivateKey.privateKeyAlgorithm, false, ['sign']);
+                return subtle.importKey('pkcs8', issuerPrivateKey.encode(), issuerPrivateKey.privateKeyAlgorithm, false, ['sign']);
             }).then(function (key) {
 
                 // Sign certificate
-                return subtle.sign(self.signatureAlgorithm, key, asn1.TBSCertificate.encode(self));
+                return subtle.sign(self.signatureAlgorithm, key, self.tbsCertificate.encode());
             }).then(function (signatureValue) {
                 // Siganture value
                 self.signatureValue = signatureValue;
@@ -506,7 +507,7 @@
             var spki = this.subjectPublicKeyInfo,
                     keyUsages = (spki.algorithm.id === 'rsaEncryption') ? ['verify'] :
                     ['verify', 'deriveKey', 'deriveBits'];
-            return subtle.importKey('spki', asn1.SubjectPublicKeyInfo.encode(spki), spki.algorithm, 'false', keyUsages);
+            return subtle.importKey('spki', spki.encode(), spki.algorithm, 'false', keyUsages);
         }, // </editor-fold>
         /**
          * Get appropriate crypto provider for public key
@@ -570,7 +571,7 @@
                             !issuerCertificate.checkUsage('keyCertSign', self.notBefore))
                         throw new Error('The issuer\'s certificate is not valid');
                     // Check certificate signature
-                    return issuerCertificate.verifySignature(asn1.TBSCertificate.encode(self),
+                    return issuerCertificate.verifySignature(self.tbsCertificate.encode(),
                             self.signatureValue, self.signatureAlgorithm);
                 }
                 return true;
@@ -707,12 +708,12 @@
                 exts.cRLNumber = exts.cRLNumber || 0;
 
                 // Import the private key
-                return subtle.importKey('pkcs8', asn1.PrivateKeyInfo.encode(issuerPrivateKey),
+                return subtle.importKey('pkcs8', issuerPrivateKey.encode(),
                         issuerPrivateKey.privateKeyAlgorithm, false, ['sign']);
             }).then(function (key) {
 
                 // Sign CRL
-                return subtle.sign(self.signatureAlgorithm, key, asn1.TBSCertList.encode(self));
+                return subtle.sign(self.signatureAlgorithm, key, self.tbsCertList.encode());
             }).then(function (signatureValue) {
 
                 // Siganture value
@@ -745,7 +746,7 @@
                     if (!self.signatureValue || !self.signatureAlgorithm)
                         throw new Error('The has no signature');
                     // Check CRL signature
-                    return issuerCertificate.verifySignature(asn1.TBSCertList.encode(self),
+                    return issuerCertificate.verifySignature(self.tbsCertList.encode(),
                             self.signatureValue, self.signatureAlgorithm);
                 }
             }).then(function (result) {
@@ -903,12 +904,12 @@
                 self.signatureAlgorithm = provider.signature;
 
                 // Import the private key
-                return subtle.importKey('pkcs8', asn1.PrivateKeyInfo.encode(privateKey),
+                return subtle.importKey('pkcs8', privateKey.encode(),
                         privateKey.privateKeyAlgorithm, false, ['sign']);
             }).then(function (key) {
 
                 // Sign the certification request
-                return subtle.sign(self.signatureAlgorithm, key, asn1.CertificationRequestInfo.encode(self));
+                return subtle.sign(self.signatureAlgorithm, key, self.requestInfo.encode());
             }).then(function (signatureValue) {
 
                 // Siganture value
@@ -929,12 +930,12 @@
             return new Promise(call).then(function () {
 
                 // Import key
-                return subtle.importKey('spki', asn1.SubjectPublicKeyInfo.encode(spki), spki.algorithm, 'false', ['verify']);
+                return subtle.importKey('spki', spki.encode(), spki.algorithm, 'false', ['verify']);
             }).then(function (publicKey) {
 
                 // Verify signature
                 return subtle.verify(self.signatureAlgorithm, publicKey, self.signatureValue,
-                        asn1.CertificationRequestInfo.encode(self));
+                        self.requestInfo.encode());
             }).then(function (result) {
                 if (!result)
                     throw new Error('The certification request has invalid signature');

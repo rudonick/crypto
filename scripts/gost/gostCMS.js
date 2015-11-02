@@ -1,6 +1,6 @@
 /**
  * @file Implements the Cryptographic Message Syntax as specified in RFC-2630.
- * @version 1.73
+ * @version 1.74
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -315,7 +315,7 @@
     // Salt size
     function saltSize(algorithm) {
         switch (algorithm.id) {
-            case 'pbewithSHAAnd40BitRC2-CBC':
+            case 'pbeWithSHAAnd40BitRC2-CBC':
             case 'pbeWithSHAAnd128BitRC2-CBC':
                 return 8;
             case 'pbeUnknownGost':

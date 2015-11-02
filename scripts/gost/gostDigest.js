@@ -1,6 +1,6 @@
 /**
  * @file GOST R 34.11-94 / GOST R 34.11-12 implementation
- * @version 1.73
+ * @version 1.74
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -357,7 +357,11 @@
                 for (var i = 0; i < 16; i++)
                     digest[i] = h[i];
             }
-            return digest.buffer;
+            // Swap hash for SignalCom
+            if (this.procreator === 'SC' || this.procreator === 'VN')
+                return swap(digest.buffer);
+            else
+                return digest.buffer;
         };
     } // </editor-fold>
     )();
@@ -1183,7 +1187,7 @@
                 (algorithm.procreator ? '/' + algorithm.procreator : '') +
                 (typeof algorithm.sBox === 'string' ? '/' + algorithm.sBox : '');
 
-        // SignalCom algorithms
+        // Algorithm procreator
         this.procreator = algorithm.procreator;
 
         // Bit length
@@ -1220,7 +1224,7 @@
         }
 
         // Key size
-        this.keySize = algorithm.keySize || (this.bitLength / 8);
+        this.keySize = algorithm.keySize || (algorithm.version <= 2 ? this.bitLength / 8 : 32);
 
         switch (algorithm.mode || 'HASH') {
             case 'HASH':

@@ -1,6 +1,6 @@
 /** 
  * @file Key and Certificate Store methods
- * @version 1.73
+ * @version 1.74
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -201,7 +201,7 @@
     // Salt size
     function saltSize(algorithm) {
         switch (algorithm.id) {
-            case 'pbewithSHAAnd40BitRC2-CBC':
+            case 'pbeWithSHAAnd40BitRC2-CBC':
             case 'pbeWithSHAAnd128BitRC2-CBC':
                 return 8;
             case 'pbeUnknownGost':
@@ -370,7 +370,6 @@
                         encryptedContent: self.encryptedData
                     }
                 });
-                // keyPassword = coding.Chars.decode(keyPassword + '\0', 'unicode')
                 return engine.getEnclosed(keyPassword);
             }).then(function (contentInfo) {
                 // Create key object
@@ -513,7 +512,7 @@
                 if (masks.byteLength > 32) {
                     if (keyPassword) {
                         // Extract password based encryption mask
-                        return subtle.importKey('raw', coding.Chars.decode(keyPassword),
+                        return subtle.importKey('raw', coding.Chars.decode(keyPassword, 'utf8'),
                                 derivation, false, ['deriveKey', 'deriveBits']).then(function (integrityKey) {
                             return subtle.deriveKey(expand(derivation,
                                     {salt: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])}),
@@ -579,7 +578,7 @@
                             contentType: 'digestedData',
                             content: digested.encode()
                         };
-                        return subtle.importKey('raw', coding.Chars.decode(keyPassword),
+                        return subtle.importKey('raw', coding.Chars.decode(keyPassword, 'utf8'),
                                 derivation, false, ['deriveKey', 'deriveBits']);
                     }).then(function (integrityKey) {
                         return subtle.deriveKey(expand(derivation,
@@ -1450,7 +1449,7 @@
             }).then(function (unwrappingKey) {
                 // Unwrap secret key
                 return subtle.unwrapKey('raw', keyData, unwrappingKey,
-                        {name: 'GOST 28147-MASK', inverse: true}, 'GOST 28147-89',
+                        'GOST 28147-MASK/VN', 'GOST 28147-89',
                         'false', ['encrypt', 'decrypt', 'sign', 'verify']);
             });
         } // </editor-fold>
@@ -1496,7 +1495,7 @@
                                 ['unwrapKey']).then(function (unwrappingKey) {
                             // Unwrap secret key
                             return subtle.unwrapKey('raw', new Int32Array(keyData, 0, l2), unwrappingKey,
-                                    {name: 'GOST 28147-MASK', inverse: true}, 'GOST 28147-89',
+                                    'GOST 28147-MASK/VN', 'GOST 28147-89',
                                     'false', ['encrypt', 'decrypt', 'sign', 'verify']);
                         });
                     } else {
@@ -1505,7 +1504,7 @@
                                 (self.certificate && self.certificate.subjectPublicKeyInfo.algorithm);
                         if (!algorithm)
                             throw new Error('Algorithm is not specified');
-                        var unwrapAlgorithm = expand(algorithm, {mode: 'MASK', inverse: true});
+                        var unwrapAlgorithm = expand(algorithm, {mode: 'MASK', procreator: 'VN'});
                         unwrapAlgorithm.name = unwrapAlgorithm.name.replace('-DH', '');
                         var wrapped = new Uint8Array(keyData, 0, l2),
                                 mask = new Uint8Array(keyData, l2, l2);
@@ -1558,7 +1557,7 @@
                     };
                     if (privateKey.type === 'private') {
                         // Generate mask
-                        wrapAlgorithm = expand(algorithm, {mode: 'MASK', inverse: true});
+                        wrapAlgorithm = expand(algorithm, {mode: 'MASK', procreator: 'VN'});
                         wrapAlgorithm.name = wrapAlgorithm.name.replace('-DH', '');
                         self.keyInfo.keyClass = 1;
                         self.keyInfo.keyType = 43556;
@@ -1576,7 +1575,7 @@
                                 delete self.certificate; // Remove not valid certificate
                         });
                     } else if (privateKey.type === 'secret') {
-                        wrapAlgorithm = {name: 'GOST 28147', mode: 'MASK', inverse: true};
+                        wrapAlgorithm = 'GOST 28147/MASK/VN';
                         delete self.certificate;
                         delete self.publicKey;
                         self.keyInfo.keyClass = 64;
@@ -1816,7 +1815,7 @@
                 var entry = self.entries[index || 0] ||
                         (self.entries[index || 0] = new ViPNetContainerEntry());
                 return entry.setPrivateKey(privateKey, keyPassword, days);
-            }).then(function() {
+            }).then(function () {
                 return self;
             });
         }, // </editor-fold>
@@ -1888,7 +1887,7 @@
             });
             var headerSize = this.applicationHeader ? this.applicationHeader.byteLength : 0,
                     result = new Uint8Array(12 + headerSize + entriesSize);
-            result.set(new Uint8Array(coding.Chars.decode(this.fileType)));
+            result.set(new Uint8Array(coding.Chars.decode(this.fileType, 'ascii')));
             set32(result.buffer, 4, this.fileVersion);
             set32(result.buffer, 8, headerSize);
             if (headerSize > 0)
@@ -1947,7 +1946,7 @@
                 container = coding.Base64.decode(container);
             container = buffer(container);
             // File type
-            var fileType = coding.Chars.encode(new Uint8Array(container, 0, 4));
+            var fileType = coding.Chars.encode(new Uint8Array(container, 0, 4), 'ascii');
             if (fileType !== 'ITCS' && fileType !== 'PKEY' && fileType !== '_CCK' && fileType !== '_LCK')
                 throw new Error('Unsupported ViPNet container type');
             // File version
@@ -2009,115 +2008,118 @@
         });
     } // </editor-fold>
 
-    extend(asn1.PFX, PKCS12, {
-        /**
-         * Sign the enclosed content with given digest algorithm
-         * 
-         * @memberOf GostKeys.PKCS12
-         * @instance
-         * @param {string} password The password 
-         * @param {(AlgorithmIdentifier|string)} digestAlgorithm Digest algorithm or provider name
-         * @returns {Promise} Promise to return self object after enclose content
-         */
-        sign: function (password, digestAlgorithm) // <editor-fold defaultstate="collapsed"> 
-        {
-            var self = this;
-            return new Promise(call).then(function () {
-                // Calculate mac for password integrity
-                if (password) {
-                    // Define digeset algorithm
-                    var hash, hmac, derivation, digestProvider;
-                    if (digestAlgorithm)
-                        digestProvider = providers[digestAlgorithm];
-                    else
-                        digestProvider = providers[options.providerName];
-                    if (digestProvider) {
-                        hash = digestProvider.digest;
-                        derivation = digestProvider.derivation;
-                        hmac = digestProvider.hmac;
-                    } else {
-                        hash = digestAlgorithm;
-                        derivation = {
-                            name: hash.name.indexOf('SHA') >= 0 ? 'PFXKDF' : 'PBKDF2',
-                            hash: hash,
-                            iterations: 2000};
-                        hmac = {name: 'HMAC', hash: hash};
-                    }
-                    // Add salt
-                    derivation = expand(derivation, {salt: getSeed(saltSize(hash)), diversifier: 3});
-                    // Import password for key generation 
-                    return subtle.importKey('raw', passwordData(derivation, password),
-                            derivation, false, ['deriveKey']).then(function (passwordKey) {
+    extend(asn1.PFX, PKCS12, (function () {
 
-                        // Generate key from password. 
-                        return subtle.deriveKey(derivation, passwordKey, hmac, false, ['sign']);
-                    }).then(function (integrityKey) {
-
-                        // Sign MAC 
-                        return subtle.sign(hmac, integrityKey, self.authSafe.content);
-                    }).then(function (digest) {
-                        self.macData = {
-                            mac: {
-                                digestAlgorithm: hash,
-                                digest: digest
-                            },
-                            macSalt: derivation.salt,
-                            iterations: derivation.iterations
-                        };
-                        return self;
-                    });
-                } else
-                    return self;
+        // <editor-fold defaultstate="collapsed"> 
+        function calcHMAC(derivation, password, content) {
+            var hmac = {name: 'HMAC', hash: derivation.hash};
+            // Import password for key generation 
+            return subtle.importKey('raw', passwordData(derivation, password),
+                    derivation, false, ['deriveKey']).then(function (passwordKey) {
+                // Generate key from password. 
+                return subtle.deriveKey(derivation, passwordKey, hmac, false, ['sign']);
+            }).then(function (integrityKey) {
+                // Sign MAC 
+                return subtle.sign(hmac, integrityKey, content);
             });
-        }, // </editor-fold>
-        /**
-         * Verifies the MAC.
-         * 
-         * @memberOf GostKeys.PKCS12
-         * @instance
-         * @param password The password for mac verification
-         * @returns {Promise} Promise to return self object after verification
-         */
-        verify: function (password) // <editor-fold defaultstate="collapsed">  
-        {
-            var self = this, authSafe = self.authSafe;
-            return new Promise(call).then(function () {
-                // Indirectly verification
-                if (authSafe.contentType === 'data') {
-                    // Check MAC 
-                    if (self.macData) {
-                        if (!password)
-                            throw new Error('Password must be defined for the MAC verification');
-                        var hash = self.macData.mac.digestAlgorithm, derivation = {
-                            name: hash.name.indexOf('SHA') >= 0 ? 'PFXKDF' : 'PBKDF2',
-                            hash: hash,
-                            salt: self.macData.macSalt,
-                            iterations: self.macData.iterations,
-                            diversifier: 3},
-                        hmac = {
-                            name: 'HMAC',
-                            hash: hash};
-                        // Import password for key generation 
-                        return subtle.importKey('raw', passwordData(derivation, password),
-                                derivation, false, ['deriveKey']).then(function (passwordKey) {
+        }
 
-                            // Generate key from password. 
-                            return subtle.deriveKey(derivation, passwordKey, hmac, false, ['verify']);
-                        }).then(function (integrityKey) {
-
-                            // Verify MAC 
-                            return subtle.verify(hmac, integrityKey, self.macData.mac.digest, authSafe.content);
-                        }).then(function (verified) {
-                            if (!verified)
-                                throw new Error('Invalid password, MAC is not verified');
+        function verifyHMAC(derivation, password, digest, content) {
+            return calcHMAC(derivation, password, content).then(function (test) {
+                if (!equalBuffers(digest, test))
+                    throw new Error('Invalid password, MAC is not verified');
+            });
+        }
+        // </editor-fold>
+        return {
+            /**
+             * Sign the enclosed content with given digest algorithm
+             * 
+             * @memberOf GostKeys.PKCS12
+             * @instance
+             * @param {string} password The password 
+             * @param {(AlgorithmIdentifier|string)} digestAlgorithm Digest algorithm or provider name
+             * @returns {Promise} Promise to return self object after enclose content
+             */
+            sign: function (password, digestAlgorithm) // <editor-fold defaultstate="collapsed"> 
+            {
+                var self = this;
+                return new Promise(call).then(function () {
+                    // Calculate mac for password integrity
+                    if (password) {
+                        // Define digeset algorithm
+                        var hash, derivation, digestProvider;
+                        if (digestAlgorithm)
+                            digestProvider = providers[digestAlgorithm];
+                        else
+                            digestAlgorithm = providers[options.providerName].digest;
+                        if (digestProvider) {
+                            hash = digestProvider.digest;
+                            derivation = digestProvider.derivation;
+                        } else {
+                            hash = digestAlgorithm;
+                            derivation = {name: 'PFXKDF', hash: hash, iterations: 2000};
+                        }
+                        // Add salt
+                        derivation = expand(derivation, {salt: getSeed(saltSize(hash)), diversifier: 3});
+                        // Sign HMAC
+                        var content = self.authSafe.content;
+                        return calcHMAC(derivation, password, content).then(function (digest) {
+                            self.macData = {
+                                mac: {
+                                    digestAlgorithm: hash,
+                                    digest: digest
+                                },
+                                macSalt: derivation.salt,
+                                iterations: derivation.iterations
+                            };
                             return self;
                         });
-                    } // No check with MAC
-                } else
-                    throw new Error('Unsupported format');
-            });
-        } // </editor-fold>
-    });
+                    } else
+                        return self;
+                });
+            }, // </editor-fold>
+            /**
+             * Verifies the MAC.
+             * 
+             * @memberOf GostKeys.PKCS12
+             * @instance
+             * @param password The password for mac verification
+             * @returns {Promise} Promise to return self object after verification
+             */
+            verify: function (password) // <editor-fold defaultstate="collapsed">  
+            {
+                var self = this, authSafe = self.authSafe, derivation;
+                return new Promise(call).then(function () {
+                    // Indirectly verification
+                    if (authSafe.contentType === 'data') {
+                        // Check MAC 
+                        if (self.macData) {
+                            if (!password)
+                                throw new Error('Password must be defined for the MAC verification');
+                            derivation = {
+                                name: 'PFXKDF',
+                                hash: self.macData.mac.digestAlgorithm,
+                                salt: self.macData.macSalt,
+                                iterations: self.macData.iterations,
+                                diversifier: 3
+                            };
+                            var content = self.authSafe.content, digest = self.macData.mac.digest;
+                            // Verify HMAC with PFXKDF (PKCS#12)
+                            return verifyHMAC(derivation, password, digest, content)['catch'](function () {
+                                // Verify HMAC with PBKDF2 (TC 26, PKCS#5)
+                                derivation.name = 'PBKDF2';
+                                return verifyHMAC(derivation, password, digest, content);
+                            });
+                        } // No check with MAC
+                    } else
+                        throw new Error('Unsupported format');
+                }).then(function () {
+                    return self;
+                });
+            } // </editor-fold>
+        };
+    })());
 
     /**
      * An implementation of PKCS #12 password encryption/integrity modes. 
@@ -2219,15 +2221,23 @@
             // Certs
             if (entry.certs) {
                 var certs = entry.certs instanceof Array ? entry.certs : [entry.certs];
-                for (var i = 0; i < certs.length; i++)
-                    certs[i] = new cert.X509(certs[i]);
+                for (var i = 0; i < certs.length; i++) {
+                    try {
+                        certs[i] = new cert.X509(certs[i]);
+                    } catch (e) {
+                    }
+                }
                 r.certs = certs;
             }
             // CRLs
             if (entry.crls) {
                 var crls = entry.crls instanceof Array ? entry.crls : [entry.crls];
-                for (var i = 0; i < crls.length; i++)
-                    crls[i] = new cert.CRL(crls[i]);
+                for (var i = 0; i < crls.length; i++) {
+                    try {
+                        crls[i] = new cert.CRL(crls[i]);
+                    } catch (e) {
+                    }
+                }
                 r.crls = crls;
             }
             this.entries[alias] = r;
@@ -2322,7 +2332,7 @@
                                 // Return entry with decrypted key
                                 entry.key = key;
                                 return entry;
-                            }, function () {
+                            })['catch'](function () {
                                 // Return entry with encrypted key
                                 return entry;
                             });

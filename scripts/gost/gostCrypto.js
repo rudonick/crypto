@@ -1,6 +1,6 @@
 /**
  * @file Implementation Web Crypto interfaces for GOST algorithms
- * @version 1.73
+ * @version 1.74
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -55,12 +55,12 @@
     var root = this;
     var rootCrypto = root.crypto || root.msCrypto;
 
-    var SyntaxError = root.SyntaxError || Error,
-            DataError = root.DataError || Error,
-            NotSupportedError = root.NotSupportedError || Error,
-            OperationError = root.OperationError || Error,
-            InvalidStateError = root.InvalidAccessError || Error,
-            InvalidAccessError = root.InvalidAccessError || Error;
+    var SyntaxError = root.SyntaxError || root.Error,
+            DataError = root.DataError || root.Error,
+            NotSupportedError = root.NotSupportedError || root.Error,
+            OperationError = root.OperationError || root.Error,
+            InvalidStateError = root.InvalidAccessError || root.Error,
+            InvalidAccessError = root.InvalidAccessError || root.Error;
 
     // Normalize algorithm
     function normalize(algorithm, method) {
@@ -179,7 +179,7 @@
             } else if (['S-256-TEST', 'S-256-A', 'S-256-B', 'S-256-C', 'P-256', 'T-512-TEST', 'T-512-A',
                 'T-512-B', 'X-256-A', 'X-256-B', 'T-256-TEST', 'T-256-A', 'T-256-B', 'S-256-B', 'T-256-C', 'S-256-C'].indexOf(mode) >= 0) {
                 na.namedCurve = mode;
-            } else if (['SC', 'CP'].indexOf(mode) >= 0) {
+            } else if (['SC', 'CP', 'VN'].indexOf(mode) >= 0) {
                 na.procreator = mode;
 
                 // Encription GOST 28147 or GOST R 34.12
@@ -219,10 +219,16 @@
         });
 
         // Procreator
-        na.procreator = na.procreator || 'CP';
+        na.procreator = algorithm.procreator || na.procreator || 'CP';
 
         // Key size
         switch (na.name) {
+            case 'GOST R 34.10':
+                na.keySize = na.length / (na.version === 1994 ? 4 : 8);
+                break;
+            case 'GOST R 34.11':
+                na.keySize = 32;
+                break;
             case 'GOST 28147':
             case 'GOST R 34.12':
                 na.keySize = 32;
@@ -230,12 +236,8 @@
             case 'RC2':
                 na.keySize = Math.ceil(na.length / 8);
                 break;
-            case 'GOST R 34.11':
             case 'SHA':
                 na.keySize = na.length / 8;
-                break;
-            case 'GOST R 34.10':
-                na.keySize = na.length / (na.version === 1994 ? 4 : 8);
                 break;
         }
 
@@ -303,9 +305,6 @@
             case 'DH':
                 algorithm.ukm && (na.ukm = algorithm.ukm);
                 algorithm['public'] && (na['public'] = algorithm['public']);
-                break;
-            case 'MASK':
-                algorithm.inverse && (na.inverse = algorithm.inverse);
                 break;
             case 'SIGN':
             case 'KW':
@@ -459,9 +458,6 @@
                 case 'MAC':
                     params = ['sBox'];
                     break;
-                case 'MASK':
-                    params = ['inverse'];
-                    break;
                 case 'KW':
                     params = ['keyWrapping', 'ukm'];
                     break;
@@ -522,7 +518,7 @@
 
     // Swap bytes in buffer
     function swapBytes(src) {
-        if (src instanceof ArrayBuffer)
+        if (src instanceof CryptoOperationData)
             src = new Uint8Array(src);
         var dst = new Uint8Array(src.length);
         for (var i = 0, n = src.length; i < n; i++)
@@ -982,7 +978,7 @@
      * @class CryptoOperationData
      */
     var CryptoOperationData = root.ArrayBuffer;
-    
+
     /**
      * DER-encoded ArrayBuffer or PEM-encoded DOMString constains ASN.1 object<br>
      * <pre>
@@ -1385,15 +1381,13 @@
      */
     SubtleCrypto.prototype.importKey = function (format, keyData, algorithm, extractable, keyUsages) // <editor-fold defaultstate="collapsed">
     {
+        var type;
         return new Promise(call).then(function () {
             if (checkNative(algorithm))
                 return rootCrypto.subtle.importKey(format, keyData, algorithm, extractable, keyUsages);
 
-
-            var type, key, data;
             if (format === 'raw') {
                 algorithm = normalize(algorithm, 'importKey');
-                data = keyData;
                 if (keyUsages && keyUsages.indexOf) {
                     var name = algorithm.name.toUpperCase().replace(/[\.\s]/g, '');
                     if (name.indexOf('3410') >= 0 && keyUsages.indexOf('sign') >= 0)
@@ -1401,8 +1395,9 @@
                     else if (name.indexOf('3410') >= 0 && keyUsages.indexOf('verify') >= 0)
                         type = 'public';
                 }
+                return keyData;
             } else {
-
+                var key;
                 if (format === 'pkcs8')
                     key = gostCrypto.asn1.GostPrivateKeyInfo.decode(keyData).object;
                 else if (format === 'spki')
@@ -1411,7 +1406,6 @@
                     throw new NotSupportedError('Key format not supported');
 
                 algorithm = normalize(key.algorithm, 'importKey');
-                data = key.buffer;
                 type = key.type;
                 if (extractable !== false)
                     extractable = extractable || key.extractable;
@@ -1422,8 +1416,35 @@
                     }
                 } else
                     keyUsages = key.usages;
+                var data = key.buffer, keySize = algorithm.keySize, dataLen = data.byteLength;
+                if (type === 'public' || keySize === dataLen)
+                    return data;
+                else {
+                    // Remove private key masks
+                    if (dataLen % keySize > 0)
+                        throw new DataError('Invalid key size');
+                    algorithm.mode = 'MASK';
+                    algorithm.procreator = 'VN';
+                    var chain = [];
+                    for (var i = keySize; i < dataLen; i += keySize) {
+                        chain.push((function (mask) {
+                            return function (data) {
+                                return execute(algorithm, 'unwrapKey', [mask, data]).then(function (data) {
+                                    var next = chain.pop();
+                                    if (next)
+                                        return next(data);
+                                    else {
+                                        delete algorithm.mode;
+                                        return data;
+                                    }
+                                });
+                            };
+                        })(new Uint8Array(data, i, keySize)));
+                    }
+                    return chain.pop()(new Uint8Array(data, 0, keySize));
+                }
             }
-
+        }).then(function (data) {
             return convertKey(algorithm, extractable, keyUsages, data, type);
         });
     }; // </editor-fold>
@@ -1475,9 +1496,29 @@
             var raw = extractKey(null, null, key);
             if (format === 'raw')
                 return raw;
-            else if (format === 'pkcs8' && key.algorithm && key.algorithm.id)
-                return gostCrypto.asn1.GostPrivateKeyInfo.encode(key);
-            else if (format === 'spki' && key.algorithm && key.algorithm.id)
+            else if (format === 'pkcs8' && key.algorithm && key.algorithm.id) {
+                if (key.algorithm.procreator === 'VN') {
+                    // Add masks for ViPNet
+                    var algorithm = key.algorithm, mask;
+                    algorithm.mode = 'MASK';
+                    return execute(algorithm, 'generateKey').then(function(data) {
+                        mask = data;
+                        return execute(algorithm, 'wrapKey', [mask, key.buffer]);
+                    }).then(function(data) {
+                        delete algorithm.mode;
+                        var d = new Uint8Array(data.byteLength + mask.byteLength);
+                        d.set(new Uint8Array(data, 0, data.byteLength));
+                        d.set(new Uint8Array(mask, 0, mask.byteLength), data.byteLength);
+                        var buffer = d.buffer; 
+                        buffer.enclosed = true;
+                        return gostCrypto.asn1.GostPrivateKeyInfo.encode({
+                           algorithm: algorithm,
+                           buffer: buffer
+                        });
+                    });
+                } else
+                    return gostCrypto.asn1.GostPrivateKeyInfo.encode(key);
+            } else if (format === 'spki' && key.algorithm && key.algorithm.id)
                 return gostCrypto.asn1.GostSubjectPublicKeyInfo.encode(key);
             else
                 throw new NotSupportedError('Key format not supported');

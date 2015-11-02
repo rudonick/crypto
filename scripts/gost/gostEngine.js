@@ -1,6 +1,6 @@
 /**
  * @file GOST 34.10-2012 signature function with 1024/512 bits digest
- * @version 1.73
+ * @version 1.74
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -183,10 +183,7 @@
          *              <li><b>ukm</b> {@link CryptoOperationData} User key material. Default - random generated value</li>
          *          </ul>
          *      </li>
-         *      <li>Wrap/Unwrap key mode (MASK)
-         *          <ul>
-         *              <li><b>inverse</b> Mode of key mask. True (a32 - b32), overwise (a32 + b32) </li>
-         *          </ul>
+         *      <li>Wrap/Unwrap key mode (MASK)</li>
          *  </ul>
          *      
          * Supported paramters values:
@@ -344,11 +341,7 @@
          * 
          *  <ul>
          *      <li>Sign/Verify mode (SIGN)</li>
-         *      <li>Wrap/Unwrap mode (MASK)
-         *          <ul>
-         *              <li><b>inverse</b> True (a * b) mod q, overwise (a * invMod(b, q)) mod q </li>
-         *          </ul>
-         *      </li>
+         *      <li>Wrap/Unwrap mode (MASK)</li>
          *      <li>DeriveKey/DeriveBits mode (DH)
          *          <ul>
          *              <li>{@link CryptoOperationData} <b>ukm</b> User key material. Default - random generated value</li>
