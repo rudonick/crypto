@@ -1,6 +1,6 @@
 /**
  * @file Coding algorithms: Base64, Hex, Int16, Chars, BER and PEM
- * @version 1.73
+ * @version 1.74
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -625,7 +625,7 @@
                         if (!result) {
                             var date = new Date(object);
                             date.setMinutes(date.getMinutes() + date.getTimezoneOffset()); // to UTC
-                            var ms = date.getMilliseconds().toString(); // Milliseconds, remove trailing zeros
+                            var ms = tagNumber === 0x18 ? date.getMilliseconds().toString() : ''; // Milliseconds, remove trailing zeros
                             while (ms.length > 0 && ms.charAt(ms.length - 1) === '0')
                                 ms = ms.substring(0, ms.length - 1);
                             if (ms.length > 0)

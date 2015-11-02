@@ -1,6 +1,6 @@
 /**
  * @file GOST 34.10-2012 signature function with 1024/512 bits digest
- * @version 1.73
+ * @version 1.74
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -62,10 +62,11 @@
 
     var root = this;
     var rootCrypto = root.crypto || root.msCrypto;
-
-    var OperationError = root.OperationError || Error,
-            DataError = root.DataError || Error,
-            NotSupportedError = root.NotSupportedError || Error;
+    var CryptoOperationData = root.ArrayBuffer;
+    
+    var OperationError = root.OperationError || root.Error,
+            DataError = root.DataError || root.Error,
+            NotSupportedError = root.NotSupportedError || root.Error;
 
     // Predefined named curve collection
     var ECGostParams = {
@@ -1447,20 +1448,21 @@
         if (this.hash)
             d = this.hash.digest(d);
         // Swap hash for SignalCom
-        if (this.procreator === 'SC')
+        if (this.procreator === 'SC' ||
+                (this.procreator === 'VN' && this.hash.version === 2012))
             d = swap(d);
         return d;
     }
 
     // Check buffer
     function buffer(d) {
-        if (d instanceof ArrayBuffer)
+        if (d instanceof CryptoOperationData)
             return d;
-        else if (d && d.buffer && d.buffer instanceof ArrayBuffer)
+        else if (d && d.buffer && d.buffer instanceof CryptoOperationData)
             return d.byteOffset === 0 && d.byteLength === d.buffer.byteLength ?
                     d.buffer : new Uint8Array(new Uint8Array(d, d.byteOffset, d.byteLength)).buffer;
         else
-            throw new DataError('ArrayBuffer or ArrayBufferView required');
+            throw new DataError('CryptoOperationData or CryptoOperationDataView required');
     }
 
     // Check double buffer
@@ -1500,9 +1502,9 @@
      * @memberOf GostSign
      * @method sign
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} privateKey Private key
-     * @param {(ArrayBuffer|TypedArray)} data Data
-     * @returns {ArrayBuffer} Signature
+     * @param {(CryptoOperationData|TypedArray)} privateKey Private key
+     * @param {(CryptoOperationData|TypedArray)} data Data
+     * @returns {CryptoOperationData} Signature
      */
     function sign(privateKey, data) // <editor-fold defaultstate="collapsed">
     {
@@ -1555,7 +1557,7 @@
         } else {
             zetta = from2(r, s, this.bitLength);
             // Swap bytes for CryptoPro algorithm
-            if (this.procreator === 'CP')
+            if (this.procreator === 'CP' || this.procreator === 'VN')
                 zetta = swap(zetta);
         }
         return zetta;
@@ -1569,9 +1571,9 @@
      * @memberOf GostSign
      * @method sign
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} publicKey Public key
-     * @param {(ArrayBuffer|TypedArray)} signature Signature
-     * @param {(ArrayBuffer|TypedArray)} data Data
+     * @param {(CryptoOperationData|TypedArray)} publicKey Public key
+     * @param {(CryptoOperationData|TypedArray)} signature Signature
+     * @param {(CryptoOperationData|TypedArray)} data Data
      * @returns {boolean} Signature verified = true
      */
     function verify(publicKey, signature, data) // <editor-fold defaultstate="collapsed">
@@ -1585,7 +1587,7 @@
             r = htobi(signature.r);
             s = htobi(signature.s);
         } else {
-            if (this.procreator === 'CP')
+            if (this.procreator === 'CP' || this.procreator === 'VN')
                 signature = swap(signature);
             var zetta = to2(signature);
             // Swap bytes for CryptoPro algorithm
@@ -1636,7 +1638,7 @@
      * @memberOf GostSign
      * @method generateKey
      * @instance
-     * @returns {Object} Object with two ArrayBuffer members: privateKey and publicKey
+     * @returns {Object} Object with two CryptoOperationData members: privateKey and publicKey
      */
     function generateKey() // <editor-fold defaultstate="collapsed">
     {
@@ -1681,7 +1683,7 @@
      * @memberOf GostSign
      * @method generateMaskKey
      * @instance
-     * @returns {Object} Object with two ArrayBuffer members: privateKey and publicKey
+     * @returns {Object} Object with two CryptoOperationData members: privateKey and publicKey
      */
     function generateMaskKey() // <editor-fold defaultstate="collapsed">
     {
@@ -1706,21 +1708,22 @@
      * @memberOf GostSign
      * @method unwrap
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} baseKey Unwrapping key
-     * @param {(ArrayBuffer|TypedArray)} data Wrapped key
-     * @returns {Object} ArrayBuffer unwrapped privateKey
+     * @param {(CryptoOperationData|TypedArray)} baseKey Unwrapping key
+     * @param {(CryptoOperationData|TypedArray)} data Wrapped key
+     * @returns {Object} CryptoOperationData unwrapped privateKey
      */
-    function unwrapKey(baseKey, data) {
+    function unwrapKey(baseKey, data) // <editor-fold defaultstate="collapsed">
+    {
         var curve = this.curve;
         if (curve) {
             var q = this.q;
             var x = mod(atobi(buffer(data)), q);
             var y = mod(atobi(buffer(baseKey)), q);
-            var z = this.inverse ? mod(mul(x, y), q) : mod(mul(x, invMod(y, q)), q);
+            var z = this.procreator === 'VN' ? mod(mul(x, y), q) : mod(mul(x, invMod(y, q)), q);
             return bitoa(z);
         } else
             throw new NotSupportedError('Key wrapping GOST R 34.10-94 not supported');
-    }
+    } // </editor-fold>
 
     /**
      * Algorithm name GOST R 34.10<br><br>
@@ -1730,21 +1733,22 @@
      * @memberOf GostSign
      * @method unwrap
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} baseKey Wrapping key
-     * @param {(ArrayBuffer|TypedArray)} data Key
-     * @returns {Object} ArrayBuffer unwrapped privateKey
+     * @param {(CryptoOperationData|TypedArray)} baseKey Wrapping key
+     * @param {(CryptoOperationData|TypedArray)} data Key
+     * @returns {Object} CryptoOperationData unwrapped privateKey
      */
-    function wrapKey(baseKey, data) {
+    function wrapKey(baseKey, data) // <editor-fold defaultstate="collapsed">
+    {
         var curve = this.curve;
         if (curve) {
             var q = this.q;
             var x = mod(atobi(buffer(data)), q);
             var y = mod(atobi(buffer(baseKey)), q);
-            var z = this.inverse ? mod(mul(x, invMod(y, q)), q) : mod(mul(x, y), q);
+            var z = this.procreator === 'VN' ? mod(mul(x, invMod(y, q)), q) : mod(mul(x, y), q);
             return bitoa(z);
         } else
             throw new NotSupportedError('Key wrapping GOST R 34.10-94 not supported');
-    }
+    } // </editor-fold>
 
     /**
      * Algorithm name GOST R 34.10<br><br>
@@ -1753,8 +1757,8 @@
      * @method derive
      * @instance
      * @private
-     * @param {ArrayBuffer} baseKey Key for deriviation
-     * @returns {ArrayBuffer}
+     * @param {CryptoOperationData} baseKey Key for deriviation
+     * @returns {CryptoOperationData}
      */
     function derive(baseKey) // <editor-fold defaultstate="collapsed">
     {
@@ -1797,9 +1801,9 @@
      * @memberOf GostSign
      * @method deriveBits
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} baseKey Key for deriviation
+     * @param {(CryptoOperationData|TypedArray)} baseKey Key for deriviation
      * @param {number} length output bit-length
-     * @returns {ArrayBuffer} result
+     * @returns {CryptoOperationData} result
      */
     function deriveBits(baseKey, length) // <editor-fold defaultstate="collapsed">
     {
@@ -1825,8 +1829,8 @@
      * @memberOf GostSign
      * @method deriveKey
      * @instance
-     * @param {(ArrayBuffer|TypedArray)} baseKey Key for deriviation
-     * @returns {ArrayBuffer} result
+     * @param {(CryptoOperationData|TypedArray)} baseKey Key for deriviation
+     * @returns {CryptoOperationData} result
      */
     function deriveKey(baseKey) // <editor-fold defaultstate="collapsed">
     {
@@ -2022,10 +2026,6 @@
 
             this.hash = new GostDigest(hash);
         }
-
-        // Inverse mask mode
-        if (algorithm.inverse)
-                this.inverse = algorithm.inverse;
 
         // Pregenerated seed for key exchange algorithms
         if (algorithm.ukm) // Now don't check size 

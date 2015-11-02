@@ -234,7 +234,7 @@
             } else if (typeof value === 'boolean' || value instanceof Boolean) {
                 return '<b>' + value + '</b>';
             } else if (value instanceof ArrayBuffer || value instanceof Uint8Array) {
-                var d = new Uint8Array(value.buffer || value);
+                var d = new Uint8Array(value);
                 var s = '';
                 for (var i = 0, n = d.length; i < n; i++) {
                     s += (i > 0 && i % 16 === 0 ? '\r\n' + ident + '    ' : ' ') +

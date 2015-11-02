@@ -1,6 +1,6 @@
 /**
  * @file GOST 28147-89/GOST R 34.12-2015/GOST R 32.13-2015 Encryption Algorithm
- * @version 1.73
+ * @version 1.74
  * @copyright 2014-2015, Rudolf Nickolaev. All rights reserved.
  */
 
@@ -1757,7 +1757,7 @@
      */
     function wrapKeyMask(mask, key) // <editor-fold defaultstate="collapsed">
     {
-        return maskKey(mask, key, this.inverse, this.keySize);
+        return maskKey(mask, key, this.procreator === 'VN', this.keySize);
     } // </editor-fold>
 
     /**
@@ -1774,7 +1774,7 @@
      */
     function unwrapKeyMask(mask, key) // <editor-fold defaultstate="collapsed">
     {
-        return maskKey(mask, key, !this.inverse, this.keySize);
+        return maskKey(mask, key, this.procreator !== 'VN', this.keySize);
     } // </editor-fold>
     
     /**
@@ -2093,6 +2093,10 @@
                         ((algorithm.keyMeshing || 'NO') !== 'NO' ? '-CPKEYMESHING' : '')) +
                 (algorithm.procreator ? '/' + algorithm.procreator : '') +
                 (typeof algorithm.sBox === 'string' ? '/' + algorithm.sBox : '');
+
+        // Algorithm procreator
+        this.procreator = algorithm.procreator;
+        
         switch (algorithm.version || 1989) {
             case 1:
                 this.process = processRC2;
@@ -2261,9 +2265,6 @@
             if (this.ukm.byteLength * 8 !== this.blockLength)
                 throw new SyntaxError('Length of ukm must be ' + this.blockLength + ' bits');
         }
-        // Inverse mask mode
-        if (algorithm.inverse)
-            this.inverse = algorithm.inverse;
     } // </editor-fold>
 
     return GostCipher;
