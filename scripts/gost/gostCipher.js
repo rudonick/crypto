@@ -1358,9 +1358,9 @@
         // 1) For a unique symmetric KEK, generate 8 octets at random and call 
         // the result UKM.  For a KEK, produced by VKO GOST R 34.10-2001, use 
         // the UKM that was used for key derivation.    
-        var ukm = new Uint8Array(this.ukm);
-        if (!ukm) 
+        if (!this.ukm) 
             throw new DataError('UKM must be defined');
+        var ukm = new Uint8Array(this.ukm);
         // 2) Compute a 4-byte checksum value, GOST 28147IMIT (UKM, KEK, CEK).       
         // Call the result CEK_MAC. 
         var mac = signMAC.call(this, kek, cek, ukm);
@@ -1396,11 +1396,11 @@
         // 2) Decompose the wrapped content-encryption key into UKM, CEK_ENC, and CEK_MAC.  
         // UKM is the most significant (first) 8 octets. CEK_ENC is next 32 octets, 
         // and CEK_MAC is the least significant (last) 4 octets.    
+        if (!this.ukm)
+            throw new DataError('UKM must be defined');
         var ukm = new Uint8Array(this.ukm),
                 enc = new Uint8Array(d, 0, k),
                 mac = new Uint8Array(d, k, n >> 1);
-        if (!ukm)
-            throw new DataError('UKM must be defined');
         // 3) Decrypt CEK_ENC in ECB mode using the KEK.  Call the output CEK.
         var cek = decryptECB.call(this, kek, enc);
         // 4) Compute a 4-byte checksum value, GOST 28147IMIT (UKM, KEK, CEK), 
@@ -1488,9 +1488,9 @@
         // 34.10-94, generate 8 octets at random.  Call the result UKM.  For       
         // a KEK, produced by VKO GOST R 34.10-2001, use the UKM that was       
         // used for key derivation.
-        var ukm = new Uint8Array(this.ukm);
-        if (!ukm) 
+        if (!this.ukm) 
             throw new DataError('UKM must be defined');
+        var ukm = new Uint8Array(this.ukm);
         // 2) Diversify KEK, using the CryptoPro KEK Diversification Algorithm,       
         // described in Section 6.5.  Call the result KEK(UKM).
         var dek = diversifyKEK.call(this, kek, ukm);
@@ -1531,11 +1531,11 @@
         // and CEK_MAC.  UKM is the most significant (first) 8 octets.       
         // CEK_ENC is next 32 octets, and CEK_MAC is the least significant       
         // (last) 4 octets.    
+        if (!this.ukm)
+            throw new DataError('UKM must be defined');
         var ukm = new Uint8Array(this.ukm),
                 enc = new Uint8Array(d, 0, k),
                 mac = new Uint8Array(d, k, n >> 1);
-        if (!ukm)
-            throw new DataError('UKM must be defined');
         // 3) Diversify KEK using the CryptoPro KEK Diversification Algorithm,       
         // described in section 6.5.  Call the result KEK(UKM).    
         var dek = diversifyKEK.call(this, kek, ukm);
