@@ -1122,8 +1122,10 @@
             algorithm = normalize(algorithm, 'sign');
             var value = execute(algorithm, 'sign',
                     [extractKey('sign', algorithm, key), data]).then(function (data) {
-                return algorithm.procreator === 'SC' && algorithm.mode === 'SIGN' ?
-                        gostCrypto.asn1.GostSignature.encode(data) : data;
+                if (algorithm.procreator === 'SC' && algorithm.mode === 'SIGN') {
+                    data = gostCrypto.asn1.GostSignature.encode(data);
+                }
+                return data;
             });
             return value;
         });
@@ -1164,10 +1166,12 @@
                 return rootCrypto.subtle.verify(algorithm, key, signature, data);
 
             algorithm = normalize(algorithm, 'verify');
+            if (algorithm.procreator === 'SC' && algorithm.mode === 'SIGN') {
+                var obj = gostCrypto.asn1.GostSignature.decode(signature);
+                signature = {r: obj.r, s: obj.s};
+            }
             return execute(algorithm, 'verify',
-                    [extractKey('verify', algorithm, key),
-                        algorithm.procreator === 'SC' && algorithm.mode === 'SIGN' ?
-                                gostCrypto.asn1.GostSignature.decode(signature) : signature, data]);
+                    [extractKey('verify', algorithm, key), signature, data]);
         });
     }; // </editor-fold>
 
@@ -1501,19 +1505,19 @@
                     // Add masks for ViPNet
                     var algorithm = key.algorithm, mask;
                     algorithm.mode = 'MASK';
-                    return execute(algorithm, 'generateKey').then(function(data) {
+                    return execute(algorithm, 'generateKey').then(function (data) {
                         mask = data;
                         return execute(algorithm, 'wrapKey', [mask, key.buffer]);
-                    }).then(function(data) {
+                    }).then(function (data) {
                         delete algorithm.mode;
                         var d = new Uint8Array(data.byteLength + mask.byteLength);
                         d.set(new Uint8Array(data, 0, data.byteLength));
                         d.set(new Uint8Array(mask, 0, mask.byteLength), data.byteLength);
-                        var buffer = d.buffer; 
+                        var buffer = d.buffer;
                         buffer.enclosed = true;
                         return gostCrypto.asn1.GostPrivateKeyInfo.encode({
-                           algorithm: algorithm,
-                           buffer: buffer
+                            algorithm: algorithm,
+                            buffer: buffer
                         });
                     });
                 } else

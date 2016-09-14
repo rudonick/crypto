@@ -264,17 +264,17 @@
         tests += performWrap(++i, {name: 'GOST 28147', mode: 'KW', ukm: '1234567890abcdef', sBox: 'D-TEST'}, // Initial UKM seed
         'aafd12f659cae63489b479e5076ddec2f06cb58faafd12f659cae63489b479e5',
                 '6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49',
-                '1234567890abcdefaf502015229a831dc82b4d32dc00173f5d43d921e5e09cc09ce947c777414397022a90c7');
-        tests += performWrap(++i, {name: 'GOST 28147', mode: 'KW', sBox: 'E-A'}, // Wrapping with random seed
+                'af502015229a831dc82b4d32dc00173f5d43d921e5e09cc09ce947c777414397022a90c7');
+        tests += performWrap(++i, {name: 'GOST 28147', mode: 'KW', ukm: '1234567890abcdef', sBox: 'E-A'}, // E-A
         'aafd12f659cae63489b479e5076ddec2f06cb58faafd12f659cae63489b479e5',
                 '6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49');
 
-        tests += performWrap(++i, {name: 'GOST 28147', sBox: 'D-TEST', ukm: '1234567890abcdef', keyWrapping: 'CP'}, // CryptoPro. Initial UKM seed
+        tests += performWrap(++i, {name: 'GOST 28147', sBox: 'D-TEST', ukm: '1234567890abcdef', keyWrapping: 'CP'}, // CryptoPro. 
         'aafd12f659cae63489b479e5076ddec2f06cb58faafd12f659cae63489b479e5',
                 '6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49',
-                '1234567890abcdef16256f060dd3b3d8734a9fcc9ab4c3d04e777dc5c46a2f4c3e411e3597a5bfc3022a90c7');
+                '16256f060dd3b3d8734a9fcc9ab4c3d04e777dc5c46a2f4c3e411e3597a5bfc32b41e492');
 
-        tests += performWrap(++i, {name: 'GOST 28147', mode: 'KW', keyWrapping: 'CP', sBox: 'E-A'}, // Wrapping with random seed
+        tests += performWrap(++i, {name: 'GOST 28147', mode: 'KW', keyWrapping: 'CP', ukm: '1234567890abcdef', sBox: 'E-A'}, // CryptoPro E-A
         'aafd12f659cae63489b479e5076ddec2f06cb58faafd12f659cae63489b479e5',
                 '6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49');
 
