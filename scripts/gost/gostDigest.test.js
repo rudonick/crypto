@@ -36,18 +36,18 @@
     if (typeof define === 'function' && define.amd) {
         define(['gostCoding', 'gostDigest'], factory);
     } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostCoding'), require('gostDigest'));
+        module.exports = factory(require('gostCoding'), require('gostCipher'), require('gostDigest'));
     } else {
         if (typeof importScripts !== 'undefined') {
             if (!root.onmessage)
                 root.onmessage = function (event) {
                     postMessage((root[event.data.object] || root)[event.data.method].apply(event.data.object || root, event.data.args));
                 };
-            importScripts('gostCoding.js', 'gostDigest.js');
+            importScripts('gostCoding.js', 'gostCipher.js', 'gostDigest.js');
         }
-        root.GostDigest_test = factory(root.GostCoding, root.GostDigest);
+        root.GostDigest_test = factory(root.GostCoding, root.GostCipher, root.GostDigest);
     }
-}(this, function (GostCoding, GostDigest) {
+}(this, function (GostCoding, GostCipher, GostDigest) {
 
     var root = this, gostCoding;
 
