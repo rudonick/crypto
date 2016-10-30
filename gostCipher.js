@@ -2239,7 +2239,7 @@
         // Define sBox parameter
         var sBox = algorithm.sBox, sBoxName;
         if (!sBox)
-            sBox = this.version === 2015 ? sBoxes['E-Z'] : sBoxes['E-A'];
+            sBox = this.version === 2015 ? sBoxes['E-Z'] : this.procreator === 'SC' ? sBoxes['E-SC'] : sBoxes['E-A'];
         else if (typeof sBox === 'string') {
             sBoxName = sBox.toUpperCase();
             sBox = sBoxes[sBoxName];
