@@ -83,6 +83,9 @@
     // PEM coding
     var PEM = gostCrypto.coding.PEM;
 
+    // Chars coding
+    var Chars = gostCrypto.coding.Chars;
+
     // Hex coding;
     var Hex = gostCrypto.coding.Hex;
 
@@ -197,8 +200,13 @@
         if (typeof source === 'string')
             source = PEM.decode(source, uniformTitle, false);
         // Decode binary data
-        if (source instanceof CryptoOperationData)
-            source = BER.decode(source);
+        if (source instanceof CryptoOperationData) {
+            try {
+                source = PEM.decode(Chars.encode(source), uniformTitle, true);
+            } catch (e) {
+                source = BER.decode(source);
+            }
+        }
 
         tagClass = tagClass || 0;
         tagConstructed = tagConstructed || false;
@@ -632,7 +640,7 @@
                 source = decode(source, 0x10, 0, true, uniformTitle);
                 var i = 0, result = new this(), data = result.items = {};
                 for (var name in structure) {
-                    console.log(name, 'decoding...');
+                    // console.log(name, 'decoding...');
                     // try to create and decode object
                     var ItemClass = result.getItemClass(name, data);
                     var item = ItemClass.decode(source[i]);
@@ -948,7 +956,7 @@
                             // repare source
                             var object = this.items, source = [];
                             for (var id in object) {
-                                console.log(id, object[id], 'encoding...');
+                                // console.log(id, object[id], 'encoding...');
                                 var encoded = object[id].encode(true);
                                 if (encoded !== undefined)
                                     source.push(encoded);
