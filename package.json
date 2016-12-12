@@ -1,0 +1,35 @@
+{
+  "name": "gostcrypto",
+  "version": "2.0.0",
+  "homepage": "http://gostcrypto.com/",
+  "bugs": "https://github.com/rudonick/crypto/issues",
+  "license": "Apache-2.0",
+  "author": "Rudolf Nickolaev <rudonick@gmail.com>",
+  "contributors": [
+    "Alexander Ustimenko <a@ustimen.co> (http://ustimen.co/)"
+  ],
+  "description": "Pure Javascript implementation of WebCrypto API interfaces and Public Key Infrastructure for GOST algorithms (Russian Cryptographic Standards)",
+  "main": "./lib",
+  "bin": {
+    "gost-export-signalcom-key": "./bin/export-signalcom-key.js"
+  },
+  "repository": "rudonick/crypto",
+  "keywords": [
+    "WebCrypto",
+    "Public Key Infrastructure",
+    "PKI",
+    "Russian Cryptographic Standards",
+    "GOST",
+    "SignalCom",
+    "private key",
+    "export",
+    "ASN1",
+    "cipher",
+    "digest",
+    "security",
+    "viewer"
+  ],
+  "dependencies": {
+    "cli": "^0.4.5"
+  }
+}
