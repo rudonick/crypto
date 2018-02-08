@@ -36,10 +36,8 @@
      * Module imports and exports
      * 
      */ // <editor-fold defaultstate="collapsed">
-    if (typeof define === 'function' && define.amd) {
-        define(['gostRandom', 'gostCipher', 'gostDigest', 'gostSign'], factory);
-    } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostRandom'), require('gostCipher'), require('gostDigest'), require('gostSign'));
+    if (typeof exports === 'object') {
+        module.exports = factory(require('./gostRandom'), require('./gostCipher'), require('./gostDigest'), require('./gostSign'));
     } else {
         if (typeof importScripts !== 'undefined') {
             if (!(root.GostRandom && root.GostCipher && root.GostDigest && root.GostSign))

@@ -46,10 +46,8 @@
      * Module imports and exports
      * 
      */ // <editor-fold defaultstate="collapsed">
-    if (typeof define === 'function' && define.amd) {
-        define(['gostCrypto', 'gostASN1', 'gostCert'], factory);
-    } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostCrypto'), require('gostASN1'), require('gostCert'));
+    if (typeof exports === 'object') {
+        module.exports = factory(require('./gostCrypto'), require('./gostASN1'), require('./gostCert'));
     } else {
         root.GostCMS = factory(root.gostCrypto, root.GostASN1, root.GostCert);
     }

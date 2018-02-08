@@ -36,10 +36,8 @@
      * Module imports and exports
      * 
      */ // <editor-fold defaultstate="collapsed">
-    if (typeof define === 'function' && define.amd) {
-        define(['gostRandom'], factory);
-    } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostRandom'));
+    if (typeof exports === 'object') {
+        module.exports = factory(require('./gostRandom'));
     } else {
         root.gostCrypto = factory(root.GostRandom);
     }
@@ -726,18 +724,20 @@
      * 
      */ // <editor-fold defaultstate="collapsed">
 
-    var baseUrl = '', nameSuffix = '';
+    var baseUrl = 'src/', nameSuffix = '';
     // Try to define from DOM model
     if (typeof document !== 'undefined') {
         (function () {
-            var regs = /^(.*)gostCrypto(.*)\.js$/i;
-            var list = document.querySelectorAll('script');
-            for (var i = 0, n = list.length; i < n; i++) {
-                var value = list[i].getAttribute('src');
-                var test = regs.exec(value);
-                if (test) {
-                    baseUrl = test[1];
-                    nameSuffix = test[2];
+            if (typeof document !== undefined) {
+                var regs = /^(.*)gostCrypto(.*)\.js$/i;
+                var list = document.querySelectorAll('script');
+                for (var i = 0, n = list.length; i < n; i++) {
+                    var value = list[i].getAttribute('src');
+                    var test = regs.exec(value);
+                    if (test) {
+                        baseUrl = test[1];
+                        nameSuffix = test[2];
+                    }
                 }
             }
         })();
@@ -745,14 +745,16 @@
 
     // Local importScripts procedure for include dependens
     function importScripts() {
-        for (var i = 0, n = arguments.length; i < n; i++) {
-            var name = arguments[i].split('.'),
-                    src = baseUrl + name[0] + nameSuffix + '.' + name[1];
-            var el = document.querySelector('script[src="' + src + '"]');
-            if (!el) {
-                el = document.createElement('script');
-                el.setAttribute('src', src);
-                document.head.appendChild(el);
+        if(typeof document !== 'undefined') { 
+            for (var i = 0, n = arguments.length; i < n; i++) {
+                var name = arguments[i].split('.'),
+                        src = baseUrl + name[0] + nameSuffix + '.' + name[1];
+                var el = document.querySelector('script[src="' + src + '"]');
+                if (!el) {
+                    el = document.createElement('script');
+                    el.setAttribute('src', src);
+                    document.head.appendChild(el);
+                }
             }
         }
     }

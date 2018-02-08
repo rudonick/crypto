@@ -36,10 +36,8 @@
      * Module imports and exports
      * 
      */ // <editor-fold defaultstate="collapsed">
-    if (typeof define === 'function' && define.amd) {
-        define(['gostRandom'], factory);
-    } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostRandom'));
+    if (typeof exports === 'object') {
+        module.exports = factory(require('./gostRandom'));
     } else {
         root.GostCipher = factory(root.GostRandom);
     }

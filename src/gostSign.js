@@ -39,10 +39,8 @@
      * Module imports and exports
      * 
      */ // <editor-fold defaultstate="collapsed">
-    if (typeof define === 'function' && define.amd) {
-        define(['gostRandom', 'gostDigest'], factory);
-    } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostRandom'), require('gostDigest'));
+    if (typeof exports === 'object') {
+        module.exports = factory(require('./gostRandom'), require('./gostDigest'));
     } else {
         root.GostSign = factory(root.GostRandom, root.GostDigest);
     }

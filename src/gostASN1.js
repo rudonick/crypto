@@ -46,10 +46,8 @@
      * Module imports and exports
      * 
      */ // <editor-fold defaultstate="collapsed">
-    if (typeof define === 'function' && define.amd) {
-        define(['gostCrypto', 'gostCoding', 'gostSecurity'], factory);
-    } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostCrypto'), require('gostCoding'), require('gostSecurity'));
+    if (typeof exports === 'object') {
+        module.exports = factory(require('./gostCrypto'), require('./gostCoding'), require('./gostSecurity'));
     } else {
         root.GostASN1 = factory(root.gostCrypto, root.GostCoding, root.GostSecurity);
     }

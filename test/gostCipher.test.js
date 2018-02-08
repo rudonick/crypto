@@ -34,13 +34,12 @@
 
 (function (root, factory) {
 
-    if (typeof define === 'function' && define.amd) {
-        define(['gostCoding', 'gostCipher'], factory);
-    } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostCoding'), require('gostCipher'));
+    if (typeof exports === 'object') {
+        module.exports = factory(require('../src/gostCoding.js'), require('../src/gostCipher.js'));
     } else {
         if (typeof importScripts !== 'undefined') {
-            if (!root.onmessage)
+            console.log(postMessage);
+            if (!root.onmessage && postMessage)
                 root.onmessage = function (event) {
                     postMessage((root[event.data.object] || root)[event.data.method].apply(event.data.object || root, event.data.args));
                 };
@@ -56,7 +55,11 @@
     function println(s, h) {
         if (typeof importScripts !== 'undefined') {
             var tag = h ? 'h3' : 'div';
-            postMessage({log: '<' + tag + '>' + (s || '&nbsp') + '</' + tag + '>'});
+            if(typeof postMessage !== 'undefined') {
+                postMessage({log: '<' + tag + '>' + (s || '&nbsp') + '</' + tag + '>'});
+            } else {
+               console.log(s,h);
+            }
         } else {
             if (typeof document !== 'undefined') {
                 var el = document.createElement(h ? 'h3' : 'div');

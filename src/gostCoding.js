@@ -36,10 +36,8 @@
      * Module imports and exports
      * 
      */ // <editor-fold defaultstate="collapsed">
-    if (typeof define === 'function' && define.amd) {
-        define(['gostCrypto'], factory);
-    } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostCrypto'));
+    if (typeof exports === 'object') {
+        module.exports = factory(require('./gostCrypto'));
     } else {
         root.GostCoding = factory(root.gostCrypto);
     }

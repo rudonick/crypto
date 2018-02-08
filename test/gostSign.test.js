@@ -36,7 +36,7 @@
     if (typeof define === 'function' && define.amd) {
         define(['gostCoding', 'gostSign'], factory);
     } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostCoding'), require('gostCipher'), require('gostDigest'), require('gostSign'));
+        module.exports = factory(require('../src/gostCoding'), require('../src/gostCipher'), require('../src/gostDigest'), require('../src/gostSign'));
     } else {
         if (typeof importScripts !== 'undefined') {
             if (!root.onmessage)
@@ -56,7 +56,11 @@
     function println(s, h) {
         if (typeof importScripts !== 'undefined') {
             var tag = h ? 'h3' : 'span';
-            postMessage({log: '<' + tag + '>' + (s || '&nbsp') + '</' + tag + '>'});
+            if(typeof postMessage !== 'undefined') {
+                postMessage({log: '<' + tag + '>' + (s || '&nbsp') + '</' + tag + '>'});
+            } else {
+               console.log(s,h);
+            }
         } else {
             if (typeof document !== 'undefined') {
                 var el = document.createElement(h ? 'h3' : 'div');

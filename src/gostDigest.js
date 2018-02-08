@@ -40,10 +40,8 @@
      * Module imports and exports
      * 
      */ // <editor-fold defaultstate="collapsed">
-    if (typeof define === 'function' && define.amd) {
-        define(['gostRandom', 'gostCipher'], factory);
-    } else if (typeof exports === 'object') {
-        module.exports = factory(require('gostRandom'), require('gostCipher'));
+    if (typeof exports === 'object') {
+        module.exports = factory(require('./gostRandom'), require('./gostCipher'));
     } else {
         root.GostDigest = factory(root.GostRandom, root.GostCipher);
     }

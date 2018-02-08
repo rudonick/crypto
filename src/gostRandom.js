@@ -36,9 +36,7 @@
      * Module imports and exports
      * 
      */ // <editor-fold defaultstate="collapsed">
-    if (typeof define === 'function' && define.amd) {
-        define(factory);
-    } else if (typeof exports === 'object') {
+    if (typeof exports === 'object') {
         module.exports = factory();
     } else {
         root.GostRandom = factory();
