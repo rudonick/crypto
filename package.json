@@ -1,11 +1,11 @@
 {
   "name": "crypto-gost",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Pure Javascript implementation of WebCrypto API interfaces and Public Key  Infrastructure for GOST algorithms (Russian Cryptographic Standards)",
   "main": "dist/CryptoGost.min.js",
   "scripts": {
     "test": "node test/",
-    "build":"PROD_ENV=1 webpack"
+    "build": "PROD_ENV=1 webpack"
   },
   "repository": {
     "type": "git",
@@ -19,6 +19,10 @@
   },
   "homepage": "https://github.com/vostokplatform/crypto#readme",
   "devDependencies": {
+    "@babel/core": "^7.0.0-beta.40",
+    "@babel/preset-env": "^7.0.0-beta.40",
+    "babel-loader": "^8.0.0-beta.0",
     "webpack": "^3.10.0"
-  }
+  },
+  "dependencies": {}
 }

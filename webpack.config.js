@@ -12,10 +12,25 @@ module.exports = {
     resolve:{
         extensions:['.js','*']
     },
+    module: {
+        rules: [
+          {
+            test: /\.js$/,
+            exclude: /(node_modules|bower_components)/,
+            use: {
+              loader: 'babel-loader',
+              options: {
+                presets: ['@babel/preset-env']
+              }
+            }
+          }
+        ]
+      },
     plugins:PROD ? [
         new webpack.optimize.UglifyJsPlugin({
             compress:{warnings:false},
             comments:false
         })
-    ] : []
+    ] : [],
+   
 };

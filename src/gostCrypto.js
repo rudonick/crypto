@@ -37,7 +37,7 @@
      * 
      */ // <editor-fold defaultstate="collapsed">
     if (typeof exports === 'object') {
-        module.exports = factory(require('./gostRandom'),require('./gostEngine'));
+        module.exports = factory(require('./gostRandom.js'),require('./gostEngine.js'));
     } else {
         root.gostCrypto = factory(root.GostRandom,root.GostEngine);
     }
@@ -827,7 +827,7 @@
                         method: method, args: args
                     });
                 } else {
-                    const gostEngine = root.gostEngine || require('./gostEngine');
+                    var gostEngine = root.gostEngine || require('./gostEngine');
                     if (gostEngine)
                         resolve(gostEngine.execute(algorithm, method, args));
                     else
