@@ -70,7 +70,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 10);
+/******/ 	return __webpack_require__(__webpack_require__.s = 11);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -116,12 +116,11 @@ return /******/ (function(modules) { // webpackBootstrap
      * 
      */ // <editor-fold defaultstate="collapsed">
     if (true) {
-        module.exports = factory(__webpack_require__(1));
+        module.exports = factory(__webpack_require__(1),__webpack_require__(3));
     } else {
-        root.gostCrypto = factory(root.GostRandom);
+        root.gostCrypto = factory(root.GostRandom,root.GostEngine);
     }
     // </editor-fold>
-
 }(this, function (GostRandom) {
 
     /*
@@ -807,14 +806,16 @@ return /******/ (function(modules) { // webpackBootstrap
     // Try to define from DOM model
     if (typeof document !== 'undefined') {
         (function () {
-            var regs = /^(.*)gostCrypto(.*)\.js$/i;
-            var list = document.querySelectorAll('script');
-            for (var i = 0, n = list.length; i < n; i++) {
-                var value = list[i].getAttribute('src');
-                var test = regs.exec(value);
-                if (test) {
-                    baseUrl = test[1];
-                    nameSuffix = test[2];
+            if (typeof document !== undefined) {
+                var regs = /^(.*)gostCrypto(.*)\.js$/i;
+                var list = document.querySelectorAll('script');
+                for (var i = 0, n = list.length; i < n; i++) {
+                    var value = list[i].getAttribute('src');
+                    var test = regs.exec(value);
+                    if (test) {
+                        baseUrl = test[1];
+                        nameSuffix = test[2];
+                    }
                 }
             }
         })();
@@ -822,14 +823,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
     // Local importScripts procedure for include dependens
     function importScripts() {
-        for (var i = 0, n = arguments.length; i < n; i++) {
-            var name = arguments[i].split('.'),
-                    src = baseUrl + name[0] + nameSuffix + '.' + name[1];
-            var el = document.querySelector('script[src="' + src + '"]');
-            if (!el) {
-                el = document.createElement('script');
-                el.setAttribute('src', src);
-                document.head.appendChild(el);
+        if(typeof document !== 'undefined') { 
+            for (var i = 0, n = arguments.length; i < n; i++) {
+                var name = arguments[i].split('.'),
+                        src = baseUrl + name[0] + nameSuffix + '.' + name[1];
+                var el = document.querySelector('script[src="' + src + '"]');
+                if (!el) {
+                    el = document.createElement('script');
+                    el.setAttribute('src', src);
+                    document.head.appendChild(el);
+                }
             }
         }
     }
@@ -903,8 +906,9 @@ return /******/ (function(modules) { // webpackBootstrap
                         method: method, args: args
                     });
                 } else {
-                    if (root.gostEngine)
-                        resolve(root.gostEngine.execute(algorithm, method, args));
+                    const gostEngine = root.gostEngine || __webpack_require__(3);
+                    if (gostEngine)
+                        resolve(gostEngine.execute(algorithm, method, args));
                     else
                         reject(new OperationError('Module gostEngine not found'));
                 }
@@ -1941,7 +1945,7 @@ return /******/ (function(modules) { // webpackBootstrap
      * 
      */ // <editor-fold defaultstate="collapsed">
     if (true) {
-        module.exports = factory(__webpack_require__(0), __webpack_require__(3), __webpack_require__(4));
+        module.exports = factory(__webpack_require__(0), __webpack_require__(6), __webpack_require__(7));
     } else {
         root.GostASN1 = factory(root.gostCrypto, root.GostCoding, root.GostSecurity);
     }
@@ -6870,7 +6874,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * @file Coding algorithms: Base64, Hex, Int16, Chars, BER and PEM
+ * @file GOST 34.10-2012 signature function with 1024/512 bits digest
  * @version 1.76
  * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
  */
@@ -6888,16 +6892,16 @@ return /******/ (function(modules) { // webpackBootstrap
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *    
- * THIS SOfTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES Of MERCHANTABILITY AND fITNESS fOR A PARTICULAR PURPOSE ARE
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * fOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT Of SUBSTITUTE GOODS OR
- * SERVICES; LOSS Of USE, DATA, OR PROfITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY Of LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT Of THE USE
- * Of THIS SOfTWARE, EVEN If ADVISED Of THE POSSIBILITY OF SUCH DAMAGE.
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  */
 
@@ -6908,3553 +6912,438 @@ return /******/ (function(modules) { // webpackBootstrap
      * 
      */ // <editor-fold defaultstate="collapsed">
     if (true) {
-        module.exports = factory(__webpack_require__(0));
+        module.exports = factory(__webpack_require__(1), __webpack_require__(4), __webpack_require__(5), __webpack_require__(9));
     } else {
-        root.GostCoding = factory(root.gostCrypto);
+        if (typeof importScripts !== 'undefined') {
+            if (!(root.GostRandom && root.GostCipher && root.GostDigest && root.GostSign))
+                importScripts('gostRandom.js', 'gostCipher.js', 'gostDigest.js', 'gostSign.js');
+        }
+        root.gostEngine = factory(root.GostRandom, root.GostCipher, root.GostDigest, root.GostSign);
     }
     // </editor-fold>
 
-}(this, function (gostCrypto) {
+}(this, function (GostRandom, GostCipher, GostDigest, GostSign) {
 
-    /**
-     * The Coding interface provides string converting methods: Base64, Hex, 
-     * Int16, Chars, BER and PEM
-     * @class GostCoding
+    /*
+     * Engine definition base on normalized algorithm identifier
      * 
      */ // <editor-fold defaultstate="collapsed">
-    var root = this;
-    var DataError = root.DataError || root.Error;
-    var CryptoOperationData = root.ArrayBuffer;
-    var Date = root.Date;
 
-    function buffer(d) {
-        if (d instanceof CryptoOperationData)
-            return d;
-        else if (d && d.buffer && d.buffer instanceof CryptoOperationData)
-            return d.byteOffset === 0 && d.byteLength === d.buffer.byteLength ?
-                    d.buffer : new Uint8Array(new Uint8Array(d, d.byteOffset, d.byteLength)).buffer;
-        else
-            throw new DataError('CryptoOperationData required');
+    var root = this;
+
+    // Define engine
+    function defineEngine(method, algorithm) {
+        if (!algorithm)
+            throw new (root.SyntaxError || Error)('Algorithm not defined');
+
+        if (!algorithm.name)
+            throw new (root.SyntaxError || Error)('Algorithm name not defined');
+
+        var name = algorithm.name, mode = algorithm.mode;
+        if ((name === 'GOST 28147' || name === 'GOST R 34.12' || name === 'RC2') && (method === 'generateKey' ||
+                (mode === 'MAC' && (method === 'sign' || method === 'verify')) ||
+                ((mode === 'KW' || mode === 'MASK') && (method === 'wrapKey' || method === 'unwrapKey')) ||
+                ((!mode || mode === 'ES') && (method === 'encrypt' || method === 'decrypt')))) {
+            return 'GostCipher';
+
+        } else if ((name === 'GOST R 34.11' || name === 'SHA') && (method === 'digest' ||
+                (mode === 'HMAC' && (method === 'sign' || method === 'verify' || method === 'generateKey')) ||
+                ((mode === 'KDF' || mode === 'PBKDF2' || mode === 'PFXKDF' || mode === 'CPKDF') &&
+                        (method === 'deriveKey' || method === 'deriveBits' || method === 'generateKey')))) {
+            return 'GostDigest';
+
+        } else if (name === 'GOST R 34.10' && (method === 'generateKey' ||
+                ((!mode || mode === 'SIGN') && (method === 'sign' || method === 'verify')) ||
+                (mode === 'MASK' && (method === 'wrapKey' || method === 'unwrapKey')) ||
+                (mode === 'DH' && (method === 'deriveKey' || method === 'deriveBits')))) {
+            return 'GostSign';
+        } else
+            throw new (root.NotSupportedError || Error)('Algorithm ' + name + '-' + mode + ' is not valid for ' + method);
     } // </editor-fold>
 
-    function GostCoding() {
-    }
-
     /**
-     * BASE64 conversion
+     * Object implements dedicated Web Workers and provide a simple way to create 
+     * and run GOST cryptographic algorithms in background thread. 
      * 
-     * @class GostCoding.Base64
+     * Object provide interface to GOST low-level cryptogric classes:
+     *  <ul>
+     *      <li>GostCipher - implementation of GOST 28147, GOST R 34.12, GOST R 34.13 Encryption algorithms. Reference {@link http://tools.ietf.org/html/rfc5830}</li>
+     *      <li>GostDigest - implementation of GOST R 34.11 Hash Function algorithms. References {@link http://tools.ietf.org/html/rfc5831} and {@link http://tools.ietf.org/html/rfc6986}</li>
+     *      <li>GostSign - implementation of GOST R 34.10 Digital Signature algorithms. References {@link http://tools.ietf.org/html/rfc5832} and {@link http://tools.ietf.org/html/rfc7091}</li>
+     *  </ul>
+     * @namespace gostEngine
      */
-    var Base64 = {// <editor-fold defaultstate="collapsed">
+    var gostEngine = {
         /**
-         * Base64.decode convert BASE64 string s to CryptoOperationData
+         * gostEngine.execute(algorithm, method, args) Entry point to execution 
+         * all low-level GOST cryptographic methods
          * 
-         * @memberOf GostCoding.Base64
-         * @param {String} s BASE64 encoded string value
-         * @returns {CryptoOperationData} Binary decoded data
+         *  <ul>
+         *      <li>Determine the appropriate engine for a given execution method</li>
+         *      <li>Create cipher object for determineted engine</li>
+         *      <li>Execute method of cipher with given args</li>
+         *  </ul>
+         * 
+         * @memberOf gostEngine
+         * @param {AlgorithmIndentifier} algorithm Algorithm identifier
+         * @param {string} method Crypto method for execution
+         * @param {Array} args Method arguments (keys, data, additional parameters)
+         * @returns {(CryptoOperationData|Key|KeyPair|boolean)} Result of method execution
          */
-        decode: function (s) {
-            s = s.replace(/[^A-Za-z0-9\+\/]/g, '');
-            var n = s.length,
-                    k = n * 3 + 1 >> 2, r = new Uint8Array(k);
-
-            for (var m3, m4, u24 = 0, j = 0, i = 0; i < n; i++) {
-                m4 = i & 3;
-                var c = s.charCodeAt(i);
-
-                c = c > 64 && c < 91 ?
-                        c - 65 : c > 96 && c < 123 ?
-                        c - 71 : c > 47 && c < 58 ?
-                        c + 4 : c === 43 ?
-                        62 : c === 47 ?
-                        63 : 0;
-
-                u24 |= c << 18 - 6 * m4;
-                if (m4 === 3 || n - i === 1) {
-                    for (m3 = 0; m3 < 3 && j < k; m3++, j++) {
-                        r[j] = u24 >>> (16 >>> m3 & 24) & 255;
-                    }
-                    u24 = 0;
-
-                }
-            }
-            return r.buffer;
-        },
+        execute: function (algorithm, method, args) // <editor-fold defaultstate="collapsed">
+        {
+            // Define engine for GOST algorithms
+            var engine = defineEngine(method, algorithm);
+            // Create cipher 
+            var cipher = this['get' + engine](algorithm);
+            // Execute method
+            return cipher[method].apply(cipher, args);
+        }, // </editor-fold>
         /**
-         * Base64.encode(data) convert CryptoOperationData data to BASE64 string
+         * gostEngine.getGostCipher(algorithm) returns GOST 28147 / GOST R 34.12 cipher instance<br><br>
          * 
-         * @memberOf GostCoding.Base64
-         * @param {CryptoOperationData} data Bynary data for encoding
-         * @returns {String} BASE64 encoded data
+         * GOST 28147-89 / GOST R 34.12-15 Encryption Algorithm<br><br> 
+         * When keys and initialization vectors are converted to/from byte arrays, 
+         * little-endian byte order is assumed.<br><br>
+         * 
+         * Normalized algorithm identifier common parameters:
+         * 
+         *  <ul>
+         *      <li><b>name</b> Algorithm name 'GOST 28147' or 'GOST R 34.12'</li>
+         *      <li><b>version</b> Algorithm version, number
+         *          <ul>
+         *              <li><b>1989</b> Current version of standard</li>
+         *              <li><b>2015</b> New draft version of standard</li>
+         *          </ul>
+         *      </li>
+         *      <li><b>length</b> Block length
+         *          <ul>
+         *              <li><b>64</b> 64 bits length (default)</li>
+         *              <li><b>128</b> 128 bits length (only for version 2015)</li>
+         *          </ul>
+         *      </li>
+         *      <li><b>mode</b> Algorithm mode, string
+         *          <ul>
+         *              <li><b>ES</b> Encryption mode (default)</li>
+         *              <li><b>MAC</b> "imitovstavka" (MAC) mode</li>
+         *              <li><b>KW</b> Key wrapping mode</li>
+         *              <li><b>MASK</b> Key mask mode</li>
+         *          </ul>
+         *      </li>
+         *      <li><b>sBox</b> Paramset sBox for GOST 28147-89, string. Used only if version = 1989</li>
+         *  </ul>
+         *  
+         * Supported algorithms, modes and parameters:
+         * 
+         *  <ul>
+         *      <li>Encript/Decrypt mode (ES)
+         *          <ul>
+         *              <li><b>block</b> Block mode, string. Default ECB</li>
+         *              <li><b>keyMeshing</b> Key meshing mode, string. Default NO</li>
+         *              <li><b>padding</b> Padding mode, string. Default NO for CFB and CTR modes, or ZERO for others</li>
+         *              <li><b>iv</b> {@link CryptoOperationData} Initial vector with length of block. Default - zero block</li>
+         *          </ul>
+         *      </li>
+         *      <li>Sign/Verify mode (MAC)
+         *          <ul>
+         *              <li><b>macLength</b> Length of mac in bits (default - 32 bits)</li>
+         *              <li><b>iv</b> {@link CryptoOperationData} Initial vector with length of block. Default - zero block</li>
+         *          </ul>
+         *      </li>
+         *      <li>Wrap/Unwrap key mode (KW)
+         *          <ul>
+         *              <li><b>keyWrapping</b> Mode of keywrapping, string. Default NO - standard GOST key wrapping</li>
+         *              <li><b>ukm</b> {@link CryptoOperationData} User key material. Default - random generated value</li>
+         *          </ul>
+         *      </li>
+         *      <li>Wrap/Unwrap key mode (MASK)</li>
+         *  </ul>
+         *      
+         * Supported paramters values:
+         *      
+         *  <ul>
+         *      <li>Block modes (parameter 'block')
+         *          <ul>
+         *              <li><b>ECB</b> "prostaya zamena" (ECB) mode (default)</li>
+         *              <li><b>CFB</b> "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode</li>
+         *              <li><b>CTR</b> "gammirovanie" (counter) mode</li>
+         *              <li><b>CBC</b> Cipher-Block-Chaining (CBC) mode</li>
+         *          </ul>
+         *      </li>
+         *      <li>Key meshing modes (parameter 'keyMeshing')
+         *          <ul>
+         *              <li><b>NO</b> No key wrapping (default)</li>
+         *              <li><b>CP</b> CryptoPor Key key meshing</li>
+         *          </ul>
+         *      </li>
+         *      <li>Padding modes (parameter 'padding')
+         *          <ul>
+         *              <li><b>NO</b> No padding only for CFB and CTR modes</li>
+         *              <li><b>PKCS5</b> PKCS#5 padding mode</li>
+         *              <li><b>ZERO</b> Zero bits padding mode</li>
+         *              <li><b>RANDOM</b> Random bits padding mode</li>
+         *          </ul>
+         *      </li>
+         *      <li>Wrapping key modes (parameter 'keyWrapping')
+         *          <ul>
+         *              <li><b>NO</b> Ref. rfc4357 6.1 GOST 28147-89 Key wrapping</li>
+         *              <li><b>CP</b> CryptoPro Key wrapping mode</li>
+         *              <li><b>SC</b> SignalCom Key wrapping mode</li>
+         *          </ul>
+         *      </li>
+         *  </ul>
+         * 
+         * @memberOf gostEngine
+         * @param {AlgorithmIndentifier} algorithm Algorithm identifier
+         * @returns {GostCipher} Instance of GostCipher
          */
-        encode: function (data) {
-            var slen = 8, d = new Uint8Array(buffer(data));
-            var m3 = 2, s = '';
-            for (var n = d.length, u24 = 0, i = 0; i < n; i++) {
-                m3 = i % 3;
-                if (i > 0 && (i * 4 / 3) % (12 * slen) === 0)
-                    s += '\r\n';
-                u24 |= d[i] << (16 >>> m3 & 24);
-                if (m3 === 2 || n - i === 1) {
-                    for (var j = 18; j >= 0; j -= 6) {
-                        var c = u24 >>> j & 63;
-                        c = c < 26 ? c + 65 : c < 52 ? c + 71 : c < 62 ? c - 4 :
-                                c === 62 ? 43 : c === 63 ? 47 : 65;
-                        s += String.fromCharCode(c);
-                    }
-                    u24 = 0;
-                }
-            }
-            return s.substr(0, s.length - 2 + m3) + (m3 === 2 ? '' : m3 === 1 ? '=' : '==');
+        getGostCipher: function (algorithm) // <editor-fold defaultstate="collapsed">
+        {
+            return new (GostCipher || (GostCipher = root.GostCipher))(algorithm);
+        }, // </editor-fold>
+        /**
+         * gostEngine.getGostDigest(algorithm) returns GOST R 34.11 cipher instance<br><br>
+         * 
+         * Normalized algorithm identifier common parameters:
+         * 
+         *  <ul>
+         *      <li><b>name</b> Algorithm name 'GOST R 34.11'</li>
+         *      <li><b>version</b> Algorithm version
+         *          <ul>
+         *              <li><b>1994</b> old-style 256 bits digest based on GOST 28147-89</li>
+         *              <li><b>2012</b> 256 ro 512 bits digest algorithm "Streebog" GOST R 34.11-2012 (default)</li>
+         *          </ul>
+         *      </li>
+         *      <li><b>length</b> Digest length
+         *          <ul>
+         *              <li><b>256</b> 256 bits digest</li>
+         *              <li><b>512</b> 512 bits digest, valid only for algorithm "Streebog"</li>
+         *          </ul>
+         *      </li>
+         *      <li><b>mode</b> Algorithm mode
+         *          <ul>
+         *              <li><b>HASH</b> simple digest mode (default)</li>
+         *              <li><b>HMAC</b> HMAC algorithm based on GOST R 34.11</li>
+         *              <li><b>KDF</b> Derive bits for KEK deversification</li>
+         *              <li><b>PBKDF2</b> Password based key dirivation algorithms PBKDF2 (based on HMAC)</li>
+         *              <li><b>PFXKDF</b> PFX key dirivation algorithms PFXKDF</li>
+         *              <li><b>CPKDF</b> CryptoPro Password based key dirivation algorithms</li>
+         *          </ul>
+         *      </li>
+         *      <li><b>sBox</b> Paramset sBox for GOST 28147-89. Used only if version = 1994</li>
+         *  </ul>
+         * 
+         * Supported algorithms, modes and parameters:
+         * 
+         *  <ul>
+         *      <li>Digest HASH mode (default)</li>
+         *      <li>Sign/Verify HMAC modes parameters depends on version and length
+         *          <ul>
+         *              <li><b>version: 1994</b> HMAC parameters (B = 32, L = 32)</li>
+         *              <li><b>version: 2012, length: 256</b> HMAC parameters (B = 64, L = 32)</li>
+         *              <li><b>version: 2012, length: 512</b> HMAC parameters  (B = 64, L = 64)</li>
+         *          </ul>
+         *      </li>
+         *      <li>DeriveBits/DeriveKey KDF mode
+         *          <ul>
+         *              <li><b>context</b> {@link CryptoOperationData} Context of the key derivation</li>
+         *              <li><b>label</b> {@link CryptoOperationData} Label that identifies the purpose for the derived keying material</li>
+         *          </ul>
+         *      </li>
+         *      <li>DeriveBits/DeriveKey PBKDF2 mode
+         *          <ul>
+         *              <li><b>salt</b> {@link CryptoOperationData} Random salt as input for HMAC algorithm</li>
+         *              <li><b>iterations</b> Iteration count. GOST recomended value 1000 (default) or 2000</li>
+         *          </ul>
+         *      </li>
+         *      <li>DeriveBits/DeriveKey PFXKDF mode
+         *          <ul>
+         *              <li><b>salt</b> {@link CryptoOperationData} Random salt as input for HMAC algorithm</li>
+         *              <li><b>iterations</b> Iteration count. GOST recomended value 1000 (default) or 2000</li>
+         *              <li><b>diversifier</b> Deversifier, ID=1 - key material for performing encryption or decryption, 
+         *              ID=2 - IV (Initial Value) for encryption or decryption, ID=3 - integrity key for MACing</li>
+         *          </ul>
+         *      </li>
+         *      <li>DeriveBits/DeriveKey CPKDF mode
+         *          <ul>
+         *              <li><b>salt</b> {@link CryptoOperationData} Random salt as input for HMAC algorithm</li>
+         *              <li><b>iterations</b> Iteration count. GOST recomended value 1000 (default) or 2000</li>
+         *          </ul>
+         *      </li>
+         *  </ul>
+         * 
+         * @memberOf gostEngine
+         * @param {AlgorithmIndentifier} algorithm Algorithm identifier
+         * @returns {GostDigest} Instance of GostDigest
+         */
+        getGostDigest: function (algorithm) // <editor-fold defaultstate="collapsed">
+        {
+            return new (GostDigest || (GostDigest = root.GostDigest))(algorithm);
+        }, // </editor-fold>
+        /**
+         * gostEngine.getGostSign(algorithm) returns GOST R 34.10 cipher instance<br><br>
+         * 
+         * Normalized algorithm identifier common parameters:
+         * 
+         *  <ul>
+         *      <li><b>name</b> Algorithm name 'GOST R 34.10'</li>
+         *      <li><b>version</b> Algorithm version
+         *          <ul>
+         *              <li><b>1994</b> - Old-style GOST R 34.10-94 ExpMod algorithm with GOST R 34.11-94 hash</li>
+         *              <li><b>2001</b> - GOST R 34.10-2001 Eliptic curve algorithm with old GOST R 34.11-94 hash</li>
+         *              <li><b>2012</b> - GOST R 34.10-2012 Eliptic curve algorithm with GOST R 34.11-12 hash, default mode</li>
+         *          </ul>
+         *      </li>
+         *      <li><b>length</b> Length of hash and signature. Key length == hash length for EC algorithms and 2 * hash length for ExpMod algorithm
+         *          <ul>
+         *              <li><b>GOST R 34.10-256</b> - 256 bits digest, default mode</li>
+         *              <li><b>GOST R 34.10-512</b> - 512 bits digest only for GOST R 34.11-2012 hash</li>
+         *          </ul>
+         *      </li>
+         *      <li><b>mode</b> Algorithm mode
+         *          <ul>
+         *              <li><b>SIGN</b> Digital signature mode (default)</li>
+         *              <li><b>DH</b> Diffie-Hellman key generation and key agreement mode</li>
+         *              <li><b>MASK</b> Key mask mode</li>
+         *          </ul>
+         *      </li>
+         *      <li><b>sBox</b> Paramset sBox for GOST 34.11-94. Used only if version = 1994 or 2001</li>
+         *  </ul>
+         *  
+         * Supported algorithms, modes and parameters:
+         * 
+         *  <ul>
+         *      <li>Sign/Verify mode (SIGN)</li>
+         *      <li>Wrap/Unwrap mode (MASK)</li>
+         *      <li>DeriveKey/DeriveBits mode (DH)
+         *          <ul>
+         *              <li>{@link CryptoOperationData} <b>ukm</b> User key material. Default - random generated value</li>
+         *              <li>{@link CryptoOperationData} <b>public</b> The peer's EC public key data</li>
+         *          </ul>
+         *      </li>
+         *      <li>GenerateKey mode (SIGN and DH and MASK) version = 1994
+         *          <ul>
+         *              <li><b>namedParam</b> Paramset for key generation algorithm. If specified no additianal parameters required</li>
+         *          </ul>
+         *          Additional parameters, if namedParam not specified
+         *          <ul>
+         *              <li><b>modulusLength</b> Bit length of p (512 or 1024 bits). Default = 1024</li>
+         *              <li><b>p</b> {@link CryptoOperationData} Modulus, prime number, 2^(t-1)<p<2^t</li>
+         *              <li><b>q</b> {@link CryptoOperationData} Order of cyclic group, prime number, 2^254<q<2^256, q is a factor of p-1</li>
+         *              <li><b>a</b> {@link CryptoOperationData} Generator, integer, 1<a<p-1, at that aq (mod p) = 1</li>
+         *          </ul>
+         *      </li>
+         *      <li>GenerateKey mode (SIGN and DH and MASK) version = 2001 or 2012
+         *          <ul>
+         *              <li><b>namedCurve</b> Paramset for key generation algorithm. If specified no additianal parameters required</li>
+         *          </ul>
+         *          Additional EC parameters, if namedCurve not specified
+         *          <ul>
+         *              <li><b>p</b> {@link CryptoOperationData} Prime number - elliptic curve modulus</li>
+         *              <li><b>a</b> {@link CryptoOperationData} Coefficients a of the elliptic curve E</li>
+         *              <li><b>b</b> {@link CryptoOperationData} Coefficients b of the elliptic curve E</li>
+         *              <li><b>q</b> {@link CryptoOperationData} Prime number - order of cyclic group</li>
+         *              <li><b>x</b> {@link CryptoOperationData} Base point p x-coordinate</li>
+         *              <li><b>y</b> {@link CryptoOperationData} Base point p y-coordinate</li>
+         *          </ul>
+         *      </li>
+         *  </ul>
+         *  
+         * @memberOf gostEngine
+         * @param {AlgorithmIndentifier} algorithm Algorithm identifier
+         * @returns {GostSign} Instance of GostSign
+         */
+        getGostSign: function (algorithm) // <editor-fold defaultstate="collapsed">
+        {
+            return new (GostSign || (GostSign = root.GostSign))(algorithm);
         } // </editor-fold>
     };
 
-    /**
-     * BASE64 conversion
+    /*
+     * Worker method execution
      * 
-     * @memberOf GostCoding
-     * @insnance
-     * @type GostCoding.Base64
-     */
-    GostCoding.prototype.Base64 = Base64;
+     */ // <editor-fold defaultstate="collapsed">
 
-    /**
-     * Text string conversion <br>
-     * Methods support charsets: ascii, win1251, utf8, utf16 (ucs2, unicode), utf32 (ucs4)
-     * 
-     * @class GostCoding.Chars
-     */
-    var Chars = (function () { // <editor-fold defaultstate="collapsed">
+    // Worker for gostCripto method execution
+    if (root.importScripts) {
 
-        var _win1251_ = {
-            0x402: 0x80, 0x403: 0x81, 0x201A: 0x82, 0x453: 0x83, 0x201E: 0x84, 0x2026: 0x85, 0x2020: 0x86, 0x2021: 0x87,
-            0x20AC: 0x88, 0x2030: 0x89, 0x409: 0x8A, 0x2039: 0x8B, 0x40A: 0x8C, 0x40C: 0x8D, 0x40B: 0x8E, 0x40f: 0x8f,
-            0x452: 0x90, 0x2018: 0x91, 0x2019: 0x92, 0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97,
-            0x2122: 0x99, 0x459: 0x9A, 0x203A: 0x9B, 0x45A: 0x9C, 0x45C: 0x9D, 0x45B: 0x9E, 0x45f: 0x9f,
-            0xA0: 0xA0, 0x40E: 0xA1, 0x45E: 0xA2, 0x408: 0xA3, 0xA4: 0xA4, 0x490: 0xA5, 0xA6: 0xA6, 0xA7: 0xA7,
-            0x401: 0xA8, 0xA9: 0xA9, 0x404: 0xAA, 0xAB: 0xAB, 0xAC: 0xAC, 0xAD: 0xAD, 0xAE: 0xAE, 0x407: 0xAf,
-            0xB0: 0xB0, 0xB1: 0xB1, 0x406: 0xB2, 0x456: 0xB3, 0x491: 0xB4, 0xB5: 0xB5, 0xB6: 0xB6, 0xB7: 0xB7,
-            0x451: 0xB8, 0x2116: 0xB9, 0x454: 0xBA, 0xBB: 0xBB, 0x458: 0xBC, 0x405: 0xBD, 0x455: 0xBE, 0x457: 0xBf
+        /**
+         * Method called when {@link SubtleCrypto} calls its own postMessage() 
+         * method with data parameter: algorithm, method and arg.<br>
+         * Call method execute and postMessage() results to onmessage event handler 
+         * in the main process.<br>
+         * If error occured onerror event handler executed in main process.
+         * 
+         * @memberOf gostEngine
+         * @name onmessage
+         * @param {MessageEvent} event Message event with data {algorithm, method, args}
+         */
+        root.onmessage = function (event) {
+            try {
+                postMessage({
+                    id: event.data.id,
+                    result: gostEngine.execute(event.data.algorithm,
+                            event.data.method, event.data.args)});
+            } catch (e) {
+                postMessage({
+                    id: event.data.id,
+                    error: e.message
+                });
+            }
         };
-        var _win1251back_ = {};
-        for (var from in _win1251_) {
-            var to = _win1251_[from];
-            _win1251back_[to] = from;
+    } else {
+
+        // Load dependens
+        var baseUrl = '', nameSuffix = '';
+        // Try to define from DOM model
+        if (typeof document !== 'undefined') {
+            (function () {
+                var regs = /^(.*)gostCrypto(.*)\.js$/i;
+                var list = document.querySelectorAll('script');
+                for (var i = 0, n = list.length; i < n; i++) {
+                    var value = list[i].getAttribute('src');
+                    var test = regs.exec(value);
+                    if (test) {
+                        baseUrl = test[1];
+                        nameSuffix = test[2];
+                    }
+                }
+            })();
         }
 
-        return {
-            /**
-             * Chars.decode(s, charset) convert string s with defined charset to CryptoOperationData 
-             * 
-             * @memberOf GostCoding.Chars
-             * @param {string} s Javascript string
-             * @param {string} charset Charset, default 'win1251'
-             * @returns {CryptoOperationData} Decoded binary data
-             */
-            decode: function (s, charset) {
-                charset = (charset || 'win1251').toLowerCase().replace('-', '');
-                var r = [];
-                for (var i = 0, j = s.length; i < j; i++) {
-                    var c = s.charCodeAt(i);
-                    if (charset === 'utf8') {
-                        if (c < 0x80) {
-                            r.push(c);
-                        } else if (c < 0x800) {
-                            r.push(0xc0 + (c >>> 6));
-                            r.push(0x80 + (c & 63));
-                        } else if (c < 0x10000) {
-                            r.push(0xe0 + (c >>> 12));
-                            r.push(0x80 + (c >>> 6 & 63));
-                            r.push(0x80 + (c & 63));
-                        } else if (c < 0x200000) {
-                            r.push(0xf0 + (c >>> 18));
-                            r.push(0x80 + (c >>> 12 & 63));
-                            r.push(0x80 + (c >>> 6 & 63));
-                            r.push(0x80 + (c & 63));
-                        } else if (c < 0x4000000) {
-                            r.push(0xf8 + (c >>> 24));
-                            r.push(0x80 + (c >>> 18 & 63));
-                            r.push(0x80 + (c >>> 12 & 63));
-                            r.push(0x80 + (c >>> 6 & 63));
-                            r.push(0x80 + (c & 63));
-                        } else {
-                            r.push(0xfc + (c >>> 30));
-                            r.push(0x80 + (c >>> 24 & 63));
-                            r.push(0x80 + (c >>> 18 & 63));
-                            r.push(0x80 + (c >>> 12 & 63));
-                            r.push(0x80 + (c >>> 6 & 63));
-                            r.push(0x80 + (c & 63));
-                        }
-                    } else if (charset === 'unicode' || charset === 'ucs2' || charset === 'utf16') {
-                        if (c < 0xD800 || (c >= 0xE000 && c <= 0x10000)) {
-                            r.push(c >>> 8);
-                            r.push(c & 0xff);
-                        } else if (c >= 0x10000 && c < 0x110000) {
-                            c -= 0x10000;
-                            var first = ((0xffc00 & c) >> 10) + 0xD800;
-                            var second = (0x3ff & c) + 0xDC00;
-                            r.push(first >>> 8);
-                            r.push(first & 0xff);
-                            r.push(second >>> 8);
-                            r.push(second & 0xff);
-                        }
-                    } else if (charset === 'utf32' || charset === 'ucs4') {
-                        r.push(c >>> 24 & 0xff);
-                        r.push(c >>> 16 & 0xff);
-                        r.push(c >>> 8 & 0xff);
-                        r.push(c & 0xff);
-                    } else if (charset === 'win1251') {
-                        if (c >= 0x80) {
-                            if (c >= 0x410 && c < 0x450) // А..Яа..я
-                                c -= 0x350;
-                            else
-                                c = _win1251_[c] || 0;
-                        }
-                        r.push(c);
-                    } else
-                        r.push(c & 0xff);
-                }
-                return new Uint8Array(r).buffer;
-            },
-            /**
-             * Chars.encode(data, charset) convert CryptoOperationData data to string with defined charset
-             * 
-             * @memberOf GostCoding.Chars
-             * @param {CryptoOperationData} data Binary data
-             * @param {string} charset Charset, default win1251
-             * @returns {string} Encoded javascript string
-             */
-            encode: function (data, charset) {
-                charset = (charset || 'win1251').toLowerCase().replace('-', '');
-                var r = [], d = new Uint8Array(buffer(data));
-                for (var i = 0, n = d.length; i < n; i++) {
-                    var c = d[i];
-                    if (charset === 'utf8') {
-                        c = c >= 0xfc && c < 0xfe && i + 5 < n ? // six bytes
-                                (c - 0xfc) * 1073741824 + (d[++i] - 0x80 << 24) + (d[++i] - 0x80 << 18) + (d[++i] - 0x80 << 12) + (d[++i] - 0x80 << 6) + d[++i] - 0x80
-                                : c >> 0xf8 && c < 0xfc && i + 4 < n ? // five bytes 
-                                (c - 0xf8 << 24) + (d[++i] - 0x80 << 18) + (d[++i] - 0x80 << 12) + (d[++i] - 0x80 << 6) + d[++i] - 0x80
-                                : c >> 0xf0 && c < 0xf8 && i + 3 < n ? // four bytes 
-                                (c - 0xf0 << 18) + (d[++i] - 0x80 << 12) + (d[++i] - 0x80 << 6) + d[++i] - 0x80
-                                : c >= 0xe0 && c < 0xf0 && i + 2 < n ? // three bytes 
-                                (c - 0xe0 << 12) + (d[++i] - 0x80 << 6) + d[++i] - 0x80
-                                : c >= 0xc0 && c < 0xe0 && i + 1 < n ? // two bytes 
-                                (c - 0xc0 << 6) + d[++i] - 0x80
-                                : c; // one byte 
-                    } else if (charset === 'unicode' || charset === 'ucs2' || charset === 'utf16') {
-                        c = (c << 8) + d[++i];
-                        if (c >= 0xD800 && c < 0xE000) {
-                            var first = (c - 0xD800) << 10;
-                            c = d[++i];
-                            c = (c << 8) + d[++i];
-                            var second = c - 0xDC00;
-                            c = first + second + 0x10000;
-                        }
-                    } else if (charset === 'utf32' || charset === 'ucs4') {
-                        c = (c << 8) + d[++i];
-                        c = (c << 8) + d[++i];
-                        c = (c << 8) + d[++i];
-                    } else if (charset === 'win1251') {
-                        if (c >= 0x80) {
-                            if (c >= 0xC0 && c < 0x100)
-                                c += 0x350; // А..Яа..я
-                            else
-                                c = _win1251back_[c] || 0;
-                        }
-                    }
-                    r.push(String.fromCharCode(c));
-                }
-                return r.join('');
-            }
-        }; // </editor-fold>
-    })();
-
-    /**
-     * Text string conversion
-     * 
-     * @memberOf GostCoding
-     * @insnance
-     * @type GostCoding.Chars
-     */
-    GostCoding.prototype.Chars = Chars;
-
-    /**
-     * HEX conversion
-     * 
-     * @class GostCoding.Hex
-     */
-    var Hex = {// <editor-fold defaultstate="collapsed">
-        /**
-         * Hex.decode(s, endean) convert HEX string s to CryptoOperationData in endean mode
-         * 
-         * @memberOf GostCoding.Hex
-         * @param {string} s Hex encoded string
-         * @param {boolean} endean Little or Big Endean, default Little
-         * @returns {CryptoOperationData} Decoded binary data
-         */
-        decode: function (s, endean) {
-            s = s.replace(/[^A-fa-f0-9]/g, '');
-            var n = Math.ceil(s.length / 2), r = new Uint8Array(n);
-            s = (s.length % 2 > 0 ? '0' : '') + s;
-            if (endean && ((typeof endean !== 'string') ||
-                    (endean.toLowerCase().indexOf('little') < 0)))
-                for (var i = 0; i < n; i++)
-                    r[i] = parseInt(s.substr((n - i - 1) * 2, 2), 16);
-            else
-                for (var i = 0; i < n; i++)
-                    r[i] = parseInt(s.substr(i * 2, 2), 16);
-            return r.buffer;
-        },
-        /**
-         * Hex.encode(data, endean) convert CryptoOperationData data to HEX string in endean mode
-         * 
-         * @memberOf GostCoding.Hex 
-         * @param {CryptoOperationData} data Binary data
-         * @param {boolean} endean Little/Big Endean, default Little
-         * @returns {string} Hex decoded string
-         */
-        encode: function (data, endean) {
-            var s = [], d = new Uint8Array(buffer(data)), n = d.length;
-            if (endean && ((typeof endean !== 'string') ||
-                    (endean.toLowerCase().indexOf('little') < 0)))
-                for (var i = 0; i < n; i++) {
-                    var j = n - i - 1;
-                    s[j] = (j > 0 && j % 32 === 0 ? '\r\n' : '') +
-                            ('00' + d[i].toString(16)).slice(-2);
-                }
-            else
-                for (var i = 0; i < n; i++)
-                    s[i] = (i > 0 && i % 32 === 0 ? '\r\n' : '') +
-                            ('00' + d[i].toString(16)).slice(-2);
-            return s.join('');
-        } // </editor-fold>
-    };
-
-    /**
-     *  HEX conversion
-     * @memberOf GostCoding
-     * @insnance
-     * @type GostCoding.Hex
-     */
-    GostCoding.prototype.Hex = Hex;
-
-    /**
-     * String hex-encoded integer conversion
-     * 
-     * @class GostCoding.Int16
-     */
-    var Int16 = {// <editor-fold defaultstate="collapsed">
-        /**
-         * Int16.decode(s) convert hex big insteger s to CryptoOperationData
-         * 
-         * @memberOf GostCoding.Int16 
-         * @param {string} s Int16 string 
-         * @returns {CryptoOperationData} Decoded binary data
-         */
-        decode: function (s) {
-            s = (s || '').replace(/[^\-A-fa-f0-9]/g, '');
-            if (s.length === 0)
-                s = '0';
-            // Signature
-            var neg = false;
-            if (s.charAt(0) === '-') {
-                neg = true;
-                s = s.substring(1);
-            }
-            // Align 2 chars
-            while (s.charAt(0) === '0' && s.length > 1)
-                s = s.substring(1);
-            s = (s.length % 2 > 0 ? '0' : '') + s;
-            // Padding for singanuture
-            // '800000' - 'ffffff' - for positive
-            // '800001' - 'ffffff' - for negative
-            if ((!neg && !/^[0-7]/.test(s)) ||
-                    (neg && !/^[0-7]|8[0]+$/.test(s)))
-                s = '00' + s;
-            // Convert hex
-            var n = s.length / 2, r = new Uint8Array(n), t = 0;
-            for (var i = n - 1; i >= 0; --i) {
-                var c = parseInt(s.substr(i * 2, 2), 16);
-                if (neg && (c + t > 0)) {
-                    c = 256 - c - t;
-                    t = 1;
-                }
-                r[i] = c;
-            }
-            return r.buffer;
-        },
-        /**
-         * Int16.encode(data) convert CryptoOperationData data to big integer hex string
-         * 
-         * @memberOf GostCoding.Int16
-         * @param {CryptoOperationData} data Binary data
-         * @returns {string} Int16 encoded string
-         */
-        encode: function (data) {
-            var d = new Uint8Array(buffer(data)), n = d.length;
-            if (d.length === 0)
-                return '0x00';
-            var s = [], neg = d[0] > 0x7f, t = 0;
-            for (var i = n - 1; i >= 0; --i) {
-                var v = d[i];
-                if (neg && (v + t > 0)) {
-                    v = 256 - v - t;
-                    t = 1;
-                }
-                s[i] = ('00' + v.toString(16)).slice(-2);
-            }
-            s = s.join('');
-            while (s.charAt(0) === '0')
-                s = s.substring(1);
-            return (neg ? '-' : '') + '0x' + s;
-        } // </editor-fold>
-    };
-
-    /**
-     * String hex-encoded integer conversion
-     * @memberOf GostCoding
-     * @insnance
-     * @type GostCoding.Int16
-     */
-    GostCoding.prototype.Int16 = Int16;
-
-    /**
-     * BER, DER, CER conversion
-     * 
-     * @class GostCoding.BER
-     */
-    var BER = (function () { // <editor-fold defaultstate="collapsed">
-
-        // Predefenition block
-        function encodeBER(source, format, onlyContent) {
-            // Correct primitive type
-            var object = source.object;
-            if (object === undefined)
-                object = source;
-
-            // Determinate tagClass
-            var tagClass = source.tagClass = source.tagClass || 0; // Universial default
-
-            // Determinate tagNumber. Use only for Universal class
-            if (tagClass === 0) {
-                var tagNumber = source.tagNumber;
-                if (typeof tagNumber === 'undefined') {
-                    if (typeof object === 'string') {
-                        if (object === '')   // NULL
-                            tagNumber = 0x05;
-                        else if (/^\-?0x[0-9a-fA-F]+$/.test(object)) // INTEGER
-                            tagNumber = 0x02;
-                        else if (/^(\d+\.)+\d+$/.test(object)) // OID
-                            tagNumber = 0x06;
-                        else if (/^[01]+$/.test(object)) // BIT STRING
-                            tagNumber = 0x03;
-                        else if (/^(true|false)$/.test(object)) // BOOLEAN
-                            tagNumber = 0x01;
-                        else if (/^[0-9a-fA-F]+$/.test(object)) // OCTET STRING
-                            tagNumber = 0x04;
-                        else
-                            tagNumber = 0x13; // Printable string (later can be changed to UTF8String)
-                    } else if (typeof object === 'number') { // INTEGER
-                        tagNumber = 0x02;
-                    } else if (typeof object === 'boolean') { // BOOLEAN
-                        tagNumber = 0x01;
-                    } else if (object instanceof Array) { // SEQUENCE
-                        tagNumber = 0x10;
-                    } else if (object instanceof Date) { // GeneralizedTime
-                        tagNumber = 0x18;
-                    } else if (object instanceof CryptoOperationData || (object && object.buffer instanceof CryptoOperationData)) {
-                        tagNumber = 0x04;
-                    } else
-                        throw new DataError('Unrecognized type for ' + object);
+        // Local importScripts procedure for include dependens
+        var importScripts = function () {
+            for (var i = 0, n = arguments.length; i < n; i++) {
+                var name = arguments[i].split('.'),
+                        src = baseUrl + name[0] + nameSuffix + '.' + name[1];
+                var el = document.querySelector('script[src="' + src + '"]');
+                if (!el) {
+                    el = document.createElement('script');
+                    el.setAttribute('src', src);
+                    document.head.appendChild(el);
                 }
             }
+        };
 
-            // Determinate constructed
-            var tagConstructed = source.tagConstructed;
-            if (typeof tagConstructed === 'undefined')
-                tagConstructed = source.tagConstructed = object instanceof Array;
+        // Import engines
+        if (!GostRandom)
+            importScripts('gostRandom.js');
+        if (!GostCipher)
+            importScripts('gostCipher.js');
+        if (!GostDigest)
+            importScripts('gostDigest.js');
+        if (!GostSign)
+            importScripts('gostSign.js');
+    } // </editor-fold>
 
-            // Create content
-            var content;
-            if (object instanceof CryptoOperationData || (object && object.buffer instanceof CryptoOperationData)) { // Direct
-                content = new Uint8Array(buffer(object));
-                if (tagNumber === 0x03) { // BITSTRING
-                    // Set unused bits
-                    var a = new Uint8Array(buffer(content));
-                    content = new Uint8Array(a.length + 1);
-                    content[0] = 0; // No unused bits
-                    content.set(a, 1);
-                }
-            } else if (tagConstructed) { // Sub items coding
-                if (object instanceof Array) {
-                    var bytelen = 0, ba = [], offset = 0;
-                    for (var i = 0, n = object.length; i < n; i++) {
-                        ba[i] = encodeBER(object[i], format);
-                        bytelen += ba[i].length;
-                    }
-                    if (tagNumber === 0x11)
-                        ba.sort(function (a, b) { // Sort order for SET components
-                            for (var i = 0, n = Math.min(a.length, b.length); i < n; i++) {
-                                var r = a[i] - b[i];
-                                if (r !== 0)
-                                    return r;
-                            }
-                            return a.length - b.length;
-                        });
-                    if (format === 'CER') { // final for CER 00 00
-                        ba[n] = new Uint8Array(2);
-                        bytelen += 2;
-                    }
-                    content = new Uint8Array(bytelen);
-                    for (var i = 0, n = ba.length; i < n; i++) {
-                        content.set(ba[i], offset);
-                        offset = offset + ba[i].length;
-                    }
-                } else
-                    throw new DataError('Constracted block can\'t be primitive');
-            } else {
-                switch (tagNumber) {
-                    // 0x00: // EOC
-                    case 0x01: // BOOLEAN
-                        content = new Uint8Array(1);
-                        content[0] = object ? 0xff : 0;
-                        break;
-                    case 0x02: // INTEGER
-                    case 0x0a: // ENUMIRATED
-                        content = Int16.decode(
-                                typeof object === 'number' ? object.toString(16) : object);
-                        break;
-                    case 0x03: // BIT STRING
-                        if (typeof object === 'string') {
-                            var unusedBits = 7 - (object.length + 7) % 8;
-                            var n = Math.ceil(object.length / 8);
-                            content = new Uint8Array(n + 1);
-                            content[0] = unusedBits;
-                            for (var i = 0; i < n; i++) {
-                                var c = 0;
-                                for (var j = 0; j < 8; j++) {
-                                    var k = i * 8 + j;
-                                    c = (c << 1) + (k < object.length ? (object.charAt(k) === '1' ? 1 : 0) : 0);
-                                }
-                                content[i + 1] = c;
-                            }
-                        }
-                        break;
-                    case 0x04:
-                        content = Hex.decode(
-                                typeof object === 'number' ? object.toString(16) : object);
-                        break;
-                        // case 0x05: // NULL
-                    case 0x06: // OBJECT IDENTIFIER
-                        var a = object.match(/\d+/g), r = [];
-                        for (var i = 1; i < a.length; i++) {
-                            var n = +a[i], r1 = [];
-                            if (i === 1)
-                                n = n + a[0] * 40;
-                            do {
-                                r1.push(n & 0x7F);
-                                n = n >>> 7;
-                            } while (n);
-                            // reverse order
-                            for (j = r1.length - 1; j >= 0; --j)
-                                r.push(r1[j] + (j === 0 ? 0x00 : 0x80));
-                        }
-                        content = new Uint8Array(r);
-                        break;
-                        // case 0x07: // ObjectDescriptor
-                        // case 0x08: // EXTERNAL
-                        // case 0x09: // REAL
-                        // case 0x0A: // ENUMERATED
-                        // case 0x0B: // EMBEDDED PDV
-                    case 0x0C: // UTF8String
-                        content = Chars.decode(object, 'utf8');
-                        break;
-                        // case 0x10: // SEQUENCE
-                        // case 0x11: // SET
-                    case 0x12: // NumericString
-                    case 0x16: // IA5String // ASCII
-                    case 0x13: // PrintableString // ASCII subset
-                    case 0x14: // TeletexString // aka T61String
-                    case 0x15: // VideotexString
-                    case 0x19: // GraphicString
-                    case 0x1A: // VisibleString // ASCII subset
-                    case 0x1B: // GeneralString
-                        // Reflect on character encoding
-                        for (var i = 0, n = object.length; i < n; i++)
-                            if (object.charCodeAt(i) > 255)
-                                tagNumber = 0x0C;
-                        if (tagNumber === 0x0C)
-                            content = Chars.decode(object, 'utf8');
-                        else
-                            content = Chars.decode(object, 'ascii');
-                        break;
-                    case 0x17: // UTCTime
-                    case 0x18: // GeneralizedTime
-                        var result = object.original;
-                        if (!result) {
-                            var date = new Date(object);
-                            date.setMinutes(date.getMinutes() + date.getTimezoneOffset()); // to UTC
-                            var ms = tagNumber === 0x18 ? date.getMilliseconds().toString() : ''; // Milliseconds, remove trailing zeros
-                            while (ms.length > 0 && ms.charAt(ms.length - 1) === '0')
-                                ms = ms.substring(0, ms.length - 1);
-                            if (ms.length > 0)
-                                ms = '.' + ms;
-                            result = (tagNumber === 0x17 ? date.getYear().toString().slice(-2) : date.getFullYear().toString()) +
-                                    ('00' + (date.getMonth() + 1)).slice(-2) +
-                                    ('00' + date.getDate()).slice(-2) +
-                                    ('00' + date.getHours()).slice(-2) +
-                                    ('00' + date.getMinutes()).slice(-2) +
-                                    ('00' + date.getSeconds()).slice(-2) + ms + 'Z';
-                        }
-                        content = Chars.decode(result, 'ascii');
-                        break;
-                    case 0x1C: // UniversalString
-                        content = Chars.decode(object, 'utf32');
-                        break;
-                    case 0x1E: // BMPString
-                        content = Chars.decode(object, 'utf16');
-                        break;
-                }
-            }
-
-            if (!content)
-                content = new Uint8Array(0);
-            if (content instanceof CryptoOperationData)
-                content = new Uint8Array(content);
-
-            if (!tagConstructed && format === 'CER') {
-                // Encoding CER-form for string types
-                var k;
-                switch (tagNumber) {
-                    case 0x03: // BIT_STRING
-                        k = 1; // ingnore unused bit for bit string
-                    case 0x04: // OCTET_STRING
-                    case 0x0C: // UTF8String
-                    case 0x12: // NumericString
-                    case 0x13: // PrintableString
-                    case 0x14: // TeletexString
-                    case 0x15: // VideotexString
-                    case 0x16: // IA5String
-                    case 0x19: // GraphicString
-                    case 0x1A: // VisibleString
-                    case 0x1B: // GeneralString
-                    case 0x1C: // UniversalString
-                    case 0x1E: // BMPString
-                        k = k || 0;
-                        // Split content on 1000 octet len parts 
-                        var size = 1000;
-                        var bytelen = 0, ba = [], offset = 0;
-                        for (var i = k, n = content.length; i < n; i += size - k) {
-                            ba[i] = encodeBER({
-                                object: new Unit8Array(content.buffer, i, Math.min(size - k, n - i)),
-                                tagNumber: tagNumber,
-                                tagClass: 0,
-                                tagConstructed: false
-                            }, format);
-                            bytelen += ba[i].length;
-                        }
-                        ba[n] = new Uint8Array(2); // final for CER 00 00
-                        bytelen += 2;
-                        content = new Uint8Array(bytelen);
-                        for (var i = 0, n = ba.length; i < n; i++) {
-                            content.set(ba[i], offset);
-                            offset = offset + ba[i].length;
-                        }
-                }
-            }
-
-            // Restore tagNumber for all classes
-            if (tagClass === 0)
-                source.tagNumber = tagNumber;
-            else
-                source.tagNumber = tagNumber = source.tagNumber || 0;
-            source.content = content;
-
-            if (onlyContent)
-                return content;
-
-            // Create header
-            // tagNumber
-            var ha = [], first = tagClass === 3 ? 0xC0 : tagClass === 2 ? 0x80 :
-                    tagClass === 1 ? 0x40 : 0x00;
-            if (tagConstructed)
-                first |= 0x20;
-            if (tagNumber < 0x1F) {
-                first |= tagNumber & 0x1F;
-                ha.push(first);
-            } else {
-                first |= 0x1F;
-                ha.push(first);
-                var n = tagNumber, ha1 = [];
-                do {
-                    ha1.push(n & 0x7F);
-                    n = n >>> 7;
-                } while (n)
-                // reverse order
-                for (var j = ha1.length - 1; j >= 0; --j)
-                    ha.push(ha1[j] + (j === 0 ? 0x00 : 0x80));
-            }
-            // Length
-            if (tagConstructed && format === 'CER') {
-                ha.push(0x80);
-            } else {
-                var len = content.length;
-                if (len > 0x7F) {
-                    var l2 = len, ha2 = [];
-                    do {
-                        ha2.push(l2 & 0xff);
-                        l2 = l2 >>> 8;
-                    } while (l2);
-                    ha.push(ha2.length + 0x80); // reverse order
-                    for (var j = ha2.length - 1; j >= 0; --j)
-                        ha.push(ha2[j]);
-                } else {
-                    // simple len
-                    ha.push(len);
-                }
-            }
-            var header = source.header = new Uint8Array(ha);
-
-            // Result - complete buffer
-            var block = new Uint8Array(header.length + content.length);
-            block.set(header, 0);
-            block.set(content, header.length);
-            return block;
-        }
-
-        function decodeBER(source, offset) {
-
-            // start pos
-            var pos = offset || 0, start = pos;
-            var tagNumber, tagClass, tagConstructed,
-                    content, header, buffer, sub, len;
-
-            if (source.object) {
-                // Ready from source
-                tagNumber = source.tagNumber;
-                tagClass = source.tagClass;
-                tagConstructed = source.tagConstructed;
-                content = source.content;
-                header = source.header;
-                buffer = source.object instanceof CryptoOperationData ?
-                        new Uint8Array(source.object) : null;
-                sub = source.object instanceof Array ? source.object : null;
-                len = buffer && buffer.length || null;
-            } else {
-                // Decode header
-                var d = source;
-
-                // Read tag
-                var buf = d[pos++];
-                tagNumber = buf & 0x1f;
-                tagClass = buf >> 6;
-                tagConstructed = (buf & 0x20) !== 0;
-                if (tagNumber === 0x1f) { // long tag
-                    tagNumber = 0;
-                    do {
-                        if (tagNumber > 0x1fffffffffff80)
-                            throw new DataError('Convertor not supported tag number more then (2^53 - 1) at position ' + offset);
-                        buf = d[pos++];
-                        tagNumber = (tagNumber << 7) + (buf & 0x7f);
-                    } while (buf & 0x80);
-                }
-
-                // Read len        
-                buf = d[pos++];
-                len = buf & 0x7f;
-                if (len !== buf) {
-                    if (len > 6) // no reason to use Int10, as it would be a huge buffer anyways
-                        throw new DataError('Length over 48 bits not supported at position ' + offset);
-                    if (len === 0)
-                        len = null; // undefined
-                    else {
-                        buf = 0;
-                        for (var i = 0; i < len; ++i)
-                            buf = (buf << 8) + d[pos++];
-                        len = buf;
-                    }
-                }
-
-                start = pos;
-                sub = null;
-
-                if (tagConstructed) {
-                    // must have valid content
-                    sub = [];
-                    if (len !== null) {
-                        // definite length
-                        var end = start + len;
-                        while (pos < end) {
-                            var s = decodeBER(d, pos);
-                            sub.push(s);
-                            pos += s.header.length + s.content.length;
-                        }
-                        if (pos !== end)
-                            throw new DataError('Content size is not correct for container starting at offset ' + start);
-                    } else {
-                        // undefined length
-                        try {
-                            for (; ; ) {
-                                var s = decodeBER(d, pos);
-                                pos += s.header.length + s.content.length;
-                                if (s.tagClass === 0x00 && s.tagNumber === 0x00)
-                                    break;
-                                sub.push(s);
-                            }
-                            len = pos - start;
-                        } catch (e) {
-                            throw new DataError('Exception ' + e + ' while decoding undefined length content at offset ' + start);
-                        }
-                    }
-                }
-
-                // Header and content
-                header = new Uint8Array(d.buffer, offset, start - offset);
-                content = new Uint8Array(d.buffer, start, len);
-                buffer = content;
-            }
-
-            // Constructed types - check for string concationation
-            if (sub !== null && tagClass === 0) {
-                var k;
-                switch (tagNumber) {
-                    case 0x03: // BIT_STRING
-                        k = 1; // ingnore unused bit for bit string
-                    case 0x04: // OCTET_STRING
-                    case 0x0C: // UTF8String
-                    case 0x12: // NumericString
-                    case 0x13: // PrintableString
-                    case 0x14: // TeletexString
-                    case 0x15: // VideotexString
-                    case 0x16: // IA5String
-                    case 0x19: // GraphicString
-                    case 0x1A: // VisibleString
-                    case 0x1B: // GeneralString
-                    case 0x1C: // UniversalString
-                    case 0x1E: // BMPString
-                        k = k || 0;
-                        // Concatination
-                        if (sub.length === 0)
-                            throw new DataError('No constructed encoding content of string type at offset ' + start);
-                        len = k;
-                        for (var i = 0, n = sub.length; i < n; i++) {
-                            var s = sub[i];
-                            if (s.tagClass !== tagClass || s.tagNumber !== tagNumber || s.tagConstructed)
-                                throw new DataError('Invalid constructed encoding of string type at offset ' + start);
-                            len += s.content.length - k;
-                        }
-                        buffer = new Uint8Array(len);
-                        for (var i = 0, n = sub.length, j = k; i < n; i++) {
-                            var s = sub[i];
-                            if (k > 0)
-                                buffer.set(s.content.subarray(1), j);
-                            else
-                                buffer.set(s.content, j);
-                            j += s.content.length - k;
-                        }
-                        tagConstructed = false; // follow not required
-                        sub = null;
-                        break;
-                }
-            }
-            // Primitive types
-            var object = '';
-            if (sub === null) {
-                if (len === null)
-                    throw new DataError('Invalid tag with undefined length at offset ' + start);
-
-                if (tagClass === 0) {
-                    switch (tagNumber) {
-                        case 0x01: // BOOLEAN
-                            object = buffer[0] !== 0;
-                            break;
-                        case 0x02: // INTEGER
-                        case 0x0a: // ENUMIRATED
-                            if (len > 6) {
-                                object = Int16.encode(buffer);
-                            } else {
-                                var v = buffer[0];
-                                if (buffer[0] > 0x7f)
-                                    v = v - 256;
-                                for (var i = 1; i < len; i++)
-                                    v = v * 256 + buffer[i];
-                                object = v;
-                            }
-                            break;
-                        case 0x03: // BIT_STRING
-                            if (len > 5) { // Content buffer
-                                object = new Uint8Array(buffer.subarray(1)).buffer;
-                            } else { // Max bit mask only for 32 bit
-                                var unusedBit = buffer[0],
-                                        skip = unusedBit, s = [];
-                                for (var i = len - 1; i >= 1; --i) {
-                                    var b = buffer[i];
-                                    for (var j = skip; j < 8; ++j)
-                                        s.push((b >> j) & 1 ? '1' : '0');
-                                    skip = 0;
-                                }
-                                object = s.reverse().join('');
-                            }
-                            break;
-                        case 0x04: // OCTET_STRING
-                            object = new Uint8Array(buffer).buffer;
-                            break;
-                            //  case 0x05: // NULL
-                        case 0x06: // OBJECT_IDENTIFIER
-                            var s = '',
-                                    n = 0,
-                                    bits = 0;
-                            for (var i = 0; i < len; ++i) {
-                                var v = buffer[i];
-                                n = (n << 7) + (v & 0x7F);
-                                bits += 7;
-                                if (!(v & 0x80)) { // finished
-                                    if (s === '') {
-                                        var m = n < 80 ? n < 40 ? 0 : 1 : 2;
-                                        s = m + "." + (n - m * 40);
-                                    } else
-                                        s += "." + n.toString();
-                                    n = 0;
-                                    bits = 0;
-                                }
-                            }
-                            if (bits > 0)
-                                throw new DataError('Incompleted OID at offset ' + start);
-                            object = s;
-                            break;
-                            //case 0x07: // ObjectDescriptor
-                            //case 0x08: // EXTERNAL
-                            //case 0x09: // REAL
-                            //case 0x0A: // ENUMERATED
-                            //case 0x0B: // EMBEDDED_PDV
-                        case 0x10: // SEQUENCE
-                        case 0x11: // SET
-                            object = [];
-                            break;
-                        case 0x0C: // UTF8String
-                            object = Chars.encode(buffer, 'utf8');
-                            break;
-                        case 0x12: // NumericString
-                        case 0x13: // PrintableString
-                        case 0x14: // TeletexString
-                        case 0x15: // VideotexString
-                        case 0x16: // IA5String
-                        case 0x19: // GraphicString
-                        case 0x1A: // VisibleString
-                        case 0x1B: // GeneralString
-                            object = Chars.encode(buffer, 'ascii');
-                            break;
-                        case 0x1C: // UniversalString
-                            object = Chars.encode(buffer, 'utf32');
-                            break;
-                        case 0x1E: // BMPString
-                            object = Chars.encode(buffer, 'utf16');
-                            break;
-                        case 0x17: // UTCTime
-                        case 0x18: // GeneralizedTime
-                            var shortYear = tagNumber === 0x17;
-                            var s = Chars.encode(buffer, 'ascii'),
-                                    m = (shortYear ?
-                                            /^(\d\d)(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])([01]\d|2[0-3])(?:([0-5]\d)(?:([0-5]\d)(?:[.,](\d{1,3}))?)?)?(Z|[-+](?:[0]\d|1[0-2])([0-5]\d)?)?$/ :
-                                            /^(\d\d\d\d)(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])([01]\d|2[0-3])(?:([0-5]\d)(?:([0-5]\d)(?:[.,](\d{1,3}))?)?)?(Z|[-+](?:[0]\d|1[0-2])([0-5]\d)?)?$/).exec(s);
-                            if (!m)
-                                throw new DataError('Unrecognized time format "' + s + '" at offset ' + start);
-                            if (shortYear) {
-                                // Where YY is greater than or equal to 50, the year SHALL be interpreted as 19YY; and
-                                // Where YY is less than 50, the year SHALL be interpreted as 20YY                                
-                                m[1] = +m[1];
-                                m[1] += (m[1] < 50) ? 2000 : 1900;
-                            }
-                            var dt = new Date(m[1], +m[2] - 1, +m[3], +(m[4] || '0'), +(m[5] || '0'), +(m[6] || '0'), +(m[7] || '0')),
-                                    tz = dt.getTimezoneOffset();
-                            if (m[8] || tagNumber === 0x17) {
-                                if (m[8].toUpperCase() !== 'Z' && m[9]) {
-                                    tz = tz + parseInt(m[9]);
-                                }
-                                dt.setMinutes(dt.getMinutes() - tz);
-                            }
-                            dt.original = s;
-                            object = dt;
-                            break;
-                    }
-                } else // OCTET_STRING
-                    object = new Uint8Array(buffer).buffer;
-            } else
-                object = sub;
-
-            // result
-            return {
-                tagConstructed: tagConstructed,
-                tagClass: tagClass,
-                tagNumber: tagNumber,
-                header: header,
-                content: content,
-                object: object
-            };
-        }
-
-        return {
-            /**
-             * BER.decode(object, format) convert javascript object to ASN.1 format CryptoOperationData<br><br>
-             * If object has members tagNumber, tagClass and tagConstructed
-             * it is clear define encoding rules. Else method use defaul rules:
-             * <ul>
-             *   <li>Empty string or null - NULL</li>
-             *   <li>String starts with '0x' and has 0-9 and a-f characters - INTEGER</li>
-             *   <li>String like d.d.d.d (d - set of digits) - OBJECT IDENTIFIER</li>
-             *   <li>String with characters 0 and 1 - BIT STRING</li>
-             *   <li>Strings 'true' or 'false' - BOOLEAN</li>
-             *   <li>String has only 0-9 and a-f characters - OCTET STRING</li>
-             *   <li>String has only characters with code 0-255 - PrintableString</li>
-             *   <li>Other strings - UTF8String</li>
-             *   <li>Number - INTEGER</li>
-             *   <li>Date - GeneralizedTime</li>
-             *   <li>Boolean - SEQUENCE</li>
-             *   <li>CryptoOperationData - OCTET STRING</li>
-             * </ul>
-             * SEQUENCE or SET arrays recursively encoded for each item.<br>
-             * OCTET STRING and BIT STRING can presents as array with one item. 
-             * It means encapsulates encoding for child element.<br>
-             * 
-             * If CONTEXT or APPLICATION classes item presents as array with one 
-             * item we use EXPLICIT encoding for element, else IMPLICIT encoding.<br>
-             * 
-             * @memberOf GostCoding.BER
-             * @param {Object} object Object to encoding
-             * @param {string} format Encoding rule: 'DER' or 'CER', default 'DER'
-             * @param {boolean} onlyContent Encode content only, without header
-             * @returns {CryptoOperationData} BER encoded data
-             */
-            encode: function (object, format, onlyContent) {
-                return encodeBER(object, format, onlyContent).buffer;
-            },
-            /**
-             * BER.encode(data) convert ASN.1 format CryptoOperationData data to javascript object<br><br>
-             * 
-             * Conversion rules to javascript object:
-             *  <ul>
-             *      <li>BOOLEAN - Boolean object</li>
-             *      <li>INTEGER, ENUMIRATED - Integer object if len <= 6 (48 bits) else Int16 encoded string</li>
-             *      <li>BIT STRING - Integer object if len <= 5 (w/o unsedBit octet - 32 bits) else String like '10111100' or  Array with one item in case of incapsulates encoding</li>
-             *      <li>OCTET STRING - Hex encoded string or Array with one item in case of incapsulates encoding</li>
-             *      <li>OBJECT IDENTIFIER - String with object identifier</li>
-             *      <li>SEQUENCE, SET - Array of encoded items</li>
-             *      <li>UTF8String, NumericString, PrintableString, TeletexString, VideotexString, 
-             *          IA5String, GraphicString, VisibleString, GeneralString, UniversalString,
-             *          BMPString - encoded String</li>
-             *      <li>UTCTime, GeneralizedTime - Date</li>
-             *  </ul>
-             * @memberOf GostCoding.BER
-             * @param {(CryptoOperationData|GostCoding.BER)} data Binary data to decode
-             * @returns {Object} Javascript object with result of decoding
-             */
-            decode: function (data) {
-                return decodeBER(data.object ? data : new Uint8Array(buffer(data)), 0);
-            }
-        }; // </editor-fold>
-    })();
-
-    /**
-     * BER, DER, CER conversion
-     * @memberOf GostCoding
-     * @insnance
-     * @type GostCoding.BER
-     */
-    GostCoding.prototype.BER = BER;
-
-    /**
-     * PEM conversion
-     * @class GostCoding.PEM
-     */
-    var PEM = {// <editor-fold defaultstate="collapsed">
-        /**
-         * PEM.encode(data, name) encode CryptoOperationData to PEM format with name label
-         * 
-         * @memberOf GostCoding.PEM
-         * @param {(Object|CryptoOperationData)} data Java script object or BER-encoded binary data
-         * @param {string} name Name of PEM object: 'certificate', 'private key' etc.
-         * @returns {string} Encoded object
-         */
-        encode: function (data, name) {
-            return (name ? '-----BEGIN ' + name.toUpperCase() + '-----\r\n' : '') +
-                    Base64.encode(data instanceof CryptoOperationData ? data : BER.encode(data)) +
-                    (name ? '\r\n-----END ' + name.toUpperCase() + '-----' : '');
-        },
-        /**
-         * PEM.decode(s, name, deep) decode PEM format s labeled name to CryptoOperationData or javascript object in according to deep parameter
-         * 
-         * @memberOf GostCoding.PEM
-         * @param {string} s PEM encoded string
-         * @param {string} name Name of PEM object: 'certificate', 'private key' etc.
-         * @param {boolean} deep If true method do BER-decoding, else only BASE64 decoding
-         * @param {integer} index Index of decoded value
-         * @returns {(Object|CryptoOperationData)} Decoded javascript object if deep=true, else CryptoOperationData for father BER decoding
-         */
-        decode: function (s, name, deep, index) {
-            // Try clear base64
-            var re1 = /([A-Za-z0-9\+\/\s\=]+)/g,
-                    valid = re1.exec(s);
-            if (valid[1].length !== s.length)
-                valid = false;
-            if (!valid && name) {
-                // Try with the name
-                var re2 = new RegExp(
-                        '-----\\s?BEGIN ' + name.toUpperCase() +
-                        '-----([A-Za-z0-9\\+\\/\\s\\=]+)-----\\s?END ' +
-                        name.toUpperCase() + '-----', 'g');
-                valid = re2.exec(s);
-            }
-            if (!valid) {
-                // Try with some name
-                var re3 = new RegExp(
-                        '-----\\s?BEGIN [A-Z0-9\\s]+' +
-                        '-----([A-Za-z0-9\\+\\/\\s\\=]+)-----\\s?END ' +
-                        '[A-Z0-9\\s]+-----', 'g');
-                valid = re3.exec(s);
-            }
-            var r = valid && valid[1 + (index || 0)];
-            if (!r)
-                throw new DataError('Not valid PEM format');
-            var out = Base64.decode(r);
-            if (deep)
-                out = BER.decode(out);
-            return out;
-        } // </editor-fold>
-    };
-
-    /**
-     * PEM conversion
-     * @memberOf GostCoding
-     * @insnance
-     * @type GostCoding.PEM
-     */
-    GostCoding.prototype.PEM = PEM;
-
-    if (gostCrypto)
-        /**
-         * Coding algorithms: Base64, Hex, Int16, Chars, BER and PEM
-         * 
-         * @memberOf gostCrypto
-         * @type GostCoding
-         */
-        gostCrypto.coding = new GostCoding();
-
-    return GostCoding;
+    return gostEngine;
 
 }));
+
+
 
 /***/ }),
 /* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/**
- * @file GOST and common ASN.1 Object and Algorithm Identifiers 
- * @version 1.76
- * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
- */
-
-/*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *    
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
- */
-
-(function (root, factory) {
-
-    /*
-     * Module imports and exports
-     * 
-     */ // <editor-fold defaultstate="collapsed">
-    if (true) {
-        module.exports = factory(__webpack_require__(0));
-    } else {
-        root.GostSecurity = factory(root.gostCrypto);
-    }
-    // </editor-fold>
-
-}(this, function (gostCrypto) {
-
-    // <editor-fold defaultstate="collapsed">
-    var root = this;
-
-    // Expand javascript object
-    function expand() {
-        var r = {};
-        for (var i = 0, n = arguments.length; i < n; i++) {
-            var item = arguments[i];
-            if (typeof item === 'object')
-                for (var name in item)
-                    r[name] = item[name];
-        }
-        return r;
-    }
-    // </editor-fold>
-
-    /**
-     * Freandly names for ASN.1 Object Identifiers
-     * 
-     * @field names
-     * @memberOf GostSecurity
-     */ // <editor-fold defaultstate="collapsed">
-    var names = {
-        // CryptoPro algoritms
-        '1.2.643.2.2': 'CryptoPro',
-        '1.2.643.2.2.3': 'id-GostR3411-94-with-GostR3410-2001',
-        '1.2.643.2.2.4': 'id-GostR3411-94-with-GostR3410-94',
-        '1.2.643.2.2.9': 'id-GostR3411-94',
-        '1.2.643.2.2.10': 'id-HMACGostR3411-94',
-        '1.2.643.2.2.13.0': 'id-Gost28147-89-None-KeyWrap',
-        '1.2.643.2.2.13.1': 'id-Gost28147-89-CryptoPro-KeyWrap',
-        '1.2.643.2.2.14.0': 'id-Gost28147-89-None-KeyMeshing',
-        '1.2.643.2.2.14.1': 'id-Gost28147-89-CryptoPro-KeyMeshing',
-        '1.2.643.2.2.19': 'id-GostR3410-2001',
-        '1.2.643.2.2.20': 'id-GostR3410-94',
-        '1.2.643.2.2.20.1': 'id-GostR3410-94-a',
-        '1.2.643.2.2.20.2': 'id-GostR3410-94-aBis',
-        '1.2.643.2.2.20.3': 'id-GostR3410-94-b',
-        '1.2.643.2.2.20.4': 'id-GostR3410-94-bBis',
-        '1.2.643.2.2.21': 'id-Gost28147-89',
-        '1.2.643.2.2.22': 'id-Gost28147-89-MAC',
-        '1.2.643.2.2.30.0': 'id-GostR3411-94-TestParamSet',
-        '1.2.643.2.2.30.1': 'id-GostR3411-94-CryptoProParamSet',
-        '1.2.643.2.2.30.2': 'id-GostR3411-94-CryptoPro-B-ParamSet',
-        '1.2.643.2.2.30.3': 'id-GostR3411-94-CryptoPro-C-ParamSet',
-        '1.2.643.2.2.30.4': 'id-GostR3411-94-CryptoPro-D-ParamSet',
-        '1.2.643.2.2.31.0': 'id-Gost28147-89-TestParamSet',
-        '1.2.643.2.2.31.1': 'id-Gost28147-89-CryptoPro-A-ParamSet',
-        '1.2.643.2.2.31.2': 'id-Gost28147-89-CryptoPro-B-ParamSet',
-        '1.2.643.2.2.31.3': 'id-Gost28147-89-CryptoPro-C-ParamSet',
-        '1.2.643.2.2.31.4': 'id-Gost28147-89-CryptoPro-D-ParamSet',
-        '1.2.643.2.2.31.5': 'id-Gost28147-89-CryptoPro-Oscar-1-1-ParamSet',
-        '1.2.643.2.2.31.6': 'id-Gost28147-89-CryptoPro-Oscar-1-0-ParamSet',
-        '1.2.643.2.2.31.7': 'id-Gost28147-89-CryptoPro-RIC-1-ParamSet ',
-        '1.2.643.2.2.31.12': 'id-Gost28147-89-CryptoPro-tc26-1',
-        '1.2.643.2.2.31.13': 'id-Gost28147-89-CryptoPro-tc26-2',
-        '1.2.643.2.2.31.14': 'id-Gost28147-89-CryptoPro-tc26-3',
-        '1.2.643.2.2.31.15': 'id-Gost28147-89-CryptoPro-tc26-4',
-        '1.2.643.2.2.31.16': 'id-Gost28147-89-CryptoPro-tc26-5',
-        '1.2.643.2.2.31.17': 'id-Gost28147-89-CryptoPro-tc26-6',
-        '1.2.643.2.2.32.0': 'id-GostR3410-94-TestParamSet',
-        '1.2.643.2.2.32.2': 'id-GostR3410-94-CryptoPro-A-ParamSet',
-        '1.2.643.2.2.32.3': 'id-GostR3410-94-CryptoPro-B-ParamSet',
-        '1.2.643.2.2.32.4': 'id-GostR3410-94-CryptoPro-C-ParamSet',
-        '1.2.643.2.2.32.5': 'id-GostR3410-94-CryptoPro-D-ParamSet',
-        '1.2.643.2.2.33.1': 'id-GostR3410-94-CryptoPro-XchA-ParamSet',
-        '1.2.643.2.2.33.2': 'id-GostR3410-94-CryptoPro-XchB-ParamSet',
-        '1.2.643.2.2.33.3': 'id-GostR3410-94-CryptoPro-XchC-ParamSet',
-        // Certificate center attributes
-        '1.2.643.2.2.34.2': 'temporaryAccessToRC',
-        '1.2.643.2.2.34.3': 'internetContentSignature',
-        '1.2.643.2.2.34.4': 'adminRC',
-        '1.2.643.2.2.34.5': 'operatorRC',
-        '1.2.643.2.2.34.6': 'userRC',
-        '1.2.643.2.2.34.7': 'clientRC',
-        '1.2.643.2.2.34.8': 'serverRC',
-        '1.2.643.2.2.34.9': 'sysAdminRC',
-        '1.2.643.2.2.34.10': 'arcAdminRC',
-        '1.2.643.2.2.34.11': 'authorityPersonRC',
-        '1.2.643.2.2.34.12': 'clientCC',
-        '1.2.643.2.2.34.13': 'sysAdminCC',
-        '1.2.643.2.2.34.14': 'arcAdminCC',
-        '1.2.643.2.2.34.15': 'accessIPSecCA',
-        '1.2.643.2.2.34.16': 'auditAdminHSM',
-        '1.2.643.2.2.34.21': 'adminHSM',
-        '1.2.643.2.2.34.22': 'serverAdminHSH',
-        '1.2.643.2.2.34.24': 'winlogonCA',
-        '1.2.643.2.2.34.25': 'timestampServiceUser',
-        '1.2.643.2.2.34.26': 'statusServiceUser',
-        '1.2.643.2.2.34.27': 'arcAdminHSM',
-        '1.2.643.2.2.34.28': 'auditorHSM',
-        // CryptoPro algoritms
-        '1.2.643.2.2.35.0': 'id-GostR3410-2001-CryptoPro-TestParamSet',
-        '1.2.643.2.2.35.1': 'id-GostR3410-2001-CryptoPro-A-ParamSet',
-        '1.2.643.2.2.35.2': 'id-GostR3410-2001-CryptoPro-B-ParamSet',
-        '1.2.643.2.2.35.3': 'id-GostR3410-2001-CryptoPro-C-ParamSet',
-        '1.2.643.2.2.36.0': 'id-GostR3410-2001-CryptoPro-XchA-ParamSet',
-        '1.2.643.2.2.36.1': 'id-GostR3410-2001-CryptoPro-XchB-ParamSet',
-        "1.2.643.2.2.37.1": 'id-CryptoPro-GostPrivateKeys-V1',
-        "1.2.643.2.2.37.2": 'id-CryptoPro-GostPrivateKeys-V2',
-        "1.2.643.2.2.37.2.1": 'id-CryptoPro-GostPrivateKeys-V2-Full',
-        "1.2.643.2.2.37.2.2": 'id-CryptoPro-GostPrivateKeys-V2-PartOf',
-        '1.2.643.2.2.37.3.1': 'intermediateCertificates',
-        '1.2.643.2.2.37.3.2': 'trustedCertificatesSignature',
-        '1.2.643.2.2.37.3.3': 'trustedCertificatesExchange',
-        '1.2.643.2.2.37.3.10': 'keyValidity',
-        '1.2.643.2.2.38.1': 'personalBaseProlicy',
-        '1.2.643.2.2.38.2': 'networkBasePolicy',
-        '1.2.643.2.2.47.1': 'id-CryptoPro-ocsp-treats-exp-key-or-exp-cert-rev',
-        '1.2.643.2.2.47.2': 'id-CryptoPro-ocsp-crl-locator',
-        '1.2.643.2.2.47.3': 'id-CryptoPro-ocsp-instant-revocation-indicator',
-        '1.2.643.2.2.47.4': 'id-CryptoPro-ocsp-revocation-announcement-reference',
-        '1.2.643.2.2.47.5': 'id-CryptoPro-ocsp-historical-request',
-        '1.2.643.2.2.49.2': 'limitedLicense',
-        '1.2.643.2.2.96': 'id-GostR3410-2001-CryptoPro-ESDH',
-        '1.2.643.2.2.97': 'id-GostR3410-94-CryptoPro-ESDH',
-        '1.2.643.2.2.98': 'id-GostR3410-2001DH',
-        '1.2.643.2.2.99': 'id-GostR3410-94DH',
-        // signature attributes
-        '1.2.643.2.45.1.1.1': 'signatureComment',
-        '1.2.643.2.45.1.1.2': 'resourceName',
-        '1.2.643.2.45.1.1.3': 'signatureUsage',
-        // params
-        '1.2.643.3.131.1.1': 'INN',
-        '1.2.643.3.141.1.1': 'RNS FSS',
-        '1.2.643.3.141.1.2': 'KP FSS',
-        // tc26
-        '1.2.643.7.1': 'tc26',
-        '1.2.643.7.1.1.1.1': 'id-tc26-gost3410-12-256',
-        '1.2.643.7.1.1.1.2': 'id-tc26-gost3410-12-512',
-        '1.2.643.7.1.1.2.1': 'id-tc26-gost3411-94',
-        '1.2.643.7.1.1.2.2': 'id-tc26-gost3411-12-256',
-        '1.2.643.7.1.1.2.3': 'id-tc26-gost3411-12-512',
-        '1.2.643.7.1.1.3.1': 'id-tc26-signwithdigest-gost3410-12-94',
-        '1.2.643.7.1.1.3.2': 'id-tc26-signwithdigest-gost3410-12-256',
-        '1.2.643.7.1.1.3.3': 'id-tc26-signwithdigest-gost3410-12-512',
-        '1.2.643.7.1.1.4.1': 'id-tc26-hmac-gost-3411-12-256',
-        '1.2.643.7.1.1.4.2': 'id-tc26-hmac-gost-3411-12-512',
-        '1.2.643.7.1.1.6.1': 'id-tc26-agreement-gost-3410-12-256',
-        '1.2.643.7.1.1.6.2': 'id-tc26-agreement-gost-3410-12-512',
-        '1.2.643.7.1.2.1.1.0': 'id-tc26-gost-3410-12-256-paramSetTest',
-        '1.2.643.7.1.2.1.1.1': 'id-tc26-gost-3410-12-256-paramSetA',
-        '1.2.643.7.1.2.1.1.2': 'id-tc26-gost-3410-12-256-paramSetB',
-        '1.2.643.7.1.2.1.2.0': 'id-tc26-gost-3410-12-512-paramSetTest',
-        '1.2.643.7.1.2.1.2.1': 'id-tc26-gost-3410-12-512-paramSetA',
-        '1.2.643.7.1.2.1.2.2': 'id-tc26-gost-3410-12-512-paramSetB',
-        '1.2.643.7.1.2.1.2.3': 'id-tc26-gost-3410-12-512-paramSetC',
-        '1.2.643.7.1.2.1.2.4': 'id-tc26-gost-3410-12-512-paramSetD',
-        '1.2.643.7.1.2.5.1.1': 'id-tc26-gost-28147-param-Z',
-        // GOST Parameters
-        '1.2.643.100.1': 'OGRN',
-        '1.2.643.100.2.1': 'SMEV-person',
-        '1.2.643.100.2.2': 'SMEV-government',
-        '1.2.643.100.3': 'SNILS',
-        '1.2.643.100.4': 'KPP',
-        '1.2.643.100.5': 'OGRNIP',
-        '1.2.643.100.6': 'internal-government',
-        '1.2.643.100.111': 'subjectSignTool',
-        '1.2.643.100.112': 'issuerSignTool',
-        '1.2.643.100.113.1': 'signToolClassKC1',
-        '1.2.643.100.113.2': 'signToolClassKC2',
-        '1.2.643.100.113.3': 'signToolClassKC3',
-        '1.2.643.100.113.4': 'signToolClassKB1',
-        '1.2.643.100.113.5': 'signToolClassKB2',
-        '1.2.643.100.113.6': 'signToolClassKA1',
-        '1.2.643.100.114.1': 'issuerToolClassKC1',
-        '1.2.643.100.114.2': 'issuerToolClassKC2',
-        '1.2.643.100.114.3': 'issuerToolClassKC3',
-        '1.2.643.100.114.4': 'issuerToolClassKB2',
-        '1.2.643.100.114.5': 'issuerToolClassKB1',
-        '1.2.643.100.114.6': 'issuerToolClassKA1',
-        // Common algorithms
-        '1.2.840.10040.4': 'x9cm',
-        '1.2.840.10040.4.1': 'dsa',
-        '1.2.840.10040.4.3': 'dsa-with-SHA1',
-        '1.2.840.10045': 'ansi-x962',
-        '1.2.840.10045.1': 'id-fieldType',
-        '1.2.840.10045.1.1': 'id-prime-Field',
-        '1.2.840.10045.1.2': 'id-characteristic-two-field',
-        '1.2.840.10045.2.1': 'ecPublicKey',
-        '1.2.840.10045.3.0': 'characteristicTwo',
-        '1.2.840.10045.3.1.1': 'secp192r1',
-        '1.2.840.10045.3.1.2': 'prime192v2',
-        '1.2.840.10045.3.1.3': 'prime192v3',
-        '1.2.840.10045.3.1.4': 'prime239v1',
-        '1.2.840.10045.3.1.5': 'prime239v2',
-        '1.2.840.10045.3.1.6': 'prime239v3',
-        '1.2.840.10045.3.1.7': 'secp256r1',
-        '1.2.840.10045.4': 'ecdsa',
-        '1.2.840.10045.4.1': 'ecdsa-with-SHA1',
-        '1.2.840.10045.4.2': 'ecdsa-with-Recommended',
-        '1.2.840.10045.4.4': 'ecdsa-with-SHA2',
-        '1.2.840.10045.4.4.1': 'ecdsa-with-SHA224',
-        '1.2.840.10045.4.4.2': 'ecdsa-with-SHA256',
-        '1.2.840.10045.4.4.3': 'ecdsa-with-SHA384',
-        '1.2.840.10045.4.4.4': 'ecdsa-with-SHA512',
-        '1.2.840.113533.7.66.13': 'PasswordBasedMac',
-        '1.3.6.1.4.1.22554.1.1.2.1.2': 'pbeWithSHAAndAES128-CBC',
-        '1.3.6.1.4.1.22554.1.1.2.1.22': 'pbeWithSHAAndAES192-CBC',
-        '1.3.6.1.4.1.22554.1.1.2.1.42': 'pbeWithSHAAndAES256-CBC',
-        '1.3.6.1.4.1.22554.1.2.1.2.1.2': 'pbeWithSHA256AndAES128-CBC',
-        '1.3.6.1.4.1.22554.1.2.1.2.1.22': 'pbeWithSHA256AndAES192-CBC',
-        '1.3.6.1.4.1.22554.1.2.1.2.1.42': 'pbeWithSHA256AndAES256-CBC',
-        //  Diffie-Hellman Key Exchange Keys
-        '1.2.840.113549': 'rsa',
-        '1.2.840.113549.1.1.1': 'rsaEncryption',
-        '1.2.840.113549.1.1.2': 'md2withRSAEncryption',
-        '1.2.840.113549.1.1.3': 'md4withRSAEncryption',
-        '1.2.840.113549.1.1.4': 'md5withRSAEncryption',
-        '1.2.840.113549.1.1.5': 'sha1withRSAEncryption',
-        '1.2.840.113549.1.1.7': 'rsaes-oaep',
-        '1.2.840.113549.1.1.8': 'mgf1',
-        '1.2.840.113549.1.1.9': 'pSpecified',
-        '1.2.840.113549.1.1.10': 'rsassa-pss',
-        '1.2.840.113549.1.1.11': 'sha256withRSAEncryption',
-        '1.2.840.113549.1.1.12': 'sha384withRSAEncryption',
-        '1.2.840.113549.1.1.13': 'sha512withRSAEncryption',
-        '1.2.840.113549.1.2.7': 'hmacWithSHA1',
-        '1.2.840.113549.1.2.8': 'hmacWithSHA224',
-        '1.2.840.113549.1.2.9': 'hmacWithSHA256',
-        '1.2.840.113549.1.2.10': 'hmacWithSHA384',
-        '1.2.840.113549.1.2.11': 'hmacWithSHA512',
-        '1.2.840.113549.1.3.1': 'dhKeyAgreement',
-        // pkcs#7 content types
-        '1.2.840.113549.1.5.12': 'PBKDF2',
-        '1.2.840.113549.1.5.13': 'PBES2',
-        '1.2.840.113549.1.5.14': 'PBMAC1',
-        '1.2.840.113549.1.7.1': 'data',
-        '1.2.840.113549.1.7.2': 'signedData',
-        '1.2.840.113549.1.7.3': 'envelopedData',
-        '1.2.840.113549.1.7.4': 'signedAndEnvelopedData',
-        '1.2.840.113549.1.7.5': 'digestedData',
-        '1.2.840.113549.1.7.6': 'encryptedData',
-        '1.2.840.113549.1.9.1': 'emailAddress',
-        '1.2.840.113549.1.9.2': 'unstructuredName',
-        '1.2.840.113549.1.9.3': 'contentType',
-        '1.2.840.113549.1.9.4': 'messageDigest',
-        '1.2.840.113549.1.9.5': 'signingTime',
-        '1.2.840.113549.1.9.6': 'countersignature',
-        '1.2.840.113549.1.9.7': 'challengePassword',
-        '1.2.840.113549.1.9.8': 'unstructuredAddress',
-        '1.2.840.113549.1.9.9': 'extendedCertificateAttributes',
-        '1.2.840.113549.1.9.10': 'issuerAndSerialNumber',
-        '1.2.840.113549.1.9.11': 'passwordCheck',
-        '1.2.840.113549.1.9.12': 'publicKey',
-        '1.2.840.113549.1.9.13': 'signingDescription',
-        '1.2.840.113549.1.9.14': 'extensionRequest',
-        '1.2.840.113549.1.9.15': 'sMimeCapabilities',
-        '1.2.840.113549.1.9.16': 'sMimeObjectIdentifierRegistry',
-        '1.2.840.113549.1.9.16.1.2': 'authData',
-        '1.2.840.113549.1.9.16.1.4 ': 'timestampToken',
-        '1.2.840.113549.1.9.16.1.17 ': 'firmwareLoadReceipt',
-        '1.2.840.113549.1.9.16.1.21': 'encKeyWithID',
-        '1.2.840.113549.1.9.16.1.23': 'authEnvelopedData',
-        '1.2.840.113549.1.9.16.2': 'sMimeAttributes',
-        '1.2.840.113549.1.9.16.2.1': 'receiptRequest',
-        '1.2.840.113549.1.9.16.2.12': 'signingCertificate',
-        '1.2.840.113549.1.9.16.2.14': 'timeStampToken',
-        '1.2.840.113549.1.9.16.2.2': 'securityLabel',
-        '1.2.840.113549.1.9.16.2.3': 'mlExpansionHistory',
-        '1.2.840.113549.1.9.16.2.34': 'unsignedData',
-        '1.2.840.113549.1.9.16.2.47': 'signingCertificateV2',
-        '1.2.840.113549.1.9.16.3.5': 'ESDH',
-        // pkcs#9 oids
-        '1.2.840.113549.1.9.20': 'friendlyName',
-        '1.2.840.113549.1.9.21': 'localKeyId',
-        '1.2.840.113549.1.9.22': 'certTypes',
-        '1.2.840.113549.1.9.22.1': 'x509Certificate',
-        '1.2.840.113549.1.9.22.2': 'sdsiCertificate',
-        '1.2.840.113549.1.9.23': 'crlTypes',
-        '1.2.840.113549.1.9.23.1': 'x509CRL',
-        '1.2.840.113549.1.9.24': 'secretTypes',
-        '1.2.840.113549.1.9.24.1': 'secret',
-        '1.2.840.113549.1.9.25.1': 'pkcs15Token',
-        '1.2.840.113549.1.9.25.2': 'encryptedPrivateKeyInfo',
-        '1.2.840.113549.1.9.25.3': 'randomNonce',
-        '1.2.840.113549.1.9.25.4': 'sequenceNumber',
-        '1.2.840.113549.1.9.25.5': 'pkcs7PDU',
-        '1.2.840.113549.1.9.26.1': 'pkcs9String',
-        '1.2.840.113549.1.9.26.2': 'signingTimeString',
-        '1.2.840.113549.1.9.27.1': 'caseIgnoreMatch',
-        '1.2.840.113549.1.9.27.2': 'signingTimeMatch',
-        // password-based-encryption for pkcs#12
-        '1.2.840.113549.1.12.0.1': 'pkcs-12',
-        '1.2.840.113549.1.12.1': 'pbe',
-        '1.2.840.113549.1.12.1.1': 'pbeWithSHAAnd128BitRC4',
-        '1.2.840.113549.1.12.1.2': 'pbeWithSHAAnd40BitRC4',
-        '1.2.840.113549.1.12.1.3': 'pbeWithSHAAnd3-KeyTripleDES-CBC',
-        '1.2.840.113549.1.12.1.4': 'pbeWithSHAAnd2-KeyTripleDES-CBC',
-        '1.2.840.113549.1.12.1.5': 'pbeWithSHAAnd128BitRC2-CBC',
-        '1.2.840.113549.1.12.1.6': 'pbeWithSHAAnd40BitRC2-CBC',
-        '1.2.840.113549.1.12.1.80': 'pbeUnknownGost',
-        '1.2.840.113549.1.12.2.1': 'pkcs8-key-shrouding',
-        '1.2.840.113549.1.12.3.1': 'keyBagId',
-        '1.2.840.113549.1.12.3.2': 'certAndCRLBagId',
-        '1.2.840.113549.1.12.3.3': 'secretBagId',
-        '1.2.840.113549.1.12.3.4': 'safeContentsId',
-        '1.2.840.113549.1.12.3.5': 'pkcs-8ShroudedKeyBagId',
-        '1.2.840.113549.1.12.4.1': 'x509CertCRLBagId',
-        '1.2.840.113549.1.12.4.2': 'pkcs-12-SDSICertBag',
-        // pkcs#12 safe bags
-        '1.2.840.113549.1.12.10.1.1': 'keyBag',
-        '1.2.840.113549.1.12.10.1.2': 'pkcs8ShroudedKeyBag',
-        '1.2.840.113549.1.12.10.1.3': 'certBag',
-        '1.2.840.113549.1.12.10.1.4': 'crlBag',
-        '1.2.840.113549.1.12.10.1.5': 'secretBag',
-        '1.2.840.113549.1.12.10.1.6': 'safeContentsBag',
-        // hash algorithm
-        '1.2.840.113549.2.5': 'md-5',
-        // symmetric key algorithm oids
-        '1.2.840.113549.3.7': 'des-EDE3-CBC',
-        // additional algorithms
-        '1.3.132.0.34': 'secp384r1',
-        '1.3.132.0.35': 'secp521r1',
-        '1.3.132.112': 'ecDH',
-        '1.3.14.3.2.26': 'sha1',
-        '1.3.6.1.4.1.311.2.1.14': 'msCertExtensions',
-        '1.3.6.1.4.1.311.17.1': 'keyProviderNameAttr',
-        '1.3.6.1.4.1.311.17.2': 'localMachineKeyset',
-        '1.3.6.1.4.1.311.17.3.20': 'certKeyIdentifierPropId',
-        // SignalCom algorithms
-        '1.3.6.1.4.1.5849': 'SignalCom',
-        '1.3.6.1.4.1.5849.1.1.1': 'id-sc-gost28147-ecb',
-        '1.3.6.1.4.1.5849.1.1.2': 'id-sc-gost28147-gamma',
-        '1.3.6.1.4.1.5849.1.1.3': 'id-sc-gost28147-gfb',
-        '1.3.6.1.4.1.5849.1.1.4': 'id-sc-gost28147-mac',
-        '1.3.6.1.4.1.5849.1.1.5': 'id-sc-gostR3410-94',
-        '1.3.6.1.4.1.5849.1.1.6.1.1.1': 'id-sc-gostR3410-94-default',
-        '1.3.6.1.4.1.5849.1.1.6.1.1.2': 'id-sc-gostR3410-94-test',
-        '1.3.6.1.4.1.5849.1.2.1': 'id-sc-gostR3411-94',
-        '1.3.6.1.4.1.5849.1.3.1': 'id-sc-gostR3411-94-with-gostR3410-94',
-        '1.3.6.1.4.1.5849.1.3.2': 'id-sc-gostR3411-94-with-gostR3410-2001',
-        '1.3.6.1.4.1.5849.1.4.1': 'id-sc-cmsGostWrap',
-        '1.3.6.1.4.1.5849.1.4.2': 'id-sc-cmsGost28147Wrap',
-        '1.3.6.1.4.1.5849.1.5.1': 'id-sc-pbeWithGost3411AndGost28147',
-        '1.3.6.1.4.1.5849.1.5.2': 'id-sc-pbeWithGost3411AndGost28147CFB',
-        '1.3.6.1.4.1.5849.1.6.2': 'id-sc-gostR3410-2001',
-        '1.3.6.1.4.1.5849.1.7.2': 'id-sc-hmacWithGostR3411',
-        '1.3.6.1.4.1.5849.1.8.1': 'id-sc-r3410-ESDH-r3411kdf',
-        '1.3.6.1.4.1.5849.1.8.3': 'id-sc-ecdh-singlePass-cofactor-r3411kdf',
-        '1.3.6.1.4.1.5849.2.2.1': 'id-sc-gostR3410-2001-publicKey',
-        // additinal data
-        '1.3.6.1.5.5.7.0.12': 'attribute-cert',
-        '1.3.6.1.5.5.7.1.1': 'authorityInfoAccess',
-        '1.3.6.1.5.5.7.1.4': 'auditIdentity',
-        '1.3.6.1.5.5.7.1.6': 'aaControls',
-        '1.3.6.1.5.5.7.1.10': 'ac-proxying',
-        '1.3.6.1.5.5.7.1.11': 'subjectInfoAccess',
-        '1.3.6.1.5.5.7.3.1': 'serverAuth',
-        '1.3.6.1.5.5.7.3.2': 'clientAuth',
-        '1.3.6.1.5.5.7.3.3': 'codeSigning',
-        '1.3.6.1.5.5.7.3.4': 'emailProtection',
-        '1.3.6.1.5.5.7.3.5': 'ipsecEndSystem',
-        '1.3.6.1.5.5.7.3.6': 'ipsecTunnel',
-        '1.3.6.1.5.5.7.3.7': 'ipsecUser',
-        '1.3.6.1.5.5.7.3.8': 'timeStamping',
-        '1.3.6.1.5.5.7.3.9': 'OCSPSigning',
-        '1.3.6.1.5.5.7.5.1': 'regCtrl',
-        '1.3.6.1.5.5.7.5.1.1': 'regToken',
-        '1.3.6.1.5.5.7.5.1.2': 'authenticator',
-        '1.3.6.1.5.5.7.5.1.3': 'pkiPublicationInfo',
-        '1.3.6.1.5.5.7.5.1.4': 'pkiArchiveOptions',
-        '1.3.6.1.5.5.7.5.1.5': 'oldCertID',
-        '1.3.6.1.5.5.7.5.1.6': 'protocolEncrKey',
-        '1.3.6.1.5.5.7.5.2': 'regInfoAttr',
-        '1.3.6.1.5.5.7.5.2.1': 'UTF8Pairs',
-        '1.3.6.1.5.5.7.5.2.2': 'certReq',
-        '1.3.6.1.5.5.7.6.2': 'noSignature',
-        '1.3.6.1.5.5.7.7.1': 'statusInfo',
-        '1.3.6.1.5.5.7.7.2': 'identification',
-        '1.3.6.1.5.5.7.7.3': 'identityProof',
-        '1.3.6.1.5.5.7.7.4': 'dataReturn',
-        '1.3.6.1.5.5.7.7.5': 'transactionId',
-        '1.3.6.1.5.5.7.7.6': 'senderNonce',
-        '1.3.6.1.5.5.7.7.7': 'recipientNonce',
-        '1.3.6.1.5.5.7.7.8': 'addExtensions',
-        '1.3.6.1.5.5.7.7.9': 'encryptedPOP',
-        '1.3.6.1.5.5.7.7.10': 'decryptedPOP',
-        '1.3.6.1.5.5.7.7.11': 'lraPOPWitness',
-        '1.3.6.1.5.5.7.7.15': 'getCert',
-        '1.3.6.1.5.5.7.7.16': 'getCRL',
-        '1.3.6.1.5.5.7.7.17': 'revokeRequest',
-        '1.3.6.1.5.5.7.7.18': 'regInfo',
-        '1.3.6.1.5.5.7.7.19': 'responseInfo',
-        '1.3.6.1.5.5.7.7.21': 'queryPending',
-        '1.3.6.1.5.5.7.7.22': 'popLinkRandom',
-        '1.3.6.1.5.5.7.7.23': 'popLinkWitness',
-        '1.3.6.1.5.5.7.7.24': 'confirmCertAcceptance',
-        '1.3.6.1.5.5.7.7.25': 'statusInfoV2',
-        '1.3.6.1.5.5.7.7.26': 'trustedAnchors',
-        '1.3.6.1.5.5.7.7.27': 'authPublish',
-        '1.3.6.1.5.5.7.7.28': 'batchRequests',
-        '1.3.6.1.5.5.7.7.29': 'batchResponses',
-        '1.3.6.1.5.5.7.7.30': 'publishCert',
-        '1.3.6.1.5.5.7.7.31': 'modCertTemplate',
-        '1.3.6.1.5.5.7.7.32': 'controlProcessed',
-        '1.3.6.1.5.5.7.7.33': 'popLinkWitnessV2',
-        '1.3.6.1.5.5.7.7.34': 'identityProofV2',
-        '1.3.6.1.5.5.7.9.1': 'dateOfBirth',
-        '1.3.6.1.5.5.7.9.2': 'placeOfBirth',
-        '1.3.6.1.5.5.7.9.3': 'gender',
-        '1.3.6.1.5.5.7.9.4': 'countryOfCitizenship',
-        '1.3.6.1.5.5.7.9.5': 'countryOfResidence',
-        '1.3.6.1.5.5.7.10.1': 'authenticationInfo',
-        '1.3.6.1.5.5.7.10.2': 'accessIdentity',
-        '1.3.6.1.5.5.7.10.3': 'chargingIdentity',
-        '1.3.6.1.5.5.7.10.4': 'group',
-        '1.3.6.1.5.5.7.10.6': 'encAttrs',
-        '1.3.6.1.5.5.7.12.2': 'PKIData',
-        '1.3.6.1.5.5.7.12.3': 'PKIResponse',
-        '1.3.6.1.5.5.7.48.1.1': 'ocsp-basic',
-        '1.3.6.1.5.5.7.48.1.2': 'ocsp-nonce',
-        '1.3.6.1.5.5.7.48.1.3': 'ocsp-crl',
-        '1.3.6.1.5.5.7.48.1.4': 'ocsp-response',
-        '1.3.6.1.5.5.7.48.1.5': 'ocsp-nocheck',
-        '1.3.6.1.5.5.7.48.1.6': 'ocsp-archive-cutoff',
-        '1.3.6.1.5.5.7.48.1.7': 'ocsp-service-locator',
-        // Key packages
-        '2.16.840.1.101.2.1.2.78.2': 'encryptedKeyPkg',
-        '2.16.840.1.101.2.1.2.78.3': 'keyPackageReceipt',
-        '2.16.840.1.101.2.1.2.78.5': 'aKeyPackage',
-        '2.16.840.1.101.2.1.2.78.6': 'keyPackageError',
-        // symmetric key algorithm oids
-        '2.16.840.1.101.3.4': 'nistAlgorithms',
-        '2.16.840.1.101.3.4.1': 'aes',
-        '2.16.840.1.101.3.4.1.1': 'aes128-ECB',
-        '2.16.840.1.101.3.4.1.2': 'aes128-CBC',
-        '2.16.840.1.101.3.4.1.3': 'aes128-OFB',
-        '2.16.840.1.101.3.4.1.4': 'aes128-CFB',
-        '2.16.840.1.101.3.4.1.5': 'aes128-wrap',
-        '2.16.840.1.101.3.4.1.6': 'aes128-GCM',
-        '2.16.840.1.101.3.4.1.7': 'aes128-CCM',
-        '2.16.840.1.101.3.4.1.8': 'aes128-wrap-pad',
-        '2.16.840.1.101.3.4.1.21': 'aes192-ECB',
-        '2.16.840.1.101.3.4.1.22': 'aes192-CBC',
-        '2.16.840.1.101.3.4.1.23': 'aes192-OFB',
-        '2.16.840.1.101.3.4.1.24': 'aes192-CFB',
-        '2.16.840.1.101.3.4.1.25': 'aes192-wrap',
-        '2.16.840.1.101.3.4.1.26': 'aes192-GCM',
-        '2.16.840.1.101.3.4.1.27': 'aes192-CCM',
-        '2.16.840.1.101.3.4.1.28': 'aes192-wrap-pad',
-        '2.16.840.1.101.3.4.1.41': 'aes256-ECB',
-        '2.16.840.1.101.3.4.1.42': 'aes256-CBC',
-        '2.16.840.1.101.3.4.1.43': 'aes256-OFB',
-        '2.16.840.1.101.3.4.1.44': 'aes256-CFB',
-        '2.16.840.1.101.3.4.1.45': 'aes256-wrap',
-        '2.16.840.1.101.3.4.1.46': 'aes256-GCM',
-        '2.16.840.1.101.3.4.1.47': 'aes256-CCM',
-        '2.16.840.1.101.3.4.1.48': 'aes256-wrap-pad',
-        // hash algorihtms
-        '2.16.840.1.101.3.4.2.1': 'sha256',
-        '2.16.840.1.101.3.4.2.2': 'sha384',
-        '2.16.840.1.101.3.4.2.3': 'sha512',
-        // pkcs12
-        '2.16.840.1.113730.3.1.216': 'userPKCS12',
-        // certificate issuer/subject OIDsets
-        '2.5.1.5.55': 'clearance',
-        '2.5.4.0': 'objectClass',
-        '2.5.4.1': 'aliasedEntryName',
-        '2.5.4.2': 'knowldgeinformation',
-        '2.5.4.3': 'commonName',
-        '2.5.4.5': 'serialName',
-        '2.5.4.6': 'countryName',
-        '2.5.4.7': 'localityName',
-        '2.5.4.8': 'stateOrProvinceName',
-        '2.5.4.9': 'streetAddress',
-        '2.5.4.10': 'organizationName',
-        '2.5.4.11': 'organizationalUnitName',
-        '2.5.4.12': 'title',
-        '2.5.4.13': 'description',
-        '2.5.4.14': 'searchGuide',
-        '2.5.4.15': 'businessCategory',
-        '2.5.4.16': 'postalAddress',
-        '2.5.4.17': 'postalCode',
-        '2.5.4.18': 'postOfficeBox',
-        '2.5.4.19': 'physicalDeliveryOfficeName',
-        '2.5.4.20': 'telephoneNumber',
-        '2.5.4.21': 'telexNumber',
-        '2.5.4.22': 'teletexTerminalIdentifier',
-        '2.5.4.23': 'facsimileTelephoneNumber',
-        '2.5.4.24': 'x121Address',
-        '2.5.4.25': 'internationalISDNNumber',
-        '2.5.4.26': 'registeredAddress',
-        '2.5.4.27': 'destinationIndicator',
-        '2.5.4.28': 'preferredDeliveryMethod',
-        '2.5.4.29': 'presentationAddress',
-        '2.5.4.30': 'supportedApplicationContext',
-        '2.5.4.31': 'member',
-        '2.5.4.32': 'owner',
-        '2.5.4.33': 'roleOccupant',
-        '2.5.4.34': 'seeAlso',
-        '2.5.4.35': 'userPassword',
-        '2.5.4.36': 'userCertificate',
-        '2.5.4.37': 'cACertificate',
-        '2.5.4.38': 'authorityRevocationList',
-        '2.5.4.39': 'certificateRevocationList',
-        '2.5.4.40': 'crossCertificatePair',
-        '2.5.4.41': 'name',
-        '2.5.4.42': 'givenName',
-        '2.5.4.43': 'initials',
-        '2.5.4.44': 'generationQualifier',
-        '2.5.4.45': 'uniqueIdentifier',
-        '2.5.4.46': 'dnQualifier',
-        '2.5.4.47': 'enhancedSearchGuide',
-        '2.5.4.48': 'protocolInformation',
-        '2.5.4.49': 'distinguishedName',
-        '2.5.4.50': 'uniqueMember',
-        '2.5.4.51': 'houseIdentifier',
-        '2.5.4.52': 'supportedAlgorithms',
-        '2.5.4.53': 'deltaRevocationList',
-        '2.5.4.58': 'attributeCertificate',
-        '2.5.4.65': 'pseudonym',
-        '2.5.4.72': 'role',
-        // X.509 extension OIDsets
-        '2.5.29.1': 'authorityKeyIdentifierX',
-        '2.5.29.2': 'keyAttributesX',
-        '2.5.29.3': 'certificatePoliciesX',
-        '2.5.29.4': 'keyUsageRestriction',
-        '2.5.29.5': 'policyMapping',
-        '2.5.29.6': 'subtreesConstraint',
-        '2.5.29.7': 'subjectAltNameX',
-        '2.5.29.8': 'issuerAltNameX',
-        '2.5.29.9': 'subjectDirectoryAttributes',
-        '2.5.29.10': 'basicConstraintsX',
-        '2.5.29.11': 'nameConstraintsX',
-        '2.5.29.12': 'policyConstraintsX',
-        '2.5.29.13': 'basicConstraintsY',
-        '2.5.29.14': 'subjectKeyIdentifier',
-        '2.5.29.15': 'keyUsage',
-        '2.5.29.16': 'privateKeyUsagePeriod',
-        '2.5.29.17': 'subjectAltName',
-        '2.5.29.18': 'issuerAltName',
-        '2.5.29.19': 'basicConstraints',
-        '2.5.29.20': 'cRLNumber',
-        '2.5.29.21': 'cRLReason',
-        '2.5.29.22': 'expirationDate',
-        '2.5.29.23': 'instructionCode',
-        '2.5.29.24': 'invalidityDate',
-        '2.5.29.25': 'cRLDistributionPointsX',
-        '2.5.29.26': 'issuingDistributionPointX',
-        '2.5.29.27': 'deltaCRLIndicator',
-        '2.5.29.28': 'issuingDistributionPoint',
-        '2.5.29.29': 'certificateIssuer',
-        '2.5.29.30': 'nameConstraints',
-        '2.5.29.31': 'cRLDistributionPoints',
-        '2.5.29.32': 'certificatePolicies',
-        '2.5.29.33': 'policyMappings',
-        '2.5.29.34': 'policyConstraintsY',
-        '2.5.29.35': 'authorityKeyIdentifier',
-        '2.5.29.36': 'policyConstraints',
-        '2.5.29.37': 'extKeyUsage',
-        '2.5.29.46': 'freshestCRL',
-        '2.5.29.54': 'inhibitAnyPolicy',
-        '2.5.29.55': 'targetInformation',
-        '2.5.29.56': 'noRevAvail'
-    };
-
-    /**
-     * ASN.1 Object Identifiers for friandly names
-     * Generated automaticly
-     * @field identifiers
-     * @memberOf GostSecurity
-     */
-    var identifiers = {};
-    for (var id in names) 
-        identifiers[names[id]] = id;
-    
-    // </editor-fold>
-
-    /**
-     * Algorithm identifiers {@link gostCrypto.AlgorithmIdentifier} for Object Identifiers
-     * 
-     * @field algorithms
-     * @memberOf GostSecurity
-     */ // <editor-fold defaultstate="collapsed">
-    var algorithms = {
-        // CryptoPro algoritms
-        'id-GostR3411-94-with-GostR3410-2001': 'GOST R 34.10-2001/GOST R 34.11-94',
-        'id-GostR3411-94-with-GostR3410-94': 'GOST R 34.10-94/GOST R 34.11-94',
-        'id-GostR3411-94': 'GOST R 34.11-94',
-        'id-HMACGostR3411-94': {name: 'HMAC', hash: {name: 'GOST R 34.11-94'}},
-        'id-Gost28147-89-None-KeyWrap': 'GOST 28147-89-KW',
-        'id-Gost28147-89-CryptoPro-KeyWrap': 'GOST 28147-89-CPKW',
-        'id-GostR3410-2001': 'GOST R 34.10-2001',
-        'id-GostR3410-94': 'GOST R 34.10-94',
-        'id-GostR3410-94-a': 'GOST R 34.10-94',
-        'id-GostR3410-94-aBis': 'GOST R 34.10-94',
-        'id-GostR3410-94-b': 'GOST R 34.10-94',
-        'id-GostR3410-94-bBis': 'GOST R 34.10-94',
-        'id-Gost28147-89': 'GOST 28147-89',
-        'id-Gost28147-89-MAC': 'GOST 28147-89-MAC',
-        'id-GostR3410-2001-CryptoPro-ESDH': 'GOST R 34.10-2001-DH/GOST R 34.11-94',
-        'id-GostR3410-94-CryptoPro-ESDH': 'GOST R 34.10-94-DH/GOST R 34.11-94',
-        'id-GostR3410-2001DH': 'GOST R 34.10-2001-DH',
-        'id-GostR3410-94DH': 'GOST R 34.10-94-DH',
-        // TK-26 attributes
-        'id-tc26-gost3410-12-256': 'GOST R 34.10-256',
-        'id-tc26-gost3410-12-512': 'GOST R 34.10-512',
-        'id-tc26-gost3411-94': 'GOST R 34.11-94',
-        'id-tc26-gost3411-12-256': 'GOST R 34.11-256',
-        'id-tc26-gost3411-12-512': 'GOST R 34.11-512',
-        'id-tc26-signwithdigest-gost3410-12-94': 'GOST R 34.10-256/GOST R 34.11-94',
-        'id-tc26-signwithdigest-gost3410-12-256': 'GOST R 34.10-256/GOST R 34.11-256',
-        'id-tc26-signwithdigest-gost3410-12-512': 'GOST R 34.10-512/GOST R 34.11-512',
-        'id-tc26-hmac-gost-3411-12-256': {name: 'HMAC', hash: {name: 'GOST R 34.11-256'}},
-        'id-tc26-hmac-gost-3411-12-512': {name: 'HMAC', hash: {name: 'GOST R 34.11-512'}},
-        'id-tc26-agreement-gost-3410-12-256': 'GOST R 34.10-256-DH/GOST R 34.11-256',
-        'id-tc26-agreement-gost-3410-12-512': 'GOST R 34.10-512-DH/GOST R 34.11-256',
-        // SignalCom algorithms
-        'id-sc-gost28147-ecb': 'GOST 28147-89-ECB/SC',
-        'id-sc-gost28147-gamma': 'GOST 28147-89-CTR/SC',
-        'id-sc-gost28147-gfb': 'GOST 28147-89-CFB/SC',
-        'id-sc-gost28147-mac': 'GOST 28147-89-MAC/SC',
-        'id-sc-gostR3410-94': 'GOST R 34.10-94/SC',
-        'id-sc-gostR3410-94-default': 'GOST R 34.10-94/SC',
-        'id-sc-gostR3410-94-test': 'GOST R 34.10-94/SC/S-TEST',
-        'id-sc-gostR3411-94': 'GOST R 34.11-94/SC',
-        'id-sc-gostR3411-94-with-gostR3410-94': 'GOST R 34.10-94/GOST R 34.11-94/SC',
-        'id-sc-gostR3411-94-with-gostR3410-2001': 'GOST R 34.10-2001/GOST R 34.11-94/SC',
-        'id-sc-cmsGostWrap': 'GOST 28147-89-SCKW/SC',
-        'id-sc-cmsGost28147Wrap': 'GOST 28147-89-KW/SC',
-        'id-sc-pbeWithGost3411AndGost28147': {derivation: {name: 'GOST R 34.11-94-PBKDF2/SC'}, encryption: {name: 'GOST 28147-ECB/SC'}},
-        'id-sc-pbeWithGost3411AndGost28147CFB': {derivation: {name: 'GOST R 34.11-94-PBKDF2/SC'}, encryption: {name: 'GOST 28147-CFB/SC'}},
-        'id-sc-gostR3410-2001': 'GOST R 34.10-2001/SC',
-        'id-sc-hmacWithGostR3411': {name: 'HMAC', hash: {name: 'GOST R 34.11-94/SC'}},
-        'id-sc-r3410-ESDH-r3411kdf': 'GOST R 34.10-2001-DH/GOST R 34.11-94/SC',
-        // RSA algorithms
-        noSignature: 'NONE',
-        rsaEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-256'}},
-        sha1withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-1'}},
-        sha256withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-256'}},
-        sha384withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-384'}},
-        sha512withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-512'}},
-        'rsaes-oaep': 'RSA-OAEP',
-        'rsassa-pss': 'RSA-PSS',
-        // ECDSA
-        'ecdsa': 'ECDSA',
-        'ecdsa-with-SHA1': {name: 'ECDSA', hash: {name: 'SHA-1'}},
-        'ecdsa-with-SHA256': {name: 'ECDSA', hash: {name: 'SHA-256'}},
-        'ecdsa-with-SHA384': {name: 'ECDSA', hash: {name: 'SHA-384'}},
-        'ecdsa-with-SHA512': {name: 'ECDSA', hash: {name: 'SHA-512'}},
-        // Legion of the Bouncy Castle pbe
-        'pbeWithSHAAndAES128-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-1'}}, encryption: {name: 'AES-CBC', length: 128}},
-        'pbeWithSHAAndAES192-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-1'}}, encryption: {name: 'AES-CBC', length: 192}},
-        'pbeWithSHAAndAES256-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-1'}}, encryption: {name: 'AES-CBC', length: 256}},
-        'pbeWithSHA256AndAES128-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-256'}}, encryption: {name: 'AES-CBC', length: 128}},
-        'pbeWithSHA256AndAES192-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-256'}}, encryption: {name: 'AES-CBC', length: 192}},
-        'pbeWithSHA256AndAES256-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-256'}}, encryption: {name: 'AES-CBC', length: 256}},
-        // PKCS12 PBE
-        'pbeWithSHAAnd3-KeyTripleDES-CBC': {derivation: {name: 'PFXKDF', iterations: 2000, hash: 'SHA-1'}, encryption: {name: '3DES', block: 'CBC'}},
-        'pbeWithSHAAnd2-KeyTripleDES-CBC': {derivation: {name: 'PFXKDF', iterations: 2000, hash: 'SHA-1'}, encryption: {name: '2DES', block: 'CBC'}},
-        'pbeWithSHAAnd128BitRC2-CBC': {derivation: {name: 'PFXKDF', iterations: 2000, hash: 'SHA-1'}, encryption: {name: 'RC2', block: 'CBC', length: 128}},
-        'pbeWithSHAAnd40BitRC2-CBC': {derivation: {name: 'PFXKDF', iterations: 2000, hash: 'SHA-1'}, encryption: {name: 'RC2', block: 'CBC', length: 40}},
-        'pbeUnknownGost': {derivation: {name: 'PFXKDF', iterations: 2000, hash: 'GOST R 34.11-94'}, encryption: {name: 'GOST 28147-89-CFB'}},
-        //  Diffie-Hellman Key Exchange Keys
-        ecDH: 'ECDH',
-        dhKeyAgreement: 'DH',
-        // symmetric key algorithm oids
-        'aes128-CBC': {name: 'AES-CBC', length: 128},
-        'aes128-CFB': {name: 'AES-CFB-8', length: 128},
-        'aes128-GCM': {name: 'AES-GCM', length: 128},
-        'aes128-wrap': {name: 'AES-KW', length: 128},
-        'aes192-CBC': {name: 'AES-CBC', length: 192},
-        'aes192-CFB': {name: 'AES-CFB-8', length: 192},
-        'aes192-GCM': {name: 'AES-GCM', length: 192},
-        'aes192-wrap': {name: 'AES-KW', length: 192},
-        'aes256-CBC': {name: 'AES-CBC', length: 256},
-        'aes256-CFB': {name: 'AES-CFB-8', length: 256},
-        'aes256-GCM': {name: 'AES-GCM', length: 256},
-        'aes256-wrap': {name: 'AES-KW', length: 256},
-        // hash algorihtms
-        sha1: 'SHA-1',
-        sha256: 'SHA-256',
-        sha384: 'SHA-384',
-        sha512: 'SHA-512',
-        // PBE
-        PBKDF2: 'PBKDF2',
-        PBES2: {derivation: {name: 'PBKDF2'}, encryption: {}},
-        PBMAC1: {derivation: {name: 'PBKDF2'}, hmac: {}},
-        // HMAC
-        hmacWithSHA1: 'SHA-1-HMAC',
-        hmacWithSHA256: {name: 'HMAC', hash: {name: 'SHA-256'}},
-        hmacWithSHA384: {name: 'HMAC', hash: {name: 'SHA-384'}},
-        hmacWithSHA512: {name: 'HMAC', hash: {name: 'SHA-512'}}
-    };
-
-    // Each algorithm must has id for convertions
-    for (var id in algorithms) {
-        var algorithm = algorithms[id];
-        if (typeof algorithm === 'string') {
-            algorithm = {name: algorithm};
-        }
-        algorithm.id = id;
-        algorithms[id] = algorithm;
-    }  // </editor-fold>
-
-    /**
-     * Algorithm parameters
-     * 
-     * @field parameters
-     * @memberOf GostSecurity
-     */ // <editor-fold defaultstate="collapsed">
-    var parameters = {
-        'id-GostR3410-94-TestParamSet': {namedParam: 'S-TEST'},
-        'id-GostR3410-94-CryptoPro-A-ParamSet': {namedParam: 'S-A'},
-        'id-GostR3410-94-CryptoPro-B-ParamSet': {namedParam: 'S-B'},
-        'id-GostR3410-94-CryptoPro-C-ParamSet': {namedParam: 'S-C'},
-        'id-GostR3410-94-CryptoPro-D-ParamSet': {namedParam: 'S-D'},
-        'id-GostR3410-94-CryptoPro-XchA-ParamSet': {namedParam: 'X-A'},
-        'id-GostR3410-94-CryptoPro-XchB-ParamSet': {namedParam: 'X-B'},
-        'id-GostR3410-94-CryptoPro-XchC-ParamSet': {namedParam: 'X-C'},
-        // CryptoPro named curves
-        'id-GostR3410-2001-CryptoPro-TestParamSet': {namedCurve: 'S-256-TEST'},
-        'id-GostR3410-2001-CryptoPro-A-ParamSet': {namedCurve: 'S-256-A'},
-        'id-GostR3410-2001-CryptoPro-B-ParamSet': {namedCurve: 'S-256-B'},
-        'id-GostR3410-2001-CryptoPro-C-ParamSet': {namedCurve: 'S-256-C'},
-        'id-GostR3410-2001-CryptoPro-XchA-ParamSet': {namedCurve: 'X-256-A'},
-        'id-GostR3410-2001-CryptoPro-XchB-ParamSet': {namedCurve: 'X-256-B'},
-        // TC-26 named curves
-        'id-tc26-gost-3410-12-256-paramSetTest': {namedCurve: 'T-256-TEST'},
-        'id-tc26-gost-3410-12-256-paramSetA': {namedCurve: 'T-256-A'},
-        'id-tc26-gost-3410-12-256-paramSetB': {namedCurve: 'T-256-B'},
-        'id-tc26-gost-3410-12-512-paramSetTest': {namedCurve: 'T-512-TEST'},
-        'id-tc26-gost-3410-12-512-paramSetA': {namedCurve: 'T-512-A'},
-        'id-tc26-gost-3410-12-512-paramSetB': {namedCurve: 'T-512-B'},
-        'id-tc26-gost-3410-12-512-paramSetC': {namedCurve: 'T-512-C'},
-        'id-tc26-gost-3410-12-512-paramSetD': {namedCurve: 'T-512-D'},
-        // Curve attributes additional algorithms
-        secp256r1: {namedCurve: 'P-256'},
-        secp384r: {namedCurve: 'P-384'},
-        secp521r: {namedCurve: 'P-521'},
-        // CryptoPro encryption parameters
-        'id-GostR3411-94-TestParamSet': {sBox: 'D-TEST'},
-        'id-GostR3411-94-CryptoProParamSet': {sBox: 'D-A'},
-        'id-GostR3411-94-CryptoPro-A-ParamSet': {sBox: 'D-B'},
-        'id-GostR3411-94-CryptoPro-B-ParamSet': {sBox: 'D-C'},
-        'id-GostR3411-94-CryptoPro-C-ParamSet': {sBox: 'D-D'},
-        'id-Gost28147-89-TestParamSet': {block: 'CTR', sBox: 'E-TEST'},
-        'id-Gost28147-89-CryptoPro-A-ParamSet': {block: 'CFB', sBox: 'E-A', keyMeshing: 'CP'},
-        'id-Gost28147-89-CryptoPro-B-ParamSet': {block: 'CFB', sBox: 'E-B', keyMeshing: 'CP'},
-        'id-Gost28147-89-CryptoPro-C-ParamSet': {block: 'CFB', sBox: 'E-C', keyMeshing: 'CP'},
-        'id-Gost28147-89-CryptoPro-D-ParamSet': {block: 'CFB', sBox: 'E-D', keyMeshing: 'CP'},
-        'id-Gost28147-89-None-KeyMeshing': {keyMeshing: 'NO'},
-        'id-Gost28147-89-CryptoPro-KeyMeshing': {keyMeshing: 'CP'},
-        // TC-26 encryption parameters
-        'id-tc26-gost-28147-param-Z': {block: 'CFB', sBox: 'E-Z'}
-    };  // </editor-fold>
-
-    /**
-     * Named attributes for Algorithm identifiers {@link AlgorithmIdentifier}<br><br> 
-     * 
-     * Recognized attributes:
-     *  <ul>
-     *      <li>sBox - Paramsets for GOST 28147. Supported values:
-     *          <ul>
-     *              <li>D-TEST - id-GostR3411-94-TestParamSet</li>
-     *              <li>D-A - id-GostR3411-94-CryptoProParamSet</li>
-     *              <li>D-B - id-GostR3411-94-CryptoPro-A-ParamSet</li>
-     *              <li>D-C - id-GostR3411-94-CryptoPro-B-ParamSet</li>
-     *              <li>D-D - id-GostR3411-94-CryptoPro-C-ParamSet</li>
-     *              <li>E-TEST - id-Gost28147-89-TestParamSet</li>
-     *              <li>E-A - id-Gost28147-89-CryptoPro-A-ParamSet</li>
-     *              <li>E-B - id-Gost28147-89-CryptoPro-B-ParamSet</li>
-     *              <li>E-C - id-Gost28147-89-CryptoPro-C-ParamSet</li>
-     *              <li>E-D - id-Gost28147-89-CryptoPro-D-ParamSet</li>
-     *              <li>E-Z - id-tc26-gost-28147-param-Z</li>
-     *              <li>D-256 - id-tc26-gost3411-12-256</li>
-     *              <li>D-512 - id-tc26-gost3411-12-512</li>
-     *          </ul>
-     *      </li>
-     *      <li>namedParam - Paramset for GOST R 34.10-94
-     *          <ul>
-     *              <li>S-TEST - id-GostR3410-94-TestParamSet</li>
-     *              <li>S-A - id-GostR3410-94-CryptoPro-A-ParamSet</li>
-     *              <li>S-B - id-GostR3410-94-CryptoPro-B-ParamSet</li>
-     *              <li>S-C - id-GostR3410-94-CryptoPro-C-ParamSet</li>
-     *              <li>S-D - id-GostR3410-94-CryptoPro-D-ParamSet</li>
-     *              <li>X-A - id-GostR3410-94-CryptoPro-XchA-ParamSet</li>
-     *              <li>X-B - id-GostR3410-94-CryptoPro-XchB-ParamSet</li>
-     *              <li>X-C - id-GostR3410-94-CryptoPro-XchC-ParamSet</li>
-     *          </ul>
-     *      </li>
-     *      <li>namedCurve - Paramset for GOST R 34.10-01 and GOST R 34.10-12
-     *          <ul>
-     *              <li>S-256-TEST - id-GostR3410-2001-CryptoPro-TestParamSet</li>
-     *              <li>S-256-A - id-GostR3410-2001-CryptoPro-A-ParamSet</li>
-     *              <li>S-256-B - id-GostR3410-2001-CryptoPro-B-ParamSet</li>
-     *              <li>S-256-C - id-GostR3410-2001-CryptoPro-C-ParamSet</li>
-     *              <li>X-256-A - id-GostR3410-2001-CryptoPro-XchA-ParamSet</li>
-     *              <li>X-256-B - id-GostR3410-2001-CryptoPro-XchB-ParamSet</li>
-     *              <li>P-256 - secp256r1</li>
-     *              <li>T-256-TEST - id-tc26-gost-3410-12-256-paramSetTest</li>
-     *              <li>T-256-A - id-tc26-gost-3410-12-256-paramSetA</li>
-     *              <li>T-256-B - id-tc26-gost-3410-12-256-paramSetB</li>
-     *              <li>T-512-TEST - id-tc26-gost-3410-12-512-paramSetTest</li>
-     *              <li>T-512-A - id-tc26-gost-3410-12-512-paramSetA</li>
-     *              <li>T-512-B - id-tc26-gost-3410-12-512-paramSetB</li>
-     *          </ul>
-     *      </li>
-     *  </ul>
-     * @field attributes
-     * @memberOf GostSecurity
-     */ // <editor-fold defaultstate="collapsed">
-    var attributes = {
-        sBox: {
-            'D-TEST': 'id-GostR3411-94-TestParamSet',
-            'D-A': 'id-GostR3411-94-CryptoProParamSet',
-            'D-B': 'id-GostR3411-94-CryptoPro-A-ParamSet',
-            'D-C': 'id-GostR3411-94-CryptoPro-B-ParamSet',
-            'D-D': 'id-GostR3411-94-CryptoPro-C-ParamSet',
-            'E-TEST': 'id-Gost28147-89-TestParamSet',
-            'E-A': 'id-Gost28147-89-CryptoPro-A-ParamSet',
-            'E-B': 'id-Gost28147-89-CryptoPro-B-ParamSet',
-            'E-C': 'id-Gost28147-89-CryptoPro-C-ParamSet',
-            'E-D': 'id-Gost28147-89-CryptoPro-D-ParamSet',
-            'E-Z': 'id-tc26-gost-28147-param-Z',
-            'D-256': 'id-tc26-gost3411-12-256',
-            'D-512': 'id-tc26-gost3411-12-512'
-        },
-        namedParam: {
-            'S-TEST': 'id-GostR3410-94-TestParamSet',
-            'S-A': 'id-GostR3410-94-CryptoPro-A-ParamSet',
-            'S-B': 'id-GostR3410-94-CryptoPro-B-ParamSet',
-            'S-C': 'id-GostR3410-94-CryptoPro-C-ParamSet',
-            'S-D': 'id-GostR3410-94-CryptoPro-D-ParamSet',
-            'X-A': 'id-GostR3410-94-CryptoPro-XchA-ParamSet',
-            'X-B': 'id-GostR3410-94-CryptoPro-XchB-ParamSet',
-            'X-C': 'id-GostR3410-94-CryptoPro-XchC-ParamSet'
-        },
-        namedCurve: {
-            'S-256-TEST': 'id-GostR3410-2001-CryptoPro-TestParamSet',
-            'S-256-A': 'id-GostR3410-2001-CryptoPro-A-ParamSet',
-            'S-256-B': 'id-GostR3410-2001-CryptoPro-B-ParamSet',
-            'S-256-C': 'id-GostR3410-2001-CryptoPro-C-ParamSet',
-            'X-256-A': 'id-GostR3410-2001-CryptoPro-XchA-ParamSet',
-            'X-256-B': 'id-GostR3410-2001-CryptoPro-XchB-ParamSet',
-            'P-256': 'secp256r1',
-            'T-256-TEST': 'id-tc26-gost-3410-12-256-paramSetTest',
-            'T-256-A': 'id-tc26-gost-3410-12-256-paramSetA',
-            'T-256-B': 'id-tc26-gost-3410-12-256-paramSetB',
-            'T-512-TEST': 'id-tc26-gost-3410-12-512-paramSetTest',
-            'T-512-A': 'id-tc26-gost-3410-12-512-paramSetA',
-            'T-512-B': 'id-tc26-gost-3410-12-512-paramSetB'
-        }
-    }; // </editor-fold>
-
-    /**
-     * Set of algorithms for different providers<br><br>
-     * Supported providers:
-     *  <ul>
-     *      <li><b>CP-94</b> - CryptoPro GOST R 34.10-94 algorithm set</li>
-     *      <li><b>CP-01</b> - CryptoPro GOST R 34.10-2001 algorithm set</li>
-     *      <li><b>TC-256</b> - Technical Commitee GOST R 34.10-256 algorithm set</li>
-     *      <li><b>TC-512</b> - Technical Commitee GOST R 34.10-512 algorithm set</li>
-     *      <li><b>SC-94</b> - SignalCom GOST R 34.10-94 algorithm set</li>
-     *      <li><b>SC-01</b> - SignalCom GOST R 34.10-2001 algorithm set</li>
-     *  </ul>
-     *  
-     *  Follow set can be used if it's supported your browser native WebCrypto API:
-     *  <ul>
-     *      <li><b>RSA-2048</b> - RSA Encryption 2048 bits with SHA-256 algorithm set</li>
-     *      <li><b>ECDSA-256</b> - ECDSA-256 with SHA-256 algorithm set</li>
-     *  </ul>
-     *  
-     *  Each provider records has follow standart algorithm identifiers:
-     *  <ul>
-     *      <li><b>signature</b> - Signature algorithm</li>
-     *      <li><b>generation</b> - Asymmetric key generation algorithm</li>
-     *      <li><b>digest</b> - Digest algorithm</li>
-     *      <li><b>wrapping</b> - Key wrapping algorithm</li>
-     *      <li><b>hmac</b> - Hash-based message authentication code algorithm</li>
-     *      <li><b>agreement</b> - Key agreement algorithm (except RSA schema)</li>
-     *      <li><b>encryption</b> - Content encription algorithm</li>
-     *      <li><b>derivation</b> - Password-based derivation algorithm</li>
-     *      <li><b>pbes</b> - Password-based encryption algorithm</li>
-     *      <li><b>pbmac</b> - Password-based message authentication code algorithm</li>
-     *  </ul>
-     *  
-     * @field providers
-     * @memberOf GostSecurity
-     */ // <editor-fold defaultstate="collapsed">
-    var providers = {
-        'CP-94': {
-            title: 'Crypto-Pro GOST R 34.10-94 Cryptographic Service Provider',
-            signature: algorithms['id-GostR3411-94-with-GostR3410-94'],
-            publicKey: {id: 'id-GostR3410-94', name: 'GOST R 34.10-94', namedParam: 'X-A'},
-            privateKey: {id: 'id-GostR3410-94DH', name: 'GOST R 34.10-94-DH', namedParam: 'X-A'},
-            digest: algorithms['id-GostR3411-94'],
-            wrapping: {id: 'id-Gost28147-89-CryptoPro-KeyWrap', name: 'GOST 28147-89-CPKW', sBox: 'E-A'},
-            hmac: algorithms['id-HMACGostR3411-94'],
-            agreement: algorithms['id-GostR3410-94-CryptoPro-ESDH'],
-            encryption: {id: 'id-Gost28147-89', name: 'GOST 28147-89', block: 'CFB', sBox: 'E-A', keyMeshing: 'CP'},
-            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 2000}
-        },
-        'CP-01': {
-            title: 'Crypto-Pro GOST R 34.10-2001 Cryptographic Service Provider',
-            signature: algorithms['id-GostR3411-94-with-GostR3410-2001'],
-            publicKey: {id: 'id-GostR3410-2001', name: 'GOST R 34.10-2001', namedCurve: 'X-256-A'},
-            privateKey: {id: 'id-GostR3410-2001DH', name: 'GOST R 34.10-2001-DH', namedCurve: 'X-256-A'},
-            digest: {id: 'id-GostR3411-94', name: 'GOST R 34.11-94', sBox: 'D-A'},
-            wrapping: {id: 'id-Gost28147-89-CryptoPro-KeyWrap', name: 'GOST 28147-89-CPKW', sBox: 'E-A'},
-            hmac: algorithms['id-HMACGostR3411-94'],
-            agreement: algorithms['id-GostR3410-2001-CryptoPro-ESDH'],
-            encryption: {id: 'id-Gost28147-89', name: 'GOST 28147-89-CFB-CPKM', sBox: 'E-A'},
-            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 2000}
-        },
-        'TC-256': {
-            title: 'Crypto-Pro GOST R 34.10-2012 Cryptographic Service Provider',
-            signature: algorithms['id-tc26-signwithdigest-gost3410-12-256'],
-            publicKey: {id: 'id-tc26-gost3410-12-256', name: 'GOST R 34.10-256', namedCurve: 'X-256-A'},
-            privateKey: {id: 'id-tc26-agreement-gost-3410-12-256', name: 'GOST R 34.10-256-DH/GOST R 34.11-256', namedCurve: 'X-256-A'},
-            digest: algorithms['id-tc26-gost3411-12-256'],
-            wrapping: {id: 'id-Gost28147-89-CryptoPro-KeyWrap', name: 'GOST 28147-89-CPKW', sBox: 'E-A'},
-            hmac: algorithms['id-tc26-hmac-gost-3411-12-256'],
-            agreement: algorithms['id-tc26-agreement-gost-3410-12-256'],
-            encryption: {id: 'id-Gost28147-89', name: 'GOST 28147-89-CFB-CPKM', sBox: 'E-A'},
-            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-256-12-PBKDF2', iterations: 2000}
-        },
-        'TC-512': {
-            title: 'Crypto-Pro GOST R 34.10-2012 Strong Cryptographic Service Provider',
-            signature: algorithms['id-tc26-signwithdigest-gost3410-12-512'],
-            publicKey: {id: 'id-tc26-gost3410-12-512', name: 'GOST R 34.10-512', namedCurve: 'T-512-A'},
-            privateKey: {id: 'id-tc26-agreement-gost-3410-12-512', name: 'GOST R 34.10-512-DH/GOST R 34.11-256', namedCurve: 'T-512-A'},
-            digest: algorithms['id-tc26-gost3411-12-512'],
-            wrapping: {id: 'id-Gost28147-89-CryptoPro-KeyWrap', name: 'GOST 28147-89-CPKW', sBox: 'E-A'},
-            hmac: algorithms['id-tc26-hmac-gost-3411-12-512'],
-            agreement: algorithms['id-tc26-agreement-gost-3410-12-512'],
-            encryption: {id: 'id-Gost28147-89', name: 'GOST 28147-89-CFB-CPKM', sBox: 'E-A'},
-            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-256-PBKDF2', iterations: 2000}
-        },
-        'SC-94': {
-            title: 'Signal-COM GOST Cryptographic Provider',
-            signature: algorithms['id-sc-gostR3411-94-with-gostR3410-94'],
-            publicKey: {id: 'id-sc-gostR3410-94', name: 'GOST R 34.10-94/SC', namedParam: 'S-A'},
-            privateKey: {id: 'id-sc-gostR3410-94', name: 'GOST R 34.10-94/SC', modulusLength: 1024, param: {
-                p: '0xB4E25EFB018E3C8B87505E2A67553C5EDC56C2914B7E4F89D23F03F03377E70A2903489DD60E78418D3D851EDB5317C4871E40B04228C3B7902963C4B7D85D52B9AA88F2AFDBEB28DA8869D6DF846A1D98924E925561BD69300B9DDD05D247B5922D967CBB02671881C57D10E5EF72D3E6DAD4223DC82AA1F7D0294651A480DF',
-                q: '0x972432A437178B30BD96195B773789AB2FFF15594B176DD175B63256EE5AF2CF',
-                a: '0x8FD36731237654BBE41F5F1F8453E71CA414FFC22C25D915309E5D2E62A2A26C7111F3FC79568DAFA028042FE1A52A0489805C0DE9A1A469C844C7CABBEE625C3078888C1D85EEA883F1AD5BC4E6776E8E1A0750912DF64F79956499F1E182475B0B60E2632ADCD8CF94E9C54FD1F3B109D81F00BF2AB8CB862ADF7D40B9369A'}},
-            digest: algorithms['id-sc-gostR3411-94'],
-            encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-89-CFB/SC'},
-            hmac: algorithms['id-sc-hmacWithGostR3411'],
-            wrapping: ['id-sc-cmsGostWrap'],
-            agreement: algorithms['id-sc-r3410-ESDH-r3411kdf'],
-            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048},
-            pbes: {id: 'id-sc-pbeWithGost3411AndGost28147CFB',
-                derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048},
-                encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-CFB/SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])}}
-        },
-        'SC-01': {
-            title: 'Signal-COM ECGOST Cryptographic Provider',
-            signature: algorithms['id-sc-gostR3411-94-with-gostR3410-2001'],
-            publicKey: {id: 'id-sc-gostR3410-2001', name: 'GOST R 34.10-2001/SC', namedCurve: 'P-256'},
-            privateKey: {id: 'id-sc-gostR3410-2001', name: 'GOST R 34.10-2001/SC', curve: {
-                p: '0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF',
-                a: '0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC',
-                b: '0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B',
-                x: '0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296',
-                y: '0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5',
-                q: '0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551'}},
-            digest: algorithms['id-sc-gostR3411-94'],
-            encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-89-CFB/SC'},
-            hmac: algorithms['id-sc-hmacWithGostR3411'],
-            wrapping: algorithms['id-sc-cmsGostWrap'],
-            agreement: algorithms['id-sc-r3410-ESDH-r3411kdf'],
-            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048},
-            pbes: {id: 'id-sc-pbeWithGost3411AndGost28147CFB',
-                derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048},
-                encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-CFB/SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])}}
-        },
-        'RSA-2048': {
-            title: 'Microsoft Strong Cryptographic Provider',
-            signature: algorithms['sha256withRSAEncryption'],
-            publicKey: {id: 'rsaEncryption', name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048,
-                publicExponent: new Uint8Array([0x01, 0x00, 0x01]), hash: algorithms['sha256']},
-            privateKey: {id: 'rsaEncryption', name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048,
-                publicExponent: new Uint8Array([0x01, 0x00, 0x01]), hash: algorithms['sha256']},
-            digest: algorithms['sha256'],
-            encryption: algorithms['aes256-CFB'],
-            hmac: algorithms['hmacWithSHA256']
-        },
-        'ECDSA-256': {
-            title: 'Microsoft Base DSS and Diffie-Hellman Cryptographic Provider',
-            signature: algorithms['ecdsa-with-SHA256'],
-            publicKey: {id: 'ecdsa', name: 'ECDSA', namedCurve: 'P-256'},
-            privateKey: {id: 'ecdsa', name: 'ECDSA', namedCurve: 'P-256'},
-            digest: algorithms['sha256'],
-            encryption: algorithms['aes256-CFB'],
-            hmac: algorithms['hmacWithSHA256'],
-            agreement: algorithms['ecDH']
-        }
-    };
-    // Russian providers extension
-    ['CP-94', 'CP-01', 'TC-256', 'TC-512', 'SC-94', 'SC-01'].forEach(function (name) {
-        var provider = providers[name];
-        provider.hmac = expand(provider.hmac, {hash: provider.digest});
-        provider.derivation = expand(provider.derivation, {hash: provider.digest, hmac: provider.hmac});
-        provider.pbes = provider.pbes || {id: 'PBES2', derivation: provider.derivation,
-            encryption: provider.encryption};
-        provider.pbmac = provider.pbmac || {id: 'PBMAC1', derivation: provider.derivation,
-            hmac: provider.hmac};
-        provider.agreement = expand(provider.agreement, {wrapping: provider.wrapping});
-    });
-    // RSA & ECDA providers extension
-    ['RSA-2048', 'ECDSA-256'].forEach(function (name) {
-        var provider = providers[name];
-        provider.derivation = provider.derivation || {id: 'PBKDF2', name: 'PBKDF2',
-            iterations: 2048, hash: provider.digest};
-        provider.pbes = provider.pbes || {id: 'PBES2',
-            derivation: provider.derivation,
-            encryption: provider.encryption
-        };
-        provider.pbmac = provider.pbmac || {id: 'PBMAC1',
-            derivation: provider.derivation,
-            hmac: provider.hmac
-        };
-    });
-    // Workaround for Chrome error for RSA algorithm when hash for keys is not defined
-    // if (root.crypto && root.crypto.subtle)
-    //    setTimeout(function () {
-    //        root.crypto.subtle.generateKey(providers['RSA-2048'].generation, false, ["sign"])['catch'](function () {
-    //            providers['RSA-2048'].generation.hash = providers['RSA-2048'].digest;
-    //            algorithms['rsaEncryption'].hash = providers['RSA-2048'].digest;
-    //        });
-    //    }); 
-    // </editor-fold>
-
-    /**
-     * GOST and common ASN.1 Object and Algorithm Identifiers
-     * @class GostSecurity
-     */
-    function GostSecurity() {
-    }
-
-    GostSecurity.prototype = {
-        names: names,
-        identifiers: identifiers,
-        algorithms: algorithms,
-        parameters: parameters,
-        attributes: attributes,
-        providers: providers
-    };
-
-    /**
-     * GOST and common ASN.1 Object and Algorithm Identifiers  
-     * 
-     * @memberOf gostCrypto
-     * @type GostSecurity
-     */
-    gostCrypto.security = new GostSecurity();
-
-    return GostSecurity();
-}));
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/**
- * @file Provides facilities for handling certificates, CRLs, etc.
- * @version 1.76
- * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
- */
-
-/*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *    
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * 
- * 1. Redistributions of source code must retain the above copyright notice, this 
- *    list of conditions and the following disclaimer.
- *    
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *    
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
- */
-
-(function (root, factory) {
-
-    /*
-     * Module imports and exports
-     * 
-     */ // <editor-fold defaultstate="collapsed">
-     
-    if (true) {
-        module.exports = factory(__webpack_require__(0), __webpack_require__(2));
-    } else {
-        root.GostCert = factory(root.gostCrypto, root.GostASN1);
-    }
-    // </editor-fold>
-
-}(this, function (gostCrypto) {
-
-    /*
-     * Common algorithms
-     * 
-     */ // <editor-fold defaultstate="collapsed">
-    var root = this;
-    var Promise = root.Promise;
-    var Object = root.Object;
-    var CryptoOperationData = root.ArrayBuffer;
-    var Date = root.Date;
-
-    // Crypto subtle
-    var subtle = gostCrypto.subtle;
-
-    // Coding
-    var coding = gostCrypto.coding;
-
-    // ASN.1 syntax
-    var asn1 = gostCrypto.asn1;
-
-    // Providers
-    var providers = gostCrypto.security.providers;
-
-    // Expand javascript object
-    function expand(r) {
-        for (var i = 1, n = arguments.length; i < n; i++) {
-            var item = arguments[i];
-            if (typeof item === 'object')
-                for (var name in item)
-                    if (item.hasOwnProperty(name))
-                        r[name] = item[name];
-        }
-        return r;
-    }
-
-    // Extend javascript class
-    function extend(Class) {
-        var F = function () {
-        };
-        F.prototype = Class.prototype;
-        var r = new F, args = [r];
-        for (var i = 1; i < arguments.length; i++)
-            args.push(arguments[i]);
-        return expand.apply(this, args);
-    }
-
-    // Today date + n days
-    function today(n) {
-        var date = new Date();
-        date.setHours(0, 0, 0, 0);
-        if (n)
-            date.setDate(date.getDate() + n);
-        return date;
-    }
-
-    // Self resolver
-    function call(callback) {
-        try {
-            callback();
-        } catch (e) {
-        }
-    }
-
-    // Serial number
-    function genSerialNumber() {
-        var seed = new Uint8Array(4);
-        gostCrypto.getRandomValues(seed);
-        seed[0] = seed[0] & 0x7f;
-        return coding.Int16.encode(seed);
-    }
-
-    // True if equal numbers
-    var equalNumbers = (function () {
-        // Convert number to bigendian hex string
-        var hex = function (s) {
-            var t = typeof s;
-            return t === 'undefined' || s === '' ? '0' :
-                    t === 'number' || s instanceof Number ? s.toString(16).toLowerCase() :
-                    s.replace('0x', '').toLowerCase();
-        };
-        // Zero left padding
-        var lpad = function (s, size) {
-            return (new Array(size + 1).join('0') + s).slice(-size);
-        };
-        return function (s1, s2) {
-            s1 = hex(s1);
-            s2 = hex(s2);
-            var len = Math.max(s1.length, s2.length);
-            return lpad(s1, len) === lpad(s2, len);
-        };
-    })();
-
-    // Check equal names
-    function equalNames(name1, name2) {
-        for (var key in name1)
-            if (name1[key] !== name2[key])
-                return false;
-        for (var key in name2)
-            if (name1[key] !== name2[key])
-                return false;
-        return true;
-    }
-
-    // Check the buffers to equal
-    function equalBuffers(r1, r2) {
-        var s1 = new Uint8Array(r1),
-                s2 = new Uint8Array(r2);
-        if (s1.length !== s2.length)
-            return false;
-        for (var i = 0, n = s1.length; i < n; i++)
-            if (s1[i] !== s2[i])
-                return false;
-        return true;
-    }
-
-    // Match certificate
-    function matchCertificate(cert, selector) {
-        var skid = cert.extensions && cert.extensions.subjectKeyIdentifier;
-        return (cert && selector &&
-                (!selector.issuer || equalNames(cert.issuer, selector.issuer)) &&
-                (!selector.serialNumber || equalNumbers(cert.serialNumber, selector.serialNumber)) &&
-                (!selector.subjectKeyIdentifier || equalBuffers(skid, selector.subjectKeyIdentifier)) &&
-                (!selector.subject || equalNames(cert.subject, selector.subject)) &&
-                (!selector.date || (cert.notBefore.getTime() <= selector.date.getTime() &&
-                        cert.notAfter.getTime() > selector.date.getTime())));
-    }
-
-    // Create authority certificate selector
-    function authoritySelector(cert, extensions, date) {
-        var selector = {subject: cert.issuer, date: date},
-        akid = extensions && extensions.authorityKeyIdentifier;
-        if (akid) {
-            selector.subjectKeyIdentifier = akid.keyIdentifier;
-            if (akid.authorityCertIssuer && akid.authorityCertIssuer[0] &&
-                    akid.authorityCertSerialNumber) {
-                selector.issuer = akid.authorityCertIssuer[0];
-                selector.serialNumber = akid.authorityCertSerialNumber;
-            }
-        }
-        return selector;
-    }
-
-    // Find certificates
-    function selectCertificates(certs, selector) {
-        var result = [];
-        for (var i = 0, n = certs.length; i < n; i++)
-            if (matchCertificate(certs[i], selector))
-                result.push(certs[i]);
-        return result;
-    }
-
-    // Match CRL
-    function matchCRL(crl, selector) {
-        return ((!selector.issuer || equalNames(crl.issuer, selector.issuer)) &&
-                (!selector.date || (crl.thisUpdate.getTime() < selector.date.getTime())));
-    }
-
-    // Find certificates
-    function selectCRLs(crls, selector) {
-        var result = [];
-        for (var i = 0, n = crls.length; i < n; i++)
-            if (matchCRL(crls[i], selector))
-                result.push(crls[i]);
-        return result;
-    }
-
-    // Define provider for key algorithm
-    function keyProvider(algorithm) {
-        var id = algorithm.id;
-        for (var name in providers) {
-            var provider = providers[name];
-            if (provider.publicKey.id === id)
-                return provider;
-        }
-    }
-
-    function defineProperty(object, name, descriptor, enumerable) {
-        if (typeof descriptor !== 'object')
-            descriptor = {value: descriptor};
-        if (enumerable !== undefined)
-            descriptor.enumerable = enumerable;
-        Object.defineProperty(object, name, descriptor);
-    }
-
-    function defineProperties(object, properties, enumerable) {
-        for (var name in properties)
-            defineProperty(object, name, properties[name], enumerable);
-    }
-
-    // Extend javascript class
-    function extend(Super, Class, propertiesObject, propertiesClass) {
-        // If constructor not defined
-        if (typeof Class !== 'function') {
-            propertiesClass = propertiesObject;
-            propertiesObject = Class;
-            Class = function () {
-                Super.apply(this, arguments);
-            };
-        }
-        // Create prototype properties
-        Class.prototype = Object.create(Super.prototype, {
-            constructor: {
-                value: Class
-            },
-            superclass: {
-                value: Super.prototype
-            }
-        });
-        if (propertiesObject)
-            defineProperties(Class.prototype, propertiesObject, true);
-        // Inherites super class properties
-        if (Super !== Object)
-            for (var name in Super)
-                Class[name] = Super[name];
-        Class.super = Super;
-        if (propertiesClass)
-            defineProperties(Class, propertiesClass, true);
-        return Class;
-    }
-
-    // </editor-fold>
-
-    /**
-     * Provides facilities for handling certificates, CRLs, etc.
-     * 
-     * @class GostCert
-     */
-    function GostCert() {
-    }
-
-    /**
-     * Certificate templates
-     * <ul>
-     *      <li>providerName - provider name for key generation, default 'CP-01'</li>
-     *      <li>subject - template of subject name {countryName: 'RU', commonName: 'Anonymous'}</li>
-     *      <li>caKeyUsage - default key usages for a CA certificates 
-     *          ['digitalSignature', 'nonRepudiation', 'keyEncipherment',
-     *          'dataEncipherment', 'keyAgreement', 'keyCertSign', 'cRLSign']</li>
-     *      <li>caExtKeyUsage - default extended key usages for a CA certificates 
-     *          ['serverAuth', 'clientAuth', 'codeSigning', 'emailProtection', 'ipsecEndSystem',
-     *          'ipsecTunnel', 'ipsecUser', 'timeStamping', 'OCSPSigning']</li>
-     *      <li>userKeyUsage - default key usages for a user certificate 
-     *          ['digitalSignature', 'nonRepudiation', 'keyEncipherment', 'dataEncipherment', 'keyAgreement'],
-     *      <li>userExtKeyUsage - default extended key usages for user certificate 
-     *          ['clientAuth', 'emailProtection']</li>
-     *      <li>days - validity of the certificate in days, default 7305</li>
-     * </ul>
-     * 
-     * @memberOf GostCert
-     * @instance
-     */
-    var options = {// <editor-fold defaultstate="collapsed">
-        providerName: 'CP-01',
-        subject: {countryName: 'RU', commonName: 'Anonymous'},
-        caKeyUsage: ['digitalSignature', 'nonRepudiation', 'keyEncipherment',
-            'dataEncipherment', 'keyAgreement', 'keyCertSign', 'cRLSign'],
-        caExtKeyUsage: ['serverAuth', 'clientAuth', 'codeSigning', 'emailProtection', 'ipsecEndSystem',
-            'ipsecTunnel', 'ipsecUser', 'timeStamping', 'OCSPSigning'],
-        userKeyUsage: ['digitalSignature', 'nonRepudiation', 'keyEncipherment', 'dataEncipherment', 'keyAgreement'],
-        userExtKeyUsage: ['clientAuth', 'emailProtection'],
-        days: 7305 // </editor-fold>
-    };
-
-    GostCert.prototype.options = options;
-
-    /**
-     * This class encapsulates X.509 Version 3 certificates.<br><br>
-     * 
-     * Constructs an X.509 certificate from the given DER encoding or ASN.1 Certificate object.
-     * 
-     * @class GostCert.X509
-     * @extends GostASN1.Certificate
-     * @param {(FormatedData|GostASN1.Certificate)} cert The certificate
-     */
-    var X509 = function (cert) // <editor-fold defaultstate="collapsed">
-    {
-        try {
-            // Try to use decode X.509 certificate
-            asn1.Certificate.call(this, cert, true);
-        } catch (e) {
-            try {
-                // Try to decode certification request
-                cert = new asn1.CertificationRequest(cert, true);
-            } catch (e) {
-            }
-            // Create new certificate structure
-            cert = cert || {};
-            asn1.Certificate.call(this, {
-                version: 2,
-                serialNumber: cert.serialNumber || genSerialNumber(),
-                signature: cert.signature || {id: 'noSignature'},
-                issuer: cert.subject || options.subject,
-                notBefore: cert.notBefore || today(),
-                notAfter: cert.notAfter ||
-                        today(cert.days || options.days),
-                subject: cert.subject || options.subject,
-                subjectPublicKeyInfo: cert.subjectPublicKeyInfo || {
-                    algorithm: {id: 'noSignature'},
-                    subjectPublicKey: new CryptoOperationData(0)
-                },
-                extensions: (cert.attributes && (cert.attributes.extensionRequest ||
-                        cert.attributes.msCertExtensions)) || cert.extensions,
-                signatureAlgorithm: {id: 'noSignature'},
-                signatureValue: new CryptoOperationData(0)
-            });
-        }
-    }; // </editor-fold>
-
-    extend(asn1.Certificate, X509, {
-        /**
-         * Generate the contents of this certificate and sign it.<br><br>
-         * 
-         * If issuerCertificate is not defined self signed certificate generated
-         * 
-         * @memberOf GostCert.X509
-         * @instance
-         * @param {GostASN1.PrivateKeyInfo} issuerPrivateKey The issuer's private key
-         * @param {GostCert.X509} issuerCertificate The issuer's certificate or undefined for self-signed certificate
-         * @returns {Promise} Promise to return self object after sign the certificate
-         */
-        sign: function (issuerPrivateKey, issuerCertificate) // <editor-fold defaultstate="collapsed">
-        {
-
-            var self = this, spki = self.subjectPublicKeyInfo;
-            return new Promise(call).then(function () {
-
-                // Need generated key
-                if (!spki || !spki.algorithm || spki.algorithm === 'noSignature')
-                    throw new Error('Key pair was not generated for the certificate');
-                // Check issuer private key
-                if (!issuerPrivateKey)
-                    throw new Error('The private key of the issuer is not defined');
-                        
-                // Certificate can be self signed
-                issuerCertificate = issuerCertificate || self;
-
-                // Calculate subject key indentifier
-                return subtle.digest('SHA-1', spki.subjectPublicKey);
-            }).then(function (digest) {
-
-                // Signature algorithm
-                var provider = issuerCertificate.getProvider() || providers[options.providerName];
-                if (!self.signature || self.signature.id === 'noSignature')
-                    self.signature = provider.signature;
-                self.signatureAlgorithm = self.signature;
-
-                // Set issuer
-                self.issuer = issuerCertificate.subject;
-                // Set default extensions
-                if (!self.extensions)
-                    self.extensions = {};
-                var exts = self.extensions, ae = issuerCertificate.extensions;
-                if (self === issuerCertificate) { // Self-signed CA certificate
-                    // Set key usage
-                    exts.keyUsage = exts.keyUsage || options.caKeyUsage;
-                    exts.extKeyUsage = exts.extKeyUsage || options.caExtKeyUsage;
-                    // Set basic constraints
-                    exts.basicConstraints = exts.basicConstraints || {cA: true};
-                } else {
-                    // Check key usage and validity
-                    if (!issuerCertificate.checkUsage('keyCertSign', self.notBefore))
-                        throw new Error('The issuer\'s certificate is not valid for signing a certificate');
-
-                    // Set key usage
-                    exts.keyUsage = exts.keyUsage || options.userKeyUsage;
-                    exts.extKeyUsage = exts.extKeyUsage || options.userExtKeyUsage;
-                    // Set basic constraints
-                    exts.basicConstraints = exts.basicConstraints || {
-                        cA: exts.keyUsage.indexOf('keyCertSign') >= 0
-                    };
-                    // Check path length constraint
-                    if (exts.basicConstraints.cA) {
-                        var pathLen = ae && ae.basicConstraints && ae.pathLenConstraint;
-                        if (pathLen !== undefined) {
-                            if (pathLen > 0)
-                                exts.basicConstraints.pathLenConstraint = pathLen - 1;
-                            else
-                                throw new Error('Path length constraint exceeded');
-                        }
-                    }
-                }
-                // Subject key identifier 160 bit from public key hash
-                exts.subjectKeyIdentifier = digest;
-                // Authority key identifier
-                if (ae && ae.subjectKeyIdentifier)
-                    exts.authorityKeyIdentifier = {
-                        keyIdentifier: ae.subjectKeyIdentifier,
-                        authorityCertIssuer: [issuerCertificate.issuer],
-                        authorityCertSerialNumber: issuerCertificate.serialNumber};
-
-                // Import the private key
-                return subtle.importKey('pkcs8', issuerPrivateKey.encode(), issuerPrivateKey.privateKeyAlgorithm, false, ['sign']);
-            }).then(function (key) {
-
-                // Sign certificate
-                return subtle.sign(self.signatureAlgorithm, key, self.tbsCertificate.encode());
-            }).then(function (signatureValue) {
-                // Siganture value
-                self.signatureValue = signatureValue;
-
-                return self;
-            });
-        }, // </editor-fold>
-        /**
-         * Generate key pair for certificate
-         * 
-         * @memberOf GostCert.X509
-         * @instance
-         * @param {(AlgorithmIdentifier|string)} keyAlgorithm The key algorithm or name of provider
-         * @returns {Promise} Promise to return {@link GostASN1.PrivateKeyInfo} after self-signed certificate generation
-         */
-        generate: function (keyAlgorithm) // <editor-fold defaultstate="collapsed">
-        {
-            var self = this, privateKey, provider;
-            if (keyAlgorithm)
-                provider = providers[keyAlgorithm];
-            else
-                provider = this.getProvider() || providers[options.providerName];
-            if (provider)
-                keyAlgorithm = expand(provider.publicKey, {privateKey: provider.privateKey});
-
-            return new Promise(call).then(function () {
-
-                // Generate key pair
-                return subtle.generateKey(keyAlgorithm, 'true', ['sign', 'verify']);
-            }).then(function (keyPair) {
-                privateKey = keyPair.privateKey;
-
-                // Export public key
-                return subtle.exportKey('spki', keyPair.publicKey);
-            }).then(function (spki) {
-                self.subjectPublicKeyInfo = new asn1.SubjectPublicKeyInfo(spki);
-
-                return subtle.exportKey('pkcs8', privateKey);
-            }).then(function (pkcs8) {
-
-                return new asn1.PrivateKeyInfo(pkcs8);
-            });
-        }, // </editor-fold>
-        /**
-         * Gets the public key.
-         * 
-         * @memberOf GostCert.X509
-         * @instance
-         * @returns {Promise} Promise to return {@link Key}
-         */
-        getPublicKey: function () // <editor-fold defaultstate="collapsed">
-        {
-            var spki = this.subjectPublicKeyInfo,
-                    keyUsages = (spki.algorithm.id === 'rsaEncryption') ? ['verify'] :
-                    ['verify', 'deriveKey', 'deriveBits'];
-            return subtle.importKey('spki', spki.encode(), spki.algorithm, 'false', keyUsages);
-        }, // </editor-fold>
-        /**
-         * Get appropriate crypto provider for public key
-         * 
-         * @memberOf GostCert.X509
-         * @instance
-         * @returns Object Set of crypto provider algorithms
-         */
-        getProvider: function () // <editor-fold defaultstate="collapsed">
-        {
-            return keyProvider(this.subjectPublicKeyInfo.algorithm);
-        }, // </editor-fold>
-        /**
-         * Verifies this certificate.<br><br>
-         * 
-         * More precisely:<br><br>
-         * <ul>
-         *      <li>Verifies that the current VM date/time is within the validity period of the certificate.</li>
-         *      <li>If an unrecognized critical extension is present, the certificate is rejected.</li> 
-         *      <li>If the issuer certificate has been set, verifies that the signing certificate is a 
-         *          CA certificate, and that the signature is correct. The signing certificate is considered 
-         *          to be a CA certificate unless one of the following two conditions hold: The signing 
-         *          certificate contains a basicConstraints extension, and the CA flag is false; or the 
-         *          signing certificate contains a keyUsage extension, the keyUsage extension is marked 
-         *          critical, and the keyCertSign bit is false.</li>
-         *      <li>If the issuer CRL has been set, verifies that the certificate has not been revoked.</li>
-         * </ul>
-         * 
-         * @memberOf GostCert.X509
-         * @instance
-         * @param {GostCert.X509} issuerCertificate The issuer X.509 certificate
-         * @param {GostCert.CRL} issuerCRL The issuer CRL
-         * @param {Date} date Validation date. Default current date
-         * @returns {Promise} Promise to return self object if the certificate is valid
-         */
-        verify: function (issuerCertificate, issuerCRL, date) // <editor-fold defaultstate="collapsed">
-        {
-            var self = this, exts = self.extensions;
-            return new Promise(call).then(function () {
-                // Current date
-                date = date || today();
-                if (self.notBefore.getTime() > date.getTime() ||
-                        self.notAfter.getTime() <= date.getTime())
-                    throw new Error('The certificate has not yet started or expired');
-                // A unrecognized critical extensions 
-                for (var name in exts) {
-                    var value = exts[name];
-                    if (value.critical &&
-                            ['authorityKeyIdentifier', 'subjectKeyIdentifier', 'keyUsage', 'certificatePolicies',
-                                'policyMappings', 'basicConstraints', 'nameConstraints', 'policyConstraints',
-                                'extKeyUsage'].indexOf(name) < 0)
-                        throw new Error('The critical extension \'' + name + '\' is unrecognized');
-                }
-                // The certificate can be self-signed
-                var selector = authoritySelector(self, exts, self.notBefore);
-                if (!issuerCertificate && matchCertificate(self, selector))
-                    issuerCertificate = self;
-                // Check issuer
-                if (issuerCertificate) {
-                    if (!matchCertificate(issuerCertificate, selector) ||
-                            !issuerCertificate.checkUsage('keyCertSign', self.notBefore))
-                        throw new Error('The issuer\'s certificate is not valid');
-                    // Check certificate signature
-                    return issuerCertificate.verifySignature(self.tbsCertificate.encode(),
-                            self.signatureValue, self.signatureAlgorithm);
-                }
-                return true;
-            }).then(function (result) {
-                if (!result)
-                    throw new Error('The certificate has invalid signature');
-                // Check CRL
-                if (issuerCRL) {
-                    if (!matchCRL(issuerCRL, {issuer: self.issuer, date: date}))
-                        throw new Error('The issuer\'s CRL is not valid');
-                    if (issuerCRL.isRevoked(self.serialNumber))
-                        throw new Error('The certificate is revoked');
-                }
-                return self;
-            });
-        }, // </editor-fold>
-        /**
-         * Verify a signature made with this certificate's public key.
-         * 
-         * @memberOf GostCert.X509
-         * @instance
-         * @param {CryptoOperationData} data The signed document.
-         * @param {CryptoOperationData} signature The signature
-         * @param {AlgorithmIdentifier} algorithm The algorithm ID used for the signature.
-         * @returns {Promise} Promise to return true if the signature is verified, and false otherwise
-         */
-        verifySignature: function (data, signature, algorithm) // <editor-fold defaultstate="collapsed">
-        {
-            return this.getPublicKey().then(function (publicKey) {
-                return subtle.verify(algorithm, publicKey, signature, data);
-            });
-        }, // </editor-fold>
-        /**
-         * Check key usage and date validation
-         * 
-         * @memberOf GostCert.X509
-         * @instance
-         * @param {DOMString} operation The operation
-         * @param {Date} date Operation date. Default current date
-         * @returns {boolean} 
-         */
-        checkUsage: function (operation, date) // <editor-fold defaultstate="collapsed">
-        {
-            var self = this, exts = self.extensions;
-            date = date || today();
-            return (self.notBefore.getTime() <= date.getTime() && self.notAfter.getTime() > date.getTime()) &&
-                    (!exts || !((['keyCertSign', 'cRLSign'].indexOf(operation) > 0 && exts.basicConstraints && !exts.basicConstraints.cA) ||
-                            ((exts.keyUsage && exts.keyUsage.indexOf(operation) < 0) && (exts.extKeyUsage && exts.extKeyUsage.indexOf(operation) < 0))));
-        } // </editor-fold>
-    });
-
-    /**
-     * This class encapsulates X.509 Version 3 certificates.
-     * 
-     * @memberOf GostCert
-     * @type GostCert.X509
-     */
-    GostCert.prototype.X509 = X509;
-
-    /**
-     * This class encapsulates a X.509 certificate revocation list (CRL) of RevokedCertificate objects.<br><br>
-     *
-     * Note: the methods and constructors that input a CRL do not automatically verify it. 
-     * You need to explicitly call the verify method.
-     *  
-     * @class GostCert.CRL       
-     * @extends GostASN1.CertificateList
-     * @param {(FormatedData|GostASN1.CertificateList)} crl
-     */
-    var CRL = function (crl) // <editor-fold defaultstate="collapsed">
-    {
-        // Call super
-        CRL.super.call(this, crl);
-        // Initialize defaults
-        if (!this.version)
-            this.version = 1;
-        if (!this.revokedCertificates)
-            this.revokedCertificates = [];
-        if (!this.thisUpdate)
-            this.thisUpdate = today();
-    }; // </editor-fold>
-
-    extend(asn1.CertificateList, CRL, {
-        /**
-         * Signs this CRL. The issuer's private key has to be set. The default random number generator is used, if needed.<br><br>
-         * 
-         * Note: Making any modifications to the contents of the CRL after signing invalidates the signature. 
-         * The sign method must be invoked again after any modifications for a valid signature to be computed.
-         * 
-         * @memberOf GostCert.CRL
-         * @instance
-         * @param {GostASN1.PrivateKeyInfo} issuerPrivateKey the issuer's private signing key
-         * @param {GostCert.X509} issuerCertificate the issuer's certificate
-         * @returns {Promise} Promise to return self object after sign the CRL
-         */
-        sign: function (issuerPrivateKey, issuerCertificate) // <editor-fold defaultstate="collapsed">
-        {
-
-            var self = this;
-            return new Promise(call).then(function () {
-                // Check issuer private key
-                if (!issuerPrivateKey)
-                    throw new Error('The issuer\'s private key is not defined');
-                // Check issuer certificate
-                if (!issuerCertificate)
-                    throw new Error('The issuer\'s certificate is not defined');
-                // Check issuer name
-                if (!self.issuer)
-                    self.issuer = issuerCertificate.issuer;
-                else if (!equalNames(self.issuer, issuerCertificate.issuer))
-                    throw new Error('The CRL prototype and authority certificate have different issuers');
-                // Check key usage and validity
-                if (!issuerCertificate.checkUsage('cRLSign', self.thisUpdate))
-                    throw new Error('The issuer\'s certificate is not valid for signing a CRL');
-
-                // Signature algorithm
-                var provider = issuerCertificate.getProvider() || providers[options.providerName];
-                if (!self.signature)
-                    self.signature = provider.signature;
-                self.signatureAlgorithm = self.signature;
-
-                // Set issuer
-                self.issuer = issuerCertificate.subject;
-                // Set default extensions
-                if (!self.crlExtensions)
-                    self.crlExtensions = {};
-                var exts = self.crlExtensions,
-                        ae = issuerCertificate.extensions;
-                if (ae && ae.subjectKeyIdentifier)
-                    exts.authorityKeyIdentifier = {
-                        keyIdentifier: ae.subjectKeyIdentifier,
-                        authorityCertIssuer: [issuerCertificate.issuer],
-                        authorityCertSerialNumber: issuerCertificate.serialNumber};
-                exts.cRLNumber = exts.cRLNumber || 0;
-
-                // Import the private key
-                return subtle.importKey('pkcs8', issuerPrivateKey.encode(),
-                        issuerPrivateKey.privateKeyAlgorithm, false, ['sign']);
-            }).then(function (key) {
-
-                // Sign CRL
-                return subtle.sign(self.signatureAlgorithm, key, self.tbsCertList.encode());
-            }).then(function (signatureValue) {
-
-                // Siganture value
-                self.signatureValue = signatureValue;
-                return self;
-            });
-        }, // </editor-fold>
-        /**
-         * Verify the CRL. Checks the date and signature if issuer's certifiate has been defined.
-         * 
-         * @memberOf GostCert.CRL
-         * @instance
-         * @param {GostCert.X509} issuerCertificate the issuer's certificate
-         * @param {Date} date Validation date. Default current date
-         * @returns {Promise} Promise to return self object if the certificate is valid
-         */
-        verify: function (issuerCertificate, date) // <editor-fold defaultstate="collapsed">
-        {
-            var self = this, exts = self.crlExtensions;
-            return new Promise(call).then(function () {
-                // Current date
-                date = date || today();
-                if (!self.thisUpdate.getTime() > date.getTime())
-                    throw new Error('The CRL has not yet started');
-                // Check issuer
-                if (issuerCertificate) {
-                    if (!matchCertificate(issuerCertificate, authoritySelector(self, exts, self.thisUpdate)) ||
-                            !issuerCertificate.checkUsage('cRLSign', self.thisUpdate))
-                        throw new Error('The issuer\'s certificate is not valid');
-                    if (!self.signatureValue || !self.signatureAlgorithm)
-                        throw new Error('The has no signature');
-                    // Check CRL signature
-                    return issuerCertificate.verifySignature(self.tbsCertList.encode(),
-                            self.signatureValue, self.signatureAlgorithm);
-                }
-            }).then(function (result) {
-                if (!result)
-                    throw new Error('The CRL has invalid signature');
-                return self;
-            });
-        }, // </editor-fold>
-        /**
-         * Checks whether this certificate serial number is on the list.
-         * 
-         * @memberOf GostCert.CRL
-         * @instance
-         * @param {Number} serialNumber the issuer's certificate
-         * @param {Date} date Validation date. Default current date
-         * @returns {boolean} True if the certificate is valid, and false otherwise
-         */
-        isRevoked: function (serialNumber, date) // <editor-fold defaultstate="collapsed">
-        {
-            var rc = this.revokedCertificates;
-            date = date || today();
-            for (var i = 0; i < rc.length; i++) {
-                // Check date and serial number
-                if (date.getTime() >= rc[i].revocationDate.getTime() &&
-                        equalNumbers(rc[i].userCertificate, serialNumber))
-                    return true;
-            }
-            return false;
-        } // </editor-fold>
-    });
-
-    /**
-     * This class encapsulates a X.509 certificate revocation list (CRL) of RevokedCertificate objects.
-     * 
-     * @memberOf GostCert
-     * @type GostCert.CRL
-     */
-    GostCert.prototype.CRL = CRL;
-
-    /**
-     * A class that encapsulates a DER-encoded PKCS #10 certificate request. The request contains 
-     * the subject's name and public key, and it is signed with the subject's private key. 
-     * The public key contained in the request is used to verify the signature. 
-     * The signature on the request is verified automatically when the request is read. 
-     * Note that the subject's private key is used only to produce a signature when the request is output, 
-     * and is not actually stored with the request.
-     * 
-     * @class GostCert.Request
-     * @extends GostASN1.CertificationRequest
-     * @param {(FormatedData|GostASN1.CertificationRequest)} req
-     */
-    function Request(req) // <editor-fold defaultstate="collapsed">
-    {
-        try {
-            // Try to use encode
-            asn1.CertificationRequest.call(this, req, true);
-        } catch (e) {
-            // Create new certificate structure
-            req = req || {};
-            asn1.CertificationRequest.call(this, {
-                version: 0,
-                subject: req.subject || options.subject,
-                subjectPublicKeyInfo: req.subjectPublicKeyInfo || {
-                    algorithm: {id: 'noSignature'},
-                    subjectPublicKey: new CryptoOperationData(0)
-                },
-                attributes: req.attributes || {
-                    extensionRequest: {
-                        keyUsage: options.userKeyUsage,
-                        extKeyUsage: options.userExtKeyUsage
-                    }
-                },
-                signatureAlgorithm: {id: 'noSignature'},
-                signatureValue: new CryptoOperationData(0)
-            });
-        }
-    } // </editor-fold>
-
-    extend(asn1.CertificationRequest, Request, {
-        /**
-         * Generate key pair and sign request
-         * 
-         * @memberOf GostCert.Request
-         * @instance
-         * @param {(AlgorithmIdentifier|string)} keyAlgorithm The name of provider or algorithm
-         * @returns {Promise} Promise to return {@link GostASN1.PrivateKeyInfo} after request generation
-         */
-        generate: function (keyAlgorithm) // <editor-fold defaultstate="collapsed">
-        {
-            var self = this, privateKey, provider;
-            if (keyAlgorithm)
-                provider = providers[keyAlgorithm];
-            else
-                provider = this.getProvider() || providers[options.providerName];
-            if (provider)
-                keyAlgorithm = expand(provider.publicKey, {privateKey: provider.privateKey});
-
-            return new Promise(call).then(function () {
-
-                // Generate key pair
-                return subtle.generateKey(keyAlgorithm, 'true', ['sign', 'verify']);
-            }).then(function (keyPair) {
-                privateKey = keyPair.privateKey;
-
-                // Export public key
-                return subtle.exportKey('spki', keyPair.publicKey);
-            }).then(function (spki) {
-                self.subjectPublicKeyInfo = new asn1.SubjectPublicKeyInfo(spki);
-
-                return subtle.exportKey('pkcs8', privateKey);
-            }).then(function (pkcs8) {
-                privateKey = new asn1.PrivateKeyInfo(pkcs8);
-
-                // Sign request
-                return self.sign(privateKey);
-            }).then(function () {
-
-                return privateKey;
-            });
-        }, // </editor-fold>
-        /**
-         * Get appropriate crypto provider for public key
-         * 
-         * @memberOf GostCert.Request
-         * @instance
-         * @returns Object Set of crypto provider algorithms
-         */
-        getProvider: function () // <editor-fold defaultstate="collapsed">
-        {
-            return keyProvider(this.subjectPublicKeyInfo.algorithm);
-        }, // </editor-fold>
-        /**
-         * Generate the contents of this request and sign it.<br><br>
-         * 
-         * @memberOf GostCert.Request
-         * @instance
-         * @param {GostASN1.PrivateKeyInfo} privateKey The subject's private key
-         * @returns Promise to return self object after sign the request
-         */
-        sign: function (privateKey) // <editor-fold defaultstate="collapsed">
-        {
-
-            var self = this, spki = self.subjectPublicKeyInfo;
-            return new Promise(call).then(function () {
-
-                // Need generated key
-                if (!spki || !spki.algorithm || spki.algorithm === 'noSignature')
-                    throw new Error('Key pair was not generated for the certificate');
-                // Check issuer private key
-                if (!privateKey)
-                    throw new Error('The private key is not defined');
-
-                // Signature algorithm
-                var provider = keyProvider(spki.algorithm) || providers[options.providerName];
-                self.signatureAlgorithm = provider.signature;
-
-                // Import the private key
-                return subtle.importKey('pkcs8', privateKey.encode(),
-                        privateKey.privateKeyAlgorithm, false, ['sign']);
-            }).then(function (key) {
-
-                // Sign the certification request
-                return subtle.sign(self.signatureAlgorithm, key, self.requestInfo.encode());
-            }).then(function (signatureValue) {
-
-                // Siganture value
-                self.signatureValue = signatureValue;
-                return self;
-            });
-        }, // </editor-fold>
-        /**
-         * Verify the Certification Request. Checks the signature on the public key in the request.
-         * 
-         * @memberOf GostCert.Request
-         * @instance
-         * @returns {Promise} Promise to return self object  if the certificate is valid
-         */
-        verify: function () // <editor-fold defaultstate="collapsed">
-        {
-            var self = this, spki = self.subjectPublicKeyInfo;
-            return new Promise(call).then(function () {
-
-                // Import key
-                return subtle.importKey('spki', spki.encode(), spki.algorithm, 'false', ['verify']);
-            }).then(function (publicKey) {
-
-                // Verify signature
-                return subtle.verify(self.signatureAlgorithm, publicKey, self.signatureValue,
-                        self.requestInfo.encode());
-            }).then(function (result) {
-                if (!result)
-                    throw new Error('The certification request has invalid signature');
-                return self;
-            });
-        } // </editor-fold>
-    });
-
-    /**
-     * A class that encapsulates a DER-encoded PKCS #10 certificate request.
-     * 
-     * @memberOf GostCert
-     * @type GostCert.Request
-     */
-    GostCert.prototype.Request = Request;
-
-    /**
-     * A class for retrieving Certificates and CRLs from a repository.<br><br>
-     * 
-     * Once the CertStore has been created, it can be used to retrieve Certificates 
-     * and CRLs by calling its getCertificates and getCRLs methods. Unlike a KeyStore, 
-     * which provides access to a cache of private keys and trusted certificates, 
-     * a CertStore is designed to provide access to a potentially vast repository 
-     * of untrusted certificates and CRLs.
-     * 
-     * @class GostCert.CertStore
-     * @param {GostCert.X509[]} certificates Certificates
-     * @param {GostCert.CRL[]} crls CLRs
-     */
-    function CertStore(certificates, crls) // <editor-fold defaultstate="collapsed">
-    {
-        this.certificates = certificates || [];
-        this.crls = crls || [];
-    } // </editor-fold>
-
-    extend(Object, CertStore, {
-        /**
-         * Returns a Array of Certificates that match the specified selector.
-         * 
-         * @memberOf GostCert.CertStore
-         * @instance
-         * @param {GostCert.CertSelector} selector Certificate filter selector
-         * @returns {GostCert.X509[]} Selected certificates
-         */
-        getCertificates: function (selector) // <editor-fold defaultstate="collapsed">
-        {
-            return selectCertificates(this.certificates, selector);
-        }, // </editor-fold>
-        /**
-         * Returns a Collection of CRLs that match the specified selector.
-         * 
-         * @memberOf GostCert.CertStore
-         * @instance
-         * @param {GostCert.CertSelector} selector CRL filter selector
-         * @returns {GostCert.CRL[]} selected CRLs
-         */
-        getCRLs: function (selector) // <editor-fold defaultstate="collapsed">
-        {
-            return selectCRLs(this.certificates, selector);
-        }, // </editor-fold>
-        /**
-         * Loads this CertStore from the given PKCS#7 formated input stream.
-         * 
-         * @memberOf GostCert.CertStore
-         * @instance
-         * @param {(FormatedData|GostASN1.ContentInfo)} store The input stream from which the certstore is loaded
-         * @returns {GostCert.CertStore} Self object after store loaded
-         */
-        load: function (store) // <editor-fold defaultstate="collapsed"> 
-        {
-            var info = new asn1.ContentInfo(store),
-                    certs = info.certificates, crls = info.crls;
-            for (var i = 0; i < certs.length; i++)
-                this.certificates.push(new X509(certs[i]));
-            for (var i = 0; i < crls.length; i++)
-                this.crls.push(new CRL(crls[i]));
-            return this;
-        }, // </editor-fold>
-        /**
-         * Stores this CertStore to the given output stream in PKCS#7 format.
-         * 
-         * @memberOf GostCert.CertStore
-         * @instance
-         * @returns {GostASN1.ContentInfo} PKCS#7 content info with certificates and crls from CertStore
-         */
-        store: function () // <editor-fold defaultstate="collapsed"> 
-        {
-            return new asn1.ContentInfo({
-                contentType: 'signedData',
-                version: 0,
-                digestAlgorithms: [],
-                encapContentInfo: {contentType: 'data'},
-                certificates: this.certs,
-                crls: this.crls,
-                signerInfos: []
-            });
-        } // </editor-fold>
-    });
-
-    /**
-     * A class for retrieving Certificates and CRLs from a repository.
-     * 
-     * @memberOf GostCert
-     * @type GostCert.Request
-     */
-    GostCert.prototype.CertStore = CertStore;
-
-    /**
-     * A class for building and validating certification paths (also known as certificate chains).
-     * 
-     * @class GostCert.CertPath
-     * @param {GostCert.CertStore} certStore
-     */
-    function CertPath(certStore) // <editor-fold defaultstate="collapsed">
-    {
-        this.certStore = certStore;
-    } // </editor-fold>
-
-    extend(Object, CertPath, {
-        /**
-         * Attempts to build a certification path using the specified algorithm parameter set.
-         * 
-         * @memberOf GostCert.CertPath
-         * @instance
-         * @param {GostCert.X509} certificate Starting path certificate 
-         * @param {Date} date Validation date. Default today
-         * @returns {Promise} Promise to return array of {@link GostCert.X509} with certification path
-         */
-        build: function (certificate, date) // <editor-fold defaultstate="collapsed">
-        {
-            var self = this;
-            return new Promise(call).then(function () {
-                // Build certification path
-                var current = new X509(certificate), certPath = [], success = false, verifiers = [];
-                while (current) {
-                    var foundCRLs = [], founds = [];
-                    certPath.push(current);
-                    if (!success) {
-                        // Select issuer CRL
-                        foundCRLs = self.certStore.getCRLs({issuer: current.issuer, date: date});
-                        // Create issuer's selection criteria
-                        var selector = authoritySelector(current, current.extensions,
-                                current.notBefore);
-                        // Self-signed certificate?
-                        if (!matchCertificate(current, selector))
-                            // Select issuer form trusted CA root list
-                            founds = self.certStore.getCertificates(selector);
-                        else
-                            success = true;
-                    }
-                    // Add verification tasks
-                    var next = founds.length > 0 && new X509(founds[0]),
-                            crl = foundCRLs.length > 0 && new CRL(foundCRLs[0]);
-                    // Verify CRLs
-                    if (crl)
-                        verifiers.push(crl.verify(next, date));
-
-                    // Verify the certificate
-                    verifiers.push(current.verify(next, crl, date));
-                    current = next;
-                }
-                if (!success)
-                    throw new Error('Root certificate is not found');
-                // Verify all certificates in path
-                return Promise.all(verifiers).then(function (results) {
-                    for (var i = 0; i < results; i++)
-                        if (!results[i])
-                            throw new Error('Certification path is not validated');
-                    return certPath;
-                });
-            });
-        } // </editor-fold>
-    });
-
-    /**
-     * A class for building and validating certification paths (also known as certificate chains).
-     * 
-     * @memberOf GostCert
-     * @type GostCert.CertPath
-     */
-    GostCert.prototype.CertPath = CertPath;
-
-    /**
-     * A generic interface for implementing a particular certificate verification 
-     * scheme, such as constructing and verifying 
-     * certificate chains.
-     * 
-     * @class GostCert.CertificateTrustPolicy
-     */
-    function CertificateTrustPolicy() {
-    }
-
-    extend(Object, CertificateTrustPolicy, {
-        /**
-         * Returns a certificate, known to be valid (according to criteria dependent 
-         * on the verification scheme), which has the given selector, certificate and 
-         * CRL lists to implement a particular certificate verification  scheme, 
-         * such a forming valid certificate chains.<br>
-         * Second and third argument to this method may be undefined, and such a case 
-         * must be treated exactly the same as if the particular argument was an empty array.
-         * 
-         * @memberOf GostCert.CertificateTrustPolicy
-         * @instance
-         * @param {GostCert.CertificateSelector} selector Certificate selector
-         * @param {GostCert.X509[]} certificates Certificates
-         * @param {GostCert.CRL[]} crls CLRs
-         * @returns {Promise} Promise to return valid {@link GostCert.X509}
-         */
-        getValidCertificate: function (selector, certificates, crls) {
-        }
-    });
-
-    /**
-     * A generic interface for implementing a particular certificate verification
-     * 
-     * @memberOf GostCert
-     * @type GostCert.CertificateTrustPolicy
-     */
-    GostCert.prototype.CertificateTrustPolicy = CertificateTrustPolicy;
-
-    /**
-     * A certificate trust policy based on a set of trusted root CAs.<br><br>
-     * 
-     * In this policy, a certificate will be trusted if and only if it is part of a 
-     * valid certificate chain which terminates in one of the trusted root CAs. <br><br>
-     * 
-     * This policy has two options for certificate chain verification:
-     * <ul>
-     *      <li>requireCRL - If true, then for every certificate in a chain 
-     *          (unless it is one of the trusted root CA certificates) a valid CRL 
-     *          must be provided to determine its revocation status. The default is false.</li>
-     *      <li>requireCAFlag - If true, then every intermediate CA certificate (excluding 
-     *          the root CA or the end entity certificate) must contain a Basic Constraints 
-     *          extension, with the CA flag set. The default for this option is true.</li>
-     * </ul>
-     * 
-     * @class GostCert.TrustedCAPolicy
-     * @extends GostCert.CertificateTrustPolicy
-     * @param {GostCert.X509[]} trustedCACerts 
-     * @param {boolean} requireCRL 
-     * @param {boolean} requireCA 
-     */
-    function TrustedCAPolicy(trustedCACerts, requireCRL, requireCA) // <editor-fold defaultstate="collapsed">
-    {
-        this.trustedCACerts = trustedCACerts || [];
-        this.requireCRL = requireCRL || false;
-        this.requireCA = requireCA || true;
-    } // </editor-fold>
-
-    extend(CertificateTrustPolicy, TrustedCAPolicy, {
-        /**
-         * Returns a certificate, known to be valid (according to criteria dependent 
-         * on the verification scheme), which has the given selector, certificate and 
-         * CRL lists to implement a particular certificate verification  scheme, 
-         * such a forming valid certificate chains.<br>
-         * Second and third argument to this method may be undefined, and such a case 
-         * must be treated exactly the same as if the particular argument was an empty array.
-         * 
-         * @memberOf GostCert.TrustedCAPolicy
-         * @instance
-         * @param {GostCert.CertificateSelector} selector Certificate selector
-         * @param {GostASN1.Certificate[]} certificates Certificates
-         * @param {GostASN1.CertificateList[]} crls CLRs
-         * @param {Date} date Validation date. Default today
-         * @returns {Promise} Promise to return valid {@link GostCert.X509}
-         */
-        getValidCertificate: function (selector, certificates, crls, date) // <editor-fold defaultstate="collapsed">
-        {
-            var self = this, certPath;
-            return new Promise(call).then(function () {
-                certificates = certificates || [];
-                crls = crls || [];
-                // Get certificates from the trusted list
-                var certs = selectCertificates(self.trustedCACerts, selector);
-                if (certs.length > 0)
-                    return new X509(certs[0]);
-                // Get certificates from the list
-                certs = selectCertificates(certificates, selector);
-                if (certs.length === 0)
-                    return;
-                // Build certification path
-                var current = new X509(certs[0]), success = false, verifiers = [];
-                certPath = [];
-                while (current) {
-                    var foundCRLs = [], founds = [];
-                    certPath.push(current);
-                    if (!success) {
-                        // Select issuer CRL
-                        foundCRLs = selectCRLs(crls, {issuer: current.issuer, date: date});
-                        if (foundCRLs.length === 0 && self.requireCRL)
-                            return; // The issuer\'s CRL is not found
-                        // Create issuer's selection criteria
-                        selector = authoritySelector(current, current.extensions,
-                                current.notBefore);
-                        // Select issuer form trusted CA root list
-                        founds = selectCertificates(self.trustedCACerts, selector);
-                        if (founds.length === 0) {
-                            // Non-trusted self-signed certificate?
-                            if (!matchCertificate(current, selector)) {
-                                // Select issuer from certificate list
-                                founds = selectCertificates(certificates, selector);
-                                if (founds.length > 0) {
-                                    // Check basic contrains and CA flag
-                                    var exts = founds[0].extensions;
-                                    if (self.requireCA) {
-                                        if (!exts || !exts.basicConstraints || !exts.basicConstraints.cA)
-                                            return; // The issuer\'s certificate is not valid
-                                        // Check path length limit
-                                        if (exts.basicConstraints.pathLenConstraint !== undefined &&
-                                                exts.basicConstraints.pathLenConstraint < certPath.length - 1)
-                                            return; // The issuer\'s certificate path length constraint exceeded
-                                    }
-                                } else
-                                    return; // Certification path is not built
-                            }
-                        } else
-                            success = true;
-                    }
-                    // Add verification tasks
-                    var next = founds.length > 0 && new X509(founds[0]),
-                            crl = foundCRLs.length > 0 && new CRL(foundCRLs[0]);
-                    // Verify CRLs
-                    if (crl)
-                        verifiers.push(crl.verify(next, date));
-
-                    // Verify the certificate
-                    verifiers.push(current.verify(next, crl, date));
-                    current = next;
-                }
-                if (!success)
-                    throw new Error('Trusted root certificate is not found');
-                // Verify all certificates in path
-                return Promise.all(verifiers).then(function (results) {
-                    for (var i = 0; i < results; i++)
-                        if (!results[i])
-                            throw new Error('Certification path is not validated');
-                    return certPath[0];
-                });
-            });
-        } // </editor-fold>
-    });
-
-    /**
-     * A certificate trust policy based on a set of trusted root CAs.
-     * 
-     * @memberOf GostCert
-     * @type GostCert.TrustedCAPolicy
-     */
-    GostCert.prototype.TrustedCAPolicy = TrustedCAPolicy;
-
-    /**
-     * Provides facilities for handling certificates, CRLs, etc.
-     * 
-     * @memberOf gostCrypto
-     * @type GostCert
-     */
-    gostCrypto.cert = new GostCert();
-
-    return GostCert;
-}));
-
-
-
-
-
-/***/ }),
-/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -12731,7 +9620,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 7 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -12777,7 +9666,7 @@ return /******/ (function(modules) { // webpackBootstrap
      * 
      */ // <editor-fold defaultstate="collapsed">
     if (true) {
-        module.exports = factory(__webpack_require__(1), __webpack_require__(6));
+        module.exports = factory(__webpack_require__(1), __webpack_require__(4));
     } else {
         root.GostDigest = factory(root.GostRandom, root.GostCipher);
     }
@@ -14008,11 +10897,2293 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @file Coding algorithms: Base64, Hex, Int16, Chars, BER and PEM
+ * @version 1.76
+ * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
+ */
+
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *    
+ * THIS SOfTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES Of MERCHANTABILITY AND fITNESS fOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * fOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT Of SUBSTITUTE GOODS OR
+ * SERVICES; LOSS Of USE, DATA, OR PROfITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY Of LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT Of THE USE
+ * Of THIS SOfTWARE, EVEN If ADVISED Of THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ */
+
+(function (root, factory) {
+
+    /*
+     * Module imports and exports
+     * 
+     */ // <editor-fold defaultstate="collapsed">
+    if (true) {
+        module.exports = factory(__webpack_require__(0));
+    } else {
+        root.GostCoding = factory(root.gostCrypto);
+    }
+    // </editor-fold>
+
+}(this, function (gostCrypto) {
+
+    /**
+     * The Coding interface provides string converting methods: Base64, Hex, 
+     * Int16, Chars, BER and PEM
+     * @class GostCoding
+     * 
+     */ // <editor-fold defaultstate="collapsed">
+    var root = this;
+    var DataError = root.DataError || root.Error;
+    var CryptoOperationData = root.ArrayBuffer;
+    var Date = root.Date;
+
+    function buffer(d) {
+        if (d instanceof CryptoOperationData)
+            return d;
+        else if (d && d.buffer && d.buffer instanceof CryptoOperationData)
+            return d.byteOffset === 0 && d.byteLength === d.buffer.byteLength ?
+                    d.buffer : new Uint8Array(new Uint8Array(d, d.byteOffset, d.byteLength)).buffer;
+        else
+            throw new DataError('CryptoOperationData required');
+    } // </editor-fold>
+
+    function GostCoding() {
+    }
+
+    /**
+     * BASE64 conversion
+     * 
+     * @class GostCoding.Base64
+     */
+    var Base64 = {// <editor-fold defaultstate="collapsed">
+        /**
+         * Base64.decode convert BASE64 string s to CryptoOperationData
+         * 
+         * @memberOf GostCoding.Base64
+         * @param {String} s BASE64 encoded string value
+         * @returns {CryptoOperationData} Binary decoded data
+         */
+        decode: function (s) {
+            s = s.replace(/[^A-Za-z0-9\+\/]/g, '');
+            var n = s.length,
+                    k = n * 3 + 1 >> 2, r = new Uint8Array(k);
+
+            for (var m3, m4, u24 = 0, j = 0, i = 0; i < n; i++) {
+                m4 = i & 3;
+                var c = s.charCodeAt(i);
+
+                c = c > 64 && c < 91 ?
+                        c - 65 : c > 96 && c < 123 ?
+                        c - 71 : c > 47 && c < 58 ?
+                        c + 4 : c === 43 ?
+                        62 : c === 47 ?
+                        63 : 0;
+
+                u24 |= c << 18 - 6 * m4;
+                if (m4 === 3 || n - i === 1) {
+                    for (m3 = 0; m3 < 3 && j < k; m3++, j++) {
+                        r[j] = u24 >>> (16 >>> m3 & 24) & 255;
+                    }
+                    u24 = 0;
+
+                }
+            }
+            return r.buffer;
+        },
+        /**
+         * Base64.encode(data) convert CryptoOperationData data to BASE64 string
+         * 
+         * @memberOf GostCoding.Base64
+         * @param {CryptoOperationData} data Bynary data for encoding
+         * @returns {String} BASE64 encoded data
+         */
+        encode: function (data) {
+            var slen = 8, d = new Uint8Array(buffer(data));
+            var m3 = 2, s = '';
+            for (var n = d.length, u24 = 0, i = 0; i < n; i++) {
+                m3 = i % 3;
+                if (i > 0 && (i * 4 / 3) % (12 * slen) === 0)
+                    s += '\r\n';
+                u24 |= d[i] << (16 >>> m3 & 24);
+                if (m3 === 2 || n - i === 1) {
+                    for (var j = 18; j >= 0; j -= 6) {
+                        var c = u24 >>> j & 63;
+                        c = c < 26 ? c + 65 : c < 52 ? c + 71 : c < 62 ? c - 4 :
+                                c === 62 ? 43 : c === 63 ? 47 : 65;
+                        s += String.fromCharCode(c);
+                    }
+                    u24 = 0;
+                }
+            }
+            return s.substr(0, s.length - 2 + m3) + (m3 === 2 ? '' : m3 === 1 ? '=' : '==');
+        } // </editor-fold>
+    };
+
+    /**
+     * BASE64 conversion
+     * 
+     * @memberOf GostCoding
+     * @insnance
+     * @type GostCoding.Base64
+     */
+    GostCoding.prototype.Base64 = Base64;
+
+    /**
+     * Text string conversion <br>
+     * Methods support charsets: ascii, win1251, utf8, utf16 (ucs2, unicode), utf32 (ucs4)
+     * 
+     * @class GostCoding.Chars
+     */
+    var Chars = (function () { // <editor-fold defaultstate="collapsed">
+
+        var _win1251_ = {
+            0x402: 0x80, 0x403: 0x81, 0x201A: 0x82, 0x453: 0x83, 0x201E: 0x84, 0x2026: 0x85, 0x2020: 0x86, 0x2021: 0x87,
+            0x20AC: 0x88, 0x2030: 0x89, 0x409: 0x8A, 0x2039: 0x8B, 0x40A: 0x8C, 0x40C: 0x8D, 0x40B: 0x8E, 0x40f: 0x8f,
+            0x452: 0x90, 0x2018: 0x91, 0x2019: 0x92, 0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97,
+            0x2122: 0x99, 0x459: 0x9A, 0x203A: 0x9B, 0x45A: 0x9C, 0x45C: 0x9D, 0x45B: 0x9E, 0x45f: 0x9f,
+            0xA0: 0xA0, 0x40E: 0xA1, 0x45E: 0xA2, 0x408: 0xA3, 0xA4: 0xA4, 0x490: 0xA5, 0xA6: 0xA6, 0xA7: 0xA7,
+            0x401: 0xA8, 0xA9: 0xA9, 0x404: 0xAA, 0xAB: 0xAB, 0xAC: 0xAC, 0xAD: 0xAD, 0xAE: 0xAE, 0x407: 0xAf,
+            0xB0: 0xB0, 0xB1: 0xB1, 0x406: 0xB2, 0x456: 0xB3, 0x491: 0xB4, 0xB5: 0xB5, 0xB6: 0xB6, 0xB7: 0xB7,
+            0x451: 0xB8, 0x2116: 0xB9, 0x454: 0xBA, 0xBB: 0xBB, 0x458: 0xBC, 0x405: 0xBD, 0x455: 0xBE, 0x457: 0xBf
+        };
+        var _win1251back_ = {};
+        for (var from in _win1251_) {
+            var to = _win1251_[from];
+            _win1251back_[to] = from;
+        }
+
+        return {
+            /**
+             * Chars.decode(s, charset) convert string s with defined charset to CryptoOperationData 
+             * 
+             * @memberOf GostCoding.Chars
+             * @param {string} s Javascript string
+             * @param {string} charset Charset, default 'win1251'
+             * @returns {CryptoOperationData} Decoded binary data
+             */
+            decode: function (s, charset) {
+                charset = (charset || 'win1251').toLowerCase().replace('-', '');
+                var r = [];
+                for (var i = 0, j = s.length; i < j; i++) {
+                    var c = s.charCodeAt(i);
+                    if (charset === 'utf8') {
+                        if (c < 0x80) {
+                            r.push(c);
+                        } else if (c < 0x800) {
+                            r.push(0xc0 + (c >>> 6));
+                            r.push(0x80 + (c & 63));
+                        } else if (c < 0x10000) {
+                            r.push(0xe0 + (c >>> 12));
+                            r.push(0x80 + (c >>> 6 & 63));
+                            r.push(0x80 + (c & 63));
+                        } else if (c < 0x200000) {
+                            r.push(0xf0 + (c >>> 18));
+                            r.push(0x80 + (c >>> 12 & 63));
+                            r.push(0x80 + (c >>> 6 & 63));
+                            r.push(0x80 + (c & 63));
+                        } else if (c < 0x4000000) {
+                            r.push(0xf8 + (c >>> 24));
+                            r.push(0x80 + (c >>> 18 & 63));
+                            r.push(0x80 + (c >>> 12 & 63));
+                            r.push(0x80 + (c >>> 6 & 63));
+                            r.push(0x80 + (c & 63));
+                        } else {
+                            r.push(0xfc + (c >>> 30));
+                            r.push(0x80 + (c >>> 24 & 63));
+                            r.push(0x80 + (c >>> 18 & 63));
+                            r.push(0x80 + (c >>> 12 & 63));
+                            r.push(0x80 + (c >>> 6 & 63));
+                            r.push(0x80 + (c & 63));
+                        }
+                    } else if (charset === 'unicode' || charset === 'ucs2' || charset === 'utf16') {
+                        if (c < 0xD800 || (c >= 0xE000 && c <= 0x10000)) {
+                            r.push(c >>> 8);
+                            r.push(c & 0xff);
+                        } else if (c >= 0x10000 && c < 0x110000) {
+                            c -= 0x10000;
+                            var first = ((0xffc00 & c) >> 10) + 0xD800;
+                            var second = (0x3ff & c) + 0xDC00;
+                            r.push(first >>> 8);
+                            r.push(first & 0xff);
+                            r.push(second >>> 8);
+                            r.push(second & 0xff);
+                        }
+                    } else if (charset === 'utf32' || charset === 'ucs4') {
+                        r.push(c >>> 24 & 0xff);
+                        r.push(c >>> 16 & 0xff);
+                        r.push(c >>> 8 & 0xff);
+                        r.push(c & 0xff);
+                    } else if (charset === 'win1251') {
+                        if (c >= 0x80) {
+                            if (c >= 0x410 && c < 0x450) // А..Яа..я
+                                c -= 0x350;
+                            else
+                                c = _win1251_[c] || 0;
+                        }
+                        r.push(c);
+                    } else
+                        r.push(c & 0xff);
+                }
+                return new Uint8Array(r).buffer;
+            },
+            /**
+             * Chars.encode(data, charset) convert CryptoOperationData data to string with defined charset
+             * 
+             * @memberOf GostCoding.Chars
+             * @param {CryptoOperationData} data Binary data
+             * @param {string} charset Charset, default win1251
+             * @returns {string} Encoded javascript string
+             */
+            encode: function (data, charset) {
+                charset = (charset || 'win1251').toLowerCase().replace('-', '');
+                var r = [], d = new Uint8Array(buffer(data));
+                for (var i = 0, n = d.length; i < n; i++) {
+                    var c = d[i];
+                    if (charset === 'utf8') {
+                        c = c >= 0xfc && c < 0xfe && i + 5 < n ? // six bytes
+                                (c - 0xfc) * 1073741824 + (d[++i] - 0x80 << 24) + (d[++i] - 0x80 << 18) + (d[++i] - 0x80 << 12) + (d[++i] - 0x80 << 6) + d[++i] - 0x80
+                                : c >> 0xf8 && c < 0xfc && i + 4 < n ? // five bytes 
+                                (c - 0xf8 << 24) + (d[++i] - 0x80 << 18) + (d[++i] - 0x80 << 12) + (d[++i] - 0x80 << 6) + d[++i] - 0x80
+                                : c >> 0xf0 && c < 0xf8 && i + 3 < n ? // four bytes 
+                                (c - 0xf0 << 18) + (d[++i] - 0x80 << 12) + (d[++i] - 0x80 << 6) + d[++i] - 0x80
+                                : c >= 0xe0 && c < 0xf0 && i + 2 < n ? // three bytes 
+                                (c - 0xe0 << 12) + (d[++i] - 0x80 << 6) + d[++i] - 0x80
+                                : c >= 0xc0 && c < 0xe0 && i + 1 < n ? // two bytes 
+                                (c - 0xc0 << 6) + d[++i] - 0x80
+                                : c; // one byte 
+                    } else if (charset === 'unicode' || charset === 'ucs2' || charset === 'utf16') {
+                        c = (c << 8) + d[++i];
+                        if (c >= 0xD800 && c < 0xE000) {
+                            var first = (c - 0xD800) << 10;
+                            c = d[++i];
+                            c = (c << 8) + d[++i];
+                            var second = c - 0xDC00;
+                            c = first + second + 0x10000;
+                        }
+                    } else if (charset === 'utf32' || charset === 'ucs4') {
+                        c = (c << 8) + d[++i];
+                        c = (c << 8) + d[++i];
+                        c = (c << 8) + d[++i];
+                    } else if (charset === 'win1251') {
+                        if (c >= 0x80) {
+                            if (c >= 0xC0 && c < 0x100)
+                                c += 0x350; // А..Яа..я
+                            else
+                                c = _win1251back_[c] || 0;
+                        }
+                    }
+                    r.push(String.fromCharCode(c));
+                }
+                return r.join('');
+            }
+        }; // </editor-fold>
+    })();
+
+    /**
+     * Text string conversion
+     * 
+     * @memberOf GostCoding
+     * @insnance
+     * @type GostCoding.Chars
+     */
+    GostCoding.prototype.Chars = Chars;
+
+    /**
+     * HEX conversion
+     * 
+     * @class GostCoding.Hex
+     */
+    var Hex = {// <editor-fold defaultstate="collapsed">
+        /**
+         * Hex.decode(s, endean) convert HEX string s to CryptoOperationData in endean mode
+         * 
+         * @memberOf GostCoding.Hex
+         * @param {string} s Hex encoded string
+         * @param {boolean} endean Little or Big Endean, default Little
+         * @returns {CryptoOperationData} Decoded binary data
+         */
+        decode: function (s, endean) {
+            s = s.replace(/[^A-fa-f0-9]/g, '');
+            var n = Math.ceil(s.length / 2), r = new Uint8Array(n);
+            s = (s.length % 2 > 0 ? '0' : '') + s;
+            if (endean && ((typeof endean !== 'string') ||
+                    (endean.toLowerCase().indexOf('little') < 0)))
+                for (var i = 0; i < n; i++)
+                    r[i] = parseInt(s.substr((n - i - 1) * 2, 2), 16);
+            else
+                for (var i = 0; i < n; i++)
+                    r[i] = parseInt(s.substr(i * 2, 2), 16);
+            return r.buffer;
+        },
+        /**
+         * Hex.encode(data, endean) convert CryptoOperationData data to HEX string in endean mode
+         * 
+         * @memberOf GostCoding.Hex 
+         * @param {CryptoOperationData} data Binary data
+         * @param {boolean} endean Little/Big Endean, default Little
+         * @returns {string} Hex decoded string
+         */
+        encode: function (data, endean) {
+            var s = [], d = new Uint8Array(buffer(data)), n = d.length;
+            if (endean && ((typeof endean !== 'string') ||
+                    (endean.toLowerCase().indexOf('little') < 0)))
+                for (var i = 0; i < n; i++) {
+                    var j = n - i - 1;
+                    s[j] = (j > 0 && j % 32 === 0 ? '\r\n' : '') +
+                            ('00' + d[i].toString(16)).slice(-2);
+                }
+            else
+                for (var i = 0; i < n; i++)
+                    s[i] = (i > 0 && i % 32 === 0 ? '\r\n' : '') +
+                            ('00' + d[i].toString(16)).slice(-2);
+            return s.join('');
+        } // </editor-fold>
+    };
+
+    /**
+     *  HEX conversion
+     * @memberOf GostCoding
+     * @insnance
+     * @type GostCoding.Hex
+     */
+    GostCoding.prototype.Hex = Hex;
+
+    /**
+     * String hex-encoded integer conversion
+     * 
+     * @class GostCoding.Int16
+     */
+    var Int16 = {// <editor-fold defaultstate="collapsed">
+        /**
+         * Int16.decode(s) convert hex big insteger s to CryptoOperationData
+         * 
+         * @memberOf GostCoding.Int16 
+         * @param {string} s Int16 string 
+         * @returns {CryptoOperationData} Decoded binary data
+         */
+        decode: function (s) {
+            s = (s || '').replace(/[^\-A-fa-f0-9]/g, '');
+            if (s.length === 0)
+                s = '0';
+            // Signature
+            var neg = false;
+            if (s.charAt(0) === '-') {
+                neg = true;
+                s = s.substring(1);
+            }
+            // Align 2 chars
+            while (s.charAt(0) === '0' && s.length > 1)
+                s = s.substring(1);
+            s = (s.length % 2 > 0 ? '0' : '') + s;
+            // Padding for singanuture
+            // '800000' - 'ffffff' - for positive
+            // '800001' - 'ffffff' - for negative
+            if ((!neg && !/^[0-7]/.test(s)) ||
+                    (neg && !/^[0-7]|8[0]+$/.test(s)))
+                s = '00' + s;
+            // Convert hex
+            var n = s.length / 2, r = new Uint8Array(n), t = 0;
+            for (var i = n - 1; i >= 0; --i) {
+                var c = parseInt(s.substr(i * 2, 2), 16);
+                if (neg && (c + t > 0)) {
+                    c = 256 - c - t;
+                    t = 1;
+                }
+                r[i] = c;
+            }
+            return r.buffer;
+        },
+        /**
+         * Int16.encode(data) convert CryptoOperationData data to big integer hex string
+         * 
+         * @memberOf GostCoding.Int16
+         * @param {CryptoOperationData} data Binary data
+         * @returns {string} Int16 encoded string
+         */
+        encode: function (data) {
+            var d = new Uint8Array(buffer(data)), n = d.length;
+            if (d.length === 0)
+                return '0x00';
+            var s = [], neg = d[0] > 0x7f, t = 0;
+            for (var i = n - 1; i >= 0; --i) {
+                var v = d[i];
+                if (neg && (v + t > 0)) {
+                    v = 256 - v - t;
+                    t = 1;
+                }
+                s[i] = ('00' + v.toString(16)).slice(-2);
+            }
+            s = s.join('');
+            while (s.charAt(0) === '0')
+                s = s.substring(1);
+            return (neg ? '-' : '') + '0x' + s;
+        } // </editor-fold>
+    };
+
+    /**
+     * String hex-encoded integer conversion
+     * @memberOf GostCoding
+     * @insnance
+     * @type GostCoding.Int16
+     */
+    GostCoding.prototype.Int16 = Int16;
+
+    /**
+     * BER, DER, CER conversion
+     * 
+     * @class GostCoding.BER
+     */
+    var BER = (function () { // <editor-fold defaultstate="collapsed">
+
+        // Predefenition block
+        function encodeBER(source, format, onlyContent) {
+            // Correct primitive type
+            var object = source.object;
+            if (object === undefined)
+                object = source;
+
+            // Determinate tagClass
+            var tagClass = source.tagClass = source.tagClass || 0; // Universial default
+
+            // Determinate tagNumber. Use only for Universal class
+            if (tagClass === 0) {
+                var tagNumber = source.tagNumber;
+                if (typeof tagNumber === 'undefined') {
+                    if (typeof object === 'string') {
+                        if (object === '')   // NULL
+                            tagNumber = 0x05;
+                        else if (/^\-?0x[0-9a-fA-F]+$/.test(object)) // INTEGER
+                            tagNumber = 0x02;
+                        else if (/^(\d+\.)+\d+$/.test(object)) // OID
+                            tagNumber = 0x06;
+                        else if (/^[01]+$/.test(object)) // BIT STRING
+                            tagNumber = 0x03;
+                        else if (/^(true|false)$/.test(object)) // BOOLEAN
+                            tagNumber = 0x01;
+                        else if (/^[0-9a-fA-F]+$/.test(object)) // OCTET STRING
+                            tagNumber = 0x04;
+                        else
+                            tagNumber = 0x13; // Printable string (later can be changed to UTF8String)
+                    } else if (typeof object === 'number') { // INTEGER
+                        tagNumber = 0x02;
+                    } else if (typeof object === 'boolean') { // BOOLEAN
+                        tagNumber = 0x01;
+                    } else if (object instanceof Array) { // SEQUENCE
+                        tagNumber = 0x10;
+                    } else if (object instanceof Date) { // GeneralizedTime
+                        tagNumber = 0x18;
+                    } else if (object instanceof CryptoOperationData || (object && object.buffer instanceof CryptoOperationData)) {
+                        tagNumber = 0x04;
+                    } else
+                        throw new DataError('Unrecognized type for ' + object);
+                }
+            }
+
+            // Determinate constructed
+            var tagConstructed = source.tagConstructed;
+            if (typeof tagConstructed === 'undefined')
+                tagConstructed = source.tagConstructed = object instanceof Array;
+
+            // Create content
+            var content;
+            if (object instanceof CryptoOperationData || (object && object.buffer instanceof CryptoOperationData)) { // Direct
+                content = new Uint8Array(buffer(object));
+                if (tagNumber === 0x03) { // BITSTRING
+                    // Set unused bits
+                    var a = new Uint8Array(buffer(content));
+                    content = new Uint8Array(a.length + 1);
+                    content[0] = 0; // No unused bits
+                    content.set(a, 1);
+                }
+            } else if (tagConstructed) { // Sub items coding
+                if (object instanceof Array) {
+                    var bytelen = 0, ba = [], offset = 0;
+                    for (var i = 0, n = object.length; i < n; i++) {
+                        ba[i] = encodeBER(object[i], format);
+                        bytelen += ba[i].length;
+                    }
+                    if (tagNumber === 0x11)
+                        ba.sort(function (a, b) { // Sort order for SET components
+                            for (var i = 0, n = Math.min(a.length, b.length); i < n; i++) {
+                                var r = a[i] - b[i];
+                                if (r !== 0)
+                                    return r;
+                            }
+                            return a.length - b.length;
+                        });
+                    if (format === 'CER') { // final for CER 00 00
+                        ba[n] = new Uint8Array(2);
+                        bytelen += 2;
+                    }
+                    content = new Uint8Array(bytelen);
+                    for (var i = 0, n = ba.length; i < n; i++) {
+                        content.set(ba[i], offset);
+                        offset = offset + ba[i].length;
+                    }
+                } else
+                    throw new DataError('Constracted block can\'t be primitive');
+            } else {
+                switch (tagNumber) {
+                    // 0x00: // EOC
+                    case 0x01: // BOOLEAN
+                        content = new Uint8Array(1);
+                        content[0] = object ? 0xff : 0;
+                        break;
+                    case 0x02: // INTEGER
+                    case 0x0a: // ENUMIRATED
+                        content = Int16.decode(
+                                typeof object === 'number' ? object.toString(16) : object);
+                        break;
+                    case 0x03: // BIT STRING
+                        if (typeof object === 'string') {
+                            var unusedBits = 7 - (object.length + 7) % 8;
+                            var n = Math.ceil(object.length / 8);
+                            content = new Uint8Array(n + 1);
+                            content[0] = unusedBits;
+                            for (var i = 0; i < n; i++) {
+                                var c = 0;
+                                for (var j = 0; j < 8; j++) {
+                                    var k = i * 8 + j;
+                                    c = (c << 1) + (k < object.length ? (object.charAt(k) === '1' ? 1 : 0) : 0);
+                                }
+                                content[i + 1] = c;
+                            }
+                        }
+                        break;
+                    case 0x04:
+                        content = Hex.decode(
+                                typeof object === 'number' ? object.toString(16) : object);
+                        break;
+                        // case 0x05: // NULL
+                    case 0x06: // OBJECT IDENTIFIER
+                        var a = object.match(/\d+/g), r = [];
+                        for (var i = 1; i < a.length; i++) {
+                            var n = +a[i], r1 = [];
+                            if (i === 1)
+                                n = n + a[0] * 40;
+                            do {
+                                r1.push(n & 0x7F);
+                                n = n >>> 7;
+                            } while (n);
+                            // reverse order
+                            for (j = r1.length - 1; j >= 0; --j)
+                                r.push(r1[j] + (j === 0 ? 0x00 : 0x80));
+                        }
+                        content = new Uint8Array(r);
+                        break;
+                        // case 0x07: // ObjectDescriptor
+                        // case 0x08: // EXTERNAL
+                        // case 0x09: // REAL
+                        // case 0x0A: // ENUMERATED
+                        // case 0x0B: // EMBEDDED PDV
+                    case 0x0C: // UTF8String
+                        content = Chars.decode(object, 'utf8');
+                        break;
+                        // case 0x10: // SEQUENCE
+                        // case 0x11: // SET
+                    case 0x12: // NumericString
+                    case 0x16: // IA5String // ASCII
+                    case 0x13: // PrintableString // ASCII subset
+                    case 0x14: // TeletexString // aka T61String
+                    case 0x15: // VideotexString
+                    case 0x19: // GraphicString
+                    case 0x1A: // VisibleString // ASCII subset
+                    case 0x1B: // GeneralString
+                        // Reflect on character encoding
+                        for (var i = 0, n = object.length; i < n; i++)
+                            if (object.charCodeAt(i) > 255)
+                                tagNumber = 0x0C;
+                        if (tagNumber === 0x0C)
+                            content = Chars.decode(object, 'utf8');
+                        else
+                            content = Chars.decode(object, 'ascii');
+                        break;
+                    case 0x17: // UTCTime
+                    case 0x18: // GeneralizedTime
+                        var result = object.original;
+                        if (!result) {
+                            var date = new Date(object);
+                            date.setMinutes(date.getMinutes() + date.getTimezoneOffset()); // to UTC
+                            var ms = tagNumber === 0x18 ? date.getMilliseconds().toString() : ''; // Milliseconds, remove trailing zeros
+                            while (ms.length > 0 && ms.charAt(ms.length - 1) === '0')
+                                ms = ms.substring(0, ms.length - 1);
+                            if (ms.length > 0)
+                                ms = '.' + ms;
+                            result = (tagNumber === 0x17 ? date.getYear().toString().slice(-2) : date.getFullYear().toString()) +
+                                    ('00' + (date.getMonth() + 1)).slice(-2) +
+                                    ('00' + date.getDate()).slice(-2) +
+                                    ('00' + date.getHours()).slice(-2) +
+                                    ('00' + date.getMinutes()).slice(-2) +
+                                    ('00' + date.getSeconds()).slice(-2) + ms + 'Z';
+                        }
+                        content = Chars.decode(result, 'ascii');
+                        break;
+                    case 0x1C: // UniversalString
+                        content = Chars.decode(object, 'utf32');
+                        break;
+                    case 0x1E: // BMPString
+                        content = Chars.decode(object, 'utf16');
+                        break;
+                }
+            }
+
+            if (!content)
+                content = new Uint8Array(0);
+            if (content instanceof CryptoOperationData)
+                content = new Uint8Array(content);
+
+            if (!tagConstructed && format === 'CER') {
+                // Encoding CER-form for string types
+                var k;
+                switch (tagNumber) {
+                    case 0x03: // BIT_STRING
+                        k = 1; // ingnore unused bit for bit string
+                    case 0x04: // OCTET_STRING
+                    case 0x0C: // UTF8String
+                    case 0x12: // NumericString
+                    case 0x13: // PrintableString
+                    case 0x14: // TeletexString
+                    case 0x15: // VideotexString
+                    case 0x16: // IA5String
+                    case 0x19: // GraphicString
+                    case 0x1A: // VisibleString
+                    case 0x1B: // GeneralString
+                    case 0x1C: // UniversalString
+                    case 0x1E: // BMPString
+                        k = k || 0;
+                        // Split content on 1000 octet len parts 
+                        var size = 1000;
+                        var bytelen = 0, ba = [], offset = 0;
+                        for (var i = k, n = content.length; i < n; i += size - k) {
+                            ba[i] = encodeBER({
+                                object: new Unit8Array(content.buffer, i, Math.min(size - k, n - i)),
+                                tagNumber: tagNumber,
+                                tagClass: 0,
+                                tagConstructed: false
+                            }, format);
+                            bytelen += ba[i].length;
+                        }
+                        ba[n] = new Uint8Array(2); // final for CER 00 00
+                        bytelen += 2;
+                        content = new Uint8Array(bytelen);
+                        for (var i = 0, n = ba.length; i < n; i++) {
+                            content.set(ba[i], offset);
+                            offset = offset + ba[i].length;
+                        }
+                }
+            }
+
+            // Restore tagNumber for all classes
+            if (tagClass === 0)
+                source.tagNumber = tagNumber;
+            else
+                source.tagNumber = tagNumber = source.tagNumber || 0;
+            source.content = content;
+
+            if (onlyContent)
+                return content;
+
+            // Create header
+            // tagNumber
+            var ha = [], first = tagClass === 3 ? 0xC0 : tagClass === 2 ? 0x80 :
+                    tagClass === 1 ? 0x40 : 0x00;
+            if (tagConstructed)
+                first |= 0x20;
+            if (tagNumber < 0x1F) {
+                first |= tagNumber & 0x1F;
+                ha.push(first);
+            } else {
+                first |= 0x1F;
+                ha.push(first);
+                var n = tagNumber, ha1 = [];
+                do {
+                    ha1.push(n & 0x7F);
+                    n = n >>> 7;
+                } while (n)
+                // reverse order
+                for (var j = ha1.length - 1; j >= 0; --j)
+                    ha.push(ha1[j] + (j === 0 ? 0x00 : 0x80));
+            }
+            // Length
+            if (tagConstructed && format === 'CER') {
+                ha.push(0x80);
+            } else {
+                var len = content.length;
+                if (len > 0x7F) {
+                    var l2 = len, ha2 = [];
+                    do {
+                        ha2.push(l2 & 0xff);
+                        l2 = l2 >>> 8;
+                    } while (l2);
+                    ha.push(ha2.length + 0x80); // reverse order
+                    for (var j = ha2.length - 1; j >= 0; --j)
+                        ha.push(ha2[j]);
+                } else {
+                    // simple len
+                    ha.push(len);
+                }
+            }
+            var header = source.header = new Uint8Array(ha);
+
+            // Result - complete buffer
+            var block = new Uint8Array(header.length + content.length);
+            block.set(header, 0);
+            block.set(content, header.length);
+            return block;
+        }
+
+        function decodeBER(source, offset) {
+
+            // start pos
+            var pos = offset || 0, start = pos;
+            var tagNumber, tagClass, tagConstructed,
+                    content, header, buffer, sub, len;
+
+            if (source.object) {
+                // Ready from source
+                tagNumber = source.tagNumber;
+                tagClass = source.tagClass;
+                tagConstructed = source.tagConstructed;
+                content = source.content;
+                header = source.header;
+                buffer = source.object instanceof CryptoOperationData ?
+                        new Uint8Array(source.object) : null;
+                sub = source.object instanceof Array ? source.object : null;
+                len = buffer && buffer.length || null;
+            } else {
+                // Decode header
+                var d = source;
+
+                // Read tag
+                var buf = d[pos++];
+                tagNumber = buf & 0x1f;
+                tagClass = buf >> 6;
+                tagConstructed = (buf & 0x20) !== 0;
+                if (tagNumber === 0x1f) { // long tag
+                    tagNumber = 0;
+                    do {
+                        if (tagNumber > 0x1fffffffffff80)
+                            throw new DataError('Convertor not supported tag number more then (2^53 - 1) at position ' + offset);
+                        buf = d[pos++];
+                        tagNumber = (tagNumber << 7) + (buf & 0x7f);
+                    } while (buf & 0x80);
+                }
+
+                // Read len        
+                buf = d[pos++];
+                len = buf & 0x7f;
+                if (len !== buf) {
+                    if (len > 6) // no reason to use Int10, as it would be a huge buffer anyways
+                        throw new DataError('Length over 48 bits not supported at position ' + offset);
+                    if (len === 0)
+                        len = null; // undefined
+                    else {
+                        buf = 0;
+                        for (var i = 0; i < len; ++i)
+                            buf = (buf << 8) + d[pos++];
+                        len = buf;
+                    }
+                }
+
+                start = pos;
+                sub = null;
+
+                if (tagConstructed) {
+                    // must have valid content
+                    sub = [];
+                    if (len !== null) {
+                        // definite length
+                        var end = start + len;
+                        while (pos < end) {
+                            var s = decodeBER(d, pos);
+                            sub.push(s);
+                            pos += s.header.length + s.content.length;
+                        }
+                        if (pos !== end)
+                            throw new DataError('Content size is not correct for container starting at offset ' + start);
+                    } else {
+                        // undefined length
+                        try {
+                            for (; ; ) {
+                                var s = decodeBER(d, pos);
+                                pos += s.header.length + s.content.length;
+                                if (s.tagClass === 0x00 && s.tagNumber === 0x00)
+                                    break;
+                                sub.push(s);
+                            }
+                            len = pos - start;
+                        } catch (e) {
+                            throw new DataError('Exception ' + e + ' while decoding undefined length content at offset ' + start);
+                        }
+                    }
+                }
+
+                // Header and content
+                header = new Uint8Array(d.buffer, offset, start - offset);
+                content = new Uint8Array(d.buffer, start, len);
+                buffer = content;
+            }
+
+            // Constructed types - check for string concationation
+            if (sub !== null && tagClass === 0) {
+                var k;
+                switch (tagNumber) {
+                    case 0x03: // BIT_STRING
+                        k = 1; // ingnore unused bit for bit string
+                    case 0x04: // OCTET_STRING
+                    case 0x0C: // UTF8String
+                    case 0x12: // NumericString
+                    case 0x13: // PrintableString
+                    case 0x14: // TeletexString
+                    case 0x15: // VideotexString
+                    case 0x16: // IA5String
+                    case 0x19: // GraphicString
+                    case 0x1A: // VisibleString
+                    case 0x1B: // GeneralString
+                    case 0x1C: // UniversalString
+                    case 0x1E: // BMPString
+                        k = k || 0;
+                        // Concatination
+                        if (sub.length === 0)
+                            throw new DataError('No constructed encoding content of string type at offset ' + start);
+                        len = k;
+                        for (var i = 0, n = sub.length; i < n; i++) {
+                            var s = sub[i];
+                            if (s.tagClass !== tagClass || s.tagNumber !== tagNumber || s.tagConstructed)
+                                throw new DataError('Invalid constructed encoding of string type at offset ' + start);
+                            len += s.content.length - k;
+                        }
+                        buffer = new Uint8Array(len);
+                        for (var i = 0, n = sub.length, j = k; i < n; i++) {
+                            var s = sub[i];
+                            if (k > 0)
+                                buffer.set(s.content.subarray(1), j);
+                            else
+                                buffer.set(s.content, j);
+                            j += s.content.length - k;
+                        }
+                        tagConstructed = false; // follow not required
+                        sub = null;
+                        break;
+                }
+            }
+            // Primitive types
+            var object = '';
+            if (sub === null) {
+                if (len === null)
+                    throw new DataError('Invalid tag with undefined length at offset ' + start);
+
+                if (tagClass === 0) {
+                    switch (tagNumber) {
+                        case 0x01: // BOOLEAN
+                            object = buffer[0] !== 0;
+                            break;
+                        case 0x02: // INTEGER
+                        case 0x0a: // ENUMIRATED
+                            if (len > 6) {
+                                object = Int16.encode(buffer);
+                            } else {
+                                var v = buffer[0];
+                                if (buffer[0] > 0x7f)
+                                    v = v - 256;
+                                for (var i = 1; i < len; i++)
+                                    v = v * 256 + buffer[i];
+                                object = v;
+                            }
+                            break;
+                        case 0x03: // BIT_STRING
+                            if (len > 5) { // Content buffer
+                                object = new Uint8Array(buffer.subarray(1)).buffer;
+                            } else { // Max bit mask only for 32 bit
+                                var unusedBit = buffer[0],
+                                        skip = unusedBit, s = [];
+                                for (var i = len - 1; i >= 1; --i) {
+                                    var b = buffer[i];
+                                    for (var j = skip; j < 8; ++j)
+                                        s.push((b >> j) & 1 ? '1' : '0');
+                                    skip = 0;
+                                }
+                                object = s.reverse().join('');
+                            }
+                            break;
+                        case 0x04: // OCTET_STRING
+                            object = new Uint8Array(buffer).buffer;
+                            break;
+                            //  case 0x05: // NULL
+                        case 0x06: // OBJECT_IDENTIFIER
+                            var s = '',
+                                    n = 0,
+                                    bits = 0;
+                            for (var i = 0; i < len; ++i) {
+                                var v = buffer[i];
+                                n = (n << 7) + (v & 0x7F);
+                                bits += 7;
+                                if (!(v & 0x80)) { // finished
+                                    if (s === '') {
+                                        var m = n < 80 ? n < 40 ? 0 : 1 : 2;
+                                        s = m + "." + (n - m * 40);
+                                    } else
+                                        s += "." + n.toString();
+                                    n = 0;
+                                    bits = 0;
+                                }
+                            }
+                            if (bits > 0)
+                                throw new DataError('Incompleted OID at offset ' + start);
+                            object = s;
+                            break;
+                            //case 0x07: // ObjectDescriptor
+                            //case 0x08: // EXTERNAL
+                            //case 0x09: // REAL
+                            //case 0x0A: // ENUMERATED
+                            //case 0x0B: // EMBEDDED_PDV
+                        case 0x10: // SEQUENCE
+                        case 0x11: // SET
+                            object = [];
+                            break;
+                        case 0x0C: // UTF8String
+                            object = Chars.encode(buffer, 'utf8');
+                            break;
+                        case 0x12: // NumericString
+                        case 0x13: // PrintableString
+                        case 0x14: // TeletexString
+                        case 0x15: // VideotexString
+                        case 0x16: // IA5String
+                        case 0x19: // GraphicString
+                        case 0x1A: // VisibleString
+                        case 0x1B: // GeneralString
+                            object = Chars.encode(buffer, 'ascii');
+                            break;
+                        case 0x1C: // UniversalString
+                            object = Chars.encode(buffer, 'utf32');
+                            break;
+                        case 0x1E: // BMPString
+                            object = Chars.encode(buffer, 'utf16');
+                            break;
+                        case 0x17: // UTCTime
+                        case 0x18: // GeneralizedTime
+                            var shortYear = tagNumber === 0x17;
+                            var s = Chars.encode(buffer, 'ascii'),
+                                    m = (shortYear ?
+                                            /^(\d\d)(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])([01]\d|2[0-3])(?:([0-5]\d)(?:([0-5]\d)(?:[.,](\d{1,3}))?)?)?(Z|[-+](?:[0]\d|1[0-2])([0-5]\d)?)?$/ :
+                                            /^(\d\d\d\d)(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])([01]\d|2[0-3])(?:([0-5]\d)(?:([0-5]\d)(?:[.,](\d{1,3}))?)?)?(Z|[-+](?:[0]\d|1[0-2])([0-5]\d)?)?$/).exec(s);
+                            if (!m)
+                                throw new DataError('Unrecognized time format "' + s + '" at offset ' + start);
+                            if (shortYear) {
+                                // Where YY is greater than or equal to 50, the year SHALL be interpreted as 19YY; and
+                                // Where YY is less than 50, the year SHALL be interpreted as 20YY                                
+                                m[1] = +m[1];
+                                m[1] += (m[1] < 50) ? 2000 : 1900;
+                            }
+                            var dt = new Date(m[1], +m[2] - 1, +m[3], +(m[4] || '0'), +(m[5] || '0'), +(m[6] || '0'), +(m[7] || '0')),
+                                    tz = dt.getTimezoneOffset();
+                            if (m[8] || tagNumber === 0x17) {
+                                if (m[8].toUpperCase() !== 'Z' && m[9]) {
+                                    tz = tz + parseInt(m[9]);
+                                }
+                                dt.setMinutes(dt.getMinutes() - tz);
+                            }
+                            dt.original = s;
+                            object = dt;
+                            break;
+                    }
+                } else // OCTET_STRING
+                    object = new Uint8Array(buffer).buffer;
+            } else
+                object = sub;
+
+            // result
+            return {
+                tagConstructed: tagConstructed,
+                tagClass: tagClass,
+                tagNumber: tagNumber,
+                header: header,
+                content: content,
+                object: object
+            };
+        }
+
+        return {
+            /**
+             * BER.decode(object, format) convert javascript object to ASN.1 format CryptoOperationData<br><br>
+             * If object has members tagNumber, tagClass and tagConstructed
+             * it is clear define encoding rules. Else method use defaul rules:
+             * <ul>
+             *   <li>Empty string or null - NULL</li>
+             *   <li>String starts with '0x' and has 0-9 and a-f characters - INTEGER</li>
+             *   <li>String like d.d.d.d (d - set of digits) - OBJECT IDENTIFIER</li>
+             *   <li>String with characters 0 and 1 - BIT STRING</li>
+             *   <li>Strings 'true' or 'false' - BOOLEAN</li>
+             *   <li>String has only 0-9 and a-f characters - OCTET STRING</li>
+             *   <li>String has only characters with code 0-255 - PrintableString</li>
+             *   <li>Other strings - UTF8String</li>
+             *   <li>Number - INTEGER</li>
+             *   <li>Date - GeneralizedTime</li>
+             *   <li>Boolean - SEQUENCE</li>
+             *   <li>CryptoOperationData - OCTET STRING</li>
+             * </ul>
+             * SEQUENCE or SET arrays recursively encoded for each item.<br>
+             * OCTET STRING and BIT STRING can presents as array with one item. 
+             * It means encapsulates encoding for child element.<br>
+             * 
+             * If CONTEXT or APPLICATION classes item presents as array with one 
+             * item we use EXPLICIT encoding for element, else IMPLICIT encoding.<br>
+             * 
+             * @memberOf GostCoding.BER
+             * @param {Object} object Object to encoding
+             * @param {string} format Encoding rule: 'DER' or 'CER', default 'DER'
+             * @param {boolean} onlyContent Encode content only, without header
+             * @returns {CryptoOperationData} BER encoded data
+             */
+            encode: function (object, format, onlyContent) {
+                return encodeBER(object, format, onlyContent).buffer;
+            },
+            /**
+             * BER.encode(data) convert ASN.1 format CryptoOperationData data to javascript object<br><br>
+             * 
+             * Conversion rules to javascript object:
+             *  <ul>
+             *      <li>BOOLEAN - Boolean object</li>
+             *      <li>INTEGER, ENUMIRATED - Integer object if len <= 6 (48 bits) else Int16 encoded string</li>
+             *      <li>BIT STRING - Integer object if len <= 5 (w/o unsedBit octet - 32 bits) else String like '10111100' or  Array with one item in case of incapsulates encoding</li>
+             *      <li>OCTET STRING - Hex encoded string or Array with one item in case of incapsulates encoding</li>
+             *      <li>OBJECT IDENTIFIER - String with object identifier</li>
+             *      <li>SEQUENCE, SET - Array of encoded items</li>
+             *      <li>UTF8String, NumericString, PrintableString, TeletexString, VideotexString, 
+             *          IA5String, GraphicString, VisibleString, GeneralString, UniversalString,
+             *          BMPString - encoded String</li>
+             *      <li>UTCTime, GeneralizedTime - Date</li>
+             *  </ul>
+             * @memberOf GostCoding.BER
+             * @param {(CryptoOperationData|GostCoding.BER)} data Binary data to decode
+             * @returns {Object} Javascript object with result of decoding
+             */
+            decode: function (data) {
+                return decodeBER(data.object ? data : new Uint8Array(buffer(data)), 0);
+            }
+        }; // </editor-fold>
+    })();
+
+    /**
+     * BER, DER, CER conversion
+     * @memberOf GostCoding
+     * @insnance
+     * @type GostCoding.BER
+     */
+    GostCoding.prototype.BER = BER;
+
+    /**
+     * PEM conversion
+     * @class GostCoding.PEM
+     */
+    var PEM = {// <editor-fold defaultstate="collapsed">
+        /**
+         * PEM.encode(data, name) encode CryptoOperationData to PEM format with name label
+         * 
+         * @memberOf GostCoding.PEM
+         * @param {(Object|CryptoOperationData)} data Java script object or BER-encoded binary data
+         * @param {string} name Name of PEM object: 'certificate', 'private key' etc.
+         * @returns {string} Encoded object
+         */
+        encode: function (data, name) {
+            return (name ? '-----BEGIN ' + name.toUpperCase() + '-----\r\n' : '') +
+                    Base64.encode(data instanceof CryptoOperationData ? data : BER.encode(data)) +
+                    (name ? '\r\n-----END ' + name.toUpperCase() + '-----' : '');
+        },
+        /**
+         * PEM.decode(s, name, deep) decode PEM format s labeled name to CryptoOperationData or javascript object in according to deep parameter
+         * 
+         * @memberOf GostCoding.PEM
+         * @param {string} s PEM encoded string
+         * @param {string} name Name of PEM object: 'certificate', 'private key' etc.
+         * @param {boolean} deep If true method do BER-decoding, else only BASE64 decoding
+         * @param {integer} index Index of decoded value
+         * @returns {(Object|CryptoOperationData)} Decoded javascript object if deep=true, else CryptoOperationData for father BER decoding
+         */
+        decode: function (s, name, deep, index) {
+            // Try clear base64
+            var re1 = /([A-Za-z0-9\+\/\s\=]+)/g,
+                    valid = re1.exec(s);
+            if (valid[1].length !== s.length)
+                valid = false;
+            if (!valid && name) {
+                // Try with the name
+                var re2 = new RegExp(
+                        '-----\\s?BEGIN ' + name.toUpperCase() +
+                        '-----([A-Za-z0-9\\+\\/\\s\\=]+)-----\\s?END ' +
+                        name.toUpperCase() + '-----', 'g');
+                valid = re2.exec(s);
+            }
+            if (!valid) {
+                // Try with some name
+                var re3 = new RegExp(
+                        '-----\\s?BEGIN [A-Z0-9\\s]+' +
+                        '-----([A-Za-z0-9\\+\\/\\s\\=]+)-----\\s?END ' +
+                        '[A-Z0-9\\s]+-----', 'g');
+                valid = re3.exec(s);
+            }
+            var r = valid && valid[1 + (index || 0)];
+            if (!r)
+                throw new DataError('Not valid PEM format');
+            var out = Base64.decode(r);
+            if (deep)
+                out = BER.decode(out);
+            return out;
+        } // </editor-fold>
+    };
+
+    /**
+     * PEM conversion
+     * @memberOf GostCoding
+     * @insnance
+     * @type GostCoding.PEM
+     */
+    GostCoding.prototype.PEM = PEM;
+
+    if (gostCrypto)
+        /**
+         * Coding algorithms: Base64, Hex, Int16, Chars, BER and PEM
+         * 
+         * @memberOf gostCrypto
+         * @type GostCoding
+         */
+        gostCrypto.coding = new GostCoding();
+
+    return GostCoding;
+
+}));
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @file GOST and common ASN.1 Object and Algorithm Identifiers 
+ * @version 1.76
+ * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
+ */
+
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *    
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ */
+
+(function (root, factory) {
+
+    /*
+     * Module imports and exports
+     * 
+     */ // <editor-fold defaultstate="collapsed">
+    if (true) {
+        module.exports = factory(__webpack_require__(0));
+    } else {
+        root.GostSecurity = factory(root.gostCrypto);
+    }
+    // </editor-fold>
+
+}(this, function (gostCrypto) {
+
+    // <editor-fold defaultstate="collapsed">
+    var root = this;
+
+    // Expand javascript object
+    function expand() {
+        var r = {};
+        for (var i = 0, n = arguments.length; i < n; i++) {
+            var item = arguments[i];
+            if (typeof item === 'object')
+                for (var name in item)
+                    r[name] = item[name];
+        }
+        return r;
+    }
+    // </editor-fold>
+
+    /**
+     * Freandly names for ASN.1 Object Identifiers
+     * 
+     * @field names
+     * @memberOf GostSecurity
+     */ // <editor-fold defaultstate="collapsed">
+    var names = {
+        // CryptoPro algoritms
+        '1.2.643.2.2': 'CryptoPro',
+        '1.2.643.2.2.3': 'id-GostR3411-94-with-GostR3410-2001',
+        '1.2.643.2.2.4': 'id-GostR3411-94-with-GostR3410-94',
+        '1.2.643.2.2.9': 'id-GostR3411-94',
+        '1.2.643.2.2.10': 'id-HMACGostR3411-94',
+        '1.2.643.2.2.13.0': 'id-Gost28147-89-None-KeyWrap',
+        '1.2.643.2.2.13.1': 'id-Gost28147-89-CryptoPro-KeyWrap',
+        '1.2.643.2.2.14.0': 'id-Gost28147-89-None-KeyMeshing',
+        '1.2.643.2.2.14.1': 'id-Gost28147-89-CryptoPro-KeyMeshing',
+        '1.2.643.2.2.19': 'id-GostR3410-2001',
+        '1.2.643.2.2.20': 'id-GostR3410-94',
+        '1.2.643.2.2.20.1': 'id-GostR3410-94-a',
+        '1.2.643.2.2.20.2': 'id-GostR3410-94-aBis',
+        '1.2.643.2.2.20.3': 'id-GostR3410-94-b',
+        '1.2.643.2.2.20.4': 'id-GostR3410-94-bBis',
+        '1.2.643.2.2.21': 'id-Gost28147-89',
+        '1.2.643.2.2.22': 'id-Gost28147-89-MAC',
+        '1.2.643.2.2.30.0': 'id-GostR3411-94-TestParamSet',
+        '1.2.643.2.2.30.1': 'id-GostR3411-94-CryptoProParamSet',
+        '1.2.643.2.2.30.2': 'id-GostR3411-94-CryptoPro-B-ParamSet',
+        '1.2.643.2.2.30.3': 'id-GostR3411-94-CryptoPro-C-ParamSet',
+        '1.2.643.2.2.30.4': 'id-GostR3411-94-CryptoPro-D-ParamSet',
+        '1.2.643.2.2.31.0': 'id-Gost28147-89-TestParamSet',
+        '1.2.643.2.2.31.1': 'id-Gost28147-89-CryptoPro-A-ParamSet',
+        '1.2.643.2.2.31.2': 'id-Gost28147-89-CryptoPro-B-ParamSet',
+        '1.2.643.2.2.31.3': 'id-Gost28147-89-CryptoPro-C-ParamSet',
+        '1.2.643.2.2.31.4': 'id-Gost28147-89-CryptoPro-D-ParamSet',
+        '1.2.643.2.2.31.5': 'id-Gost28147-89-CryptoPro-Oscar-1-1-ParamSet',
+        '1.2.643.2.2.31.6': 'id-Gost28147-89-CryptoPro-Oscar-1-0-ParamSet',
+        '1.2.643.2.2.31.7': 'id-Gost28147-89-CryptoPro-RIC-1-ParamSet ',
+        '1.2.643.2.2.31.12': 'id-Gost28147-89-CryptoPro-tc26-1',
+        '1.2.643.2.2.31.13': 'id-Gost28147-89-CryptoPro-tc26-2',
+        '1.2.643.2.2.31.14': 'id-Gost28147-89-CryptoPro-tc26-3',
+        '1.2.643.2.2.31.15': 'id-Gost28147-89-CryptoPro-tc26-4',
+        '1.2.643.2.2.31.16': 'id-Gost28147-89-CryptoPro-tc26-5',
+        '1.2.643.2.2.31.17': 'id-Gost28147-89-CryptoPro-tc26-6',
+        '1.2.643.2.2.32.0': 'id-GostR3410-94-TestParamSet',
+        '1.2.643.2.2.32.2': 'id-GostR3410-94-CryptoPro-A-ParamSet',
+        '1.2.643.2.2.32.3': 'id-GostR3410-94-CryptoPro-B-ParamSet',
+        '1.2.643.2.2.32.4': 'id-GostR3410-94-CryptoPro-C-ParamSet',
+        '1.2.643.2.2.32.5': 'id-GostR3410-94-CryptoPro-D-ParamSet',
+        '1.2.643.2.2.33.1': 'id-GostR3410-94-CryptoPro-XchA-ParamSet',
+        '1.2.643.2.2.33.2': 'id-GostR3410-94-CryptoPro-XchB-ParamSet',
+        '1.2.643.2.2.33.3': 'id-GostR3410-94-CryptoPro-XchC-ParamSet',
+        // Certificate center attributes
+        '1.2.643.2.2.34.2': 'temporaryAccessToRC',
+        '1.2.643.2.2.34.3': 'internetContentSignature',
+        '1.2.643.2.2.34.4': 'adminRC',
+        '1.2.643.2.2.34.5': 'operatorRC',
+        '1.2.643.2.2.34.6': 'userRC',
+        '1.2.643.2.2.34.7': 'clientRC',
+        '1.2.643.2.2.34.8': 'serverRC',
+        '1.2.643.2.2.34.9': 'sysAdminRC',
+        '1.2.643.2.2.34.10': 'arcAdminRC',
+        '1.2.643.2.2.34.11': 'authorityPersonRC',
+        '1.2.643.2.2.34.12': 'clientCC',
+        '1.2.643.2.2.34.13': 'sysAdminCC',
+        '1.2.643.2.2.34.14': 'arcAdminCC',
+        '1.2.643.2.2.34.15': 'accessIPSecCA',
+        '1.2.643.2.2.34.16': 'auditAdminHSM',
+        '1.2.643.2.2.34.21': 'adminHSM',
+        '1.2.643.2.2.34.22': 'serverAdminHSH',
+        '1.2.643.2.2.34.24': 'winlogonCA',
+        '1.2.643.2.2.34.25': 'timestampServiceUser',
+        '1.2.643.2.2.34.26': 'statusServiceUser',
+        '1.2.643.2.2.34.27': 'arcAdminHSM',
+        '1.2.643.2.2.34.28': 'auditorHSM',
+        // CryptoPro algoritms
+        '1.2.643.2.2.35.0': 'id-GostR3410-2001-CryptoPro-TestParamSet',
+        '1.2.643.2.2.35.1': 'id-GostR3410-2001-CryptoPro-A-ParamSet',
+        '1.2.643.2.2.35.2': 'id-GostR3410-2001-CryptoPro-B-ParamSet',
+        '1.2.643.2.2.35.3': 'id-GostR3410-2001-CryptoPro-C-ParamSet',
+        '1.2.643.2.2.36.0': 'id-GostR3410-2001-CryptoPro-XchA-ParamSet',
+        '1.2.643.2.2.36.1': 'id-GostR3410-2001-CryptoPro-XchB-ParamSet',
+        "1.2.643.2.2.37.1": 'id-CryptoPro-GostPrivateKeys-V1',
+        "1.2.643.2.2.37.2": 'id-CryptoPro-GostPrivateKeys-V2',
+        "1.2.643.2.2.37.2.1": 'id-CryptoPro-GostPrivateKeys-V2-Full',
+        "1.2.643.2.2.37.2.2": 'id-CryptoPro-GostPrivateKeys-V2-PartOf',
+        '1.2.643.2.2.37.3.1': 'intermediateCertificates',
+        '1.2.643.2.2.37.3.2': 'trustedCertificatesSignature',
+        '1.2.643.2.2.37.3.3': 'trustedCertificatesExchange',
+        '1.2.643.2.2.37.3.10': 'keyValidity',
+        '1.2.643.2.2.38.1': 'personalBaseProlicy',
+        '1.2.643.2.2.38.2': 'networkBasePolicy',
+        '1.2.643.2.2.47.1': 'id-CryptoPro-ocsp-treats-exp-key-or-exp-cert-rev',
+        '1.2.643.2.2.47.2': 'id-CryptoPro-ocsp-crl-locator',
+        '1.2.643.2.2.47.3': 'id-CryptoPro-ocsp-instant-revocation-indicator',
+        '1.2.643.2.2.47.4': 'id-CryptoPro-ocsp-revocation-announcement-reference',
+        '1.2.643.2.2.47.5': 'id-CryptoPro-ocsp-historical-request',
+        '1.2.643.2.2.49.2': 'limitedLicense',
+        '1.2.643.2.2.96': 'id-GostR3410-2001-CryptoPro-ESDH',
+        '1.2.643.2.2.97': 'id-GostR3410-94-CryptoPro-ESDH',
+        '1.2.643.2.2.98': 'id-GostR3410-2001DH',
+        '1.2.643.2.2.99': 'id-GostR3410-94DH',
+        // signature attributes
+        '1.2.643.2.45.1.1.1': 'signatureComment',
+        '1.2.643.2.45.1.1.2': 'resourceName',
+        '1.2.643.2.45.1.1.3': 'signatureUsage',
+        // params
+        '1.2.643.3.131.1.1': 'INN',
+        '1.2.643.3.141.1.1': 'RNS FSS',
+        '1.2.643.3.141.1.2': 'KP FSS',
+        // tc26
+        '1.2.643.7.1': 'tc26',
+        '1.2.643.7.1.1.1.1': 'id-tc26-gost3410-12-256',
+        '1.2.643.7.1.1.1.2': 'id-tc26-gost3410-12-512',
+        '1.2.643.7.1.1.2.1': 'id-tc26-gost3411-94',
+        '1.2.643.7.1.1.2.2': 'id-tc26-gost3411-12-256',
+        '1.2.643.7.1.1.2.3': 'id-tc26-gost3411-12-512',
+        '1.2.643.7.1.1.3.1': 'id-tc26-signwithdigest-gost3410-12-94',
+        '1.2.643.7.1.1.3.2': 'id-tc26-signwithdigest-gost3410-12-256',
+        '1.2.643.7.1.1.3.3': 'id-tc26-signwithdigest-gost3410-12-512',
+        '1.2.643.7.1.1.4.1': 'id-tc26-hmac-gost-3411-12-256',
+        '1.2.643.7.1.1.4.2': 'id-tc26-hmac-gost-3411-12-512',
+        '1.2.643.7.1.1.6.1': 'id-tc26-agreement-gost-3410-12-256',
+        '1.2.643.7.1.1.6.2': 'id-tc26-agreement-gost-3410-12-512',
+        '1.2.643.7.1.2.1.1.0': 'id-tc26-gost-3410-12-256-paramSetTest',
+        '1.2.643.7.1.2.1.1.1': 'id-tc26-gost-3410-12-256-paramSetA',
+        '1.2.643.7.1.2.1.1.2': 'id-tc26-gost-3410-12-256-paramSetB',
+        '1.2.643.7.1.2.1.2.0': 'id-tc26-gost-3410-12-512-paramSetTest',
+        '1.2.643.7.1.2.1.2.1': 'id-tc26-gost-3410-12-512-paramSetA',
+        '1.2.643.7.1.2.1.2.2': 'id-tc26-gost-3410-12-512-paramSetB',
+        '1.2.643.7.1.2.1.2.3': 'id-tc26-gost-3410-12-512-paramSetC',
+        '1.2.643.7.1.2.1.2.4': 'id-tc26-gost-3410-12-512-paramSetD',
+        '1.2.643.7.1.2.5.1.1': 'id-tc26-gost-28147-param-Z',
+        // GOST Parameters
+        '1.2.643.100.1': 'OGRN',
+        '1.2.643.100.2.1': 'SMEV-person',
+        '1.2.643.100.2.2': 'SMEV-government',
+        '1.2.643.100.3': 'SNILS',
+        '1.2.643.100.4': 'KPP',
+        '1.2.643.100.5': 'OGRNIP',
+        '1.2.643.100.6': 'internal-government',
+        '1.2.643.100.111': 'subjectSignTool',
+        '1.2.643.100.112': 'issuerSignTool',
+        '1.2.643.100.113.1': 'signToolClassKC1',
+        '1.2.643.100.113.2': 'signToolClassKC2',
+        '1.2.643.100.113.3': 'signToolClassKC3',
+        '1.2.643.100.113.4': 'signToolClassKB1',
+        '1.2.643.100.113.5': 'signToolClassKB2',
+        '1.2.643.100.113.6': 'signToolClassKA1',
+        '1.2.643.100.114.1': 'issuerToolClassKC1',
+        '1.2.643.100.114.2': 'issuerToolClassKC2',
+        '1.2.643.100.114.3': 'issuerToolClassKC3',
+        '1.2.643.100.114.4': 'issuerToolClassKB2',
+        '1.2.643.100.114.5': 'issuerToolClassKB1',
+        '1.2.643.100.114.6': 'issuerToolClassKA1',
+        // Common algorithms
+        '1.2.840.10040.4': 'x9cm',
+        '1.2.840.10040.4.1': 'dsa',
+        '1.2.840.10040.4.3': 'dsa-with-SHA1',
+        '1.2.840.10045': 'ansi-x962',
+        '1.2.840.10045.1': 'id-fieldType',
+        '1.2.840.10045.1.1': 'id-prime-Field',
+        '1.2.840.10045.1.2': 'id-characteristic-two-field',
+        '1.2.840.10045.2.1': 'ecPublicKey',
+        '1.2.840.10045.3.0': 'characteristicTwo',
+        '1.2.840.10045.3.1.1': 'secp192r1',
+        '1.2.840.10045.3.1.2': 'prime192v2',
+        '1.2.840.10045.3.1.3': 'prime192v3',
+        '1.2.840.10045.3.1.4': 'prime239v1',
+        '1.2.840.10045.3.1.5': 'prime239v2',
+        '1.2.840.10045.3.1.6': 'prime239v3',
+        '1.2.840.10045.3.1.7': 'secp256r1',
+        '1.2.840.10045.4': 'ecdsa',
+        '1.2.840.10045.4.1': 'ecdsa-with-SHA1',
+        '1.2.840.10045.4.2': 'ecdsa-with-Recommended',
+        '1.2.840.10045.4.4': 'ecdsa-with-SHA2',
+        '1.2.840.10045.4.4.1': 'ecdsa-with-SHA224',
+        '1.2.840.10045.4.4.2': 'ecdsa-with-SHA256',
+        '1.2.840.10045.4.4.3': 'ecdsa-with-SHA384',
+        '1.2.840.10045.4.4.4': 'ecdsa-with-SHA512',
+        '1.2.840.113533.7.66.13': 'PasswordBasedMac',
+        '1.3.6.1.4.1.22554.1.1.2.1.2': 'pbeWithSHAAndAES128-CBC',
+        '1.3.6.1.4.1.22554.1.1.2.1.22': 'pbeWithSHAAndAES192-CBC',
+        '1.3.6.1.4.1.22554.1.1.2.1.42': 'pbeWithSHAAndAES256-CBC',
+        '1.3.6.1.4.1.22554.1.2.1.2.1.2': 'pbeWithSHA256AndAES128-CBC',
+        '1.3.6.1.4.1.22554.1.2.1.2.1.22': 'pbeWithSHA256AndAES192-CBC',
+        '1.3.6.1.4.1.22554.1.2.1.2.1.42': 'pbeWithSHA256AndAES256-CBC',
+        //  Diffie-Hellman Key Exchange Keys
+        '1.2.840.113549': 'rsa',
+        '1.2.840.113549.1.1.1': 'rsaEncryption',
+        '1.2.840.113549.1.1.2': 'md2withRSAEncryption',
+        '1.2.840.113549.1.1.3': 'md4withRSAEncryption',
+        '1.2.840.113549.1.1.4': 'md5withRSAEncryption',
+        '1.2.840.113549.1.1.5': 'sha1withRSAEncryption',
+        '1.2.840.113549.1.1.7': 'rsaes-oaep',
+        '1.2.840.113549.1.1.8': 'mgf1',
+        '1.2.840.113549.1.1.9': 'pSpecified',
+        '1.2.840.113549.1.1.10': 'rsassa-pss',
+        '1.2.840.113549.1.1.11': 'sha256withRSAEncryption',
+        '1.2.840.113549.1.1.12': 'sha384withRSAEncryption',
+        '1.2.840.113549.1.1.13': 'sha512withRSAEncryption',
+        '1.2.840.113549.1.2.7': 'hmacWithSHA1',
+        '1.2.840.113549.1.2.8': 'hmacWithSHA224',
+        '1.2.840.113549.1.2.9': 'hmacWithSHA256',
+        '1.2.840.113549.1.2.10': 'hmacWithSHA384',
+        '1.2.840.113549.1.2.11': 'hmacWithSHA512',
+        '1.2.840.113549.1.3.1': 'dhKeyAgreement',
+        // pkcs#7 content types
+        '1.2.840.113549.1.5.12': 'PBKDF2',
+        '1.2.840.113549.1.5.13': 'PBES2',
+        '1.2.840.113549.1.5.14': 'PBMAC1',
+        '1.2.840.113549.1.7.1': 'data',
+        '1.2.840.113549.1.7.2': 'signedData',
+        '1.2.840.113549.1.7.3': 'envelopedData',
+        '1.2.840.113549.1.7.4': 'signedAndEnvelopedData',
+        '1.2.840.113549.1.7.5': 'digestedData',
+        '1.2.840.113549.1.7.6': 'encryptedData',
+        '1.2.840.113549.1.9.1': 'emailAddress',
+        '1.2.840.113549.1.9.2': 'unstructuredName',
+        '1.2.840.113549.1.9.3': 'contentType',
+        '1.2.840.113549.1.9.4': 'messageDigest',
+        '1.2.840.113549.1.9.5': 'signingTime',
+        '1.2.840.113549.1.9.6': 'countersignature',
+        '1.2.840.113549.1.9.7': 'challengePassword',
+        '1.2.840.113549.1.9.8': 'unstructuredAddress',
+        '1.2.840.113549.1.9.9': 'extendedCertificateAttributes',
+        '1.2.840.113549.1.9.10': 'issuerAndSerialNumber',
+        '1.2.840.113549.1.9.11': 'passwordCheck',
+        '1.2.840.113549.1.9.12': 'publicKey',
+        '1.2.840.113549.1.9.13': 'signingDescription',
+        '1.2.840.113549.1.9.14': 'extensionRequest',
+        '1.2.840.113549.1.9.15': 'sMimeCapabilities',
+        '1.2.840.113549.1.9.16': 'sMimeObjectIdentifierRegistry',
+        '1.2.840.113549.1.9.16.1.2': 'authData',
+        '1.2.840.113549.1.9.16.1.4 ': 'timestampToken',
+        '1.2.840.113549.1.9.16.1.17 ': 'firmwareLoadReceipt',
+        '1.2.840.113549.1.9.16.1.21': 'encKeyWithID',
+        '1.2.840.113549.1.9.16.1.23': 'authEnvelopedData',
+        '1.2.840.113549.1.9.16.2': 'sMimeAttributes',
+        '1.2.840.113549.1.9.16.2.1': 'receiptRequest',
+        '1.2.840.113549.1.9.16.2.12': 'signingCertificate',
+        '1.2.840.113549.1.9.16.2.14': 'timeStampToken',
+        '1.2.840.113549.1.9.16.2.2': 'securityLabel',
+        '1.2.840.113549.1.9.16.2.3': 'mlExpansionHistory',
+        '1.2.840.113549.1.9.16.2.34': 'unsignedData',
+        '1.2.840.113549.1.9.16.2.47': 'signingCertificateV2',
+        '1.2.840.113549.1.9.16.3.5': 'ESDH',
+        // pkcs#9 oids
+        '1.2.840.113549.1.9.20': 'friendlyName',
+        '1.2.840.113549.1.9.21': 'localKeyId',
+        '1.2.840.113549.1.9.22': 'certTypes',
+        '1.2.840.113549.1.9.22.1': 'x509Certificate',
+        '1.2.840.113549.1.9.22.2': 'sdsiCertificate',
+        '1.2.840.113549.1.9.23': 'crlTypes',
+        '1.2.840.113549.1.9.23.1': 'x509CRL',
+        '1.2.840.113549.1.9.24': 'secretTypes',
+        '1.2.840.113549.1.9.24.1': 'secret',
+        '1.2.840.113549.1.9.25.1': 'pkcs15Token',
+        '1.2.840.113549.1.9.25.2': 'encryptedPrivateKeyInfo',
+        '1.2.840.113549.1.9.25.3': 'randomNonce',
+        '1.2.840.113549.1.9.25.4': 'sequenceNumber',
+        '1.2.840.113549.1.9.25.5': 'pkcs7PDU',
+        '1.2.840.113549.1.9.26.1': 'pkcs9String',
+        '1.2.840.113549.1.9.26.2': 'signingTimeString',
+        '1.2.840.113549.1.9.27.1': 'caseIgnoreMatch',
+        '1.2.840.113549.1.9.27.2': 'signingTimeMatch',
+        // password-based-encryption for pkcs#12
+        '1.2.840.113549.1.12.0.1': 'pkcs-12',
+        '1.2.840.113549.1.12.1': 'pbe',
+        '1.2.840.113549.1.12.1.1': 'pbeWithSHAAnd128BitRC4',
+        '1.2.840.113549.1.12.1.2': 'pbeWithSHAAnd40BitRC4',
+        '1.2.840.113549.1.12.1.3': 'pbeWithSHAAnd3-KeyTripleDES-CBC',
+        '1.2.840.113549.1.12.1.4': 'pbeWithSHAAnd2-KeyTripleDES-CBC',
+        '1.2.840.113549.1.12.1.5': 'pbeWithSHAAnd128BitRC2-CBC',
+        '1.2.840.113549.1.12.1.6': 'pbeWithSHAAnd40BitRC2-CBC',
+        '1.2.840.113549.1.12.1.80': 'pbeUnknownGost',
+        '1.2.840.113549.1.12.2.1': 'pkcs8-key-shrouding',
+        '1.2.840.113549.1.12.3.1': 'keyBagId',
+        '1.2.840.113549.1.12.3.2': 'certAndCRLBagId',
+        '1.2.840.113549.1.12.3.3': 'secretBagId',
+        '1.2.840.113549.1.12.3.4': 'safeContentsId',
+        '1.2.840.113549.1.12.3.5': 'pkcs-8ShroudedKeyBagId',
+        '1.2.840.113549.1.12.4.1': 'x509CertCRLBagId',
+        '1.2.840.113549.1.12.4.2': 'pkcs-12-SDSICertBag',
+        // pkcs#12 safe bags
+        '1.2.840.113549.1.12.10.1.1': 'keyBag',
+        '1.2.840.113549.1.12.10.1.2': 'pkcs8ShroudedKeyBag',
+        '1.2.840.113549.1.12.10.1.3': 'certBag',
+        '1.2.840.113549.1.12.10.1.4': 'crlBag',
+        '1.2.840.113549.1.12.10.1.5': 'secretBag',
+        '1.2.840.113549.1.12.10.1.6': 'safeContentsBag',
+        // hash algorithm
+        '1.2.840.113549.2.5': 'md-5',
+        // symmetric key algorithm oids
+        '1.2.840.113549.3.7': 'des-EDE3-CBC',
+        // additional algorithms
+        '1.3.132.0.34': 'secp384r1',
+        '1.3.132.0.35': 'secp521r1',
+        '1.3.132.112': 'ecDH',
+        '1.3.14.3.2.26': 'sha1',
+        '1.3.6.1.4.1.311.2.1.14': 'msCertExtensions',
+        '1.3.6.1.4.1.311.17.1': 'keyProviderNameAttr',
+        '1.3.6.1.4.1.311.17.2': 'localMachineKeyset',
+        '1.3.6.1.4.1.311.17.3.20': 'certKeyIdentifierPropId',
+        // SignalCom algorithms
+        '1.3.6.1.4.1.5849': 'SignalCom',
+        '1.3.6.1.4.1.5849.1.1.1': 'id-sc-gost28147-ecb',
+        '1.3.6.1.4.1.5849.1.1.2': 'id-sc-gost28147-gamma',
+        '1.3.6.1.4.1.5849.1.1.3': 'id-sc-gost28147-gfb',
+        '1.3.6.1.4.1.5849.1.1.4': 'id-sc-gost28147-mac',
+        '1.3.6.1.4.1.5849.1.1.5': 'id-sc-gostR3410-94',
+        '1.3.6.1.4.1.5849.1.1.6.1.1.1': 'id-sc-gostR3410-94-default',
+        '1.3.6.1.4.1.5849.1.1.6.1.1.2': 'id-sc-gostR3410-94-test',
+        '1.3.6.1.4.1.5849.1.2.1': 'id-sc-gostR3411-94',
+        '1.3.6.1.4.1.5849.1.3.1': 'id-sc-gostR3411-94-with-gostR3410-94',
+        '1.3.6.1.4.1.5849.1.3.2': 'id-sc-gostR3411-94-with-gostR3410-2001',
+        '1.3.6.1.4.1.5849.1.4.1': 'id-sc-cmsGostWrap',
+        '1.3.6.1.4.1.5849.1.4.2': 'id-sc-cmsGost28147Wrap',
+        '1.3.6.1.4.1.5849.1.5.1': 'id-sc-pbeWithGost3411AndGost28147',
+        '1.3.6.1.4.1.5849.1.5.2': 'id-sc-pbeWithGost3411AndGost28147CFB',
+        '1.3.6.1.4.1.5849.1.6.2': 'id-sc-gostR3410-2001',
+        '1.3.6.1.4.1.5849.1.7.2': 'id-sc-hmacWithGostR3411',
+        '1.3.6.1.4.1.5849.1.8.1': 'id-sc-r3410-ESDH-r3411kdf',
+        '1.3.6.1.4.1.5849.1.8.3': 'id-sc-ecdh-singlePass-cofactor-r3411kdf',
+        '1.3.6.1.4.1.5849.2.2.1': 'id-sc-gostR3410-2001-publicKey',
+        // additinal data
+        '1.3.6.1.5.5.7.0.12': 'attribute-cert',
+        '1.3.6.1.5.5.7.1.1': 'authorityInfoAccess',
+        '1.3.6.1.5.5.7.1.4': 'auditIdentity',
+        '1.3.6.1.5.5.7.1.6': 'aaControls',
+        '1.3.6.1.5.5.7.1.10': 'ac-proxying',
+        '1.3.6.1.5.5.7.1.11': 'subjectInfoAccess',
+        '1.3.6.1.5.5.7.3.1': 'serverAuth',
+        '1.3.6.1.5.5.7.3.2': 'clientAuth',
+        '1.3.6.1.5.5.7.3.3': 'codeSigning',
+        '1.3.6.1.5.5.7.3.4': 'emailProtection',
+        '1.3.6.1.5.5.7.3.5': 'ipsecEndSystem',
+        '1.3.6.1.5.5.7.3.6': 'ipsecTunnel',
+        '1.3.6.1.5.5.7.3.7': 'ipsecUser',
+        '1.3.6.1.5.5.7.3.8': 'timeStamping',
+        '1.3.6.1.5.5.7.3.9': 'OCSPSigning',
+        '1.3.6.1.5.5.7.5.1': 'regCtrl',
+        '1.3.6.1.5.5.7.5.1.1': 'regToken',
+        '1.3.6.1.5.5.7.5.1.2': 'authenticator',
+        '1.3.6.1.5.5.7.5.1.3': 'pkiPublicationInfo',
+        '1.3.6.1.5.5.7.5.1.4': 'pkiArchiveOptions',
+        '1.3.6.1.5.5.7.5.1.5': 'oldCertID',
+        '1.3.6.1.5.5.7.5.1.6': 'protocolEncrKey',
+        '1.3.6.1.5.5.7.5.2': 'regInfoAttr',
+        '1.3.6.1.5.5.7.5.2.1': 'UTF8Pairs',
+        '1.3.6.1.5.5.7.5.2.2': 'certReq',
+        '1.3.6.1.5.5.7.6.2': 'noSignature',
+        '1.3.6.1.5.5.7.7.1': 'statusInfo',
+        '1.3.6.1.5.5.7.7.2': 'identification',
+        '1.3.6.1.5.5.7.7.3': 'identityProof',
+        '1.3.6.1.5.5.7.7.4': 'dataReturn',
+        '1.3.6.1.5.5.7.7.5': 'transactionId',
+        '1.3.6.1.5.5.7.7.6': 'senderNonce',
+        '1.3.6.1.5.5.7.7.7': 'recipientNonce',
+        '1.3.6.1.5.5.7.7.8': 'addExtensions',
+        '1.3.6.1.5.5.7.7.9': 'encryptedPOP',
+        '1.3.6.1.5.5.7.7.10': 'decryptedPOP',
+        '1.3.6.1.5.5.7.7.11': 'lraPOPWitness',
+        '1.3.6.1.5.5.7.7.15': 'getCert',
+        '1.3.6.1.5.5.7.7.16': 'getCRL',
+        '1.3.6.1.5.5.7.7.17': 'revokeRequest',
+        '1.3.6.1.5.5.7.7.18': 'regInfo',
+        '1.3.6.1.5.5.7.7.19': 'responseInfo',
+        '1.3.6.1.5.5.7.7.21': 'queryPending',
+        '1.3.6.1.5.5.7.7.22': 'popLinkRandom',
+        '1.3.6.1.5.5.7.7.23': 'popLinkWitness',
+        '1.3.6.1.5.5.7.7.24': 'confirmCertAcceptance',
+        '1.3.6.1.5.5.7.7.25': 'statusInfoV2',
+        '1.3.6.1.5.5.7.7.26': 'trustedAnchors',
+        '1.3.6.1.5.5.7.7.27': 'authPublish',
+        '1.3.6.1.5.5.7.7.28': 'batchRequests',
+        '1.3.6.1.5.5.7.7.29': 'batchResponses',
+        '1.3.6.1.5.5.7.7.30': 'publishCert',
+        '1.3.6.1.5.5.7.7.31': 'modCertTemplate',
+        '1.3.6.1.5.5.7.7.32': 'controlProcessed',
+        '1.3.6.1.5.5.7.7.33': 'popLinkWitnessV2',
+        '1.3.6.1.5.5.7.7.34': 'identityProofV2',
+        '1.3.6.1.5.5.7.9.1': 'dateOfBirth',
+        '1.3.6.1.5.5.7.9.2': 'placeOfBirth',
+        '1.3.6.1.5.5.7.9.3': 'gender',
+        '1.3.6.1.5.5.7.9.4': 'countryOfCitizenship',
+        '1.3.6.1.5.5.7.9.5': 'countryOfResidence',
+        '1.3.6.1.5.5.7.10.1': 'authenticationInfo',
+        '1.3.6.1.5.5.7.10.2': 'accessIdentity',
+        '1.3.6.1.5.5.7.10.3': 'chargingIdentity',
+        '1.3.6.1.5.5.7.10.4': 'group',
+        '1.3.6.1.5.5.7.10.6': 'encAttrs',
+        '1.3.6.1.5.5.7.12.2': 'PKIData',
+        '1.3.6.1.5.5.7.12.3': 'PKIResponse',
+        '1.3.6.1.5.5.7.48.1.1': 'ocsp-basic',
+        '1.3.6.1.5.5.7.48.1.2': 'ocsp-nonce',
+        '1.3.6.1.5.5.7.48.1.3': 'ocsp-crl',
+        '1.3.6.1.5.5.7.48.1.4': 'ocsp-response',
+        '1.3.6.1.5.5.7.48.1.5': 'ocsp-nocheck',
+        '1.3.6.1.5.5.7.48.1.6': 'ocsp-archive-cutoff',
+        '1.3.6.1.5.5.7.48.1.7': 'ocsp-service-locator',
+        // Key packages
+        '2.16.840.1.101.2.1.2.78.2': 'encryptedKeyPkg',
+        '2.16.840.1.101.2.1.2.78.3': 'keyPackageReceipt',
+        '2.16.840.1.101.2.1.2.78.5': 'aKeyPackage',
+        '2.16.840.1.101.2.1.2.78.6': 'keyPackageError',
+        // symmetric key algorithm oids
+        '2.16.840.1.101.3.4': 'nistAlgorithms',
+        '2.16.840.1.101.3.4.1': 'aes',
+        '2.16.840.1.101.3.4.1.1': 'aes128-ECB',
+        '2.16.840.1.101.3.4.1.2': 'aes128-CBC',
+        '2.16.840.1.101.3.4.1.3': 'aes128-OFB',
+        '2.16.840.1.101.3.4.1.4': 'aes128-CFB',
+        '2.16.840.1.101.3.4.1.5': 'aes128-wrap',
+        '2.16.840.1.101.3.4.1.6': 'aes128-GCM',
+        '2.16.840.1.101.3.4.1.7': 'aes128-CCM',
+        '2.16.840.1.101.3.4.1.8': 'aes128-wrap-pad',
+        '2.16.840.1.101.3.4.1.21': 'aes192-ECB',
+        '2.16.840.1.101.3.4.1.22': 'aes192-CBC',
+        '2.16.840.1.101.3.4.1.23': 'aes192-OFB',
+        '2.16.840.1.101.3.4.1.24': 'aes192-CFB',
+        '2.16.840.1.101.3.4.1.25': 'aes192-wrap',
+        '2.16.840.1.101.3.4.1.26': 'aes192-GCM',
+        '2.16.840.1.101.3.4.1.27': 'aes192-CCM',
+        '2.16.840.1.101.3.4.1.28': 'aes192-wrap-pad',
+        '2.16.840.1.101.3.4.1.41': 'aes256-ECB',
+        '2.16.840.1.101.3.4.1.42': 'aes256-CBC',
+        '2.16.840.1.101.3.4.1.43': 'aes256-OFB',
+        '2.16.840.1.101.3.4.1.44': 'aes256-CFB',
+        '2.16.840.1.101.3.4.1.45': 'aes256-wrap',
+        '2.16.840.1.101.3.4.1.46': 'aes256-GCM',
+        '2.16.840.1.101.3.4.1.47': 'aes256-CCM',
+        '2.16.840.1.101.3.4.1.48': 'aes256-wrap-pad',
+        // hash algorihtms
+        '2.16.840.1.101.3.4.2.1': 'sha256',
+        '2.16.840.1.101.3.4.2.2': 'sha384',
+        '2.16.840.1.101.3.4.2.3': 'sha512',
+        // pkcs12
+        '2.16.840.1.113730.3.1.216': 'userPKCS12',
+        // certificate issuer/subject OIDsets
+        '2.5.1.5.55': 'clearance',
+        '2.5.4.0': 'objectClass',
+        '2.5.4.1': 'aliasedEntryName',
+        '2.5.4.2': 'knowldgeinformation',
+        '2.5.4.3': 'commonName',
+        '2.5.4.5': 'serialName',
+        '2.5.4.6': 'countryName',
+        '2.5.4.7': 'localityName',
+        '2.5.4.8': 'stateOrProvinceName',
+        '2.5.4.9': 'streetAddress',
+        '2.5.4.10': 'organizationName',
+        '2.5.4.11': 'organizationalUnitName',
+        '2.5.4.12': 'title',
+        '2.5.4.13': 'description',
+        '2.5.4.14': 'searchGuide',
+        '2.5.4.15': 'businessCategory',
+        '2.5.4.16': 'postalAddress',
+        '2.5.4.17': 'postalCode',
+        '2.5.4.18': 'postOfficeBox',
+        '2.5.4.19': 'physicalDeliveryOfficeName',
+        '2.5.4.20': 'telephoneNumber',
+        '2.5.4.21': 'telexNumber',
+        '2.5.4.22': 'teletexTerminalIdentifier',
+        '2.5.4.23': 'facsimileTelephoneNumber',
+        '2.5.4.24': 'x121Address',
+        '2.5.4.25': 'internationalISDNNumber',
+        '2.5.4.26': 'registeredAddress',
+        '2.5.4.27': 'destinationIndicator',
+        '2.5.4.28': 'preferredDeliveryMethod',
+        '2.5.4.29': 'presentationAddress',
+        '2.5.4.30': 'supportedApplicationContext',
+        '2.5.4.31': 'member',
+        '2.5.4.32': 'owner',
+        '2.5.4.33': 'roleOccupant',
+        '2.5.4.34': 'seeAlso',
+        '2.5.4.35': 'userPassword',
+        '2.5.4.36': 'userCertificate',
+        '2.5.4.37': 'cACertificate',
+        '2.5.4.38': 'authorityRevocationList',
+        '2.5.4.39': 'certificateRevocationList',
+        '2.5.4.40': 'crossCertificatePair',
+        '2.5.4.41': 'name',
+        '2.5.4.42': 'givenName',
+        '2.5.4.43': 'initials',
+        '2.5.4.44': 'generationQualifier',
+        '2.5.4.45': 'uniqueIdentifier',
+        '2.5.4.46': 'dnQualifier',
+        '2.5.4.47': 'enhancedSearchGuide',
+        '2.5.4.48': 'protocolInformation',
+        '2.5.4.49': 'distinguishedName',
+        '2.5.4.50': 'uniqueMember',
+        '2.5.4.51': 'houseIdentifier',
+        '2.5.4.52': 'supportedAlgorithms',
+        '2.5.4.53': 'deltaRevocationList',
+        '2.5.4.58': 'attributeCertificate',
+        '2.5.4.65': 'pseudonym',
+        '2.5.4.72': 'role',
+        // X.509 extension OIDsets
+        '2.5.29.1': 'authorityKeyIdentifierX',
+        '2.5.29.2': 'keyAttributesX',
+        '2.5.29.3': 'certificatePoliciesX',
+        '2.5.29.4': 'keyUsageRestriction',
+        '2.5.29.5': 'policyMapping',
+        '2.5.29.6': 'subtreesConstraint',
+        '2.5.29.7': 'subjectAltNameX',
+        '2.5.29.8': 'issuerAltNameX',
+        '2.5.29.9': 'subjectDirectoryAttributes',
+        '2.5.29.10': 'basicConstraintsX',
+        '2.5.29.11': 'nameConstraintsX',
+        '2.5.29.12': 'policyConstraintsX',
+        '2.5.29.13': 'basicConstraintsY',
+        '2.5.29.14': 'subjectKeyIdentifier',
+        '2.5.29.15': 'keyUsage',
+        '2.5.29.16': 'privateKeyUsagePeriod',
+        '2.5.29.17': 'subjectAltName',
+        '2.5.29.18': 'issuerAltName',
+        '2.5.29.19': 'basicConstraints',
+        '2.5.29.20': 'cRLNumber',
+        '2.5.29.21': 'cRLReason',
+        '2.5.29.22': 'expirationDate',
+        '2.5.29.23': 'instructionCode',
+        '2.5.29.24': 'invalidityDate',
+        '2.5.29.25': 'cRLDistributionPointsX',
+        '2.5.29.26': 'issuingDistributionPointX',
+        '2.5.29.27': 'deltaCRLIndicator',
+        '2.5.29.28': 'issuingDistributionPoint',
+        '2.5.29.29': 'certificateIssuer',
+        '2.5.29.30': 'nameConstraints',
+        '2.5.29.31': 'cRLDistributionPoints',
+        '2.5.29.32': 'certificatePolicies',
+        '2.5.29.33': 'policyMappings',
+        '2.5.29.34': 'policyConstraintsY',
+        '2.5.29.35': 'authorityKeyIdentifier',
+        '2.5.29.36': 'policyConstraints',
+        '2.5.29.37': 'extKeyUsage',
+        '2.5.29.46': 'freshestCRL',
+        '2.5.29.54': 'inhibitAnyPolicy',
+        '2.5.29.55': 'targetInformation',
+        '2.5.29.56': 'noRevAvail'
+    };
+
+    /**
+     * ASN.1 Object Identifiers for friandly names
+     * Generated automaticly
+     * @field identifiers
+     * @memberOf GostSecurity
+     */
+    var identifiers = {};
+    for (var id in names) 
+        identifiers[names[id]] = id;
+    
+    // </editor-fold>
+
+    /**
+     * Algorithm identifiers {@link gostCrypto.AlgorithmIdentifier} for Object Identifiers
+     * 
+     * @field algorithms
+     * @memberOf GostSecurity
+     */ // <editor-fold defaultstate="collapsed">
+    var algorithms = {
+        // CryptoPro algoritms
+        'id-GostR3411-94-with-GostR3410-2001': 'GOST R 34.10-2001/GOST R 34.11-94',
+        'id-GostR3411-94-with-GostR3410-94': 'GOST R 34.10-94/GOST R 34.11-94',
+        'id-GostR3411-94': 'GOST R 34.11-94',
+        'id-HMACGostR3411-94': {name: 'HMAC', hash: {name: 'GOST R 34.11-94'}},
+        'id-Gost28147-89-None-KeyWrap': 'GOST 28147-89-KW',
+        'id-Gost28147-89-CryptoPro-KeyWrap': 'GOST 28147-89-CPKW',
+        'id-GostR3410-2001': 'GOST R 34.10-2001',
+        'id-GostR3410-94': 'GOST R 34.10-94',
+        'id-GostR3410-94-a': 'GOST R 34.10-94',
+        'id-GostR3410-94-aBis': 'GOST R 34.10-94',
+        'id-GostR3410-94-b': 'GOST R 34.10-94',
+        'id-GostR3410-94-bBis': 'GOST R 34.10-94',
+        'id-Gost28147-89': 'GOST 28147-89',
+        'id-Gost28147-89-MAC': 'GOST 28147-89-MAC',
+        'id-GostR3410-2001-CryptoPro-ESDH': 'GOST R 34.10-2001-DH/GOST R 34.11-94',
+        'id-GostR3410-94-CryptoPro-ESDH': 'GOST R 34.10-94-DH/GOST R 34.11-94',
+        'id-GostR3410-2001DH': 'GOST R 34.10-2001-DH',
+        'id-GostR3410-94DH': 'GOST R 34.10-94-DH',
+        // TK-26 attributes
+        'id-tc26-gost3410-12-256': 'GOST R 34.10-256',
+        'id-tc26-gost3410-12-512': 'GOST R 34.10-512',
+        'id-tc26-gost3411-94': 'GOST R 34.11-94',
+        'id-tc26-gost3411-12-256': 'GOST R 34.11-256',
+        'id-tc26-gost3411-12-512': 'GOST R 34.11-512',
+        'id-tc26-signwithdigest-gost3410-12-94': 'GOST R 34.10-256/GOST R 34.11-94',
+        'id-tc26-signwithdigest-gost3410-12-256': 'GOST R 34.10-256/GOST R 34.11-256',
+        'id-tc26-signwithdigest-gost3410-12-512': 'GOST R 34.10-512/GOST R 34.11-512',
+        'id-tc26-hmac-gost-3411-12-256': {name: 'HMAC', hash: {name: 'GOST R 34.11-256'}},
+        'id-tc26-hmac-gost-3411-12-512': {name: 'HMAC', hash: {name: 'GOST R 34.11-512'}},
+        'id-tc26-agreement-gost-3410-12-256': 'GOST R 34.10-256-DH/GOST R 34.11-256',
+        'id-tc26-agreement-gost-3410-12-512': 'GOST R 34.10-512-DH/GOST R 34.11-256',
+        // SignalCom algorithms
+        'id-sc-gost28147-ecb': 'GOST 28147-89-ECB/SC',
+        'id-sc-gost28147-gamma': 'GOST 28147-89-CTR/SC',
+        'id-sc-gost28147-gfb': 'GOST 28147-89-CFB/SC',
+        'id-sc-gost28147-mac': 'GOST 28147-89-MAC/SC',
+        'id-sc-gostR3410-94': 'GOST R 34.10-94/SC',
+        'id-sc-gostR3410-94-default': 'GOST R 34.10-94/SC',
+        'id-sc-gostR3410-94-test': 'GOST R 34.10-94/SC/S-TEST',
+        'id-sc-gostR3411-94': 'GOST R 34.11-94/SC',
+        'id-sc-gostR3411-94-with-gostR3410-94': 'GOST R 34.10-94/GOST R 34.11-94/SC',
+        'id-sc-gostR3411-94-with-gostR3410-2001': 'GOST R 34.10-2001/GOST R 34.11-94/SC',
+        'id-sc-cmsGostWrap': 'GOST 28147-89-SCKW/SC',
+        'id-sc-cmsGost28147Wrap': 'GOST 28147-89-KW/SC',
+        'id-sc-pbeWithGost3411AndGost28147': {derivation: {name: 'GOST R 34.11-94-PBKDF2/SC'}, encryption: {name: 'GOST 28147-ECB/SC'}},
+        'id-sc-pbeWithGost3411AndGost28147CFB': {derivation: {name: 'GOST R 34.11-94-PBKDF2/SC'}, encryption: {name: 'GOST 28147-CFB/SC'}},
+        'id-sc-gostR3410-2001': 'GOST R 34.10-2001/SC',
+        'id-sc-hmacWithGostR3411': {name: 'HMAC', hash: {name: 'GOST R 34.11-94/SC'}},
+        'id-sc-r3410-ESDH-r3411kdf': 'GOST R 34.10-2001-DH/GOST R 34.11-94/SC',
+        // RSA algorithms
+        noSignature: 'NONE',
+        rsaEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-256'}},
+        sha1withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-1'}},
+        sha256withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-256'}},
+        sha384withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-384'}},
+        sha512withRSAEncryption: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-512'}},
+        'rsaes-oaep': 'RSA-OAEP',
+        'rsassa-pss': 'RSA-PSS',
+        // ECDSA
+        'ecdsa': 'ECDSA',
+        'ecdsa-with-SHA1': {name: 'ECDSA', hash: {name: 'SHA-1'}},
+        'ecdsa-with-SHA256': {name: 'ECDSA', hash: {name: 'SHA-256'}},
+        'ecdsa-with-SHA384': {name: 'ECDSA', hash: {name: 'SHA-384'}},
+        'ecdsa-with-SHA512': {name: 'ECDSA', hash: {name: 'SHA-512'}},
+        // Legion of the Bouncy Castle pbe
+        'pbeWithSHAAndAES128-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-1'}}, encryption: {name: 'AES-CBC', length: 128}},
+        'pbeWithSHAAndAES192-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-1'}}, encryption: {name: 'AES-CBC', length: 192}},
+        'pbeWithSHAAndAES256-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-1'}}, encryption: {name: 'AES-CBC', length: 256}},
+        'pbeWithSHA256AndAES128-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-256'}}, encryption: {name: 'AES-CBC', length: 128}},
+        'pbeWithSHA256AndAES192-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-256'}}, encryption: {name: 'AES-CBC', length: 192}},
+        'pbeWithSHA256AndAES256-CBC': {derivation: {name: 'PBKDF2', hash: {name: 'SHA-256'}}, encryption: {name: 'AES-CBC', length: 256}},
+        // PKCS12 PBE
+        'pbeWithSHAAnd3-KeyTripleDES-CBC': {derivation: {name: 'PFXKDF', iterations: 2000, hash: 'SHA-1'}, encryption: {name: '3DES', block: 'CBC'}},
+        'pbeWithSHAAnd2-KeyTripleDES-CBC': {derivation: {name: 'PFXKDF', iterations: 2000, hash: 'SHA-1'}, encryption: {name: '2DES', block: 'CBC'}},
+        'pbeWithSHAAnd128BitRC2-CBC': {derivation: {name: 'PFXKDF', iterations: 2000, hash: 'SHA-1'}, encryption: {name: 'RC2', block: 'CBC', length: 128}},
+        'pbeWithSHAAnd40BitRC2-CBC': {derivation: {name: 'PFXKDF', iterations: 2000, hash: 'SHA-1'}, encryption: {name: 'RC2', block: 'CBC', length: 40}},
+        'pbeUnknownGost': {derivation: {name: 'PFXKDF', iterations: 2000, hash: 'GOST R 34.11-94'}, encryption: {name: 'GOST 28147-89-CFB'}},
+        //  Diffie-Hellman Key Exchange Keys
+        ecDH: 'ECDH',
+        dhKeyAgreement: 'DH',
+        // symmetric key algorithm oids
+        'aes128-CBC': {name: 'AES-CBC', length: 128},
+        'aes128-CFB': {name: 'AES-CFB-8', length: 128},
+        'aes128-GCM': {name: 'AES-GCM', length: 128},
+        'aes128-wrap': {name: 'AES-KW', length: 128},
+        'aes192-CBC': {name: 'AES-CBC', length: 192},
+        'aes192-CFB': {name: 'AES-CFB-8', length: 192},
+        'aes192-GCM': {name: 'AES-GCM', length: 192},
+        'aes192-wrap': {name: 'AES-KW', length: 192},
+        'aes256-CBC': {name: 'AES-CBC', length: 256},
+        'aes256-CFB': {name: 'AES-CFB-8', length: 256},
+        'aes256-GCM': {name: 'AES-GCM', length: 256},
+        'aes256-wrap': {name: 'AES-KW', length: 256},
+        // hash algorihtms
+        sha1: 'SHA-1',
+        sha256: 'SHA-256',
+        sha384: 'SHA-384',
+        sha512: 'SHA-512',
+        // PBE
+        PBKDF2: 'PBKDF2',
+        PBES2: {derivation: {name: 'PBKDF2'}, encryption: {}},
+        PBMAC1: {derivation: {name: 'PBKDF2'}, hmac: {}},
+        // HMAC
+        hmacWithSHA1: 'SHA-1-HMAC',
+        hmacWithSHA256: {name: 'HMAC', hash: {name: 'SHA-256'}},
+        hmacWithSHA384: {name: 'HMAC', hash: {name: 'SHA-384'}},
+        hmacWithSHA512: {name: 'HMAC', hash: {name: 'SHA-512'}}
+    };
+
+    // Each algorithm must has id for convertions
+    for (var id in algorithms) {
+        var algorithm = algorithms[id];
+        if (typeof algorithm === 'string') {
+            algorithm = {name: algorithm};
+        }
+        algorithm.id = id;
+        algorithms[id] = algorithm;
+    }  // </editor-fold>
+
+    /**
+     * Algorithm parameters
+     * 
+     * @field parameters
+     * @memberOf GostSecurity
+     */ // <editor-fold defaultstate="collapsed">
+    var parameters = {
+        'id-GostR3410-94-TestParamSet': {namedParam: 'S-TEST'},
+        'id-GostR3410-94-CryptoPro-A-ParamSet': {namedParam: 'S-A'},
+        'id-GostR3410-94-CryptoPro-B-ParamSet': {namedParam: 'S-B'},
+        'id-GostR3410-94-CryptoPro-C-ParamSet': {namedParam: 'S-C'},
+        'id-GostR3410-94-CryptoPro-D-ParamSet': {namedParam: 'S-D'},
+        'id-GostR3410-94-CryptoPro-XchA-ParamSet': {namedParam: 'X-A'},
+        'id-GostR3410-94-CryptoPro-XchB-ParamSet': {namedParam: 'X-B'},
+        'id-GostR3410-94-CryptoPro-XchC-ParamSet': {namedParam: 'X-C'},
+        // CryptoPro named curves
+        'id-GostR3410-2001-CryptoPro-TestParamSet': {namedCurve: 'S-256-TEST'},
+        'id-GostR3410-2001-CryptoPro-A-ParamSet': {namedCurve: 'S-256-A'},
+        'id-GostR3410-2001-CryptoPro-B-ParamSet': {namedCurve: 'S-256-B'},
+        'id-GostR3410-2001-CryptoPro-C-ParamSet': {namedCurve: 'S-256-C'},
+        'id-GostR3410-2001-CryptoPro-XchA-ParamSet': {namedCurve: 'X-256-A'},
+        'id-GostR3410-2001-CryptoPro-XchB-ParamSet': {namedCurve: 'X-256-B'},
+        // TC-26 named curves
+        'id-tc26-gost-3410-12-256-paramSetTest': {namedCurve: 'T-256-TEST'},
+        'id-tc26-gost-3410-12-256-paramSetA': {namedCurve: 'T-256-A'},
+        'id-tc26-gost-3410-12-256-paramSetB': {namedCurve: 'T-256-B'},
+        'id-tc26-gost-3410-12-512-paramSetTest': {namedCurve: 'T-512-TEST'},
+        'id-tc26-gost-3410-12-512-paramSetA': {namedCurve: 'T-512-A'},
+        'id-tc26-gost-3410-12-512-paramSetB': {namedCurve: 'T-512-B'},
+        'id-tc26-gost-3410-12-512-paramSetC': {namedCurve: 'T-512-C'},
+        'id-tc26-gost-3410-12-512-paramSetD': {namedCurve: 'T-512-D'},
+        // Curve attributes additional algorithms
+        secp256r1: {namedCurve: 'P-256'},
+        secp384r: {namedCurve: 'P-384'},
+        secp521r: {namedCurve: 'P-521'},
+        // CryptoPro encryption parameters
+        'id-GostR3411-94-TestParamSet': {sBox: 'D-TEST'},
+        'id-GostR3411-94-CryptoProParamSet': {sBox: 'D-A'},
+        'id-GostR3411-94-CryptoPro-A-ParamSet': {sBox: 'D-B'},
+        'id-GostR3411-94-CryptoPro-B-ParamSet': {sBox: 'D-C'},
+        'id-GostR3411-94-CryptoPro-C-ParamSet': {sBox: 'D-D'},
+        'id-Gost28147-89-TestParamSet': {block: 'CTR', sBox: 'E-TEST'},
+        'id-Gost28147-89-CryptoPro-A-ParamSet': {block: 'CFB', sBox: 'E-A', keyMeshing: 'CP'},
+        'id-Gost28147-89-CryptoPro-B-ParamSet': {block: 'CFB', sBox: 'E-B', keyMeshing: 'CP'},
+        'id-Gost28147-89-CryptoPro-C-ParamSet': {block: 'CFB', sBox: 'E-C', keyMeshing: 'CP'},
+        'id-Gost28147-89-CryptoPro-D-ParamSet': {block: 'CFB', sBox: 'E-D', keyMeshing: 'CP'},
+        'id-Gost28147-89-None-KeyMeshing': {keyMeshing: 'NO'},
+        'id-Gost28147-89-CryptoPro-KeyMeshing': {keyMeshing: 'CP'},
+        // TC-26 encryption parameters
+        'id-tc26-gost-28147-param-Z': {block: 'CFB', sBox: 'E-Z'}
+    };  // </editor-fold>
+
+    /**
+     * Named attributes for Algorithm identifiers {@link AlgorithmIdentifier}<br><br> 
+     * 
+     * Recognized attributes:
+     *  <ul>
+     *      <li>sBox - Paramsets for GOST 28147. Supported values:
+     *          <ul>
+     *              <li>D-TEST - id-GostR3411-94-TestParamSet</li>
+     *              <li>D-A - id-GostR3411-94-CryptoProParamSet</li>
+     *              <li>D-B - id-GostR3411-94-CryptoPro-A-ParamSet</li>
+     *              <li>D-C - id-GostR3411-94-CryptoPro-B-ParamSet</li>
+     *              <li>D-D - id-GostR3411-94-CryptoPro-C-ParamSet</li>
+     *              <li>E-TEST - id-Gost28147-89-TestParamSet</li>
+     *              <li>E-A - id-Gost28147-89-CryptoPro-A-ParamSet</li>
+     *              <li>E-B - id-Gost28147-89-CryptoPro-B-ParamSet</li>
+     *              <li>E-C - id-Gost28147-89-CryptoPro-C-ParamSet</li>
+     *              <li>E-D - id-Gost28147-89-CryptoPro-D-ParamSet</li>
+     *              <li>E-Z - id-tc26-gost-28147-param-Z</li>
+     *              <li>D-256 - id-tc26-gost3411-12-256</li>
+     *              <li>D-512 - id-tc26-gost3411-12-512</li>
+     *          </ul>
+     *      </li>
+     *      <li>namedParam - Paramset for GOST R 34.10-94
+     *          <ul>
+     *              <li>S-TEST - id-GostR3410-94-TestParamSet</li>
+     *              <li>S-A - id-GostR3410-94-CryptoPro-A-ParamSet</li>
+     *              <li>S-B - id-GostR3410-94-CryptoPro-B-ParamSet</li>
+     *              <li>S-C - id-GostR3410-94-CryptoPro-C-ParamSet</li>
+     *              <li>S-D - id-GostR3410-94-CryptoPro-D-ParamSet</li>
+     *              <li>X-A - id-GostR3410-94-CryptoPro-XchA-ParamSet</li>
+     *              <li>X-B - id-GostR3410-94-CryptoPro-XchB-ParamSet</li>
+     *              <li>X-C - id-GostR3410-94-CryptoPro-XchC-ParamSet</li>
+     *          </ul>
+     *      </li>
+     *      <li>namedCurve - Paramset for GOST R 34.10-01 and GOST R 34.10-12
+     *          <ul>
+     *              <li>S-256-TEST - id-GostR3410-2001-CryptoPro-TestParamSet</li>
+     *              <li>S-256-A - id-GostR3410-2001-CryptoPro-A-ParamSet</li>
+     *              <li>S-256-B - id-GostR3410-2001-CryptoPro-B-ParamSet</li>
+     *              <li>S-256-C - id-GostR3410-2001-CryptoPro-C-ParamSet</li>
+     *              <li>X-256-A - id-GostR3410-2001-CryptoPro-XchA-ParamSet</li>
+     *              <li>X-256-B - id-GostR3410-2001-CryptoPro-XchB-ParamSet</li>
+     *              <li>P-256 - secp256r1</li>
+     *              <li>T-256-TEST - id-tc26-gost-3410-12-256-paramSetTest</li>
+     *              <li>T-256-A - id-tc26-gost-3410-12-256-paramSetA</li>
+     *              <li>T-256-B - id-tc26-gost-3410-12-256-paramSetB</li>
+     *              <li>T-512-TEST - id-tc26-gost-3410-12-512-paramSetTest</li>
+     *              <li>T-512-A - id-tc26-gost-3410-12-512-paramSetA</li>
+     *              <li>T-512-B - id-tc26-gost-3410-12-512-paramSetB</li>
+     *          </ul>
+     *      </li>
+     *  </ul>
+     * @field attributes
+     * @memberOf GostSecurity
+     */ // <editor-fold defaultstate="collapsed">
+    var attributes = {
+        sBox: {
+            'D-TEST': 'id-GostR3411-94-TestParamSet',
+            'D-A': 'id-GostR3411-94-CryptoProParamSet',
+            'D-B': 'id-GostR3411-94-CryptoPro-A-ParamSet',
+            'D-C': 'id-GostR3411-94-CryptoPro-B-ParamSet',
+            'D-D': 'id-GostR3411-94-CryptoPro-C-ParamSet',
+            'E-TEST': 'id-Gost28147-89-TestParamSet',
+            'E-A': 'id-Gost28147-89-CryptoPro-A-ParamSet',
+            'E-B': 'id-Gost28147-89-CryptoPro-B-ParamSet',
+            'E-C': 'id-Gost28147-89-CryptoPro-C-ParamSet',
+            'E-D': 'id-Gost28147-89-CryptoPro-D-ParamSet',
+            'E-Z': 'id-tc26-gost-28147-param-Z',
+            'D-256': 'id-tc26-gost3411-12-256',
+            'D-512': 'id-tc26-gost3411-12-512'
+        },
+        namedParam: {
+            'S-TEST': 'id-GostR3410-94-TestParamSet',
+            'S-A': 'id-GostR3410-94-CryptoPro-A-ParamSet',
+            'S-B': 'id-GostR3410-94-CryptoPro-B-ParamSet',
+            'S-C': 'id-GostR3410-94-CryptoPro-C-ParamSet',
+            'S-D': 'id-GostR3410-94-CryptoPro-D-ParamSet',
+            'X-A': 'id-GostR3410-94-CryptoPro-XchA-ParamSet',
+            'X-B': 'id-GostR3410-94-CryptoPro-XchB-ParamSet',
+            'X-C': 'id-GostR3410-94-CryptoPro-XchC-ParamSet'
+        },
+        namedCurve: {
+            'S-256-TEST': 'id-GostR3410-2001-CryptoPro-TestParamSet',
+            'S-256-A': 'id-GostR3410-2001-CryptoPro-A-ParamSet',
+            'S-256-B': 'id-GostR3410-2001-CryptoPro-B-ParamSet',
+            'S-256-C': 'id-GostR3410-2001-CryptoPro-C-ParamSet',
+            'X-256-A': 'id-GostR3410-2001-CryptoPro-XchA-ParamSet',
+            'X-256-B': 'id-GostR3410-2001-CryptoPro-XchB-ParamSet',
+            'P-256': 'secp256r1',
+            'T-256-TEST': 'id-tc26-gost-3410-12-256-paramSetTest',
+            'T-256-A': 'id-tc26-gost-3410-12-256-paramSetA',
+            'T-256-B': 'id-tc26-gost-3410-12-256-paramSetB',
+            'T-512-TEST': 'id-tc26-gost-3410-12-512-paramSetTest',
+            'T-512-A': 'id-tc26-gost-3410-12-512-paramSetA',
+            'T-512-B': 'id-tc26-gost-3410-12-512-paramSetB'
+        }
+    }; // </editor-fold>
+
+    /**
+     * Set of algorithms for different providers<br><br>
+     * Supported providers:
+     *  <ul>
+     *      <li><b>CP-94</b> - CryptoPro GOST R 34.10-94 algorithm set</li>
+     *      <li><b>CP-01</b> - CryptoPro GOST R 34.10-2001 algorithm set</li>
+     *      <li><b>TC-256</b> - Technical Commitee GOST R 34.10-256 algorithm set</li>
+     *      <li><b>TC-512</b> - Technical Commitee GOST R 34.10-512 algorithm set</li>
+     *      <li><b>SC-94</b> - SignalCom GOST R 34.10-94 algorithm set</li>
+     *      <li><b>SC-01</b> - SignalCom GOST R 34.10-2001 algorithm set</li>
+     *  </ul>
+     *  
+     *  Follow set can be used if it's supported your browser native WebCrypto API:
+     *  <ul>
+     *      <li><b>RSA-2048</b> - RSA Encryption 2048 bits with SHA-256 algorithm set</li>
+     *      <li><b>ECDSA-256</b> - ECDSA-256 with SHA-256 algorithm set</li>
+     *  </ul>
+     *  
+     *  Each provider records has follow standart algorithm identifiers:
+     *  <ul>
+     *      <li><b>signature</b> - Signature algorithm</li>
+     *      <li><b>generation</b> - Asymmetric key generation algorithm</li>
+     *      <li><b>digest</b> - Digest algorithm</li>
+     *      <li><b>wrapping</b> - Key wrapping algorithm</li>
+     *      <li><b>hmac</b> - Hash-based message authentication code algorithm</li>
+     *      <li><b>agreement</b> - Key agreement algorithm (except RSA schema)</li>
+     *      <li><b>encryption</b> - Content encription algorithm</li>
+     *      <li><b>derivation</b> - Password-based derivation algorithm</li>
+     *      <li><b>pbes</b> - Password-based encryption algorithm</li>
+     *      <li><b>pbmac</b> - Password-based message authentication code algorithm</li>
+     *  </ul>
+     *  
+     * @field providers
+     * @memberOf GostSecurity
+     */ // <editor-fold defaultstate="collapsed">
+    var providers = {
+        'CP-94': {
+            title: 'Crypto-Pro GOST R 34.10-94 Cryptographic Service Provider',
+            signature: algorithms['id-GostR3411-94-with-GostR3410-94'],
+            publicKey: {id: 'id-GostR3410-94', name: 'GOST R 34.10-94', namedParam: 'X-A'},
+            privateKey: {id: 'id-GostR3410-94DH', name: 'GOST R 34.10-94-DH', namedParam: 'X-A'},
+            digest: algorithms['id-GostR3411-94'],
+            wrapping: {id: 'id-Gost28147-89-CryptoPro-KeyWrap', name: 'GOST 28147-89-CPKW', sBox: 'E-A'},
+            hmac: algorithms['id-HMACGostR3411-94'],
+            agreement: algorithms['id-GostR3410-94-CryptoPro-ESDH'],
+            encryption: {id: 'id-Gost28147-89', name: 'GOST 28147-89', block: 'CFB', sBox: 'E-A', keyMeshing: 'CP'},
+            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 2000}
+        },
+        'CP-01': {
+            title: 'Crypto-Pro GOST R 34.10-2001 Cryptographic Service Provider',
+            signature: algorithms['id-GostR3411-94-with-GostR3410-2001'],
+            publicKey: {id: 'id-GostR3410-2001', name: 'GOST R 34.10-2001', namedCurve: 'X-256-A'},
+            privateKey: {id: 'id-GostR3410-2001DH', name: 'GOST R 34.10-2001-DH', namedCurve: 'X-256-A'},
+            digest: {id: 'id-GostR3411-94', name: 'GOST R 34.11-94', sBox: 'D-A'},
+            wrapping: {id: 'id-Gost28147-89-CryptoPro-KeyWrap', name: 'GOST 28147-89-CPKW', sBox: 'E-A'},
+            hmac: algorithms['id-HMACGostR3411-94'],
+            agreement: algorithms['id-GostR3410-2001-CryptoPro-ESDH'],
+            encryption: {id: 'id-Gost28147-89', name: 'GOST 28147-89-CFB-CPKM', sBox: 'E-A'},
+            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2', iterations: 2000}
+        },
+        'TC-256': {
+            title: 'Crypto-Pro GOST R 34.10-2012 Cryptographic Service Provider',
+            signature: algorithms['id-tc26-signwithdigest-gost3410-12-256'],
+            publicKey: {id: 'id-tc26-gost3410-12-256', name: 'GOST R 34.10-256', namedCurve: 'X-256-A'},
+            privateKey: {id: 'id-tc26-agreement-gost-3410-12-256', name: 'GOST R 34.10-256-DH/GOST R 34.11-256', namedCurve: 'X-256-A'},
+            digest: algorithms['id-tc26-gost3411-12-256'],
+            wrapping: {id: 'id-Gost28147-89-CryptoPro-KeyWrap', name: 'GOST 28147-89-CPKW', sBox: 'E-A'},
+            hmac: algorithms['id-tc26-hmac-gost-3411-12-256'],
+            agreement: algorithms['id-tc26-agreement-gost-3410-12-256'],
+            encryption: {id: 'id-Gost28147-89', name: 'GOST 28147-89-CFB-CPKM', sBox: 'E-A'},
+            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-256-12-PBKDF2', iterations: 2000}
+        },
+        'TC-512': {
+            title: 'Crypto-Pro GOST R 34.10-2012 Strong Cryptographic Service Provider',
+            signature: algorithms['id-tc26-signwithdigest-gost3410-12-512'],
+            publicKey: {id: 'id-tc26-gost3410-12-512', name: 'GOST R 34.10-512', namedCurve: 'T-512-A'},
+            privateKey: {id: 'id-tc26-agreement-gost-3410-12-512', name: 'GOST R 34.10-512-DH/GOST R 34.11-256', namedCurve: 'T-512-A'},
+            digest: algorithms['id-tc26-gost3411-12-512'],
+            wrapping: {id: 'id-Gost28147-89-CryptoPro-KeyWrap', name: 'GOST 28147-89-CPKW', sBox: 'E-A'},
+            hmac: algorithms['id-tc26-hmac-gost-3411-12-512'],
+            agreement: algorithms['id-tc26-agreement-gost-3410-12-512'],
+            encryption: {id: 'id-Gost28147-89', name: 'GOST 28147-89-CFB-CPKM', sBox: 'E-A'},
+            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-256-PBKDF2', iterations: 2000}
+        },
+        'SC-94': {
+            title: 'Signal-COM GOST Cryptographic Provider',
+            signature: algorithms['id-sc-gostR3411-94-with-gostR3410-94'],
+            publicKey: {id: 'id-sc-gostR3410-94', name: 'GOST R 34.10-94/SC', namedParam: 'S-A'},
+            privateKey: {id: 'id-sc-gostR3410-94', name: 'GOST R 34.10-94/SC', modulusLength: 1024, param: {
+                p: '0xB4E25EFB018E3C8B87505E2A67553C5EDC56C2914B7E4F89D23F03F03377E70A2903489DD60E78418D3D851EDB5317C4871E40B04228C3B7902963C4B7D85D52B9AA88F2AFDBEB28DA8869D6DF846A1D98924E925561BD69300B9DDD05D247B5922D967CBB02671881C57D10E5EF72D3E6DAD4223DC82AA1F7D0294651A480DF',
+                q: '0x972432A437178B30BD96195B773789AB2FFF15594B176DD175B63256EE5AF2CF',
+                a: '0x8FD36731237654BBE41F5F1F8453E71CA414FFC22C25D915309E5D2E62A2A26C7111F3FC79568DAFA028042FE1A52A0489805C0DE9A1A469C844C7CABBEE625C3078888C1D85EEA883F1AD5BC4E6776E8E1A0750912DF64F79956499F1E182475B0B60E2632ADCD8CF94E9C54FD1F3B109D81F00BF2AB8CB862ADF7D40B9369A'}},
+            digest: algorithms['id-sc-gostR3411-94'],
+            encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-89-CFB/SC'},
+            hmac: algorithms['id-sc-hmacWithGostR3411'],
+            wrapping: ['id-sc-cmsGostWrap'],
+            agreement: algorithms['id-sc-r3410-ESDH-r3411kdf'],
+            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048},
+            pbes: {id: 'id-sc-pbeWithGost3411AndGost28147CFB',
+                derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048},
+                encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-CFB/SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])}}
+        },
+        'SC-01': {
+            title: 'Signal-COM ECGOST Cryptographic Provider',
+            signature: algorithms['id-sc-gostR3411-94-with-gostR3410-2001'],
+            publicKey: {id: 'id-sc-gostR3410-2001', name: 'GOST R 34.10-2001/SC', namedCurve: 'P-256'},
+            privateKey: {id: 'id-sc-gostR3410-2001', name: 'GOST R 34.10-2001/SC', curve: {
+                p: '0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF',
+                a: '0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC',
+                b: '0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B',
+                x: '0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296',
+                y: '0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5',
+                q: '0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551'}},
+            digest: algorithms['id-sc-gostR3411-94'],
+            encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-89-CFB/SC'},
+            hmac: algorithms['id-sc-hmacWithGostR3411'],
+            wrapping: algorithms['id-sc-cmsGostWrap'],
+            agreement: algorithms['id-sc-r3410-ESDH-r3411kdf'],
+            derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048},
+            pbes: {id: 'id-sc-pbeWithGost3411AndGost28147CFB',
+                derivation: {id: 'PBKDF2', name: 'GOST R 34.11-94-PBKDF2/SC', iterations: 2048},
+                encryption: {id: 'id-sc-gost28147-gfb', name: 'GOST 28147-CFB/SC', iv: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0])}}
+        },
+        'RSA-2048': {
+            title: 'Microsoft Strong Cryptographic Provider',
+            signature: algorithms['sha256withRSAEncryption'],
+            publicKey: {id: 'rsaEncryption', name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048,
+                publicExponent: new Uint8Array([0x01, 0x00, 0x01]), hash: algorithms['sha256']},
+            privateKey: {id: 'rsaEncryption', name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048,
+                publicExponent: new Uint8Array([0x01, 0x00, 0x01]), hash: algorithms['sha256']},
+            digest: algorithms['sha256'],
+            encryption: algorithms['aes256-CFB'],
+            hmac: algorithms['hmacWithSHA256']
+        },
+        'ECDSA-256': {
+            title: 'Microsoft Base DSS and Diffie-Hellman Cryptographic Provider',
+            signature: algorithms['ecdsa-with-SHA256'],
+            publicKey: {id: 'ecdsa', name: 'ECDSA', namedCurve: 'P-256'},
+            privateKey: {id: 'ecdsa', name: 'ECDSA', namedCurve: 'P-256'},
+            digest: algorithms['sha256'],
+            encryption: algorithms['aes256-CFB'],
+            hmac: algorithms['hmacWithSHA256'],
+            agreement: algorithms['ecDH']
+        }
+    };
+    // Russian providers extension
+    ['CP-94', 'CP-01', 'TC-256', 'TC-512', 'SC-94', 'SC-01'].forEach(function (name) {
+        var provider = providers[name];
+        provider.hmac = expand(provider.hmac, {hash: provider.digest});
+        provider.derivation = expand(provider.derivation, {hash: provider.digest, hmac: provider.hmac});
+        provider.pbes = provider.pbes || {id: 'PBES2', derivation: provider.derivation,
+            encryption: provider.encryption};
+        provider.pbmac = provider.pbmac || {id: 'PBMAC1', derivation: provider.derivation,
+            hmac: provider.hmac};
+        provider.agreement = expand(provider.agreement, {wrapping: provider.wrapping});
+    });
+    // RSA & ECDA providers extension
+    ['RSA-2048', 'ECDSA-256'].forEach(function (name) {
+        var provider = providers[name];
+        provider.derivation = provider.derivation || {id: 'PBKDF2', name: 'PBKDF2',
+            iterations: 2048, hash: provider.digest};
+        provider.pbes = provider.pbes || {id: 'PBES2',
+            derivation: provider.derivation,
+            encryption: provider.encryption
+        };
+        provider.pbmac = provider.pbmac || {id: 'PBMAC1',
+            derivation: provider.derivation,
+            hmac: provider.hmac
+        };
+    });
+    // Workaround for Chrome error for RSA algorithm when hash for keys is not defined
+    // if (root.crypto && root.crypto.subtle)
+    //    setTimeout(function () {
+    //        root.crypto.subtle.generateKey(providers['RSA-2048'].generation, false, ["sign"])['catch'](function () {
+    //            providers['RSA-2048'].generation.hash = providers['RSA-2048'].digest;
+    //            algorithms['rsaEncryption'].hash = providers['RSA-2048'].digest;
+    //        });
+    //    }); 
+    // </editor-fold>
+
+    /**
+     * GOST and common ASN.1 Object and Algorithm Identifiers
+     * @class GostSecurity
+     */
+    function GostSecurity() {
+    }
+
+    GostSecurity.prototype = {
+        names: names,
+        identifiers: identifiers,
+        algorithms: algorithms,
+        parameters: parameters,
+        attributes: attributes,
+        providers: providers
+    };
+
+    /**
+     * GOST and common ASN.1 Object and Algorithm Identifiers  
+     * 
+     * @memberOf gostCrypto
+     * @type GostSecurity
+     */
+    gostCrypto.security = new GostSecurity();
+
+    return GostSecurity();
+}));
+
+/***/ }),
 /* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * @file Implements the Cryptographic Message Syntax as specified in RFC-2630.
+ * @file Provides facilities for handling certificates, CRLs, etc.
  * @version 1.76
  * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
  */
@@ -14059,10 +13230,11 @@ return /******/ (function(modules) { // webpackBootstrap
      * Module imports and exports
      * 
      */ // <editor-fold defaultstate="collapsed">
+     
     if (true) {
-        module.exports = factory(__webpack_require__(0), __webpack_require__(2), __webpack_require__(5));
+        module.exports = factory(__webpack_require__(0), __webpack_require__(2));
     } else {
-        root.GostCMS = factory(root.gostCrypto, root.GostASN1, root.GostCert);
+        root.GostCert = factory(root.gostCrypto, root.GostASN1);
     }
     // </editor-fold>
 
@@ -14070,6 +13242,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
     /*
      * Common algorithms
+     * 
      */ // <editor-fold defaultstate="collapsed">
     var root = this;
     var Promise = root.Promise;
@@ -14077,16 +13250,21 @@ return /******/ (function(modules) { // webpackBootstrap
     var CryptoOperationData = root.ArrayBuffer;
     var Date = root.Date;
 
+    // Crypto subtle
     var subtle = gostCrypto.subtle;
-    var asn1 = gostCrypto.asn1;
+
+    // Coding
     var coding = gostCrypto.coding;
-    var cert = gostCrypto.cert;
+
+    // ASN.1 syntax
+    var asn1 = gostCrypto.asn1;
+
+    // Providers
     var providers = gostCrypto.security.providers;
 
     // Expand javascript object
-    function expand() {
-        var r = {};
-        for (var i = 0, n = arguments.length; i < n; i++) {
+    function expand(r) {
+        for (var i = 1, n = arguments.length; i < n; i++) {
             var item = arguments[i];
             if (typeof item === 'object')
                 for (var name in item)
@@ -14094,6 +13272,147 @@ return /******/ (function(modules) { // webpackBootstrap
                         r[name] = item[name];
         }
         return r;
+    }
+
+    // Extend javascript class
+    function extend(Class) {
+        var F = function () {
+        };
+        F.prototype = Class.prototype;
+        var r = new F, args = [r];
+        for (var i = 1; i < arguments.length; i++)
+            args.push(arguments[i]);
+        return expand.apply(this, args);
+    }
+
+    // Today date + n days
+    function today(n) {
+        var date = new Date();
+        date.setHours(0, 0, 0, 0);
+        if (n)
+            date.setDate(date.getDate() + n);
+        return date;
+    }
+
+    // Self resolver
+    function call(callback) {
+        try {
+            callback();
+        } catch (e) {
+        }
+    }
+
+    // Serial number
+    function genSerialNumber() {
+        var seed = new Uint8Array(4);
+        gostCrypto.getRandomValues(seed);
+        seed[0] = seed[0] & 0x7f;
+        return coding.Int16.encode(seed);
+    }
+
+    // True if equal numbers
+    var equalNumbers = (function () {
+        // Convert number to bigendian hex string
+        var hex = function (s) {
+            var t = typeof s;
+            return t === 'undefined' || s === '' ? '0' :
+                    t === 'number' || s instanceof Number ? s.toString(16).toLowerCase() :
+                    s.replace('0x', '').toLowerCase();
+        };
+        // Zero left padding
+        var lpad = function (s, size) {
+            return (new Array(size + 1).join('0') + s).slice(-size);
+        };
+        return function (s1, s2) {
+            s1 = hex(s1);
+            s2 = hex(s2);
+            var len = Math.max(s1.length, s2.length);
+            return lpad(s1, len) === lpad(s2, len);
+        };
+    })();
+
+    // Check equal names
+    function equalNames(name1, name2) {
+        for (var key in name1)
+            if (name1[key] !== name2[key])
+                return false;
+        for (var key in name2)
+            if (name1[key] !== name2[key])
+                return false;
+        return true;
+    }
+
+    // Check the buffers to equal
+    function equalBuffers(r1, r2) {
+        var s1 = new Uint8Array(r1),
+                s2 = new Uint8Array(r2);
+        if (s1.length !== s2.length)
+            return false;
+        for (var i = 0, n = s1.length; i < n; i++)
+            if (s1[i] !== s2[i])
+                return false;
+        return true;
+    }
+
+    // Match certificate
+    function matchCertificate(cert, selector) {
+        var skid = cert.extensions && cert.extensions.subjectKeyIdentifier;
+        return (cert && selector &&
+                (!selector.issuer || equalNames(cert.issuer, selector.issuer)) &&
+                (!selector.serialNumber || equalNumbers(cert.serialNumber, selector.serialNumber)) &&
+                (!selector.subjectKeyIdentifier || equalBuffers(skid, selector.subjectKeyIdentifier)) &&
+                (!selector.subject || equalNames(cert.subject, selector.subject)) &&
+                (!selector.date || (cert.notBefore.getTime() <= selector.date.getTime() &&
+                        cert.notAfter.getTime() > selector.date.getTime())));
+    }
+
+    // Create authority certificate selector
+    function authoritySelector(cert, extensions, date) {
+        var selector = {subject: cert.issuer, date: date},
+        akid = extensions && extensions.authorityKeyIdentifier;
+        if (akid) {
+            selector.subjectKeyIdentifier = akid.keyIdentifier;
+            if (akid.authorityCertIssuer && akid.authorityCertIssuer[0] &&
+                    akid.authorityCertSerialNumber) {
+                selector.issuer = akid.authorityCertIssuer[0];
+                selector.serialNumber = akid.authorityCertSerialNumber;
+            }
+        }
+        return selector;
+    }
+
+    // Find certificates
+    function selectCertificates(certs, selector) {
+        var result = [];
+        for (var i = 0, n = certs.length; i < n; i++)
+            if (matchCertificate(certs[i], selector))
+                result.push(certs[i]);
+        return result;
+    }
+
+    // Match CRL
+    function matchCRL(crl, selector) {
+        return ((!selector.issuer || equalNames(crl.issuer, selector.issuer)) &&
+                (!selector.date || (crl.thisUpdate.getTime() < selector.date.getTime())));
+    }
+
+    // Find certificates
+    function selectCRLs(crls, selector) {
+        var result = [];
+        for (var i = 0, n = crls.length; i < n; i++)
+            if (matchCRL(crls[i], selector))
+                result.push(crls[i]);
+        return result;
+    }
+
+    // Define provider for key algorithm
+    function keyProvider(algorithm) {
+        var id = algorithm.id;
+        for (var name in providers) {
+            var provider = providers[name];
+            if (provider.publicKey.id === id)
+                return provider;
+        }
     }
 
     function defineProperty(object, name, descriptor, enumerable) {
@@ -14140,1240 +13459,1028 @@ return /******/ (function(modules) { // webpackBootstrap
         return Class;
     }
 
-    // Self resolver
-    function call(callback) {
-        try {
-            callback();
-        } catch (e) {
-        }
-    }
-
-    // Check the buffers to equal
-    function equalBuffers(r1, r2) {
-        var s1 = new Uint8Array(r1),
-                s2 = new Uint8Array(r2);
-        if (s1.length !== s2.length)
-            return false;
-        for (var i = 0, n = s1.length; i < n; i++)
-            if (s1[i] !== s2[i])
-                return false;
-        return true;
-    }
-
-    // True if equal numbers
-    var equalNumbers = (function () {
-        // Convert number to bigendian hex string
-        var hex = function (s) {
-            var t = typeof s;
-            return t === 'undefined' || s === '' ? '0' :
-                    t === 'number' || s instanceof Number ? s.toString(16).toLowerCase() :
-                    s.replace('0x', '').toLowerCase();
-        };
-        // Zero left padding
-        var lpad = function (s, size) {
-            return (new Array(size + 1).join('0') + s).slice(-size);
-        };
-        return function (s1, s2) {
-            s1 = hex(s1);
-            s2 = hex(s2);
-            var len = Math.max(s1.length, s2.length);
-            return lpad(s1, len) === lpad(s2, len);
-        };
-    })();
-
-    // Check equal names
-    function equalNames(name1, name2) {
-        for (var key in name1)
-            if (name1[key] !== name2[key])
-                return false;
-        for (var key in name2)
-            if (name1[key] !== name2[key])
-                return false;
-        return true;
-    }
-
-    // Add unique value to array
-    function addUnique(array, item, comparator) {
-        var found = false;
-        for (var i = 0, n = array.length; i < n; i++)
-            if (comparator(array[i], item)) {
-                found = true;
-                break;
-            }
-        if (!found)
-            array.push(item);
-    }
-
-    // Set content data
-    function setContentData(object, data) {
-        var content = object.content;
-        switch (object.contentType) {
-            case 'data':
-                object.content = data.content;
-                break;
-            case 'digestedData':
-            case 'signedData':
-            case 'authData':
-                content.encapContentInfo = {
-                    eContentType: data.contentType,
-                    eContent: data.content
-                };
-                break;
-            case 'envelopedData':
-            case 'encryptedData':
-                content.encryptedContentInfo = {
-                    contentType: data.contentType,
-                    encryptedContent: data.content
-                };
-                break;
-        }
-    }
-
-    // Get content data
-    function getContentData(object) {
-        var content = object.content;
-        switch (object.contentType) {
-            case 'data':
-                return {
-                    contentType: object.contentType,
-                    content: object.content
-                };
-            case 'digestedData':
-            case 'signedData':
-            case 'authData':
-                var encap = content.encapContentInfo;
-                return  {
-                    contentType: encap.eContentType,
-                    content: encap.eContent
-                };
-            case 'envelopedData':
-            case 'encryptedData':
-                var enc = content.encryptedContentInfo;
-                return {
-                    contentType: enc.contentType,
-                    content: enc.encryptedContent
-                };
-        }
-    }
-
-    // Check content info type
-    function checkContentInfo(contentInfo) {
-        var content, contentType;
-        if (contentInfo) {
-            if (typeof contentInfo === 'string')
-                try {
-                    contentInfo = coding.PEM.decode(contentInfo);
-                } catch (e1) {
-                    contentInfo = coding.Chars.decode(contentInfo);
-                }
-            if (contentInfo instanceof CryptoOperationData)
-                try {
-                    contentInfo = asn1.ContentInfo.decode(contentInfo);
-                } catch (e) {
-                    contentInfo = {contentType: 'data', content: contentInfo};
-                }
-            contentType = contentInfo.contentType;
-            if (!contentType)
-                throw new Error('Invalid content object');
-            content = contentInfo.content;
-            if (!(content instanceof CryptoOperationData))
-                content = content.encode();
-            return {contentType: contentType, content: content};
-        } else
-            contentInfo = {contentType: 'data'};
-        return contentInfo;
-    }
-
-    function createContentInfo(contentInfo) {
-        try {
-            // Some provider has mistake to envelop ContentInfo enstead 
-            // content field of ContentInfo
-            contentInfo = new asn1.ContentInfo(contentInfo.content, true);
-        } catch (e) {
-        }
-        // Create situable content info object
-        switch (contentInfo.contentType) {
-            case 'data':
-                return new DataContentInfo(contentInfo);
-            case 'digestedData':
-                return new DigestedDataContentInfo(contentInfo);
-            case 'signedData':
-                return new SignedDataContentInfo(contentInfo);
-            case 'encryptedData':
-                return new EncryptedDataContentInfo(contentInfo);
-            case 'envelopedData':
-                return new EnvelopedDataContentInfo(contentInfo);
-            default:
-                return new asn1.ContentInfo(contentInfo);
-        }
-    }
-    ;
-
-    function matchCert(id, cert) {
-        return (id instanceof CryptoOperationData ? cert.extensions &&
-                equalBuffers(id, cert.extensions.subjectKeyIdentifier) :
-                equalNames(cert.issuer, id.issuer) &&
-                equalNumbers(cert.serialNumber, id.serialNumber));
-    }
-
-    // Get random values
-    function getSeed(length) {
-        var seed = new Uint8Array(length);
-        gostCrypto.getRandomValues(seed);
-        return seed.buffer;
-    }
-
-    // Salt size
-    function saltSize(algorithm) {
-        switch (algorithm.id) {
-            case 'pbeWithSHAAnd40BitRC2-CBC':
-            case 'pbeWithSHAAnd128BitRC2-CBC':
-                return 8;
-            case 'pbeUnknownGost':
-                return 16;
-            case 'sha1':
-                return 20;
-            default:
-                return 32;
-        }
-    }
-
-    // Password to bytes
-    function passwordData(derivation, password) {
-        if (!password)
-            return new CryptoOperationData(0);
-        if (password instanceof CryptoOperationData)
-            return password;
-        if (typeof password !== 'string')
-            throw new Error('The password must be string or raw data type');
-        if (derivation.name.indexOf('CPKDF') >= 0) {
-            // CryptoPro store password
-            var r = [];
-            for (var i = 0; i < password.length; i++) {
-                var c = password.charCodeAt(i);
-                r.push(c & 0xff);
-                r.push(c >>> 8 & 0xff);
-                r.push(0);
-                r.push(0);
-            }
-            return new Uint8Array(r).buffer;
-        } else if (derivation.name.indexOf('PFXKDF') >= 0)
-            // PKCS#12 unicode password
-            return coding.Chars.decode(password + '\0', 'unicode');
-        else
-            // PKCS#5 password mode
-            return coding.Chars.decode(password, 'utf8');
-    }
-
-    // Define provider for encription algorithm
-    function encryptionProvider(algorithm) {
-        var id = algorithm.id;
-        for (var name in providers) {
-            var provider = providers[name];
-            if (provider.encryption.id === id)
-                return provider;
-        }
-    }
-
     // </editor-fold>
 
     /**
      * Provides facilities for handling certificates, CRLs, etc.
-     * @class GostCMS
+     * 
+     * @class GostCert
      */
-    function GostCMS() {
+    function GostCert() {
     }
 
     /**
-     * Message templates
+     * Certificate templates
      * <ul>
      *      <li>providerName - provider name for key generation, default 'CP-01'</li>
-     *      <li>autoAddCert - automatic add signer certificate to signature, default false</li>
-     *      <li>useKeyIdentifier - true to add Signer as the SignerIdentifier (v3), otherwise, as the IssuerAndSerialNumber (v1) (default false).</li>
+     *      <li>subject - template of subject name {countryName: 'RU', commonName: 'Anonymous'}</li>
+     *      <li>caKeyUsage - default key usages for a CA certificates 
+     *          ['digitalSignature', 'nonRepudiation', 'keyEncipherment',
+     *          'dataEncipherment', 'keyAgreement', 'keyCertSign', 'cRLSign']</li>
+     *      <li>caExtKeyUsage - default extended key usages for a CA certificates 
+     *          ['serverAuth', 'clientAuth', 'codeSigning', 'emailProtection', 'ipsecEndSystem',
+     *          'ipsecTunnel', 'ipsecUser', 'timeStamping', 'OCSPSigning']</li>
+     *      <li>userKeyUsage - default key usages for a user certificate 
+     *          ['digitalSignature', 'nonRepudiation', 'keyEncipherment', 'dataEncipherment', 'keyAgreement'],
+     *      <li>userExtKeyUsage - default extended key usages for user certificate 
+     *          ['clientAuth', 'emailProtection']</li>
+     *      <li>days - validity of the certificate in days, default 7305</li>
      * </ul>
      * 
-     * @memberOf GostCMS
+     * @memberOf GostCert
      * @instance
      */
     var options = {// <editor-fold defaultstate="collapsed">
         providerName: 'CP-01',
-        autoAddCert: false,
-        useKeyIdentifier: false // </editor-fold>
+        subject: {countryName: 'RU', commonName: 'Anonymous'},
+        caKeyUsage: ['digitalSignature', 'nonRepudiation', 'keyEncipherment',
+            'dataEncipherment', 'keyAgreement', 'keyCertSign', 'cRLSign'],
+        caExtKeyUsage: ['serverAuth', 'clientAuth', 'codeSigning', 'emailProtection', 'ipsecEndSystem',
+            'ipsecTunnel', 'ipsecUser', 'timeStamping', 'OCSPSigning'],
+        userKeyUsage: ['digitalSignature', 'nonRepudiation', 'keyEncipherment', 'dataEncipherment', 'keyAgreement'],
+        userExtKeyUsage: ['clientAuth', 'emailProtection'],
+        days: 7305 // </editor-fold>
     };
 
-    GostCMS.prototype.options = options;
+    GostCert.prototype.options = options;
 
     /**
-     * The base class for all CMS objects.<br><br>
+     * This class encapsulates X.509 Version 3 certificates.<br><br>
      * 
-     * A CMS object consists of a content type, and content.<br><br>
+     * Constructs an X.509 certificate from the given DER encoding or ASN.1 Certificate object.
      * 
-     * @class GostCMS.DataContentInfo
-     * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The content object.
-     * @param {string} defaultSet The default object initialization set.
-     * @extends GostASN1.ContentInfo
+     * @class GostCert.X509
+     * @extends GostASN1.Certificate
+     * @param {(FormatedData|GostASN1.Certificate)} cert The certificate
      */
-    function DataContentInfo(contentInfo, defaultSet) // <editor-fold defaultstate="collapsed">
+    var X509 = function (cert) // <editor-fold defaultstate="collapsed">
     {
-        asn1.ContentInfo.call(this, contentInfo || defaultSet || {contentType: 'data'});
-        if (defaultSet && this.contentType !== (defaultSet.contentType || 'data'))
-            throw new Error('Invalid content type');
-    } // </editor-fold>
-
-    extend(asn1.ContentInfo, DataContentInfo, {
-        /**
-         * Indicates if this is a detached CMS object.
-         * 
-         * @memberOf GostCMS.DataContentInfo
-         * @instance
-         * @returns {boolean} true if detached; false otherwise.
-         */
-        isDetached: {// <editor-fold defaultstate="collapsed">
-            value: false,
-            enumerable: true,
-            writable: true // </editor-fold>
-        },
-        /**
-         * Indicates if an external (detached) signature must be created.
-         * 
-         * @memberOf GostCMS.DataContentInfo
-         * @instance
-         * @param {boolean} createDetached True if detached; false otherwise.
-         */
-        writeDetached: function (createDetached) // <editor-fold defaultstate="collapsed">
-        {
-            // Define external signature mode
-            this.isDetached = createDetached;
-        }, // </editor-fold> 
-        /**
-         * Encode the message to binary format 'DER' or 'PEM'
-         * 
-         * @memberOf GostCMS.DataContentInfo
-         * @instance
-         * @param {string} format
-         * @returns {FormatedData}
-         */ // <editor-fold defaultstate="collapsed">
-        encode: function (format) // <editor-fold defaultstate="collapsed">
-        {
-            if (this.isDetached) {
-                var data = getContentData(this);
-                setContentData(this, {contentType: data.contentType});
-                var result = asn1.ContentInfo.method('encode').call(this, format);
-                setContentData(this, data);
-                return result;
-            } else
-                return asn1.ContentInfo.method('encode').call(this, format);
-        }, // </editor-fold> 
-        /**
-         * Enclose content to document. 
-         * 
-         * @memberOf GostCMS.DataContentInfo
-         * @instance
-         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo
-         * @returns {Promise} Promise to return self object after enclose content
-         */
-        encloseContent: function (contentInfo) // <editor-fold defaultstate="collapsed">
-        {
-            var self = this;
-            return new Promise(call).then(function () {
-                self.setEnclosed(contentInfo);
-                return self;
+        try {
+            // Try to use decode X.509 certificate
+            asn1.Certificate.call(this, cert, true);
+        } catch (e) {
+            try {
+                // Try to decode certification request
+                cert = new asn1.CertificationRequest(cert, true);
+            } catch (e) {
+            }
+            // Create new certificate structure
+            cert = cert || {};
+            asn1.Certificate.call(this, {
+                version: 2,
+                serialNumber: cert.serialNumber || genSerialNumber(),
+                signature: cert.signature || {id: 'noSignature'},
+                issuer: cert.subject || options.subject,
+                notBefore: cert.notBefore || today(),
+                notAfter: cert.notAfter ||
+                        today(cert.days || options.days),
+                subject: cert.subject || options.subject,
+                subjectPublicKeyInfo: cert.subjectPublicKeyInfo || {
+                    algorithm: {id: 'noSignature'},
+                    subjectPublicKey: new CryptoOperationData(0)
+                },
+                extensions: (cert.attributes && (cert.attributes.extensionRequest ||
+                        cert.attributes.msCertExtensions)) || cert.extensions,
+                signatureAlgorithm: {id: 'noSignature'},
+                signatureValue: new CryptoOperationData(0)
             });
-        }, // </editor-fold> 
-        /**
-         * Sets the content of attached document.<br><br>
-         * 
-         * This is necessary only in detached mode.
-         * 
-         * @memberOf GostCMS.DataContentInfo
-         * @instance
-         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo - The encapsulated CMS Object.
-         */
-        setEnclosed: function (contentInfo) // <editor-fold defaultstate="collapsed">
-        {
-            setContentData(this, checkContentInfo(contentInfo));
-        }, // </editor-fold> 
-        /**
-         * Returns the document which attached. If the content is not attached, the CMS object 
-         * which is returned will be degenerate.
-         * 
-         * @memberOf GostCMS.DataContentInfo
-         * @instance
-         * @returns {GostASN1.ContentInfo} The encapsulated CMS Object.
-         */
-        getEnclosed: function () // <editor-fold defaultstate="collapsed">
-        {
-            return createContentInfo(getContentData(this));
-        } // </editor-fold>
-    });
+        }
+    }; // </editor-fold>
 
-    /**
-     * This class encapsulates a CMS object of content type binary data.
-     * 
-     * @memberOf GostCMS
-     * @type GostCMS.DigestedDataContentInfo
-     */
-    GostCMS.prototype.DataContentInfo = DataContentInfo;
-
-    /**
-     * This class encapsulates a CMS object of content type digested-data.
-     * 
-     * @class GostCMS.DigestedDataContentInfo
-     * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo - The content that is to be signed.
-     * @extends GostCMS.DataContentInfo
-     * @extends GostASN1.DigestedData
-     */
-    function DigestedDataContentInfo(contentInfo) // <editor-fold defaultstate="collapsed">
-    {
-        DataContentInfo.call(this, contentInfo, {
-            contentType: 'digestedData',
-            version: 0,
-            digestAlgorithm: providers[options.providerName].digest,
-            encapContentInfo: {
-                eContentType: 'data'
-            },
-            digest: new CryptoOperationData(0)
-        });
-    }  // </editor-fold>
-
-    extend(DataContentInfo, DigestedDataContentInfo, {
+    extend(asn1.Certificate, X509, {
         /**
-         * Enclose the content and calculate the message digest with given digest algorithm
+         * Generate the contents of this certificate and sign it.<br><br>
          * 
-         * @memberOf GostCMS.DigestedDataContentInfo
+         * If issuerCertificate is not defined self signed certificate generated
+         * 
+         * @memberOf GostCert.X509
          * @instance
-         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo Content data to be enclosed.
-         * @param {(AlgorithmIdentifier|string)} digestAlgorithm Digest algorithm or provider name
-         * @returns {Promise} 
+         * @param {GostASN1.PrivateKeyInfo} issuerPrivateKey The issuer's private key
+         * @param {GostCert.X509} issuerCertificate The issuer's certificate or undefined for self-signed certificate
+         * @returns {Promise} Promise to return self object after sign the certificate
          */
-        encloseContent: function (contentInfo, digestAlgorithm) // <editor-fold defaultstate="collapsed"> 
+        sign: function (issuerPrivateKey, issuerCertificate) // <editor-fold defaultstate="collapsed">
         {
-            var self = this;
+
+            var self = this, spki = self.subjectPublicKeyInfo;
             return new Promise(call).then(function () {
-                // Set enclosed data
-                self.setEnclosed(contentInfo);
 
-                // Define digest algorithm
-                if (digestAlgorithm) {
-                    var digestProvider = providers[digestAlgorithm];
-                    self.digestAlgorithm = (digestProvider && digestProvider.digest) || digestAlgorithm;
-                }
+                // Need generated key
+                if (!spki || !spki.algorithm || spki.algorithm === 'noSignature')
+                    throw new Error('Key pair was not generated for the certificate');
+                // Check issuer private key
+                if (!issuerPrivateKey)
+                    throw new Error('The private key of the issuer is not defined');
+                        
+                // Certificate can be self signed
+                issuerCertificate = issuerCertificate || self;
 
-                // Calculate digest
-                return subtle.digest(self.digestAlgorithm, self.encapContentInfo.eContent);
+                // Calculate subject key indentifier
+                return subtle.digest('SHA-1', spki.subjectPublicKey);
             }).then(function (digest) {
 
-                // Set digest attribute
-                self.digest = digest;
-            });
-        }, // </editor-fold>
-        /**
-         * Verify the Message Digest. <br><br>
-         * 
-         * @memberOf GostCMS.DigestedDataContentInfo
-         * @instance
-         * @param contentInfo Detached content (optional)
-         * @returns {Promise} Promise to return enclosed object {@link GostASN1.ContentInfo} if digest verified
-         */
-        verify: function (contentInfo) // <editor-fold defaultstate="collapsed">
-        {
-            var self = this;
-            return new Promise(call).then(function () {
-                // Append attached
-                if (contentInfo)
-                    self.setEnclosed(contentInfo);
+                // Signature algorithm
+                var provider = issuerCertificate.getProvider() || providers[options.providerName];
+                if (!self.signature || self.signature.id === 'noSignature')
+                    self.signature = provider.signature;
+                self.signatureAlgorithm = self.signature;
 
-                // Check data
-                var dataToVerify = self.encapContentInfo &&
-                        self.encapContentInfo.eContent;
-                if (!dataToVerify)
-                    throw new Error('Detached content is not found');
+                // Set issuer
+                self.issuer = issuerCertificate.subject;
+                // Set default extensions
+                if (!self.extensions)
+                    self.extensions = {};
+                var exts = self.extensions, ae = issuerCertificate.extensions;
+                if (self === issuerCertificate) { // Self-signed CA certificate
+                    // Set key usage
+                    exts.keyUsage = exts.keyUsage || options.caKeyUsage;
+                    exts.extKeyUsage = exts.extKeyUsage || options.caExtKeyUsage;
+                    // Set basic constraints
+                    exts.basicConstraints = exts.basicConstraints || {cA: true};
+                } else {
+                    // Check key usage and validity
+                    if (!issuerCertificate.checkUsage('keyCertSign', self.notBefore))
+                        throw new Error('The issuer\'s certificate is not valid for signing a certificate');
 
-                // Calculate digest
-                return subtle.digest(self.digestAlgorithm, self.encapContentInfo.eContent);
-            }).then(function (digest) {
-                if (!equalBuffers(digest, self.digest))
-                    throw Error('Message digest is not verified');
-                // Return content
-                return createContentInfo({
-                    contentType: self.encapContentInfo.eContentType,
-                    content: self.encapContentInfo.eContent
-                });
-            });
-        } // </editor-fold>
-    });
-
-    /**
-     * This class encapsulates a CMS object of content type digested-data.
-     * 
-     * @memberOf GostCMS
-     * @type GostCMS.DigestedDataContentInfo
-     */
-    GostCMS.prototype.DigestedDataContentInfo = DigestedDataContentInfo;
-
-    /**
-     * This class encapsulates a CMS object of content type signed-data.
-     * 
-     * Use encloseContent or setEnclosed methods to add a enclosed content before add signatures
-     * 
-     * @class GostCMS.SignedDataContentInfo
-     * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo - The signed content. 
-     * @extends GostCMS.DataContentInfo
-     * @extends GostASN1.SignedData
-     */
-    function SignedDataContentInfo(contentInfo) // <editor-fold defaultstate="collapsed">
-    {
-        DataContentInfo.call(this, contentInfo, {
-            contentType: 'signedData',
-            version: 1,
-            digestAlgorithms: [],
-            encapContentInfo: {
-                eContentType: 'data'
-            },
-            signerInfos: []
-        });
-    }  // </editor-fold>
-
-    extend(DataContentInfo, SignedDataContentInfo, {
-        /**
-         * Add a Signer using the the IssuerAndSerialNumber as the SignerIdentifier i.e a Version1 CMSSignerInfo 
-         * or SubjectPublicKeyIdentifier as the SignerIdentifier i.e a Version3 CMSSignerInfo.
-         * 
-         * @memberOf GostCMS.SignedDataContentInfo
-         * @instance
-         * @param {GostASN1.PrivateKeyInfo} signerKey Private Key of the signer.
-         * @param {GostCert.X509} signerCert Signer certificate or certificate chain
-         * @param {GostASN1.SignedAttributes} signedAttrs The set of signed attributes. Default undefined. If true or {} standard attributes will be appended: contentType and messageDigest
-         * @param {GostASN1.UnsignedAttributes} unsignedAttrs  The set of unsigned attributes. Default undefined.
-         * @returns {Promise} Promise to return self object after add signature
-         */
-        addSignature: function (signerKey, signerCert, signedAttrs, unsignedAttrs) // <editor-fold defaultstate="collapsed"> 
-        {
-            var self = this, signerInfo, dataToSign, signerCertChain;
-            return new Promise(call).then(function () {
-                // Check attribures
-                if (!signerKey || !signerCert)
-                    throw new Error('Signer key or certificate is not defined');
-                // Cert chain
-                if (signerCert instanceof Array) {
-                    signerCertChain = signerCert;
-                    signerCert = signerCertChain[0];
-                } else
-                    signerCertChain = [signerCert];
-                // Signature algorithm provider
-                var provider = signerCert.getProvider() ||
-                        providers[options.providerName];
-                var useKeyIdentifier = options.useKeyIdentifier && signerCert.extensions &&
-                        signerCert.extensions.subjectKeyIdentifier;
-                // Get enclosed data
-                dataToSign = self.encapContentInfo.eContent;
-                // Prepare signer info structure
-                signerInfo = {
-                    version: useKeyIdentifier ? 2 : 0,
-                    sid: useKeyIdentifier ? signerCert.extensions.subjectKeyIdentifier : {
-                        issuer: signerCert.issuer,
-                        serialNumber: signerCert.serialNumber},
-                    digestAlgorithm: provider.digest,
-                    signatureAlgorithm: signerCert.subjectPublicKeyInfo.algorithm};
-                // Set an unsigned attributes
-                if (unsignedAttrs)
-                    signerInfo.unsignedAttrs = unsignedAttrs;
-                // For a signed attributes calculate digest
-                if (signedAttrs) {
-                    if (typeof signedAttrs !== 'object')
-                        signedAttrs = {};
-                    return subtle.digest(signerInfo.digestAlgorithm, dataToSign);
+                    // Set key usage
+                    exts.keyUsage = exts.keyUsage || options.userKeyUsage;
+                    exts.extKeyUsage = exts.extKeyUsage || options.userExtKeyUsage;
+                    // Set basic constraints
+                    exts.basicConstraints = exts.basicConstraints || {
+                        cA: exts.keyUsage.indexOf('keyCertSign') >= 0
+                    };
+                    // Check path length constraint
+                    if (exts.basicConstraints.cA) {
+                        var pathLen = ae && ae.basicConstraints && ae.pathLenConstraint;
+                        if (pathLen !== undefined) {
+                            if (pathLen > 0)
+                                exts.basicConstraints.pathLenConstraint = pathLen - 1;
+                            else
+                                throw new Error('Path length constraint exceeded');
+                        }
+                    }
                 }
-            }).then(function (digest) {
-                if (digest) {
-                    // Add standard signed attributes
-                    signedAttrs.contentType = self.encapContentInfo.eContentType,
-                            signedAttrs.messageDigest = digest,
-                            signedAttrs.signingTime = new Date();
-                    signerInfo.signedAttrs = signedAttrs,
-                            // Now data to sign = attributes
-                            dataToSign = asn1.SignedAttributes.encode(signerInfo.signedAttrs);
-                }
+                // Subject key identifier 160 bit from public key hash
+                exts.subjectKeyIdentifier = digest;
+                // Authority key identifier
+                if (ae && ae.subjectKeyIdentifier)
+                    exts.authorityKeyIdentifier = {
+                        keyIdentifier: ae.subjectKeyIdentifier,
+                        authorityCertIssuer: [issuerCertificate.issuer],
+                        authorityCertSerialNumber: issuerCertificate.serialNumber};
 
                 // Import the private key
-                return subtle.importKey('pkcs8', asn1.PrivateKeyInfo.encode(signerKey),
-                        signerKey.privateKeyAlgorithm, false, ['sign']);
+                return subtle.importKey('pkcs8', issuerPrivateKey.encode(), issuerPrivateKey.privateKeyAlgorithm, false, ['sign']);
             }).then(function (key) {
 
-                // Sign data
-                var algorithm = expand(signerInfo.signatureAlgorithm, {hash: signerInfo.digestAlgorithm});
-                return subtle.sign(algorithm, key, dataToSign);
+                // Sign certificate
+                return subtle.sign(self.signatureAlgorithm, key, self.tbsCertificate.encode());
             }).then(function (signatureValue) {
-                signerInfo.signatureValue = signatureValue;
+                // Siganture value
+                self.signatureValue = signatureValue;
 
-                // Add digest algorithm
-                addUnique(self.digestAlgorithms, signerInfo.digestAlgorithm, function (algorithm1, algorithm2) {
-                    return algorithm1.id === algorithm2.id;
-                });
-
-                // Add signer certificate
-                if (options.autoAddCert) {
-                    if (!self.certificates)
-                        self.certificates = [];
-                    for (var i = 0, n = signerCertChain.length; i < n; i++) {
-                        addUnique(self.certificates, signerCertChain[i], function (cert1, cert2) {
-                            return equalNames(cert1.issuer, cert2.issuer) &&
-                                    equalNumbers(cert1.serialNumber, cert2.serialNumber);
-                        });
-                    }
-                }
-
-                // Add signer info
-                self.signerInfos.push(signerInfo);
-            });
-        }, // </editor-fold>
-        /**
-         * Indicates if this object has any signers i.e. checks for the absence of any SignerInfo structures.
-         * CMS (RFC-2630) defines a degenerate object as one which has no signers.
-         * 
-         * @memberOf GostCMS.SignedDataContentInfo
-         * @instance
-         * @returns {boolean} True if this object has no signers; false otherwise.
-         */
-        isDegenerate: {// <editor-fold defaultstate="collapsed">
-            get: function () {
-                return !(this.signerInfos && this.signerInfos.length > 0);
-            } // </editor-fold>
-        },
-        /**
-         * Returns normally if this CMS signed data object contains at least one valid signature, 
-         * according to the given trust policy; otherwise throws an Error.<br><br>
-         * 
-         * In order to be considered valid, there must be at least one signature on this CMS 
-         * message which is validated by one of the certificates included with it; furthermore, 
-         * the validating certificate must itself be valid according to the given certificate 
-         * trust policy. This latter validation process may involve examining the other certificates 
-         * or CRLs included with this object, if called for by the trust policy.<br><br>
-         * 
-         * If a signature is encountered for which a certification path can be found, but is 
-         * invalid, an Error will be created, but will not be thrown until 
-         * all other signatures have been checked. If another signature is found which is valid, 
-         * then the method simply returns and no exception at all is thrown. 
-         * 
-         * @memberOf GostCMS.SignedDataContentInfo
-         * @instance
-         * @param {GostCert.CertificateTrustPolicy} trustPolicy The trust prolicy for verification
-         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The content that was signed (optional)
-         * @returns {Promise} Promise to return enclosed object {@link GostASN1.ContentInfo} if signature verified
-         */
-        verify: function (trustPolicy, contentInfo) // <editor-fold defaultstate="collapsed">
-        {
-            var self = this, result;
-            return new Promise(call).then(function () {
-                // Append attached
-                if (contentInfo)
-                    self.setEnclosed(contentInfo);
-                if (!self.signerInfos || self.signerInfos.length === 0)
-                    throw new Error('No signatures found');
-                // Validate certificate of signers
-                return Promise.all(self.signerInfos.map(function (signerInfo, i) {
-                    var sid = signerInfo.sid, selector = sid instanceof CryptoOperationData ? {
-                        subjectKeyIdentifier: sid
-                    } : {
-                        issuer: sid.issuer,
-                        serialNumber: sid.serialNumber};
-                    // Signing date
-                    var date;
-                    if (signerInfo.signedAttrs && signerInfo.signedAttrs.signingTime)
-                        date = signerInfo.signedAttrs.signingTime;
-                    // Use certificate trust policy validation
-                    return trustPolicy.getValidCertificate(selector,
-                            self.certificates, self.crls, date).catch(function () {
-                        return; // Ignore error
-                    });
-                }));
-
-            }).then(function (certs) {
-                // Get encapsulated data
-                var verifiers = [];
-                // Verify signatures for each signers
-                certs.forEach(function (signerCert) {
-                    if (signerCert)
-                        verifiers.push(self.verifySignature(signerCert).then(function (data) {
-                            result = data; // Enough one valid signature
-                        }, function () {
-                            return; // Ignore error
-                        }));
-                });
-                if (verifiers.length === 0)
-                    throw new Error('Valid verification path not found');
-                return Promise.all(verifiers);
-            }).then(function () {
-                if (!result)
-                    throw Error('Verification path found but no valid signature');
-                // Return content
-                return result;
-            });
-        }, // </editor-fold>
-        /**
-         * Returns successfully if this CMS signed data object contains a signature which is 
-         * validated by the given certificate and data; otherwise throws an Error.<br><br>
-         * 
-         * This method verifies the specified signature directly and ignores any certificates 
-         * or CRLs which may be contained in this CMS object. A more complex verification process, 
-         * which does make use of attached certificates and CRLs, is provided by the verify method.
-         * 
-         * @memberOf GostCMS.SignedDataContentInfo
-         * @instance
-         * @param {GostCert.X509} signerCert The signer certificate
-         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The content that was signed (optional)
-         * @returns {Promise} Promise to return enclosed object {@link GostASN1.ContentInfo} if signature verified
-         */
-        verifySignature: function (signerCert, contentInfo) // <editor-fold defaultstate="collapsed">
-        {
-            var self = this, signerInfo, dataToVerify, dataDigest;
-            return new Promise(call).then(function () {
-                // Append attached
-                if (contentInfo)
-                    self.setEnclosed(contentInfo);
-                dataToVerify = self.encapContentInfo && self.encapContentInfo.eContent;
-                if (!dataToVerify)
-                    throw new Error('Detached content is not found');
-                // Find signer
-                for (var i = 0; i < self.signerInfos.length; i++) {
-                    var sid = self.signerInfos[i].sid;
-                    if (matchCert(sid, signerCert)) {
-                        signerInfo = self.signerInfos[i];
-                        break;
-                    }
-                }
-                if (!signerInfo)
-                    throw new Error('Signature not found for the certificate');
-                // Choice data for verification
-                if (signerInfo.signedAttrs) {
-                    dataDigest = signerInfo.signedAttrs.messageDigest;
-                    if (!dataDigest)
-                        throw new Error('Message digest must present in signed attributes');
-
-                    // To exclude implicit [0] need to reassemble signed attributes (auto on CTX object)
-                    dataToVerify = signerInfo.signedAttrs.encode();
-                }
-                if (!dataToVerify)
-                    throw new Error('Data for verification not found');
-                // Verify signature
-                var algorithm = expand(signerInfo.signatureAlgorithm, {hash: signerInfo.digestAlgorithm});
-                return signerCert.verifySignature(dataToVerify, signerInfo.signatureValue, algorithm);
-            }).then(function (result) {
-                if (!result)
-                    throw new Error('Signature not verified');
-                // Verify digest
-                if (signerInfo.signedAttrs)
-                    return subtle.digest(signerInfo.digestAlgorithm, self.encapContentInfo.eContent);
-            }).then(function (digest) {
-                if (digest && !equalBuffers(digest, dataDigest))
-                    throw new Error('Message digest not verified');
-                // Return content
-                return createContentInfo({
-                    contentType: self.encapContentInfo.eContentType,
-                    content: self.encapContentInfo.eContent
-                });
-            });
-        }  // </editor-fold>
-    });
-
-    /**
-     * This class encapsulates a CMS object of content type signed-data.
-     * 
-     * @memberOf GostCMS
-     * @type GostCMS.SignedDataContentInfo
-     */
-    GostCMS.prototype.SignedDataContentInfo = SignedDataContentInfo;
-
-    /**
-     * This class encapsulates a CMS object of content type encrypted-data.
-     * 
-     * @class GostCMS.EncryptedDataContentInfo
-     * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The encrypted data content.
-     * @extends GostCMS.DataContentInfo
-     * @extends GostASN1.EncryptedData
-     */
-    function EncryptedDataContentInfo(contentInfo) // <editor-fold defaultstate="collapsed">
-    {
-        DataContentInfo.call(this, contentInfo, {
-            contentType: 'encryptedData',
-            version: 0,
-            encryptedContentInfo: {
-                contentType: 'data',
-                contentEncryptionAlgorithm: providers[options.providerName].encryption
-            }
-        });
-    }  // </editor-fold>
-
-    extend(DataContentInfo, EncryptedDataContentInfo, {
-        /**
-         * Encrypt the content with given encryption algorithm, secret key or password
-         * 
-         * @memberOf GostCMS.EncryptedDataContentInfo
-         * @instance
-         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The content data to be enclosed.
-         * @param {Key|string} contentEncryptionKey content The encryption key or password for derive key
-         * @param {(AlgorithmIdentifier|string)} encryptionAlgorithm The encryption algorithm or provider name
-         * @returns {Promise} Promise to return self object after encrypt content
-         */
-        encloseContent: function (contentInfo, contentEncryptionKey, encryptionAlgorithm) // <editor-fold defaultstate="collapsed"> 
-        {
-            var self = this, encryption, derivation;
-            return new Promise(call).then(function () {
-                // Check content info
-                contentInfo = checkContentInfo(contentInfo);
-                if (!contentInfo.content)
-                    throw new Error('Content for encryption must be specified');
-
-                // Define encryption algorithm
-                var type = typeof contentEncryptionKey === 'string' ? 'pbes' : 'encryption';
-                if (encryptionAlgorithm) {
-                    var provider = providers[encryptionAlgorithm];
-                    encryptionAlgorithm = (provider && provider[type]) || encryptionAlgorithm;
-                } else
-                    encryptionAlgorithm = providers[options.providerName][type];
-                // Prepare content encryption key
-                if (encryptionAlgorithm.derivation) {
-                    // Encrypt with password
-                    derivation = expand(encryptionAlgorithm.derivation);
-                    encryption = expand(encryptionAlgorithm.encryption);
-                    derivation.salt = getSeed(saltSize(encryptionAlgorithm));
-                    // Import password for key generation
-                    var integrityKey;
-                    return subtle.importKey('raw', passwordData(derivation, contentEncryptionKey),
-                            derivation, false, ['deriveKey', 'deriveBits']).then(function (key) {
-                        integrityKey = key;
-                        // Derive IV
-                        if (derivation.name.indexOf('PFXKDF') >= 0) {
-                            derivation.diversifier = 2;
-                            return subtle.deriveBits(derivation, integrityKey, 64);
-                        }
-                    }).then(function (iv) {
-                        if (iv)
-                            encryption.iv = iv;
-                        // Generate key from password 
-                        derivation.diversifier = 1;
-                        return subtle.deriveKey(derivation, integrityKey, encryption, false, ['encrypt']);
-                    }).then(function (encryptionKey) {
-                        // Content encryption with key
-                        return encryptionKey;
-                    });
-                } else {
-                    // Base encryption
-                    encryption = expand(encryptionAlgorithm);
-                    if (contentEncryptionKey instanceof CryptoOperationData) {
-                        // Import key
-                        return subtle.importKey('raw', contentEncryptionKey, encryption, false, ['encrypt']);
-                    } else if (contentEncryptionKey.type === 'secret') {
-                        return contentEncryptionKey;
-                    } else
-                        throw new Error('Content encryption key must be raw data or secret key type');
-                }
-            }).then(function (encryptionKey) {
-                // Initial vector
-                if (!encryption.iv)
-                    encryption.iv = getSeed(8);
-
-                return subtle.encrypt(encryption, encryptionKey, contentInfo.content);
-            }).then(function (encryptedContent) {
-                if (encryptionAlgorithm.derivation) {
-                    delete derivation.diversifier;
-                    encryptionAlgorithm = expand(encryptionAlgorithm, {
-                        derivation: derivation,
-                        encryption: encryption
-                    });
-                } else
-                    encryptionAlgorithm = encryption;
-                // Set enclosed data
-                self.encryptedContentInfo = {
-                    contentType: contentInfo.contentType,
-                    contentEncryptionAlgorithm: encryptionAlgorithm,
-                    encryptedContent: encryptedContent
-                };
                 return self;
             });
         }, // </editor-fold>
         /**
-         * Returns the decrypted content. 
+         * Generate key pair for certificate
          * 
-         * @memberOf GostCMS.EncryptedDataContentInfo
+         * @memberOf GostCert.X509
          * @instance
-         * @param {Key|string} decryptionKey The decryption key or password for derive key   
-         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The detached content (optional).
-         * @returns {Promise} Promise to return enclosed object {@ling GostASN1.ContentInfo} after decrypt content
+         * @param {(AlgorithmIdentifier|string)} keyAlgorithm The key algorithm or name of provider
+         * @returns {Promise} Promise to return {@link GostASN1.PrivateKeyInfo} after self-signed certificate generation
          */
-        getEnclosed: function (decryptionKey, contentInfo) // <editor-fold defaultstate="collapsed">
+        generate: function (keyAlgorithm) // <editor-fold defaultstate="collapsed">
         {
-            var self = this, encryption, derivation, encryptedContent;
-            return new Promise(call).then(function () {
-                // Append attached
-                if (contentInfo)
-                    self.setEnclosed(contentInfo);
-                encryptedContent = self.encryptedContentInfo.encryptedContent;
-                if (!encryptedContent)
-                    throw new Error('Encrypted content must be specified');
+            var self = this, privateKey, provider;
+            if (keyAlgorithm)
+                provider = providers[keyAlgorithm];
+            else
+                provider = this.getProvider() || providers[options.providerName];
+            if (provider)
+                keyAlgorithm = expand(provider.publicKey, {privateKey: provider.privateKey});
 
-                encryption = expand(self.encryptedContentInfo.contentEncryptionAlgorithm);
-                if (encryption.derivation) {
-                    // Decrypt with password
-                    derivation = expand(encryption.derivation);
-                    encryption = expand(encryption.encryption);
-                    // Derive encryption key from password
-                    var integrityKey;
-                    return subtle.importKey('raw', passwordData(derivation, decryptionKey),
-                            derivation, false, ['deriveKey', 'deriveBits']).then(function (key) {
-                        integrityKey = key;
-                        // Derive iv for PFX
-                        if (derivation.name.indexOf('PFXKDF') >= 0) {
-                            derivation.diversifier = 2;
-                            return subtle.deriveBits(derivation, integrityKey, 64);
-                        }
-                    }).then(function (iv) {
-                        if (iv)
-                            encryption.iv = iv;
-                        // Generate key from password 
-                        derivation.diversifier = 1;
-                        return subtle.deriveKey(derivation, integrityKey, encryption, false, ['decrypt']);
-                    });
-                } else {
-                    // Base encryption. Password should be secret key
-                    if (decryptionKey instanceof CryptoOperationData) {
-                        // Import key
-                        return subtle.importKey('raw', decryptionKey, encryption, false, ['decrypt']);
-                    } else if (decryptionKey.type === 'secret') {
-                        return decryptionKey;
-                    } else
-                        throw new Error('Decryption key must be raw data or secret key type');
+            return new Promise(call).then(function () {
+
+                // Generate key pair
+                return subtle.generateKey(keyAlgorithm, 'true', ['sign', 'verify']);
+            }).then(function (keyPair) {
+                privateKey = keyPair.privateKey;
+
+                // Export public key
+                return subtle.exportKey('spki', keyPair.publicKey);
+            }).then(function (spki) {
+                self.subjectPublicKeyInfo = new asn1.SubjectPublicKeyInfo(spki);
+
+                return subtle.exportKey('pkcs8', privateKey);
+            }).then(function (pkcs8) {
+
+                return new asn1.PrivateKeyInfo(pkcs8);
+            });
+        }, // </editor-fold>
+        /**
+         * Gets the public key.
+         * 
+         * @memberOf GostCert.X509
+         * @instance
+         * @returns {Promise} Promise to return {@link Key}
+         */
+        getPublicKey: function () // <editor-fold defaultstate="collapsed">
+        {
+            var spki = this.subjectPublicKeyInfo,
+                    keyUsages = (spki.algorithm.id === 'rsaEncryption') ? ['verify'] :
+                    ['verify', 'deriveKey', 'deriveBits'];
+            return subtle.importKey('spki', spki.encode(), spki.algorithm, 'false', keyUsages);
+        }, // </editor-fold>
+        /**
+         * Get appropriate crypto provider for public key
+         * 
+         * @memberOf GostCert.X509
+         * @instance
+         * @returns Object Set of crypto provider algorithms
+         */
+        getProvider: function () // <editor-fold defaultstate="collapsed">
+        {
+            return keyProvider(this.subjectPublicKeyInfo.algorithm);
+        }, // </editor-fold>
+        /**
+         * Verifies this certificate.<br><br>
+         * 
+         * More precisely:<br><br>
+         * <ul>
+         *      <li>Verifies that the current VM date/time is within the validity period of the certificate.</li>
+         *      <li>If an unrecognized critical extension is present, the certificate is rejected.</li> 
+         *      <li>If the issuer certificate has been set, verifies that the signing certificate is a 
+         *          CA certificate, and that the signature is correct. The signing certificate is considered 
+         *          to be a CA certificate unless one of the following two conditions hold: The signing 
+         *          certificate contains a basicConstraints extension, and the CA flag is false; or the 
+         *          signing certificate contains a keyUsage extension, the keyUsage extension is marked 
+         *          critical, and the keyCertSign bit is false.</li>
+         *      <li>If the issuer CRL has been set, verifies that the certificate has not been revoked.</li>
+         * </ul>
+         * 
+         * @memberOf GostCert.X509
+         * @instance
+         * @param {GostCert.X509} issuerCertificate The issuer X.509 certificate
+         * @param {GostCert.CRL} issuerCRL The issuer CRL
+         * @param {Date} date Validation date. Default current date
+         * @returns {Promise} Promise to return self object if the certificate is valid
+         */
+        verify: function (issuerCertificate, issuerCRL, date) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this, exts = self.extensions;
+            return new Promise(call).then(function () {
+                // Current date
+                date = date || today();
+                if (self.notBefore.getTime() > date.getTime() ||
+                        self.notAfter.getTime() <= date.getTime())
+                    throw new Error('The certificate has not yet started or expired');
+                // A unrecognized critical extensions 
+                for (var name in exts) {
+                    var value = exts[name];
+                    if (value.critical &&
+                            ['authorityKeyIdentifier', 'subjectKeyIdentifier', 'keyUsage', 'certificatePolicies',
+                                'policyMappings', 'basicConstraints', 'nameConstraints', 'policyConstraints',
+                                'extKeyUsage'].indexOf(name) < 0)
+                        throw new Error('The critical extension \'' + name + '\' is unrecognized');
                 }
-            }).then(function (encryptionKey) {
-                // Decrypt key with encryption key
-                return subtle.decrypt(encryption, encryptionKey, encryptedContent);
-            }).then(function (decryptedContent) {
-                // Create content info object
-                return createContentInfo({
-                    contentType: self.encryptedContentInfo.contentType,
-                    content: decryptedContent
-                });
+                // The certificate can be self-signed
+                var selector = authoritySelector(self, exts, self.notBefore);
+                if (!issuerCertificate && matchCertificate(self, selector))
+                    issuerCertificate = self;
+                // Check issuer
+                if (issuerCertificate) {
+                    if (!matchCertificate(issuerCertificate, selector) ||
+                            !issuerCertificate.checkUsage('keyCertSign', self.notBefore))
+                        throw new Error('The issuer\'s certificate is not valid');
+                    // Check certificate signature
+                    return issuerCertificate.verifySignature(self.tbsCertificate.encode(),
+                            self.signatureValue, self.signatureAlgorithm);
+                }
+                return true;
+            }).then(function (result) {
+                if (!result)
+                    throw new Error('The certificate has invalid signature');
+                // Check CRL
+                if (issuerCRL) {
+                    if (!matchCRL(issuerCRL, {issuer: self.issuer, date: date}))
+                        throw new Error('The issuer\'s CRL is not valid');
+                    if (issuerCRL.isRevoked(self.serialNumber))
+                        throw new Error('The certificate is revoked');
+                }
+                return self;
+            });
+        }, // </editor-fold>
+        /**
+         * Verify a signature made with this certificate's public key.
+         * 
+         * @memberOf GostCert.X509
+         * @instance
+         * @param {CryptoOperationData} data The signed document.
+         * @param {CryptoOperationData} signature The signature
+         * @param {AlgorithmIdentifier} algorithm The algorithm ID used for the signature.
+         * @returns {Promise} Promise to return true if the signature is verified, and false otherwise
+         */
+        verifySignature: function (data, signature, algorithm) // <editor-fold defaultstate="collapsed">
+        {
+            return this.getPublicKey().then(function (publicKey) {
+                return subtle.verify(algorithm, publicKey, signature, data);
+            });
+        }, // </editor-fold>
+        /**
+         * Check key usage and date validation
+         * 
+         * @memberOf GostCert.X509
+         * @instance
+         * @param {DOMString} operation The operation
+         * @param {Date} date Operation date. Default current date
+         * @returns {boolean} 
+         */
+        checkUsage: function (operation, date) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this, exts = self.extensions;
+            date = date || today();
+            return (self.notBefore.getTime() <= date.getTime() && self.notAfter.getTime() > date.getTime()) &&
+                    (!exts || !((['keyCertSign', 'cRLSign'].indexOf(operation) > 0 && exts.basicConstraints && !exts.basicConstraints.cA) ||
+                            ((exts.keyUsage && exts.keyUsage.indexOf(operation) < 0) && (exts.extKeyUsage && exts.extKeyUsage.indexOf(operation) < 0))));
+        } // </editor-fold>
+    });
+
+    /**
+     * This class encapsulates X.509 Version 3 certificates.
+     * 
+     * @memberOf GostCert
+     * @type GostCert.X509
+     */
+    GostCert.prototype.X509 = X509;
+
+    /**
+     * This class encapsulates a X.509 certificate revocation list (CRL) of RevokedCertificate objects.<br><br>
+     *
+     * Note: the methods and constructors that input a CRL do not automatically verify it. 
+     * You need to explicitly call the verify method.
+     *  
+     * @class GostCert.CRL       
+     * @extends GostASN1.CertificateList
+     * @param {(FormatedData|GostASN1.CertificateList)} crl
+     */
+    var CRL = function (crl) // <editor-fold defaultstate="collapsed">
+    {
+        // Call super
+        CRL.super.call(this, crl);
+        // Initialize defaults
+        if (!this.version)
+            this.version = 1;
+        if (!this.revokedCertificates)
+            this.revokedCertificates = [];
+        if (!this.thisUpdate)
+            this.thisUpdate = today();
+    }; // </editor-fold>
+
+    extend(asn1.CertificateList, CRL, {
+        /**
+         * Signs this CRL. The issuer's private key has to be set. The default random number generator is used, if needed.<br><br>
+         * 
+         * Note: Making any modifications to the contents of the CRL after signing invalidates the signature. 
+         * The sign method must be invoked again after any modifications for a valid signature to be computed.
+         * 
+         * @memberOf GostCert.CRL
+         * @instance
+         * @param {GostASN1.PrivateKeyInfo} issuerPrivateKey the issuer's private signing key
+         * @param {GostCert.X509} issuerCertificate the issuer's certificate
+         * @returns {Promise} Promise to return self object after sign the CRL
+         */
+        sign: function (issuerPrivateKey, issuerCertificate) // <editor-fold defaultstate="collapsed">
+        {
+
+            var self = this;
+            return new Promise(call).then(function () {
+                // Check issuer private key
+                if (!issuerPrivateKey)
+                    throw new Error('The issuer\'s private key is not defined');
+                // Check issuer certificate
+                if (!issuerCertificate)
+                    throw new Error('The issuer\'s certificate is not defined');
+                // Check issuer name
+                if (!self.issuer)
+                    self.issuer = issuerCertificate.issuer;
+                else if (!equalNames(self.issuer, issuerCertificate.issuer))
+                    throw new Error('The CRL prototype and authority certificate have different issuers');
+                // Check key usage and validity
+                if (!issuerCertificate.checkUsage('cRLSign', self.thisUpdate))
+                    throw new Error('The issuer\'s certificate is not valid for signing a CRL');
+
+                // Signature algorithm
+                var provider = issuerCertificate.getProvider() || providers[options.providerName];
+                if (!self.signature)
+                    self.signature = provider.signature;
+                self.signatureAlgorithm = self.signature;
+
+                // Set issuer
+                self.issuer = issuerCertificate.subject;
+                // Set default extensions
+                if (!self.crlExtensions)
+                    self.crlExtensions = {};
+                var exts = self.crlExtensions,
+                        ae = issuerCertificate.extensions;
+                if (ae && ae.subjectKeyIdentifier)
+                    exts.authorityKeyIdentifier = {
+                        keyIdentifier: ae.subjectKeyIdentifier,
+                        authorityCertIssuer: [issuerCertificate.issuer],
+                        authorityCertSerialNumber: issuerCertificate.serialNumber};
+                exts.cRLNumber = exts.cRLNumber || 0;
+
+                // Import the private key
+                return subtle.importKey('pkcs8', issuerPrivateKey.encode(),
+                        issuerPrivateKey.privateKeyAlgorithm, false, ['sign']);
+            }).then(function (key) {
+
+                // Sign CRL
+                return subtle.sign(self.signatureAlgorithm, key, self.tbsCertList.encode());
+            }).then(function (signatureValue) {
+
+                // Siganture value
+                self.signatureValue = signatureValue;
+                return self;
+            });
+        }, // </editor-fold>
+        /**
+         * Verify the CRL. Checks the date and signature if issuer's certifiate has been defined.
+         * 
+         * @memberOf GostCert.CRL
+         * @instance
+         * @param {GostCert.X509} issuerCertificate the issuer's certificate
+         * @param {Date} date Validation date. Default current date
+         * @returns {Promise} Promise to return self object if the certificate is valid
+         */
+        verify: function (issuerCertificate, date) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this, exts = self.crlExtensions;
+            return new Promise(call).then(function () {
+                // Current date
+                date = date || today();
+                if (!self.thisUpdate.getTime() > date.getTime())
+                    throw new Error('The CRL has not yet started');
+                // Check issuer
+                if (issuerCertificate) {
+                    if (!matchCertificate(issuerCertificate, authoritySelector(self, exts, self.thisUpdate)) ||
+                            !issuerCertificate.checkUsage('cRLSign', self.thisUpdate))
+                        throw new Error('The issuer\'s certificate is not valid');
+                    if (!self.signatureValue || !self.signatureAlgorithm)
+                        throw new Error('The has no signature');
+                    // Check CRL signature
+                    return issuerCertificate.verifySignature(self.tbsCertList.encode(),
+                            self.signatureValue, self.signatureAlgorithm);
+                }
+            }).then(function (result) {
+                if (!result)
+                    throw new Error('The CRL has invalid signature');
+                return self;
+            });
+        }, // </editor-fold>
+        /**
+         * Checks whether this certificate serial number is on the list.
+         * 
+         * @memberOf GostCert.CRL
+         * @instance
+         * @param {Number} serialNumber the issuer's certificate
+         * @param {Date} date Validation date. Default current date
+         * @returns {boolean} True if the certificate is valid, and false otherwise
+         */
+        isRevoked: function (serialNumber, date) // <editor-fold defaultstate="collapsed">
+        {
+            var rc = this.revokedCertificates;
+            date = date || today();
+            for (var i = 0; i < rc.length; i++) {
+                // Check date and serial number
+                if (date.getTime() >= rc[i].revocationDate.getTime() &&
+                        equalNumbers(rc[i].userCertificate, serialNumber))
+                    return true;
+            }
+            return false;
+        } // </editor-fold>
+    });
+
+    /**
+     * This class encapsulates a X.509 certificate revocation list (CRL) of RevokedCertificate objects.
+     * 
+     * @memberOf GostCert
+     * @type GostCert.CRL
+     */
+    GostCert.prototype.CRL = CRL;
+
+    /**
+     * A class that encapsulates a DER-encoded PKCS #10 certificate request. The request contains 
+     * the subject's name and public key, and it is signed with the subject's private key. 
+     * The public key contained in the request is used to verify the signature. 
+     * The signature on the request is verified automatically when the request is read. 
+     * Note that the subject's private key is used only to produce a signature when the request is output, 
+     * and is not actually stored with the request.
+     * 
+     * @class GostCert.Request
+     * @extends GostASN1.CertificationRequest
+     * @param {(FormatedData|GostASN1.CertificationRequest)} req
+     */
+    function Request(req) // <editor-fold defaultstate="collapsed">
+    {
+        try {
+            // Try to use encode
+            asn1.CertificationRequest.call(this, req, true);
+        } catch (e) {
+            // Create new certificate structure
+            req = req || {};
+            asn1.CertificationRequest.call(this, {
+                version: 0,
+                subject: req.subject || options.subject,
+                subjectPublicKeyInfo: req.subjectPublicKeyInfo || {
+                    algorithm: {id: 'noSignature'},
+                    subjectPublicKey: new CryptoOperationData(0)
+                },
+                attributes: req.attributes || {
+                    extensionRequest: {
+                        keyUsage: options.userKeyUsage,
+                        extKeyUsage: options.userExtKeyUsage
+                    }
+                },
+                signatureAlgorithm: {id: 'noSignature'},
+                signatureValue: new CryptoOperationData(0)
+            });
+        }
+    } // </editor-fold>
+
+    extend(asn1.CertificationRequest, Request, {
+        /**
+         * Generate key pair and sign request
+         * 
+         * @memberOf GostCert.Request
+         * @instance
+         * @param {(AlgorithmIdentifier|string)} keyAlgorithm The name of provider or algorithm
+         * @returns {Promise} Promise to return {@link GostASN1.PrivateKeyInfo} after request generation
+         */
+        generate: function (keyAlgorithm) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this, privateKey, provider;
+            if (keyAlgorithm)
+                provider = providers[keyAlgorithm];
+            else
+                provider = this.getProvider() || providers[options.providerName];
+            if (provider)
+                keyAlgorithm = expand(provider.publicKey, {privateKey: provider.privateKey});
+
+            return new Promise(call).then(function () {
+
+                // Generate key pair
+                return subtle.generateKey(keyAlgorithm, 'true', ['sign', 'verify']);
+            }).then(function (keyPair) {
+                privateKey = keyPair.privateKey;
+
+                // Export public key
+                return subtle.exportKey('spki', keyPair.publicKey);
+            }).then(function (spki) {
+                self.subjectPublicKeyInfo = new asn1.SubjectPublicKeyInfo(spki);
+
+                return subtle.exportKey('pkcs8', privateKey);
+            }).then(function (pkcs8) {
+                privateKey = new asn1.PrivateKeyInfo(pkcs8);
+
+                // Sign request
+                return self.sign(privateKey);
+            }).then(function () {
+
+                return privateKey;
+            });
+        }, // </editor-fold>
+        /**
+         * Get appropriate crypto provider for public key
+         * 
+         * @memberOf GostCert.Request
+         * @instance
+         * @returns Object Set of crypto provider algorithms
+         */
+        getProvider: function () // <editor-fold defaultstate="collapsed">
+        {
+            return keyProvider(this.subjectPublicKeyInfo.algorithm);
+        }, // </editor-fold>
+        /**
+         * Generate the contents of this request and sign it.<br><br>
+         * 
+         * @memberOf GostCert.Request
+         * @instance
+         * @param {GostASN1.PrivateKeyInfo} privateKey The subject's private key
+         * @returns Promise to return self object after sign the request
+         */
+        sign: function (privateKey) // <editor-fold defaultstate="collapsed">
+        {
+
+            var self = this, spki = self.subjectPublicKeyInfo;
+            return new Promise(call).then(function () {
+
+                // Need generated key
+                if (!spki || !spki.algorithm || spki.algorithm === 'noSignature')
+                    throw new Error('Key pair was not generated for the certificate');
+                // Check issuer private key
+                if (!privateKey)
+                    throw new Error('The private key is not defined');
+
+                // Signature algorithm
+                var provider = keyProvider(spki.algorithm) || providers[options.providerName];
+                self.signatureAlgorithm = provider.signature;
+
+                // Import the private key
+                return subtle.importKey('pkcs8', privateKey.encode(),
+                        privateKey.privateKeyAlgorithm, false, ['sign']);
+            }).then(function (key) {
+
+                // Sign the certification request
+                return subtle.sign(self.signatureAlgorithm, key, self.requestInfo.encode());
+            }).then(function (signatureValue) {
+
+                // Siganture value
+                self.signatureValue = signatureValue;
+                return self;
+            });
+        }, // </editor-fold>
+        /**
+         * Verify the Certification Request. Checks the signature on the public key in the request.
+         * 
+         * @memberOf GostCert.Request
+         * @instance
+         * @returns {Promise} Promise to return self object  if the certificate is valid
+         */
+        verify: function () // <editor-fold defaultstate="collapsed">
+        {
+            var self = this, spki = self.subjectPublicKeyInfo;
+            return new Promise(call).then(function () {
+
+                // Import key
+                return subtle.importKey('spki', spki.encode(), spki.algorithm, 'false', ['verify']);
+            }).then(function (publicKey) {
+
+                // Verify signature
+                return subtle.verify(self.signatureAlgorithm, publicKey, self.signatureValue,
+                        self.requestInfo.encode());
+            }).then(function (result) {
+                if (!result)
+                    throw new Error('The certification request has invalid signature');
+                return self;
             });
         } // </editor-fold>
     });
 
     /**
-     * This class encapsulates a CMS object of content type encrypted-data.
+     * A class that encapsulates a DER-encoded PKCS #10 certificate request.
      * 
-     * @memberOf GostCMS
-     * @type GostCMS.EncryptedDataContentInfo
+     * @memberOf GostCert
+     * @type GostCert.Request
      */
-    GostCMS.prototype.EncryptedDataContentInfo = EncryptedDataContentInfo;
-    /**
-     * This class encapsulates a CMS object of content type enveloped-data.
-     * 
-     * @class GostCMS.EnvelopedDataContentInfo
-     * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The encrypted data content.
-     * @extends GostCMS.DataContentInfo
-     * @extends GostASN1.EnvelopedData
-     */
-    function EnvelopedDataContentInfo(contentInfo) // <editor-fold defaultstate="collapsed">
-    {
-        DataContentInfo.call(this, contentInfo, {
-            contentType: 'envelopedData',
-            version: 0,
-            recipientInfos: [],
-            encryptedContentInfo: {
-                contentType: 'data',
-                contentEncryptionAlgorithm: providers[options.providerName].encryption
-            }
-        });
-    }  // </editor-fold>
+    GostCert.prototype.Request = Request;
 
-    extend(DataContentInfo, EnvelopedDataContentInfo, {
+    /**
+     * A class for retrieving Certificates and CRLs from a repository.<br><br>
+     * 
+     * Once the CertStore has been created, it can be used to retrieve Certificates 
+     * and CRLs by calling its getCertificates and getCRLs methods. Unlike a KeyStore, 
+     * which provides access to a cache of private keys and trusted certificates, 
+     * a CertStore is designed to provide access to a potentially vast repository 
+     * of untrusted certificates and CRLs.
+     * 
+     * @class GostCert.CertStore
+     * @param {GostCert.X509[]} certificates Certificates
+     * @param {GostCert.CRL[]} crls CLRs
+     */
+    function CertStore(certificates, crls) // <editor-fold defaultstate="collapsed">
+    {
+        this.certificates = certificates || [];
+        this.crls = crls || [];
+    } // </editor-fold>
+
+    extend(Object, CertStore, {
         /**
-         * Generate content encryption key with given encryption algorithm and encrypt the content
+         * Returns a Array of Certificates that match the specified selector.
          * 
-         * @memberOf GostCMS.EnvelopedDataContentInfo
+         * @memberOf GostCert.CertStore
          * @instance
-         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The content data to be enclosed.
-         * @param {(AlgorithmIdentifier|string)} encryptionAlgorithm The encryption algorithm or provider name
-         * @returns {Promise} Promise to return self object after encrypt content
+         * @param {GostCert.CertSelector} selector Certificate filter selector
+         * @returns {GostCert.X509[]} Selected certificates
          */
-        encloseContent: function (contentInfo, encryptionAlgorithm) // <editor-fold defaultstate="collapsed"> 
+        getCertificates: function (selector) // <editor-fold defaultstate="collapsed">
+        {
+            return selectCertificates(this.certificates, selector);
+        }, // </editor-fold>
+        /**
+         * Returns a Collection of CRLs that match the specified selector.
+         * 
+         * @memberOf GostCert.CertStore
+         * @instance
+         * @param {GostCert.CertSelector} selector CRL filter selector
+         * @returns {GostCert.CRL[]} selected CRLs
+         */
+        getCRLs: function (selector) // <editor-fold defaultstate="collapsed">
+        {
+            return selectCRLs(this.certificates, selector);
+        }, // </editor-fold>
+        /**
+         * Loads this CertStore from the given PKCS#7 formated input stream.
+         * 
+         * @memberOf GostCert.CertStore
+         * @instance
+         * @param {(FormatedData|GostASN1.ContentInfo)} store The input stream from which the certstore is loaded
+         * @returns {GostCert.CertStore} Self object after store loaded
+         */
+        load: function (store) // <editor-fold defaultstate="collapsed"> 
+        {
+            var info = new asn1.ContentInfo(store),
+                    certs = info.certificates, crls = info.crls;
+            for (var i = 0; i < certs.length; i++)
+                this.certificates.push(new X509(certs[i]));
+            for (var i = 0; i < crls.length; i++)
+                this.crls.push(new CRL(crls[i]));
+            return this;
+        }, // </editor-fold>
+        /**
+         * Stores this CertStore to the given output stream in PKCS#7 format.
+         * 
+         * @memberOf GostCert.CertStore
+         * @instance
+         * @returns {GostASN1.ContentInfo} PKCS#7 content info with certificates and crls from CertStore
+         */
+        store: function () // <editor-fold defaultstate="collapsed"> 
+        {
+            return new asn1.ContentInfo({
+                contentType: 'signedData',
+                version: 0,
+                digestAlgorithms: [],
+                encapContentInfo: {contentType: 'data'},
+                certificates: this.certs,
+                crls: this.crls,
+                signerInfos: []
+            });
+        } // </editor-fold>
+    });
+
+    /**
+     * A class for retrieving Certificates and CRLs from a repository.
+     * 
+     * @memberOf GostCert
+     * @type GostCert.Request
+     */
+    GostCert.prototype.CertStore = CertStore;
+
+    /**
+     * A class for building and validating certification paths (also known as certificate chains).
+     * 
+     * @class GostCert.CertPath
+     * @param {GostCert.CertStore} certStore
+     */
+    function CertPath(certStore) // <editor-fold defaultstate="collapsed">
+    {
+        this.certStore = certStore;
+    } // </editor-fold>
+
+    extend(Object, CertPath, {
+        /**
+         * Attempts to build a certification path using the specified algorithm parameter set.
+         * 
+         * @memberOf GostCert.CertPath
+         * @instance
+         * @param {GostCert.X509} certificate Starting path certificate 
+         * @param {Date} date Validation date. Default today
+         * @returns {Promise} Promise to return array of {@link GostCert.X509} with certification path
+         */
+        build: function (certificate, date) // <editor-fold defaultstate="collapsed">
         {
             var self = this;
             return new Promise(call).then(function () {
-                // Check content info
-                contentInfo = checkContentInfo(contentInfo);
-                if (!contentInfo.content)
-                    throw new Error('Content for encryption must be specified');
-                // Define encryption algorithm
-                if (encryptionAlgorithm) {
-                    var provider = providers[encryptionAlgorithm];
-                    encryptionAlgorithm = (provider && provider.encryption) || encryptionAlgorithm;
-                } else
-                    encryptionAlgorithm = providers[options.providerName].encryption;
-                // Generate key for encryption content
-                return subtle.generateKey(encryptionAlgorithm, true, ['encrypt']);
-            }).then(function (encryptionKey) {
-                // Encrypt content
-                self.contentEncryptionKey = encryptionKey;
-                // Initial vector
-                if (!encryptionAlgorithm.iv)
-                    encryptionAlgorithm.iv = getSeed(8);
-                return subtle.encrypt(encryptionAlgorithm, encryptionKey, contentInfo.content);
-            }).then(function (encryptedContent) {
-                self.encryptedContentInfo = {
-                    contentType: contentInfo.contentType,
-                    contentEncryptionAlgorithm: encryptionAlgorithm,
-                    encryptedContent: encryptedContent
-                };
-                return self;
-            });
-        }, // </editor-fold>
-        /**
-         * Add a recipient. <br><br>
-         * 
-         * Uses the Recipient Information with IssuerAndSerialNumber as the Recipient Identifier.
-         * Note: If senderCert specified uses the Key Agreement algorithm overwise Key Transport algorithm.
-         * 
-         * @memberOf GostCMS.EnvelopedDataContentInfo
-         * @instance
-         * @param {GostCert.X509} recipientCert The certificate of recepient
-         * @param {(AlgorithmIdentifier|string)} keyEncryptionAlgorithm Key encryption algorithm or provider name
-         * @param {GostASN1.PrivateKeyInfo} senderKey The private key of sender for key agreement protocol
-         * @param {GostCert.X509} senderCert The certificate of sender for key agreement protocol
-         * @returns {Promise} Promise to return self object after add recipient
-         */
-        addRecipient: function (recipientCert, keyEncryptionAlgorithm, senderKey, senderCert) // <editor-fold defaultstate="collapsed">
-        {
-            var self = this, privateKey, encryptionProvider, derivation, wrapping;
-            return new Promise(call).then(function () {
-                // Check for recepient cert
-                recipientCert = new cert.X509(recipientCert);
-                if (keyEncryptionAlgorithm && typeof keyEncryptionAlgorithm !== 'string' &&
-                        !keyEncryptionAlgorithm.algorithm) {
-                    // Sender parameters
-                    senderCert = senderKey;
-                    senderKey = keyEncryptionAlgorithm;
-                    keyEncryptionAlgorithm = undefined;
-                }
-                if (keyEncryptionAlgorithm) {
-                    encryptionProvider = providers[keyEncryptionAlgorithm];
-                } else
-                    encryptionProvider = recipientCert.getProvider();
-
-                // Check for content encryption key
-                if (!self.contentEncryptionKey)
-                    throw new Error('The content encryption key is not assigned');
-
-                if (senderCert) {
-                    // Sender certificate for agreement protocol
-                    var senderCertChain;
-                    if (senderCert instanceof Array) {
-                        senderCertChain = senderCert;
-                        senderCert = senderCertChain[0];
-                    } else
-                        senderCertChain = [senderCert];
-
-                    // Add sender certificate
-                    if (options.autoAddCert) {
-                        if (!self.originatorInfo)
-                            self.originatorInfo = {certs: []};
-                        else if (!self.originatorInfo.certs)
-                            self.originatorInfo.certs = [];
-                        for (var i = 0, n = senderCertChain.length; i < n; i++) {
-                            addUnique(self.originatorInfo.certs, senderCertChain[i], function (cert1, cert2) {
-                                return equalNames(cert1.issuer, cert2.issuer) &&
-                                        equalNumbers(cert1.serialNumber, cert2.serialNumber);
-                            });
-                        }
+                // Build certification path
+                var current = new X509(certificate), certPath = [], success = false, verifiers = [];
+                while (current) {
+                    var foundCRLs = [], founds = [];
+                    certPath.push(current);
+                    if (!success) {
+                        // Select issuer CRL
+                        foundCRLs = self.certStore.getCRLs({issuer: current.issuer, date: date});
+                        // Create issuer's selection criteria
+                        var selector = authoritySelector(current, current.extensions,
+                                current.notBefore);
+                        // Self-signed certificate?
+                        if (!matchCertificate(current, selector))
+                            // Select issuer form trusted CA root list
+                            founds = self.certStore.getCertificates(selector);
+                        else
+                            success = true;
                     }
-                    // Key Agreement
-                    if (encryptionProvider)
-                        keyEncryptionAlgorithm = expand(encryptionProvider.agreement);
-                    else
-                        encryptionProvider = recipientCert.getProvider();
-                    // Certificates must have similar curve parameters
-                    if (recipientCert.subjectPublicKeyInfo.algorithm.namedCurve !==
-                            senderCert.subjectPublicKeyInfo.algorithm.namedCurve)
-                        throw new Error('The sender and the recipient have different public key algorithms');
-                    // Get private sender key
-                    return subtle.importKey('pkcs8', senderKey.encode(), senderKey.privateKeyAlgorithm,
-                            false, ['deriveKey']);
-                } else {
-                    // Key Transport
-                    if (encryptionProvider)
-                        keyEncryptionAlgorithm = expand(recipientCert.subjectPublicKeyInfo.algorithm);
-                    else
-                        encryptionProvider = recipientCert.getProvider();
-                    // Generate key pair
-                    return subtle.generateKey(keyEncryptionAlgorithm, true, ['deriveKey']).then(function (keyPair) {
-                        keyEncryptionAlgorithm['public'] = keyPair.publicKey;
-                        return keyPair.privateKey;
-                    });
-                }
-            }).then(function (key) {
-                privateKey = key;
-                // Get public key from recipient certificate
-                return subtle.importKey('spki', recipientCert.subjectPublicKeyInfo.encode(),
-                        recipientCert.subjectPublicKeyInfo.algorithm, false, ['deriveKey', 'deriveBits']);
-            }).then(function (publicKey) {
-                // Derivate key encryption key
-                keyEncryptionAlgorithm.ukm = getSeed(8);
-                derivation = expand(encryptionProvider.agreement,
-                        {sBox: keyEncryptionAlgorithm.sBox, ukm: keyEncryptionAlgorithm.ukm, 'public': publicKey});
-                wrapping = expand(keyEncryptionAlgorithm.wrapping || encryptionProvider.wrapping,
-                        {ukm: keyEncryptionAlgorithm.ukm});
-                return subtle.deriveKey(derivation, privateKey, wrapping, true, ['wrapKey']);
-            }).then(function (wrappingKey) {
-                // Wrap content encryption key 
-                keyEncryptionAlgorithm.wrapping = wrapping;
-                return subtle.wrapKey('raw', self.contentEncryptionKey, wrappingKey, wrapping);
-            }).then(function (wrappedKey) {
-                // Create recipient info
-                var recipientInfo;
-                var useKeyIdentifier = options.useKeyIdentifier && recipientCert.extensions &&
-                        recipientCert.extensions.subjectKeyIdentifier,
-                        rid = useKeyIdentifier ? recipientCert.extensions.subjectKeyIdentifier : {
-                            issuer: recipientCert.issuer,
-                            serialNumber: recipientCert.serialNumber};
-                if (senderCert) {
-                    var spki = senderCert.subjectPublicKeyInfo;
-                    recipientInfo = {// KeyAgreeRecipientInfo
-                        version: 3, // always set to 3
-                        originator: {
-                            algorithm: spki.algorithm,
-                            publicKey: spki.subjectPublicKey
-                        },
-                        ukm: keyEncryptionAlgorithm.ukm,
-                        keyEncryptionAlgorithm: keyEncryptionAlgorithm,
-                        recipientEncryptedKeys: [{// use only one recipient in domain
-                                rid: rid,
-                                encryptedKey: asn1.GostEncryptedKey(keyEncryptionAlgorithm).encode(wrappedKey)
-                            }]
-                    };
-                } else {
-                    recipientInfo = {
-                        version: 0, // always set to 0 or 2
-                        rid: rid,
-                        keyEncryptionAlgorithm: keyEncryptionAlgorithm,
-                        encryptedKey: asn1.GostEncryptedKey(keyEncryptionAlgorithm).encode({
-                            algorithm: keyEncryptionAlgorithm,
-                            sessionEncryptedKey: wrappedKey
-                        })
-                    };
-                }
-                self.recipientInfos.push(recipientInfo);
-                return self;
-            });
-        }, // </editor-fold>
-        /**
-         * Returns the decrypted content. 
-         * 
-         * @memberOf GostCMS.EnvelopedDataContentInfo
-         * @instance
-         * @param {GostASN1.PrivateKeyInfo} recipientKey The decryption key or password for derive key   
-         * @param {GostCert.X509} recipientCert  The decryption key or password for derive key   
-         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The detached content (optional).
-         * @param {GostCert.X509} originatorCert The originator certificate (optional).
-         * @returns {Promise} Promise to return enclosed object {@ling GostASN1.ContentInfo} after decrypt content
-         */
-        getEnclosed: function (recipientKey, recipientCert, contentInfo, originatorCert) // <editor-fold defaultstate="collapsed">
-        {
-            var self = this, wrappedKey, encryptedContent, derivation, wrapping, encryption;
-            return new Promise(call).then(function () {
-                var encryptionProvider = recipientCert.getProvider();
-                // Append attached
-                if (contentInfo)
-                    self.setEnclosed(contentInfo);
-                encryptedContent = self.encryptedContentInfo.encryptedContent;
-                if (!encryptedContent)
-                    throw new Error('Encrypted content must be specified');
+                    // Add verification tasks
+                    var next = founds.length > 0 && new X509(founds[0]),
+                            crl = foundCRLs.length > 0 && new CRL(foundCRLs[0]);
+                    // Verify CRLs
+                    if (crl)
+                        verifiers.push(crl.verify(next, date));
 
-                encryption = self.encryptedContentInfo.contentEncryptionAlgorithm;
-
-                // Find receiver
-                for (var i = 0; i < self.recipientInfos.length; i++) {
-                    var recipientInfo = self.recipientInfos[i],
-                            algorithm = expand(recipientInfo.keyEncryptionAlgorithm);
-                    if (recipientInfo.rid) {
-                        if (matchCert(recipientInfo.rid, recipientCert)) {
-                            // Algorithm and wrapped key
-                            var transportKey = asn1.GostEncryptedKey(algorithm).decode(recipientInfo.encryptedKey).object;
-                            wrappedKey = transportKey.sessionEncryptedKey;
-                            algorithm = expand(algorithm, transportKey.algorithm);
-                            derivation = expand(encryptionProvider.agreement, {ukm: algorithm.ukm, sBox: algorithm.sBox});
-                            wrapping = expand(encryptionProvider.wrapping, algorithm.wrapping, {ukm: algorithm.ukm});
-                            return algorithm['public'];
-                        }
-                    } else {
-                        var keys = recipientInfo.recipientEncryptedKeys;
-                        if (keys) {
-                            for (var j = 0; j < keys.length; j++) {
-                                if (matchCert(keys[j].rid, recipientCert)) {
-                                    // Algorithm and wrapped key
-                                    algorithm = expand(encryptionProvider.agreement, algorithm, {ukm: recipientInfo.ukm});
-                                    wrappedKey = asn1.GostEncryptedKey(algorithm).decode(keys[j].encryptedKey).object;
-                                    derivation = algorithm;
-                                    wrapping = expand(algorithm.wrapping || encryptionProvider.wrapping, {ukm: recipientInfo.ukm});
-                                    // Check originator
-                                    var originator = recipientInfo.originator;
-                                    if (originator.algorithm) {
-                                        var spki = new asn1.SubjectPublicKeyInfo({
-                                            algorithm: originator.algorithm,
-                                            subjectPublicKey: originator.publicKey});
-                                        return subtle.importKey('spki', spki.encode(), spki.algorithm, false, ['deriveKey', 'deriveBits']);
-                                    } else if (originatorCert && matchCert(originator, originatorCert))
-                                        return importKey('pkcs', originatorCert.subjectPublicKeyInfo.encode(),
-                                                originatorCert.subjectPublicKeyInfo.algorithm, false, ['deriveKey', 'deriveBits']);
-                                    else
-                                        throw Error('Originator certificate not specified or not valid');
-                                }
-                            }
-                        }
-                    }
+                    // Verify the certificate
+                    verifiers.push(current.verify(next, crl, date));
+                    current = next;
                 }
-                throw new Error('Recipient not found or format not supported');
-            }).then(function (publicKey) {
-                derivation['public'] = publicKey;
-                // Import private key
-                return subtle.importKey('pkcs8', recipientKey.encode(), recipientKey.privateKeyAlgorithm,
-                        false, ['deriveKey', 'deriveBits']);
-            }).then(function (privateKey) {
-                // Derive key
-                return subtle.deriveKey(derivation, privateKey, wrapping, true, ['unwrapKey']);
-            }).then(function (unwrappingKey) {
-                // Unwrap key
-                return subtle.unwrapKey('raw', wrappedKey, unwrappingKey,
-                        wrapping, encryption, false, ['decrypt']);
-            }).then(function (encryptionKey) {
-                // Decrypt content
-                return subtle.decrypt(encryption, encryptionKey, encryptedContent);
-            }).then(function (decryptedContent) {
-                return createContentInfo({
-                    contentType: self.encryptedContentInfo.contentType,
-                    content: decryptedContent
+                if (!success)
+                    throw new Error('Root certificate is not found');
+                // Verify all certificates in path
+                return Promise.all(verifiers).then(function (results) {
+                    for (var i = 0; i < results; i++)
+                        if (!results[i])
+                            throw new Error('Certification path is not validated');
+                    return certPath;
                 });
             });
         } // </editor-fold>
     });
 
     /**
-     * This class encapsulates a CMS object of content type enveloped-data.
+     * A class for building and validating certification paths (also known as certificate chains).
      * 
-     * @memberOf GostCMS
-     * @type GostCMS.EnvelopedDataContentInfo
+     * @memberOf GostCert
+     * @type GostCert.CertPath
      */
-    GostCMS.prototype.EnvelopedDataContentInfo = EnvelopedDataContentInfo;
+    GostCert.prototype.CertPath = CertPath;
 
     /**
-     * Implements the Cryptographic Message Syntax as specified in RFC-2630.
+     * A generic interface for implementing a particular certificate verification 
+     * scheme, such as constructing and verifying 
+     * certificate chains.
+     * 
+     * @class GostCert.CertificateTrustPolicy
+     */
+    function CertificateTrustPolicy() {
+    }
+
+    extend(Object, CertificateTrustPolicy, {
+        /**
+         * Returns a certificate, known to be valid (according to criteria dependent 
+         * on the verification scheme), which has the given selector, certificate and 
+         * CRL lists to implement a particular certificate verification  scheme, 
+         * such a forming valid certificate chains.<br>
+         * Second and third argument to this method may be undefined, and such a case 
+         * must be treated exactly the same as if the particular argument was an empty array.
+         * 
+         * @memberOf GostCert.CertificateTrustPolicy
+         * @instance
+         * @param {GostCert.CertificateSelector} selector Certificate selector
+         * @param {GostCert.X509[]} certificates Certificates
+         * @param {GostCert.CRL[]} crls CLRs
+         * @returns {Promise} Promise to return valid {@link GostCert.X509}
+         */
+        getValidCertificate: function (selector, certificates, crls) {
+        }
+    });
+
+    /**
+     * A generic interface for implementing a particular certificate verification
+     * 
+     * @memberOf GostCert
+     * @type GostCert.CertificateTrustPolicy
+     */
+    GostCert.prototype.CertificateTrustPolicy = CertificateTrustPolicy;
+
+    /**
+     * A certificate trust policy based on a set of trusted root CAs.<br><br>
+     * 
+     * In this policy, a certificate will be trusted if and only if it is part of a 
+     * valid certificate chain which terminates in one of the trusted root CAs. <br><br>
+     * 
+     * This policy has two options for certificate chain verification:
+     * <ul>
+     *      <li>requireCRL - If true, then for every certificate in a chain 
+     *          (unless it is one of the trusted root CA certificates) a valid CRL 
+     *          must be provided to determine its revocation status. The default is false.</li>
+     *      <li>requireCAFlag - If true, then every intermediate CA certificate (excluding 
+     *          the root CA or the end entity certificate) must contain a Basic Constraints 
+     *          extension, with the CA flag set. The default for this option is true.</li>
+     * </ul>
+     * 
+     * @class GostCert.TrustedCAPolicy
+     * @extends GostCert.CertificateTrustPolicy
+     * @param {GostCert.X509[]} trustedCACerts 
+     * @param {boolean} requireCRL 
+     * @param {boolean} requireCA 
+     */
+    function TrustedCAPolicy(trustedCACerts, requireCRL, requireCA) // <editor-fold defaultstate="collapsed">
+    {
+        this.trustedCACerts = trustedCACerts || [];
+        this.requireCRL = requireCRL || false;
+        this.requireCA = requireCA || true;
+    } // </editor-fold>
+
+    extend(CertificateTrustPolicy, TrustedCAPolicy, {
+        /**
+         * Returns a certificate, known to be valid (according to criteria dependent 
+         * on the verification scheme), which has the given selector, certificate and 
+         * CRL lists to implement a particular certificate verification  scheme, 
+         * such a forming valid certificate chains.<br>
+         * Second and third argument to this method may be undefined, and such a case 
+         * must be treated exactly the same as if the particular argument was an empty array.
+         * 
+         * @memberOf GostCert.TrustedCAPolicy
+         * @instance
+         * @param {GostCert.CertificateSelector} selector Certificate selector
+         * @param {GostASN1.Certificate[]} certificates Certificates
+         * @param {GostASN1.CertificateList[]} crls CLRs
+         * @param {Date} date Validation date. Default today
+         * @returns {Promise} Promise to return valid {@link GostCert.X509}
+         */
+        getValidCertificate: function (selector, certificates, crls, date) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this, certPath;
+            return new Promise(call).then(function () {
+                certificates = certificates || [];
+                crls = crls || [];
+                // Get certificates from the trusted list
+                var certs = selectCertificates(self.trustedCACerts, selector);
+                if (certs.length > 0)
+                    return new X509(certs[0]);
+                // Get certificates from the list
+                certs = selectCertificates(certificates, selector);
+                if (certs.length === 0)
+                    return;
+                // Build certification path
+                var current = new X509(certs[0]), success = false, verifiers = [];
+                certPath = [];
+                while (current) {
+                    var foundCRLs = [], founds = [];
+                    certPath.push(current);
+                    if (!success) {
+                        // Select issuer CRL
+                        foundCRLs = selectCRLs(crls, {issuer: current.issuer, date: date});
+                        if (foundCRLs.length === 0 && self.requireCRL)
+                            return; // The issuer\'s CRL is not found
+                        // Create issuer's selection criteria
+                        selector = authoritySelector(current, current.extensions,
+                                current.notBefore);
+                        // Select issuer form trusted CA root list
+                        founds = selectCertificates(self.trustedCACerts, selector);
+                        if (founds.length === 0) {
+                            // Non-trusted self-signed certificate?
+                            if (!matchCertificate(current, selector)) {
+                                // Select issuer from certificate list
+                                founds = selectCertificates(certificates, selector);
+                                if (founds.length > 0) {
+                                    // Check basic contrains and CA flag
+                                    var exts = founds[0].extensions;
+                                    if (self.requireCA) {
+                                        if (!exts || !exts.basicConstraints || !exts.basicConstraints.cA)
+                                            return; // The issuer\'s certificate is not valid
+                                        // Check path length limit
+                                        if (exts.basicConstraints.pathLenConstraint !== undefined &&
+                                                exts.basicConstraints.pathLenConstraint < certPath.length - 1)
+                                            return; // The issuer\'s certificate path length constraint exceeded
+                                    }
+                                } else
+                                    return; // Certification path is not built
+                            }
+                        } else
+                            success = true;
+                    }
+                    // Add verification tasks
+                    var next = founds.length > 0 && new X509(founds[0]),
+                            crl = foundCRLs.length > 0 && new CRL(foundCRLs[0]);
+                    // Verify CRLs
+                    if (crl)
+                        verifiers.push(crl.verify(next, date));
+
+                    // Verify the certificate
+                    verifiers.push(current.verify(next, crl, date));
+                    current = next;
+                }
+                if (!success)
+                    throw new Error('Trusted root certificate is not found');
+                // Verify all certificates in path
+                return Promise.all(verifiers).then(function (results) {
+                    for (var i = 0; i < results; i++)
+                        if (!results[i])
+                            throw new Error('Certification path is not validated');
+                    return certPath[0];
+                });
+            });
+        } // </editor-fold>
+    });
+
+    /**
+     * A certificate trust policy based on a set of trusted root CAs.
+     * 
+     * @memberOf GostCert
+     * @type GostCert.TrustedCAPolicy
+     */
+    GostCert.prototype.TrustedCAPolicy = TrustedCAPolicy;
+
+    /**
+     * Provides facilities for handling certificates, CRLs, etc.
      * 
      * @memberOf gostCrypto
-     * @type GostCMS
+     * @type GostCert
      */
-    gostCrypto.cms = new GostCMS();
+    gostCrypto.cert = new GostCert();
 
-    return GostCMS;
-
+    return GostCert;
 }));
+
+
 
 
 
@@ -15423,7 +14530,7 @@ return /******/ (function(modules) { // webpackBootstrap
      * 
      */ // <editor-fold defaultstate="collapsed">
     if (true) {
-        module.exports = factory(__webpack_require__(1), __webpack_require__(7));
+        module.exports = factory(__webpack_require__(1), __webpack_require__(5));
     } else {
         root.GostSign = factory(root.GostRandom, root.GostDigest);
     }
@@ -17424,25 +16531,1395 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
+/**
+ * @file Implements the Cryptographic Message Syntax as specified in RFC-2630.
+ * @version 1.76
+ * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
+ */
+
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *    
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright notice, this 
+ *    list of conditions and the following disclaimer.
+ *    
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *    
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ */
+
+(function (root, factory) {
+
+    /*
+     * Module imports and exports
+     * 
+     */ // <editor-fold defaultstate="collapsed">
+    if (true) {
+        module.exports = factory(__webpack_require__(0), __webpack_require__(2), __webpack_require__(8));
+    } else {
+        root.GostCMS = factory(root.gostCrypto, root.GostASN1, root.GostCert);
+    }
+    // </editor-fold>
+
+}(this, function (gostCrypto) {
+
+    /*
+     * Common algorithms
+     */ // <editor-fold defaultstate="collapsed">
+    var root = this;
+    var Promise = root.Promise;
+    var Object = root.Object;
+    var CryptoOperationData = root.ArrayBuffer;
+    var Date = root.Date;
+
+    var subtle = gostCrypto.subtle;
+    var asn1 = gostCrypto.asn1;
+    var coding = gostCrypto.coding;
+    var cert = gostCrypto.cert;
+    var providers = gostCrypto.security.providers;
+
+    // Expand javascript object
+    function expand() {
+        var r = {};
+        for (var i = 0, n = arguments.length; i < n; i++) {
+            var item = arguments[i];
+            if (typeof item === 'object')
+                for (var name in item)
+                    if (item.hasOwnProperty(name))
+                        r[name] = item[name];
+        }
+        return r;
+    }
+
+    function defineProperty(object, name, descriptor, enumerable) {
+        if (typeof descriptor !== 'object')
+            descriptor = {value: descriptor};
+        if (enumerable !== undefined)
+            descriptor.enumerable = enumerable;
+        Object.defineProperty(object, name, descriptor);
+    }
+
+    function defineProperties(object, properties, enumerable) {
+        for (var name in properties)
+            defineProperty(object, name, properties[name], enumerable);
+    }
+
+    // Extend javascript class
+    function extend(Super, Class, propertiesObject, propertiesClass) {
+        // If constructor not defined
+        if (typeof Class !== 'function') {
+            propertiesClass = propertiesObject;
+            propertiesObject = Class;
+            Class = function () {
+                Super.apply(this, arguments);
+            };
+        }
+        // Create prototype properties
+        Class.prototype = Object.create(Super.prototype, {
+            constructor: {
+                value: Class
+            },
+            superclass: {
+                value: Super.prototype
+            }
+        });
+        if (propertiesObject)
+            defineProperties(Class.prototype, propertiesObject, true);
+        // Inherites super class properties
+        if (Super !== Object)
+            for (var name in Super)
+                Class[name] = Super[name];
+        Class.super = Super;
+        if (propertiesClass)
+            defineProperties(Class, propertiesClass, true);
+        return Class;
+    }
+
+    // Self resolver
+    function call(callback) {
+        try {
+            callback();
+        } catch (e) {
+        }
+    }
+
+    // Check the buffers to equal
+    function equalBuffers(r1, r2) {
+        var s1 = new Uint8Array(r1),
+                s2 = new Uint8Array(r2);
+        if (s1.length !== s2.length)
+            return false;
+        for (var i = 0, n = s1.length; i < n; i++)
+            if (s1[i] !== s2[i])
+                return false;
+        return true;
+    }
+
+    // True if equal numbers
+    var equalNumbers = (function () {
+        // Convert number to bigendian hex string
+        var hex = function (s) {
+            var t = typeof s;
+            return t === 'undefined' || s === '' ? '0' :
+                    t === 'number' || s instanceof Number ? s.toString(16).toLowerCase() :
+                    s.replace('0x', '').toLowerCase();
+        };
+        // Zero left padding
+        var lpad = function (s, size) {
+            return (new Array(size + 1).join('0') + s).slice(-size);
+        };
+        return function (s1, s2) {
+            s1 = hex(s1);
+            s2 = hex(s2);
+            var len = Math.max(s1.length, s2.length);
+            return lpad(s1, len) === lpad(s2, len);
+        };
+    })();
+
+    // Check equal names
+    function equalNames(name1, name2) {
+        for (var key in name1)
+            if (name1[key] !== name2[key])
+                return false;
+        for (var key in name2)
+            if (name1[key] !== name2[key])
+                return false;
+        return true;
+    }
+
+    // Add unique value to array
+    function addUnique(array, item, comparator) {
+        var found = false;
+        for (var i = 0, n = array.length; i < n; i++)
+            if (comparator(array[i], item)) {
+                found = true;
+                break;
+            }
+        if (!found)
+            array.push(item);
+    }
+
+    // Set content data
+    function setContentData(object, data) {
+        var content = object.content;
+        switch (object.contentType) {
+            case 'data':
+                object.content = data.content;
+                break;
+            case 'digestedData':
+            case 'signedData':
+            case 'authData':
+                content.encapContentInfo = {
+                    eContentType: data.contentType,
+                    eContent: data.content
+                };
+                break;
+            case 'envelopedData':
+            case 'encryptedData':
+                content.encryptedContentInfo = {
+                    contentType: data.contentType,
+                    encryptedContent: data.content
+                };
+                break;
+        }
+    }
+
+    // Get content data
+    function getContentData(object) {
+        var content = object.content;
+        switch (object.contentType) {
+            case 'data':
+                return {
+                    contentType: object.contentType,
+                    content: object.content
+                };
+            case 'digestedData':
+            case 'signedData':
+            case 'authData':
+                var encap = content.encapContentInfo;
+                return  {
+                    contentType: encap.eContentType,
+                    content: encap.eContent
+                };
+            case 'envelopedData':
+            case 'encryptedData':
+                var enc = content.encryptedContentInfo;
+                return {
+                    contentType: enc.contentType,
+                    content: enc.encryptedContent
+                };
+        }
+    }
+
+    // Check content info type
+    function checkContentInfo(contentInfo) {
+        var content, contentType;
+        if (contentInfo) {
+            if (typeof contentInfo === 'string')
+                try {
+                    contentInfo = coding.PEM.decode(contentInfo);
+                } catch (e1) {
+                    contentInfo = coding.Chars.decode(contentInfo);
+                }
+            if (contentInfo instanceof CryptoOperationData)
+                try {
+                    contentInfo = asn1.ContentInfo.decode(contentInfo);
+                } catch (e) {
+                    contentInfo = {contentType: 'data', content: contentInfo};
+                }
+            contentType = contentInfo.contentType;
+            if (!contentType)
+                throw new Error('Invalid content object');
+            content = contentInfo.content;
+            if (!(content instanceof CryptoOperationData))
+                content = content.encode();
+            return {contentType: contentType, content: content};
+        } else
+            contentInfo = {contentType: 'data'};
+        return contentInfo;
+    }
+
+    function createContentInfo(contentInfo) {
+        try {
+            // Some provider has mistake to envelop ContentInfo enstead 
+            // content field of ContentInfo
+            contentInfo = new asn1.ContentInfo(contentInfo.content, true);
+        } catch (e) {
+        }
+        // Create situable content info object
+        switch (contentInfo.contentType) {
+            case 'data':
+                return new DataContentInfo(contentInfo);
+            case 'digestedData':
+                return new DigestedDataContentInfo(contentInfo);
+            case 'signedData':
+                return new SignedDataContentInfo(contentInfo);
+            case 'encryptedData':
+                return new EncryptedDataContentInfo(contentInfo);
+            case 'envelopedData':
+                return new EnvelopedDataContentInfo(contentInfo);
+            default:
+                return new asn1.ContentInfo(contentInfo);
+        }
+    }
+    ;
+
+    function matchCert(id, cert) {
+        return (id instanceof CryptoOperationData ? cert.extensions &&
+                equalBuffers(id, cert.extensions.subjectKeyIdentifier) :
+                equalNames(cert.issuer, id.issuer) &&
+                equalNumbers(cert.serialNumber, id.serialNumber));
+    }
+
+    // Get random values
+    function getSeed(length) {
+        var seed = new Uint8Array(length);
+        gostCrypto.getRandomValues(seed);
+        return seed.buffer;
+    }
+
+    // Salt size
+    function saltSize(algorithm) {
+        switch (algorithm.id) {
+            case 'pbeWithSHAAnd40BitRC2-CBC':
+            case 'pbeWithSHAAnd128BitRC2-CBC':
+                return 8;
+            case 'pbeUnknownGost':
+                return 16;
+            case 'sha1':
+                return 20;
+            default:
+                return 32;
+        }
+    }
+
+    // Password to bytes
+    function passwordData(derivation, password) {
+        if (!password)
+            return new CryptoOperationData(0);
+        if (password instanceof CryptoOperationData)
+            return password;
+        if (typeof password !== 'string')
+            throw new Error('The password must be string or raw data type');
+        if (derivation.name.indexOf('CPKDF') >= 0) {
+            // CryptoPro store password
+            var r = [];
+            for (var i = 0; i < password.length; i++) {
+                var c = password.charCodeAt(i);
+                r.push(c & 0xff);
+                r.push(c >>> 8 & 0xff);
+                r.push(0);
+                r.push(0);
+            }
+            return new Uint8Array(r).buffer;
+        } else if (derivation.name.indexOf('PFXKDF') >= 0)
+            // PKCS#12 unicode password
+            return coding.Chars.decode(password + '\0', 'unicode');
+        else
+            // PKCS#5 password mode
+            return coding.Chars.decode(password, 'utf8');
+    }
+
+    // Define provider for encription algorithm
+    function encryptionProvider(algorithm) {
+        var id = algorithm.id;
+        for (var name in providers) {
+            var provider = providers[name];
+            if (provider.encryption.id === id)
+                return provider;
+        }
+    }
+
+    // </editor-fold>
+
+    /**
+     * Provides facilities for handling certificates, CRLs, etc.
+     * @class GostCMS
+     */
+    function GostCMS() {
+    }
+
+    /**
+     * Message templates
+     * <ul>
+     *      <li>providerName - provider name for key generation, default 'CP-01'</li>
+     *      <li>autoAddCert - automatic add signer certificate to signature, default false</li>
+     *      <li>useKeyIdentifier - true to add Signer as the SignerIdentifier (v3), otherwise, as the IssuerAndSerialNumber (v1) (default false).</li>
+     * </ul>
+     * 
+     * @memberOf GostCMS
+     * @instance
+     */
+    var options = {// <editor-fold defaultstate="collapsed">
+        providerName: 'CP-01',
+        autoAddCert: false,
+        useKeyIdentifier: false // </editor-fold>
+    };
+
+    GostCMS.prototype.options = options;
+
+    /**
+     * The base class for all CMS objects.<br><br>
+     * 
+     * A CMS object consists of a content type, and content.<br><br>
+     * 
+     * @class GostCMS.DataContentInfo
+     * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The content object.
+     * @param {string} defaultSet The default object initialization set.
+     * @extends GostASN1.ContentInfo
+     */
+    function DataContentInfo(contentInfo, defaultSet) // <editor-fold defaultstate="collapsed">
+    {
+        asn1.ContentInfo.call(this, contentInfo || defaultSet || {contentType: 'data'});
+        if (defaultSet && this.contentType !== (defaultSet.contentType || 'data'))
+            throw new Error('Invalid content type');
+    } // </editor-fold>
+
+    extend(asn1.ContentInfo, DataContentInfo, {
+        /**
+         * Indicates if this is a detached CMS object.
+         * 
+         * @memberOf GostCMS.DataContentInfo
+         * @instance
+         * @returns {boolean} true if detached; false otherwise.
+         */
+        isDetached: {// <editor-fold defaultstate="collapsed">
+            value: false,
+            enumerable: true,
+            writable: true // </editor-fold>
+        },
+        /**
+         * Indicates if an external (detached) signature must be created.
+         * 
+         * @memberOf GostCMS.DataContentInfo
+         * @instance
+         * @param {boolean} createDetached True if detached; false otherwise.
+         */
+        writeDetached: function (createDetached) // <editor-fold defaultstate="collapsed">
+        {
+            // Define external signature mode
+            this.isDetached = createDetached;
+        }, // </editor-fold> 
+        /**
+         * Encode the message to binary format 'DER' or 'PEM'
+         * 
+         * @memberOf GostCMS.DataContentInfo
+         * @instance
+         * @param {string} format
+         * @returns {FormatedData}
+         */ // <editor-fold defaultstate="collapsed">
+        encode: function (format) // <editor-fold defaultstate="collapsed">
+        {
+            if (this.isDetached) {
+                var data = getContentData(this);
+                setContentData(this, {contentType: data.contentType});
+                var result = asn1.ContentInfo.method('encode').call(this, format);
+                setContentData(this, data);
+                return result;
+            } else
+                return asn1.ContentInfo.method('encode').call(this, format);
+        }, // </editor-fold> 
+        /**
+         * Enclose content to document. 
+         * 
+         * @memberOf GostCMS.DataContentInfo
+         * @instance
+         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo
+         * @returns {Promise} Promise to return self object after enclose content
+         */
+        encloseContent: function (contentInfo) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this;
+            return new Promise(call).then(function () {
+                self.setEnclosed(contentInfo);
+                return self;
+            });
+        }, // </editor-fold> 
+        /**
+         * Sets the content of attached document.<br><br>
+         * 
+         * This is necessary only in detached mode.
+         * 
+         * @memberOf GostCMS.DataContentInfo
+         * @instance
+         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo - The encapsulated CMS Object.
+         */
+        setEnclosed: function (contentInfo) // <editor-fold defaultstate="collapsed">
+        {
+            setContentData(this, checkContentInfo(contentInfo));
+        }, // </editor-fold> 
+        /**
+         * Returns the document which attached. If the content is not attached, the CMS object 
+         * which is returned will be degenerate.
+         * 
+         * @memberOf GostCMS.DataContentInfo
+         * @instance
+         * @returns {GostASN1.ContentInfo} The encapsulated CMS Object.
+         */
+        getEnclosed: function () // <editor-fold defaultstate="collapsed">
+        {
+            return createContentInfo(getContentData(this));
+        } // </editor-fold>
+    });
+
+    /**
+     * This class encapsulates a CMS object of content type binary data.
+     * 
+     * @memberOf GostCMS
+     * @type GostCMS.DigestedDataContentInfo
+     */
+    GostCMS.prototype.DataContentInfo = DataContentInfo;
+
+    /**
+     * This class encapsulates a CMS object of content type digested-data.
+     * 
+     * @class GostCMS.DigestedDataContentInfo
+     * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo - The content that is to be signed.
+     * @extends GostCMS.DataContentInfo
+     * @extends GostASN1.DigestedData
+     */
+    function DigestedDataContentInfo(contentInfo) // <editor-fold defaultstate="collapsed">
+    {
+        DataContentInfo.call(this, contentInfo, {
+            contentType: 'digestedData',
+            version: 0,
+            digestAlgorithm: providers[options.providerName].digest,
+            encapContentInfo: {
+                eContentType: 'data'
+            },
+            digest: new CryptoOperationData(0)
+        });
+    }  // </editor-fold>
+
+    extend(DataContentInfo, DigestedDataContentInfo, {
+        /**
+         * Enclose the content and calculate the message digest with given digest algorithm
+         * 
+         * @memberOf GostCMS.DigestedDataContentInfo
+         * @instance
+         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo Content data to be enclosed.
+         * @param {(AlgorithmIdentifier|string)} digestAlgorithm Digest algorithm or provider name
+         * @returns {Promise} 
+         */
+        encloseContent: function (contentInfo, digestAlgorithm) // <editor-fold defaultstate="collapsed"> 
+        {
+            var self = this;
+            return new Promise(call).then(function () {
+                // Set enclosed data
+                self.setEnclosed(contentInfo);
+
+                // Define digest algorithm
+                if (digestAlgorithm) {
+                    var digestProvider = providers[digestAlgorithm];
+                    self.digestAlgorithm = (digestProvider && digestProvider.digest) || digestAlgorithm;
+                }
+
+                // Calculate digest
+                return subtle.digest(self.digestAlgorithm, self.encapContentInfo.eContent);
+            }).then(function (digest) {
+
+                // Set digest attribute
+                self.digest = digest;
+            });
+        }, // </editor-fold>
+        /**
+         * Verify the Message Digest. <br><br>
+         * 
+         * @memberOf GostCMS.DigestedDataContentInfo
+         * @instance
+         * @param contentInfo Detached content (optional)
+         * @returns {Promise} Promise to return enclosed object {@link GostASN1.ContentInfo} if digest verified
+         */
+        verify: function (contentInfo) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this;
+            return new Promise(call).then(function () {
+                // Append attached
+                if (contentInfo)
+                    self.setEnclosed(contentInfo);
+
+                // Check data
+                var dataToVerify = self.encapContentInfo &&
+                        self.encapContentInfo.eContent;
+                if (!dataToVerify)
+                    throw new Error('Detached content is not found');
+
+                // Calculate digest
+                return subtle.digest(self.digestAlgorithm, self.encapContentInfo.eContent);
+            }).then(function (digest) {
+                if (!equalBuffers(digest, self.digest))
+                    throw Error('Message digest is not verified');
+                // Return content
+                return createContentInfo({
+                    contentType: self.encapContentInfo.eContentType,
+                    content: self.encapContentInfo.eContent
+                });
+            });
+        } // </editor-fold>
+    });
+
+    /**
+     * This class encapsulates a CMS object of content type digested-data.
+     * 
+     * @memberOf GostCMS
+     * @type GostCMS.DigestedDataContentInfo
+     */
+    GostCMS.prototype.DigestedDataContentInfo = DigestedDataContentInfo;
+
+    /**
+     * This class encapsulates a CMS object of content type signed-data.
+     * 
+     * Use encloseContent or setEnclosed methods to add a enclosed content before add signatures
+     * 
+     * @class GostCMS.SignedDataContentInfo
+     * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo - The signed content. 
+     * @extends GostCMS.DataContentInfo
+     * @extends GostASN1.SignedData
+     */
+    function SignedDataContentInfo(contentInfo) // <editor-fold defaultstate="collapsed">
+    {
+        DataContentInfo.call(this, contentInfo, {
+            contentType: 'signedData',
+            version: 1,
+            digestAlgorithms: [],
+            encapContentInfo: {
+                eContentType: 'data'
+            },
+            signerInfos: []
+        });
+    }  // </editor-fold>
+
+    extend(DataContentInfo, SignedDataContentInfo, {
+        /**
+         * Add a Signer using the the IssuerAndSerialNumber as the SignerIdentifier i.e a Version1 CMSSignerInfo 
+         * or SubjectPublicKeyIdentifier as the SignerIdentifier i.e a Version3 CMSSignerInfo.
+         * 
+         * @memberOf GostCMS.SignedDataContentInfo
+         * @instance
+         * @param {GostASN1.PrivateKeyInfo} signerKey Private Key of the signer.
+         * @param {GostCert.X509} signerCert Signer certificate or certificate chain
+         * @param {GostASN1.SignedAttributes} signedAttrs The set of signed attributes. Default undefined. If true or {} standard attributes will be appended: contentType and messageDigest
+         * @param {GostASN1.UnsignedAttributes} unsignedAttrs  The set of unsigned attributes. Default undefined.
+         * @returns {Promise} Promise to return self object after add signature
+         */
+        addSignature: function (signerKey, signerCert, signedAttrs, unsignedAttrs) // <editor-fold defaultstate="collapsed"> 
+        {
+            var self = this, signerInfo, dataToSign, signerCertChain;
+            return new Promise(call).then(function () {
+                // Check attribures
+                if (!signerKey || !signerCert)
+                    throw new Error('Signer key or certificate is not defined');
+                // Cert chain
+                if (signerCert instanceof Array) {
+                    signerCertChain = signerCert;
+                    signerCert = signerCertChain[0];
+                } else
+                    signerCertChain = [signerCert];
+                // Signature algorithm provider
+                var provider = signerCert.getProvider() ||
+                        providers[options.providerName];
+                var useKeyIdentifier = options.useKeyIdentifier && signerCert.extensions &&
+                        signerCert.extensions.subjectKeyIdentifier;
+                // Get enclosed data
+                dataToSign = self.encapContentInfo.eContent;
+                // Prepare signer info structure
+                signerInfo = {
+                    version: useKeyIdentifier ? 2 : 0,
+                    sid: useKeyIdentifier ? signerCert.extensions.subjectKeyIdentifier : {
+                        issuer: signerCert.issuer,
+                        serialNumber: signerCert.serialNumber},
+                    digestAlgorithm: provider.digest,
+                    signatureAlgorithm: signerCert.subjectPublicKeyInfo.algorithm};
+                // Set an unsigned attributes
+                if (unsignedAttrs)
+                    signerInfo.unsignedAttrs = unsignedAttrs;
+                // For a signed attributes calculate digest
+                if (signedAttrs) {
+                    if (typeof signedAttrs !== 'object')
+                        signedAttrs = {};
+                    return subtle.digest(signerInfo.digestAlgorithm, dataToSign);
+                }
+            }).then(function (digest) {
+                if (digest) {
+                    // Add standard signed attributes
+                    signedAttrs.contentType = self.encapContentInfo.eContentType,
+                            signedAttrs.messageDigest = digest,
+                            signedAttrs.signingTime = new Date();
+                    signerInfo.signedAttrs = signedAttrs,
+                            // Now data to sign = attributes
+                            dataToSign = asn1.SignedAttributes.encode(signerInfo.signedAttrs);
+                }
+
+                // Import the private key
+                return subtle.importKey('pkcs8', asn1.PrivateKeyInfo.encode(signerKey),
+                        signerKey.privateKeyAlgorithm, false, ['sign']);
+            }).then(function (key) {
+
+                // Sign data
+                var algorithm = expand(signerInfo.signatureAlgorithm, {hash: signerInfo.digestAlgorithm});
+                return subtle.sign(algorithm, key, dataToSign);
+            }).then(function (signatureValue) {
+                signerInfo.signatureValue = signatureValue;
+
+                // Add digest algorithm
+                addUnique(self.digestAlgorithms, signerInfo.digestAlgorithm, function (algorithm1, algorithm2) {
+                    return algorithm1.id === algorithm2.id;
+                });
+
+                // Add signer certificate
+                if (options.autoAddCert) {
+                    if (!self.certificates)
+                        self.certificates = [];
+                    for (var i = 0, n = signerCertChain.length; i < n; i++) {
+                        addUnique(self.certificates, signerCertChain[i], function (cert1, cert2) {
+                            return equalNames(cert1.issuer, cert2.issuer) &&
+                                    equalNumbers(cert1.serialNumber, cert2.serialNumber);
+                        });
+                    }
+                }
+
+                // Add signer info
+                self.signerInfos.push(signerInfo);
+            });
+        }, // </editor-fold>
+        /**
+         * Indicates if this object has any signers i.e. checks for the absence of any SignerInfo structures.
+         * CMS (RFC-2630) defines a degenerate object as one which has no signers.
+         * 
+         * @memberOf GostCMS.SignedDataContentInfo
+         * @instance
+         * @returns {boolean} True if this object has no signers; false otherwise.
+         */
+        isDegenerate: {// <editor-fold defaultstate="collapsed">
+            get: function () {
+                return !(this.signerInfos && this.signerInfos.length > 0);
+            } // </editor-fold>
+        },
+        /**
+         * Returns normally if this CMS signed data object contains at least one valid signature, 
+         * according to the given trust policy; otherwise throws an Error.<br><br>
+         * 
+         * In order to be considered valid, there must be at least one signature on this CMS 
+         * message which is validated by one of the certificates included with it; furthermore, 
+         * the validating certificate must itself be valid according to the given certificate 
+         * trust policy. This latter validation process may involve examining the other certificates 
+         * or CRLs included with this object, if called for by the trust policy.<br><br>
+         * 
+         * If a signature is encountered for which a certification path can be found, but is 
+         * invalid, an Error will be created, but will not be thrown until 
+         * all other signatures have been checked. If another signature is found which is valid, 
+         * then the method simply returns and no exception at all is thrown. 
+         * 
+         * @memberOf GostCMS.SignedDataContentInfo
+         * @instance
+         * @param {GostCert.CertificateTrustPolicy} trustPolicy The trust prolicy for verification
+         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The content that was signed (optional)
+         * @returns {Promise} Promise to return enclosed object {@link GostASN1.ContentInfo} if signature verified
+         */
+        verify: function (trustPolicy, contentInfo) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this, result;
+            return new Promise(call).then(function () {
+                // Append attached
+                if (contentInfo)
+                    self.setEnclosed(contentInfo);
+                if (!self.signerInfos || self.signerInfos.length === 0)
+                    throw new Error('No signatures found');
+                // Validate certificate of signers
+                return Promise.all(self.signerInfos.map(function (signerInfo, i) {
+                    var sid = signerInfo.sid, selector = sid instanceof CryptoOperationData ? {
+                        subjectKeyIdentifier: sid
+                    } : {
+                        issuer: sid.issuer,
+                        serialNumber: sid.serialNumber};
+                    // Signing date
+                    var date;
+                    if (signerInfo.signedAttrs && signerInfo.signedAttrs.signingTime)
+                        date = signerInfo.signedAttrs.signingTime;
+                    // Use certificate trust policy validation
+                    return trustPolicy.getValidCertificate(selector,
+                            self.certificates, self.crls, date).catch(function () {
+                        return; // Ignore error
+                    });
+                }));
+
+            }).then(function (certs) {
+                // Get encapsulated data
+                var verifiers = [];
+                // Verify signatures for each signers
+                certs.forEach(function (signerCert) {
+                    if (signerCert)
+                        verifiers.push(self.verifySignature(signerCert).then(function (data) {
+                            result = data; // Enough one valid signature
+                        }, function () {
+                            return; // Ignore error
+                        }));
+                });
+                if (verifiers.length === 0)
+                    throw new Error('Valid verification path not found');
+                return Promise.all(verifiers);
+            }).then(function () {
+                if (!result)
+                    throw Error('Verification path found but no valid signature');
+                // Return content
+                return result;
+            });
+        }, // </editor-fold>
+        /**
+         * Returns successfully if this CMS signed data object contains a signature which is 
+         * validated by the given certificate and data; otherwise throws an Error.<br><br>
+         * 
+         * This method verifies the specified signature directly and ignores any certificates 
+         * or CRLs which may be contained in this CMS object. A more complex verification process, 
+         * which does make use of attached certificates and CRLs, is provided by the verify method.
+         * 
+         * @memberOf GostCMS.SignedDataContentInfo
+         * @instance
+         * @param {GostCert.X509} signerCert The signer certificate
+         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The content that was signed (optional)
+         * @returns {Promise} Promise to return enclosed object {@link GostASN1.ContentInfo} if signature verified
+         */
+        verifySignature: function (signerCert, contentInfo) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this, signerInfo, dataToVerify, dataDigest;
+            return new Promise(call).then(function () {
+                // Append attached
+                if (contentInfo)
+                    self.setEnclosed(contentInfo);
+                dataToVerify = self.encapContentInfo && self.encapContentInfo.eContent;
+                if (!dataToVerify)
+                    throw new Error('Detached content is not found');
+                // Find signer
+                for (var i = 0; i < self.signerInfos.length; i++) {
+                    var sid = self.signerInfos[i].sid;
+                    if (matchCert(sid, signerCert)) {
+                        signerInfo = self.signerInfos[i];
+                        break;
+                    }
+                }
+                if (!signerInfo)
+                    throw new Error('Signature not found for the certificate');
+                // Choice data for verification
+                if (signerInfo.signedAttrs) {
+                    dataDigest = signerInfo.signedAttrs.messageDigest;
+                    if (!dataDigest)
+                        throw new Error('Message digest must present in signed attributes');
+
+                    // To exclude implicit [0] need to reassemble signed attributes (auto on CTX object)
+                    dataToVerify = signerInfo.signedAttrs.encode();
+                }
+                if (!dataToVerify)
+                    throw new Error('Data for verification not found');
+                // Verify signature
+                var algorithm = expand(signerInfo.signatureAlgorithm, {hash: signerInfo.digestAlgorithm});
+                return signerCert.verifySignature(dataToVerify, signerInfo.signatureValue, algorithm);
+            }).then(function (result) {
+                if (!result)
+                    throw new Error('Signature not verified');
+                // Verify digest
+                if (signerInfo.signedAttrs)
+                    return subtle.digest(signerInfo.digestAlgorithm, self.encapContentInfo.eContent);
+            }).then(function (digest) {
+                if (digest && !equalBuffers(digest, dataDigest))
+                    throw new Error('Message digest not verified');
+                // Return content
+                return createContentInfo({
+                    contentType: self.encapContentInfo.eContentType,
+                    content: self.encapContentInfo.eContent
+                });
+            });
+        }  // </editor-fold>
+    });
+
+    /**
+     * This class encapsulates a CMS object of content type signed-data.
+     * 
+     * @memberOf GostCMS
+     * @type GostCMS.SignedDataContentInfo
+     */
+    GostCMS.prototype.SignedDataContentInfo = SignedDataContentInfo;
+
+    /**
+     * This class encapsulates a CMS object of content type encrypted-data.
+     * 
+     * @class GostCMS.EncryptedDataContentInfo
+     * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The encrypted data content.
+     * @extends GostCMS.DataContentInfo
+     * @extends GostASN1.EncryptedData
+     */
+    function EncryptedDataContentInfo(contentInfo) // <editor-fold defaultstate="collapsed">
+    {
+        DataContentInfo.call(this, contentInfo, {
+            contentType: 'encryptedData',
+            version: 0,
+            encryptedContentInfo: {
+                contentType: 'data',
+                contentEncryptionAlgorithm: providers[options.providerName].encryption
+            }
+        });
+    }  // </editor-fold>
+
+    extend(DataContentInfo, EncryptedDataContentInfo, {
+        /**
+         * Encrypt the content with given encryption algorithm, secret key or password
+         * 
+         * @memberOf GostCMS.EncryptedDataContentInfo
+         * @instance
+         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The content data to be enclosed.
+         * @param {Key|string} contentEncryptionKey content The encryption key or password for derive key
+         * @param {(AlgorithmIdentifier|string)} encryptionAlgorithm The encryption algorithm or provider name
+         * @returns {Promise} Promise to return self object after encrypt content
+         */
+        encloseContent: function (contentInfo, contentEncryptionKey, encryptionAlgorithm) // <editor-fold defaultstate="collapsed"> 
+        {
+            var self = this, encryption, derivation;
+            return new Promise(call).then(function () {
+                // Check content info
+                contentInfo = checkContentInfo(contentInfo);
+                if (!contentInfo.content)
+                    throw new Error('Content for encryption must be specified');
+
+                // Define encryption algorithm
+                var type = typeof contentEncryptionKey === 'string' ? 'pbes' : 'encryption';
+                if (encryptionAlgorithm) {
+                    var provider = providers[encryptionAlgorithm];
+                    encryptionAlgorithm = (provider && provider[type]) || encryptionAlgorithm;
+                } else
+                    encryptionAlgorithm = providers[options.providerName][type];
+                // Prepare content encryption key
+                if (encryptionAlgorithm.derivation) {
+                    // Encrypt with password
+                    derivation = expand(encryptionAlgorithm.derivation);
+                    encryption = expand(encryptionAlgorithm.encryption);
+                    derivation.salt = getSeed(saltSize(encryptionAlgorithm));
+                    // Import password for key generation
+                    var integrityKey;
+                    return subtle.importKey('raw', passwordData(derivation, contentEncryptionKey),
+                            derivation, false, ['deriveKey', 'deriveBits']).then(function (key) {
+                        integrityKey = key;
+                        // Derive IV
+                        if (derivation.name.indexOf('PFXKDF') >= 0) {
+                            derivation.diversifier = 2;
+                            return subtle.deriveBits(derivation, integrityKey, 64);
+                        }
+                    }).then(function (iv) {
+                        if (iv)
+                            encryption.iv = iv;
+                        // Generate key from password 
+                        derivation.diversifier = 1;
+                        return subtle.deriveKey(derivation, integrityKey, encryption, false, ['encrypt']);
+                    }).then(function (encryptionKey) {
+                        // Content encryption with key
+                        return encryptionKey;
+                    });
+                } else {
+                    // Base encryption
+                    encryption = expand(encryptionAlgorithm);
+                    if (contentEncryptionKey instanceof CryptoOperationData) {
+                        // Import key
+                        return subtle.importKey('raw', contentEncryptionKey, encryption, false, ['encrypt']);
+                    } else if (contentEncryptionKey.type === 'secret') {
+                        return contentEncryptionKey;
+                    } else
+                        throw new Error('Content encryption key must be raw data or secret key type');
+                }
+            }).then(function (encryptionKey) {
+                // Initial vector
+                if (!encryption.iv)
+                    encryption.iv = getSeed(8);
+
+                return subtle.encrypt(encryption, encryptionKey, contentInfo.content);
+            }).then(function (encryptedContent) {
+                if (encryptionAlgorithm.derivation) {
+                    delete derivation.diversifier;
+                    encryptionAlgorithm = expand(encryptionAlgorithm, {
+                        derivation: derivation,
+                        encryption: encryption
+                    });
+                } else
+                    encryptionAlgorithm = encryption;
+                // Set enclosed data
+                self.encryptedContentInfo = {
+                    contentType: contentInfo.contentType,
+                    contentEncryptionAlgorithm: encryptionAlgorithm,
+                    encryptedContent: encryptedContent
+                };
+                return self;
+            });
+        }, // </editor-fold>
+        /**
+         * Returns the decrypted content. 
+         * 
+         * @memberOf GostCMS.EncryptedDataContentInfo
+         * @instance
+         * @param {Key|string} decryptionKey The decryption key or password for derive key   
+         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The detached content (optional).
+         * @returns {Promise} Promise to return enclosed object {@ling GostASN1.ContentInfo} after decrypt content
+         */
+        getEnclosed: function (decryptionKey, contentInfo) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this, encryption, derivation, encryptedContent;
+            return new Promise(call).then(function () {
+                // Append attached
+                if (contentInfo)
+                    self.setEnclosed(contentInfo);
+                encryptedContent = self.encryptedContentInfo.encryptedContent;
+                if (!encryptedContent)
+                    throw new Error('Encrypted content must be specified');
+
+                encryption = expand(self.encryptedContentInfo.contentEncryptionAlgorithm);
+                if (encryption.derivation) {
+                    // Decrypt with password
+                    derivation = expand(encryption.derivation);
+                    encryption = expand(encryption.encryption);
+                    // Derive encryption key from password
+                    var integrityKey;
+                    return subtle.importKey('raw', passwordData(derivation, decryptionKey),
+                            derivation, false, ['deriveKey', 'deriveBits']).then(function (key) {
+                        integrityKey = key;
+                        // Derive iv for PFX
+                        if (derivation.name.indexOf('PFXKDF') >= 0) {
+                            derivation.diversifier = 2;
+                            return subtle.deriveBits(derivation, integrityKey, 64);
+                        }
+                    }).then(function (iv) {
+                        if (iv)
+                            encryption.iv = iv;
+                        // Generate key from password 
+                        derivation.diversifier = 1;
+                        return subtle.deriveKey(derivation, integrityKey, encryption, false, ['decrypt']);
+                    });
+                } else {
+                    // Base encryption. Password should be secret key
+                    if (decryptionKey instanceof CryptoOperationData) {
+                        // Import key
+                        return subtle.importKey('raw', decryptionKey, encryption, false, ['decrypt']);
+                    } else if (decryptionKey.type === 'secret') {
+                        return decryptionKey;
+                    } else
+                        throw new Error('Decryption key must be raw data or secret key type');
+                }
+            }).then(function (encryptionKey) {
+                // Decrypt key with encryption key
+                return subtle.decrypt(encryption, encryptionKey, encryptedContent);
+            }).then(function (decryptedContent) {
+                // Create content info object
+                return createContentInfo({
+                    contentType: self.encryptedContentInfo.contentType,
+                    content: decryptedContent
+                });
+            });
+        } // </editor-fold>
+    });
+
+    /**
+     * This class encapsulates a CMS object of content type encrypted-data.
+     * 
+     * @memberOf GostCMS
+     * @type GostCMS.EncryptedDataContentInfo
+     */
+    GostCMS.prototype.EncryptedDataContentInfo = EncryptedDataContentInfo;
+    /**
+     * This class encapsulates a CMS object of content type enveloped-data.
+     * 
+     * @class GostCMS.EnvelopedDataContentInfo
+     * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The encrypted data content.
+     * @extends GostCMS.DataContentInfo
+     * @extends GostASN1.EnvelopedData
+     */
+    function EnvelopedDataContentInfo(contentInfo) // <editor-fold defaultstate="collapsed">
+    {
+        DataContentInfo.call(this, contentInfo, {
+            contentType: 'envelopedData',
+            version: 0,
+            recipientInfos: [],
+            encryptedContentInfo: {
+                contentType: 'data',
+                contentEncryptionAlgorithm: providers[options.providerName].encryption
+            }
+        });
+    }  // </editor-fold>
+
+    extend(DataContentInfo, EnvelopedDataContentInfo, {
+        /**
+         * Generate content encryption key with given encryption algorithm and encrypt the content
+         * 
+         * @memberOf GostCMS.EnvelopedDataContentInfo
+         * @instance
+         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The content data to be enclosed.
+         * @param {(AlgorithmIdentifier|string)} encryptionAlgorithm The encryption algorithm or provider name
+         * @returns {Promise} Promise to return self object after encrypt content
+         */
+        encloseContent: function (contentInfo, encryptionAlgorithm) // <editor-fold defaultstate="collapsed"> 
+        {
+            var self = this;
+            return new Promise(call).then(function () {
+                // Check content info
+                contentInfo = checkContentInfo(contentInfo);
+                if (!contentInfo.content)
+                    throw new Error('Content for encryption must be specified');
+                // Define encryption algorithm
+                if (encryptionAlgorithm) {
+                    var provider = providers[encryptionAlgorithm];
+                    encryptionAlgorithm = (provider && provider.encryption) || encryptionAlgorithm;
+                } else
+                    encryptionAlgorithm = providers[options.providerName].encryption;
+                // Generate key for encryption content
+                return subtle.generateKey(encryptionAlgorithm, true, ['encrypt']);
+            }).then(function (encryptionKey) {
+                // Encrypt content
+                self.contentEncryptionKey = encryptionKey;
+                // Initial vector
+                if (!encryptionAlgorithm.iv)
+                    encryptionAlgorithm.iv = getSeed(8);
+                return subtle.encrypt(encryptionAlgorithm, encryptionKey, contentInfo.content);
+            }).then(function (encryptedContent) {
+                self.encryptedContentInfo = {
+                    contentType: contentInfo.contentType,
+                    contentEncryptionAlgorithm: encryptionAlgorithm,
+                    encryptedContent: encryptedContent
+                };
+                return self;
+            });
+        }, // </editor-fold>
+        /**
+         * Add a recipient. <br><br>
+         * 
+         * Uses the Recipient Information with IssuerAndSerialNumber as the Recipient Identifier.
+         * Note: If senderCert specified uses the Key Agreement algorithm overwise Key Transport algorithm.
+         * 
+         * @memberOf GostCMS.EnvelopedDataContentInfo
+         * @instance
+         * @param {GostCert.X509} recipientCert The certificate of recepient
+         * @param {(AlgorithmIdentifier|string)} keyEncryptionAlgorithm Key encryption algorithm or provider name
+         * @param {GostASN1.PrivateKeyInfo} senderKey The private key of sender for key agreement protocol
+         * @param {GostCert.X509} senderCert The certificate of sender for key agreement protocol
+         * @returns {Promise} Promise to return self object after add recipient
+         */
+        addRecipient: function (recipientCert, keyEncryptionAlgorithm, senderKey, senderCert) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this, privateKey, encryptionProvider, derivation, wrapping;
+            return new Promise(call).then(function () {
+                // Check for recepient cert
+                recipientCert = new cert.X509(recipientCert);
+                if (keyEncryptionAlgorithm && typeof keyEncryptionAlgorithm !== 'string' &&
+                        !keyEncryptionAlgorithm.algorithm) {
+                    // Sender parameters
+                    senderCert = senderKey;
+                    senderKey = keyEncryptionAlgorithm;
+                    keyEncryptionAlgorithm = undefined;
+                }
+                if (keyEncryptionAlgorithm) {
+                    encryptionProvider = providers[keyEncryptionAlgorithm];
+                } else
+                    encryptionProvider = recipientCert.getProvider();
+
+                // Check for content encryption key
+                if (!self.contentEncryptionKey)
+                    throw new Error('The content encryption key is not assigned');
+
+                if (senderCert) {
+                    // Sender certificate for agreement protocol
+                    var senderCertChain;
+                    if (senderCert instanceof Array) {
+                        senderCertChain = senderCert;
+                        senderCert = senderCertChain[0];
+                    } else
+                        senderCertChain = [senderCert];
+
+                    // Add sender certificate
+                    if (options.autoAddCert) {
+                        if (!self.originatorInfo)
+                            self.originatorInfo = {certs: []};
+                        else if (!self.originatorInfo.certs)
+                            self.originatorInfo.certs = [];
+                        for (var i = 0, n = senderCertChain.length; i < n; i++) {
+                            addUnique(self.originatorInfo.certs, senderCertChain[i], function (cert1, cert2) {
+                                return equalNames(cert1.issuer, cert2.issuer) &&
+                                        equalNumbers(cert1.serialNumber, cert2.serialNumber);
+                            });
+                        }
+                    }
+                    // Key Agreement
+                    if (encryptionProvider)
+                        keyEncryptionAlgorithm = expand(encryptionProvider.agreement);
+                    else
+                        encryptionProvider = recipientCert.getProvider();
+                    // Certificates must have similar curve parameters
+                    if (recipientCert.subjectPublicKeyInfo.algorithm.namedCurve !==
+                            senderCert.subjectPublicKeyInfo.algorithm.namedCurve)
+                        throw new Error('The sender and the recipient have different public key algorithms');
+                    // Get private sender key
+                    return subtle.importKey('pkcs8', senderKey.encode(), senderKey.privateKeyAlgorithm,
+                            false, ['deriveKey']);
+                } else {
+                    // Key Transport
+                    if (encryptionProvider)
+                        keyEncryptionAlgorithm = expand(recipientCert.subjectPublicKeyInfo.algorithm);
+                    else
+                        encryptionProvider = recipientCert.getProvider();
+                    // Generate key pair
+                    return subtle.generateKey(keyEncryptionAlgorithm, true, ['deriveKey']).then(function (keyPair) {
+                        keyEncryptionAlgorithm['public'] = keyPair.publicKey;
+                        return keyPair.privateKey;
+                    });
+                }
+            }).then(function (key) {
+                privateKey = key;
+                // Get public key from recipient certificate
+                return subtle.importKey('spki', recipientCert.subjectPublicKeyInfo.encode(),
+                        recipientCert.subjectPublicKeyInfo.algorithm, false, ['deriveKey', 'deriveBits']);
+            }).then(function (publicKey) {
+                // Derivate key encryption key
+                keyEncryptionAlgorithm.ukm = getSeed(8);
+                derivation = expand(encryptionProvider.agreement,
+                        {sBox: keyEncryptionAlgorithm.sBox, ukm: keyEncryptionAlgorithm.ukm, 'public': publicKey});
+                wrapping = expand(keyEncryptionAlgorithm.wrapping || encryptionProvider.wrapping,
+                        {ukm: keyEncryptionAlgorithm.ukm});
+                return subtle.deriveKey(derivation, privateKey, wrapping, true, ['wrapKey']);
+            }).then(function (wrappingKey) {
+                // Wrap content encryption key 
+                keyEncryptionAlgorithm.wrapping = wrapping;
+                return subtle.wrapKey('raw', self.contentEncryptionKey, wrappingKey, wrapping);
+            }).then(function (wrappedKey) {
+                // Create recipient info
+                var recipientInfo;
+                var useKeyIdentifier = options.useKeyIdentifier && recipientCert.extensions &&
+                        recipientCert.extensions.subjectKeyIdentifier,
+                        rid = useKeyIdentifier ? recipientCert.extensions.subjectKeyIdentifier : {
+                            issuer: recipientCert.issuer,
+                            serialNumber: recipientCert.serialNumber};
+                if (senderCert) {
+                    var spki = senderCert.subjectPublicKeyInfo;
+                    recipientInfo = {// KeyAgreeRecipientInfo
+                        version: 3, // always set to 3
+                        originator: {
+                            algorithm: spki.algorithm,
+                            publicKey: spki.subjectPublicKey
+                        },
+                        ukm: keyEncryptionAlgorithm.ukm,
+                        keyEncryptionAlgorithm: keyEncryptionAlgorithm,
+                        recipientEncryptedKeys: [{// use only one recipient in domain
+                                rid: rid,
+                                encryptedKey: asn1.GostEncryptedKey(keyEncryptionAlgorithm).encode(wrappedKey)
+                            }]
+                    };
+                } else {
+                    recipientInfo = {
+                        version: 0, // always set to 0 or 2
+                        rid: rid,
+                        keyEncryptionAlgorithm: keyEncryptionAlgorithm,
+                        encryptedKey: asn1.GostEncryptedKey(keyEncryptionAlgorithm).encode({
+                            algorithm: keyEncryptionAlgorithm,
+                            sessionEncryptedKey: wrappedKey
+                        })
+                    };
+                }
+                self.recipientInfos.push(recipientInfo);
+                return self;
+            });
+        }, // </editor-fold>
+        /**
+         * Returns the decrypted content. 
+         * 
+         * @memberOf GostCMS.EnvelopedDataContentInfo
+         * @instance
+         * @param {GostASN1.PrivateKeyInfo} recipientKey The decryption key or password for derive key   
+         * @param {GostCert.X509} recipientCert  The decryption key or password for derive key   
+         * @param {(FormatedData|GostASN1.ContentInfo)} contentInfo The detached content (optional).
+         * @param {GostCert.X509} originatorCert The originator certificate (optional).
+         * @returns {Promise} Promise to return enclosed object {@ling GostASN1.ContentInfo} after decrypt content
+         */
+        getEnclosed: function (recipientKey, recipientCert, contentInfo, originatorCert) // <editor-fold defaultstate="collapsed">
+        {
+            var self = this, wrappedKey, encryptedContent, derivation, wrapping, encryption;
+            return new Promise(call).then(function () {
+                var encryptionProvider = recipientCert.getProvider();
+                // Append attached
+                if (contentInfo)
+                    self.setEnclosed(contentInfo);
+                encryptedContent = self.encryptedContentInfo.encryptedContent;
+                if (!encryptedContent)
+                    throw new Error('Encrypted content must be specified');
+
+                encryption = self.encryptedContentInfo.contentEncryptionAlgorithm;
+
+                // Find receiver
+                for (var i = 0; i < self.recipientInfos.length; i++) {
+                    var recipientInfo = self.recipientInfos[i],
+                            algorithm = expand(recipientInfo.keyEncryptionAlgorithm);
+                    if (recipientInfo.rid) {
+                        if (matchCert(recipientInfo.rid, recipientCert)) {
+                            // Algorithm and wrapped key
+                            var transportKey = asn1.GostEncryptedKey(algorithm).decode(recipientInfo.encryptedKey).object;
+                            wrappedKey = transportKey.sessionEncryptedKey;
+                            algorithm = expand(algorithm, transportKey.algorithm);
+                            derivation = expand(encryptionProvider.agreement, {ukm: algorithm.ukm, sBox: algorithm.sBox});
+                            wrapping = expand(encryptionProvider.wrapping, algorithm.wrapping, {ukm: algorithm.ukm});
+                            return algorithm['public'];
+                        }
+                    } else {
+                        var keys = recipientInfo.recipientEncryptedKeys;
+                        if (keys) {
+                            for (var j = 0; j < keys.length; j++) {
+                                if (matchCert(keys[j].rid, recipientCert)) {
+                                    // Algorithm and wrapped key
+                                    algorithm = expand(encryptionProvider.agreement, algorithm, {ukm: recipientInfo.ukm});
+                                    wrappedKey = asn1.GostEncryptedKey(algorithm).decode(keys[j].encryptedKey).object;
+                                    derivation = algorithm;
+                                    wrapping = expand(algorithm.wrapping || encryptionProvider.wrapping, {ukm: recipientInfo.ukm});
+                                    // Check originator
+                                    var originator = recipientInfo.originator;
+                                    if (originator.algorithm) {
+                                        var spki = new asn1.SubjectPublicKeyInfo({
+                                            algorithm: originator.algorithm,
+                                            subjectPublicKey: originator.publicKey});
+                                        return subtle.importKey('spki', spki.encode(), spki.algorithm, false, ['deriveKey', 'deriveBits']);
+                                    } else if (originatorCert && matchCert(originator, originatorCert))
+                                        return importKey('pkcs', originatorCert.subjectPublicKeyInfo.encode(),
+                                                originatorCert.subjectPublicKeyInfo.algorithm, false, ['deriveKey', 'deriveBits']);
+                                    else
+                                        throw Error('Originator certificate not specified or not valid');
+                                }
+                            }
+                        }
+                    }
+                }
+                throw new Error('Recipient not found or format not supported');
+            }).then(function (publicKey) {
+                derivation['public'] = publicKey;
+                // Import private key
+                return subtle.importKey('pkcs8', recipientKey.encode(), recipientKey.privateKeyAlgorithm,
+                        false, ['deriveKey', 'deriveBits']);
+            }).then(function (privateKey) {
+                // Derive key
+                return subtle.deriveKey(derivation, privateKey, wrapping, true, ['unwrapKey']);
+            }).then(function (unwrappingKey) {
+                // Unwrap key
+                return subtle.unwrapKey('raw', wrappedKey, unwrappingKey,
+                        wrapping, encryption, false, ['decrypt']);
+            }).then(function (encryptionKey) {
+                // Decrypt content
+                return subtle.decrypt(encryption, encryptionKey, encryptedContent);
+            }).then(function (decryptedContent) {
+                return createContentInfo({
+                    contentType: self.encryptedContentInfo.contentType,
+                    content: decryptedContent
+                });
+            });
+        } // </editor-fold>
+    });
+
+    /**
+     * This class encapsulates a CMS object of content type enveloped-data.
+     * 
+     * @memberOf GostCMS
+     * @type GostCMS.EnvelopedDataContentInfo
+     */
+    GostCMS.prototype.EnvelopedDataContentInfo = EnvelopedDataContentInfo;
+
+    /**
+     * Implements the Cryptographic Message Syntax as specified in RFC-2630.
+     * 
+     * @memberOf gostCrypto
+     * @type GostCMS
+     */
+    gostCrypto.cms = new GostCMS();
+
+    return GostCMS;
+
+}));
+
+
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
 __webpack_require__(2);
-__webpack_require__(5);
-__webpack_require__(6);
 __webpack_require__(8);
-__webpack_require__(3);
-__webpack_require__(7);
-__webpack_require__(11);
-__webpack_require__(1);
 __webpack_require__(4);
-__webpack_require__(9);
+__webpack_require__(10);
+__webpack_require__(6);
+__webpack_require__(5);
 __webpack_require__(12);
+__webpack_require__(1);
+__webpack_require__(7);
+__webpack_require__(9);
+__webpack_require__(13);
 module.exports = {
     CryptoGost: __webpack_require__(0),
-    GostEngine: __webpack_require__(13)
+    GostEngine: __webpack_require__(3)
     
 }
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /** 
@@ -17484,7 +17961,7 @@ module.exports = {
      * 
      */ // <editor-fold defaultstate="collapsed">
     if (true) {
-        module.exports = factory(__webpack_require__(0), __webpack_require__(2), __webpack_require__(5), __webpack_require__(8));
+        module.exports = factory(__webpack_require__(0), __webpack_require__(2), __webpack_require__(8), __webpack_require__(10));
     } else {
         root.GostKeys = factory(root.gostCrypto, root.GostASN1, root.GostCert, root.GostCMS);
     }
@@ -19949,7 +20426,7 @@ module.exports = {
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* 
@@ -19988,7 +20465,7 @@ module.exports = {
 
 (function (root, factory) {
     if (true) {
-        module.exports = factory(__webpack_require__(0), __webpack_require__(3), __webpack_require__(4), __webpack_require__(2));
+        module.exports = factory(__webpack_require__(0), __webpack_require__(6), __webpack_require__(7), __webpack_require__(2));
     } else {
         root.gostViewer = factory(root.gostCrypto, root.gostCoding, root.gostSecurity, root.gostASN1);
     }
@@ -20272,479 +20749,6 @@ module.exports = {
     };
 
 }));
-
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/**
- * @file GOST 34.10-2012 signature function with 1024/512 bits digest
- * @version 1.76
- * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
- */
-
-/*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *    
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
- */
-
-(function (root, factory) {
-
-    /*
-     * Module imports and exports
-     * 
-     */ // <editor-fold defaultstate="collapsed">
-    if (true) {
-        module.exports = factory(__webpack_require__(1), __webpack_require__(6), __webpack_require__(7), __webpack_require__(9));
-    } else {
-        if (typeof importScripts !== 'undefined') {
-            if (!(root.GostRandom && root.GostCipher && root.GostDigest && root.GostSign))
-                importScripts('gostRandom.js', 'gostCipher.js', 'gostDigest.js', 'gostSign.js');
-        }
-        root.gostEngine = factory(root.GostRandom, root.GostCipher, root.GostDigest, root.GostSign);
-    }
-    // </editor-fold>
-
-}(this, function (GostRandom, GostCipher, GostDigest, GostSign) {
-
-    /*
-     * Engine definition base on normalized algorithm identifier
-     * 
-     */ // <editor-fold defaultstate="collapsed">
-
-    var root = this;
-
-    // Define engine
-    function defineEngine(method, algorithm) {
-        if (!algorithm)
-            throw new (root.SyntaxError || Error)('Algorithm not defined');
-
-        if (!algorithm.name)
-            throw new (root.SyntaxError || Error)('Algorithm name not defined');
-
-        var name = algorithm.name, mode = algorithm.mode;
-        if ((name === 'GOST 28147' || name === 'GOST R 34.12' || name === 'RC2') && (method === 'generateKey' ||
-                (mode === 'MAC' && (method === 'sign' || method === 'verify')) ||
-                ((mode === 'KW' || mode === 'MASK') && (method === 'wrapKey' || method === 'unwrapKey')) ||
-                ((!mode || mode === 'ES') && (method === 'encrypt' || method === 'decrypt')))) {
-            return 'GostCipher';
-
-        } else if ((name === 'GOST R 34.11' || name === 'SHA') && (method === 'digest' ||
-                (mode === 'HMAC' && (method === 'sign' || method === 'verify' || method === 'generateKey')) ||
-                ((mode === 'KDF' || mode === 'PBKDF2' || mode === 'PFXKDF' || mode === 'CPKDF') &&
-                        (method === 'deriveKey' || method === 'deriveBits' || method === 'generateKey')))) {
-            return 'GostDigest';
-
-        } else if (name === 'GOST R 34.10' && (method === 'generateKey' ||
-                ((!mode || mode === 'SIGN') && (method === 'sign' || method === 'verify')) ||
-                (mode === 'MASK' && (method === 'wrapKey' || method === 'unwrapKey')) ||
-                (mode === 'DH' && (method === 'deriveKey' || method === 'deriveBits')))) {
-            return 'GostSign';
-        } else
-            throw new (root.NotSupportedError || Error)('Algorithm ' + name + '-' + mode + ' is not valid for ' + method);
-    } // </editor-fold>
-
-    /**
-     * Object implements dedicated Web Workers and provide a simple way to create 
-     * and run GOST cryptographic algorithms in background thread. 
-     * 
-     * Object provide interface to GOST low-level cryptogric classes:
-     *  <ul>
-     *      <li>GostCipher - implementation of GOST 28147, GOST R 34.12, GOST R 34.13 Encryption algorithms. Reference {@link http://tools.ietf.org/html/rfc5830}</li>
-     *      <li>GostDigest - implementation of GOST R 34.11 Hash Function algorithms. References {@link http://tools.ietf.org/html/rfc5831} and {@link http://tools.ietf.org/html/rfc6986}</li>
-     *      <li>GostSign - implementation of GOST R 34.10 Digital Signature algorithms. References {@link http://tools.ietf.org/html/rfc5832} and {@link http://tools.ietf.org/html/rfc7091}</li>
-     *  </ul>
-     * @namespace gostEngine
-     */
-    var gostEngine = {
-        /**
-         * gostEngine.execute(algorithm, method, args) Entry point to execution 
-         * all low-level GOST cryptographic methods
-         * 
-         *  <ul>
-         *      <li>Determine the appropriate engine for a given execution method</li>
-         *      <li>Create cipher object for determineted engine</li>
-         *      <li>Execute method of cipher with given args</li>
-         *  </ul>
-         * 
-         * @memberOf gostEngine
-         * @param {AlgorithmIndentifier} algorithm Algorithm identifier
-         * @param {string} method Crypto method for execution
-         * @param {Array} args Method arguments (keys, data, additional parameters)
-         * @returns {(CryptoOperationData|Key|KeyPair|boolean)} Result of method execution
-         */
-        execute: function (algorithm, method, args) // <editor-fold defaultstate="collapsed">
-        {
-            // Define engine for GOST algorithms
-            var engine = defineEngine(method, algorithm);
-            // Create cipher 
-            var cipher = this['get' + engine](algorithm);
-            // Execute method
-            return cipher[method].apply(cipher, args);
-        }, // </editor-fold>
-        /**
-         * gostEngine.getGostCipher(algorithm) returns GOST 28147 / GOST R 34.12 cipher instance<br><br>
-         * 
-         * GOST 28147-89 / GOST R 34.12-15 Encryption Algorithm<br><br> 
-         * When keys and initialization vectors are converted to/from byte arrays, 
-         * little-endian byte order is assumed.<br><br>
-         * 
-         * Normalized algorithm identifier common parameters:
-         * 
-         *  <ul>
-         *      <li><b>name</b> Algorithm name 'GOST 28147' or 'GOST R 34.12'</li>
-         *      <li><b>version</b> Algorithm version, number
-         *          <ul>
-         *              <li><b>1989</b> Current version of standard</li>
-         *              <li><b>2015</b> New draft version of standard</li>
-         *          </ul>
-         *      </li>
-         *      <li><b>length</b> Block length
-         *          <ul>
-         *              <li><b>64</b> 64 bits length (default)</li>
-         *              <li><b>128</b> 128 bits length (only for version 2015)</li>
-         *          </ul>
-         *      </li>
-         *      <li><b>mode</b> Algorithm mode, string
-         *          <ul>
-         *              <li><b>ES</b> Encryption mode (default)</li>
-         *              <li><b>MAC</b> "imitovstavka" (MAC) mode</li>
-         *              <li><b>KW</b> Key wrapping mode</li>
-         *              <li><b>MASK</b> Key mask mode</li>
-         *          </ul>
-         *      </li>
-         *      <li><b>sBox</b> Paramset sBox for GOST 28147-89, string. Used only if version = 1989</li>
-         *  </ul>
-         *  
-         * Supported algorithms, modes and parameters:
-         * 
-         *  <ul>
-         *      <li>Encript/Decrypt mode (ES)
-         *          <ul>
-         *              <li><b>block</b> Block mode, string. Default ECB</li>
-         *              <li><b>keyMeshing</b> Key meshing mode, string. Default NO</li>
-         *              <li><b>padding</b> Padding mode, string. Default NO for CFB and CTR modes, or ZERO for others</li>
-         *              <li><b>iv</b> {@link CryptoOperationData} Initial vector with length of block. Default - zero block</li>
-         *          </ul>
-         *      </li>
-         *      <li>Sign/Verify mode (MAC)
-         *          <ul>
-         *              <li><b>macLength</b> Length of mac in bits (default - 32 bits)</li>
-         *              <li><b>iv</b> {@link CryptoOperationData} Initial vector with length of block. Default - zero block</li>
-         *          </ul>
-         *      </li>
-         *      <li>Wrap/Unwrap key mode (KW)
-         *          <ul>
-         *              <li><b>keyWrapping</b> Mode of keywrapping, string. Default NO - standard GOST key wrapping</li>
-         *              <li><b>ukm</b> {@link CryptoOperationData} User key material. Default - random generated value</li>
-         *          </ul>
-         *      </li>
-         *      <li>Wrap/Unwrap key mode (MASK)</li>
-         *  </ul>
-         *      
-         * Supported paramters values:
-         *      
-         *  <ul>
-         *      <li>Block modes (parameter 'block')
-         *          <ul>
-         *              <li><b>ECB</b> "prostaya zamena" (ECB) mode (default)</li>
-         *              <li><b>CFB</b> "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode</li>
-         *              <li><b>CTR</b> "gammirovanie" (counter) mode</li>
-         *              <li><b>CBC</b> Cipher-Block-Chaining (CBC) mode</li>
-         *          </ul>
-         *      </li>
-         *      <li>Key meshing modes (parameter 'keyMeshing')
-         *          <ul>
-         *              <li><b>NO</b> No key wrapping (default)</li>
-         *              <li><b>CP</b> CryptoPor Key key meshing</li>
-         *          </ul>
-         *      </li>
-         *      <li>Padding modes (parameter 'padding')
-         *          <ul>
-         *              <li><b>NO</b> No padding only for CFB and CTR modes</li>
-         *              <li><b>PKCS5</b> PKCS#5 padding mode</li>
-         *              <li><b>ZERO</b> Zero bits padding mode</li>
-         *              <li><b>RANDOM</b> Random bits padding mode</li>
-         *          </ul>
-         *      </li>
-         *      <li>Wrapping key modes (parameter 'keyWrapping')
-         *          <ul>
-         *              <li><b>NO</b> Ref. rfc4357 6.1 GOST 28147-89 Key wrapping</li>
-         *              <li><b>CP</b> CryptoPro Key wrapping mode</li>
-         *              <li><b>SC</b> SignalCom Key wrapping mode</li>
-         *          </ul>
-         *      </li>
-         *  </ul>
-         * 
-         * @memberOf gostEngine
-         * @param {AlgorithmIndentifier} algorithm Algorithm identifier
-         * @returns {GostCipher} Instance of GostCipher
-         */
-        getGostCipher: function (algorithm) // <editor-fold defaultstate="collapsed">
-        {
-            return new (GostCipher || (GostCipher = root.GostCipher))(algorithm);
-        }, // </editor-fold>
-        /**
-         * gostEngine.getGostDigest(algorithm) returns GOST R 34.11 cipher instance<br><br>
-         * 
-         * Normalized algorithm identifier common parameters:
-         * 
-         *  <ul>
-         *      <li><b>name</b> Algorithm name 'GOST R 34.11'</li>
-         *      <li><b>version</b> Algorithm version
-         *          <ul>
-         *              <li><b>1994</b> old-style 256 bits digest based on GOST 28147-89</li>
-         *              <li><b>2012</b> 256 ro 512 bits digest algorithm "Streebog" GOST R 34.11-2012 (default)</li>
-         *          </ul>
-         *      </li>
-         *      <li><b>length</b> Digest length
-         *          <ul>
-         *              <li><b>256</b> 256 bits digest</li>
-         *              <li><b>512</b> 512 bits digest, valid only for algorithm "Streebog"</li>
-         *          </ul>
-         *      </li>
-         *      <li><b>mode</b> Algorithm mode
-         *          <ul>
-         *              <li><b>HASH</b> simple digest mode (default)</li>
-         *              <li><b>HMAC</b> HMAC algorithm based on GOST R 34.11</li>
-         *              <li><b>KDF</b> Derive bits for KEK deversification</li>
-         *              <li><b>PBKDF2</b> Password based key dirivation algorithms PBKDF2 (based on HMAC)</li>
-         *              <li><b>PFXKDF</b> PFX key dirivation algorithms PFXKDF</li>
-         *              <li><b>CPKDF</b> CryptoPro Password based key dirivation algorithms</li>
-         *          </ul>
-         *      </li>
-         *      <li><b>sBox</b> Paramset sBox for GOST 28147-89. Used only if version = 1994</li>
-         *  </ul>
-         * 
-         * Supported algorithms, modes and parameters:
-         * 
-         *  <ul>
-         *      <li>Digest HASH mode (default)</li>
-         *      <li>Sign/Verify HMAC modes parameters depends on version and length
-         *          <ul>
-         *              <li><b>version: 1994</b> HMAC parameters (B = 32, L = 32)</li>
-         *              <li><b>version: 2012, length: 256</b> HMAC parameters (B = 64, L = 32)</li>
-         *              <li><b>version: 2012, length: 512</b> HMAC parameters  (B = 64, L = 64)</li>
-         *          </ul>
-         *      </li>
-         *      <li>DeriveBits/DeriveKey KDF mode
-         *          <ul>
-         *              <li><b>context</b> {@link CryptoOperationData} Context of the key derivation</li>
-         *              <li><b>label</b> {@link CryptoOperationData} Label that identifies the purpose for the derived keying material</li>
-         *          </ul>
-         *      </li>
-         *      <li>DeriveBits/DeriveKey PBKDF2 mode
-         *          <ul>
-         *              <li><b>salt</b> {@link CryptoOperationData} Random salt as input for HMAC algorithm</li>
-         *              <li><b>iterations</b> Iteration count. GOST recomended value 1000 (default) or 2000</li>
-         *          </ul>
-         *      </li>
-         *      <li>DeriveBits/DeriveKey PFXKDF mode
-         *          <ul>
-         *              <li><b>salt</b> {@link CryptoOperationData} Random salt as input for HMAC algorithm</li>
-         *              <li><b>iterations</b> Iteration count. GOST recomended value 1000 (default) or 2000</li>
-         *              <li><b>diversifier</b> Deversifier, ID=1 - key material for performing encryption or decryption, 
-         *              ID=2 - IV (Initial Value) for encryption or decryption, ID=3 - integrity key for MACing</li>
-         *          </ul>
-         *      </li>
-         *      <li>DeriveBits/DeriveKey CPKDF mode
-         *          <ul>
-         *              <li><b>salt</b> {@link CryptoOperationData} Random salt as input for HMAC algorithm</li>
-         *              <li><b>iterations</b> Iteration count. GOST recomended value 1000 (default) or 2000</li>
-         *          </ul>
-         *      </li>
-         *  </ul>
-         * 
-         * @memberOf gostEngine
-         * @param {AlgorithmIndentifier} algorithm Algorithm identifier
-         * @returns {GostDigest} Instance of GostDigest
-         */
-        getGostDigest: function (algorithm) // <editor-fold defaultstate="collapsed">
-        {
-            return new (GostDigest || (GostDigest = root.GostDigest))(algorithm);
-        }, // </editor-fold>
-        /**
-         * gostEngine.getGostSign(algorithm) returns GOST R 34.10 cipher instance<br><br>
-         * 
-         * Normalized algorithm identifier common parameters:
-         * 
-         *  <ul>
-         *      <li><b>name</b> Algorithm name 'GOST R 34.10'</li>
-         *      <li><b>version</b> Algorithm version
-         *          <ul>
-         *              <li><b>1994</b> - Old-style GOST R 34.10-94 ExpMod algorithm with GOST R 34.11-94 hash</li>
-         *              <li><b>2001</b> - GOST R 34.10-2001 Eliptic curve algorithm with old GOST R 34.11-94 hash</li>
-         *              <li><b>2012</b> - GOST R 34.10-2012 Eliptic curve algorithm with GOST R 34.11-12 hash, default mode</li>
-         *          </ul>
-         *      </li>
-         *      <li><b>length</b> Length of hash and signature. Key length == hash length for EC algorithms and 2 * hash length for ExpMod algorithm
-         *          <ul>
-         *              <li><b>GOST R 34.10-256</b> - 256 bits digest, default mode</li>
-         *              <li><b>GOST R 34.10-512</b> - 512 bits digest only for GOST R 34.11-2012 hash</li>
-         *          </ul>
-         *      </li>
-         *      <li><b>mode</b> Algorithm mode
-         *          <ul>
-         *              <li><b>SIGN</b> Digital signature mode (default)</li>
-         *              <li><b>DH</b> Diffie-Hellman key generation and key agreement mode</li>
-         *              <li><b>MASK</b> Key mask mode</li>
-         *          </ul>
-         *      </li>
-         *      <li><b>sBox</b> Paramset sBox for GOST 34.11-94. Used only if version = 1994 or 2001</li>
-         *  </ul>
-         *  
-         * Supported algorithms, modes and parameters:
-         * 
-         *  <ul>
-         *      <li>Sign/Verify mode (SIGN)</li>
-         *      <li>Wrap/Unwrap mode (MASK)</li>
-         *      <li>DeriveKey/DeriveBits mode (DH)
-         *          <ul>
-         *              <li>{@link CryptoOperationData} <b>ukm</b> User key material. Default - random generated value</li>
-         *              <li>{@link CryptoOperationData} <b>public</b> The peer's EC public key data</li>
-         *          </ul>
-         *      </li>
-         *      <li>GenerateKey mode (SIGN and DH and MASK) version = 1994
-         *          <ul>
-         *              <li><b>namedParam</b> Paramset for key generation algorithm. If specified no additianal parameters required</li>
-         *          </ul>
-         *          Additional parameters, if namedParam not specified
-         *          <ul>
-         *              <li><b>modulusLength</b> Bit length of p (512 or 1024 bits). Default = 1024</li>
-         *              <li><b>p</b> {@link CryptoOperationData} Modulus, prime number, 2^(t-1)<p<2^t</li>
-         *              <li><b>q</b> {@link CryptoOperationData} Order of cyclic group, prime number, 2^254<q<2^256, q is a factor of p-1</li>
-         *              <li><b>a</b> {@link CryptoOperationData} Generator, integer, 1<a<p-1, at that aq (mod p) = 1</li>
-         *          </ul>
-         *      </li>
-         *      <li>GenerateKey mode (SIGN and DH and MASK) version = 2001 or 2012
-         *          <ul>
-         *              <li><b>namedCurve</b> Paramset for key generation algorithm. If specified no additianal parameters required</li>
-         *          </ul>
-         *          Additional EC parameters, if namedCurve not specified
-         *          <ul>
-         *              <li><b>p</b> {@link CryptoOperationData} Prime number - elliptic curve modulus</li>
-         *              <li><b>a</b> {@link CryptoOperationData} Coefficients a of the elliptic curve E</li>
-         *              <li><b>b</b> {@link CryptoOperationData} Coefficients b of the elliptic curve E</li>
-         *              <li><b>q</b> {@link CryptoOperationData} Prime number - order of cyclic group</li>
-         *              <li><b>x</b> {@link CryptoOperationData} Base point p x-coordinate</li>
-         *              <li><b>y</b> {@link CryptoOperationData} Base point p y-coordinate</li>
-         *          </ul>
-         *      </li>
-         *  </ul>
-         *  
-         * @memberOf gostEngine
-         * @param {AlgorithmIndentifier} algorithm Algorithm identifier
-         * @returns {GostSign} Instance of GostSign
-         */
-        getGostSign: function (algorithm) // <editor-fold defaultstate="collapsed">
-        {
-            return new (GostSign || (GostSign = root.GostSign))(algorithm);
-        } // </editor-fold>
-    };
-
-    /*
-     * Worker method execution
-     * 
-     */ // <editor-fold defaultstate="collapsed">
-
-    // Worker for gostCripto method execution
-    if (root.importScripts) {
-
-        /**
-         * Method called when {@link SubtleCrypto} calls its own postMessage() 
-         * method with data parameter: algorithm, method and arg.<br>
-         * Call method execute and postMessage() results to onmessage event handler 
-         * in the main process.<br>
-         * If error occured onerror event handler executed in main process.
-         * 
-         * @memberOf gostEngine
-         * @name onmessage
-         * @param {MessageEvent} event Message event with data {algorithm, method, args}
-         */
-        root.onmessage = function (event) {
-            try {
-                postMessage({
-                    id: event.data.id,
-                    result: gostEngine.execute(event.data.algorithm,
-                            event.data.method, event.data.args)});
-            } catch (e) {
-                postMessage({
-                    id: event.data.id,
-                    error: e.message
-                });
-            }
-        };
-    } else {
-
-        // Load dependens
-        var baseUrl = '', nameSuffix = '';
-        // Try to define from DOM model
-        if (typeof document !== 'undefined') {
-            (function () {
-                var regs = /^(.*)gostCrypto(.*)\.js$/i;
-                var list = document.querySelectorAll('script');
-                for (var i = 0, n = list.length; i < n; i++) {
-                    var value = list[i].getAttribute('src');
-                    var test = regs.exec(value);
-                    if (test) {
-                        baseUrl = test[1];
-                        nameSuffix = test[2];
-                    }
-                }
-            })();
-        }
-
-        // Local importScripts procedure for include dependens
-        var importScripts = function () {
-            for (var i = 0, n = arguments.length; i < n; i++) {
-                var name = arguments[i].split('.'),
-                        src = baseUrl + name[0] + nameSuffix + '.' + name[1];
-                var el = document.querySelector('script[src="' + src + '"]');
-                if (!el) {
-                    el = document.createElement('script');
-                    el.setAttribute('src', src);
-                    document.head.appendChild(el);
-                }
-            }
-        };
-
-        // Import engines
-        if (!GostRandom)
-            importScripts('gostRandom.js');
-        if (!GostCipher)
-            importScripts('gostCipher.js');
-        if (!GostDigest)
-            importScripts('gostDigest.js');
-        if (!GostSign)
-            importScripts('gostSign.js');
-    } // </editor-fold>
-
-    return gostEngine;
-
-}));
-
 
 
 /***/ })

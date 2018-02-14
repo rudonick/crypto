@@ -141,7 +141,7 @@
             algorithm.public = publicKey1;
             cipher = new GostSign(algorithm);
             var kek2 = gostCoding.Hex.encode(cipher.deriveKey(privateKey2));
-
+            
             var test = 0 + (kek1 !== kek2);
             if (!test)
                 result += 'PASSED DeriveKey ' + (finish - start) / 1000 + ' sec';

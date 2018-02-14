@@ -37,12 +37,11 @@
      * 
      */ // <editor-fold defaultstate="collapsed">
     if (typeof exports === 'object') {
-        module.exports = factory(require('./gostRandom'));
+        module.exports = factory(require('./gostRandom'),require('./gostEngine'));
     } else {
-        root.gostCrypto = factory(root.GostRandom);
+        root.gostCrypto = factory(root.GostRandom,root.GostEngine);
     }
     // </editor-fold>
-
 }(this, function (GostRandom) {
 
     /*
@@ -828,8 +827,9 @@
                         method: method, args: args
                     });
                 } else {
-                    if (root.gostEngine)
-                        resolve(root.gostEngine.execute(algorithm, method, args));
+                    const gostEngine = root.gostEngine || require('./gostEngine');
+                    if (gostEngine)
+                        resolve(gostEngine.execute(algorithm, method, args));
                     else
                         reject(new OperationError('Module gostEngine not found'));
                 }
