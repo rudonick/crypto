@@ -53,7 +53,11 @@
      */ // <editor-fold defaultstate="collapsed">
 
     var root = this;
-    var rootCrypto = root.crypto || root.msCrypto;
+    var rootCrypto = root.crypto || root.msCrypto || require('crypto');
+    
+    if(!rootCrypto) {
+        throw new Error('Global object does not have property сrypto' );
+    }
     var CryptoOperationData = root.ArrayBuffer;
     var SyntaxError = root.SyntaxError || root.Error,
             DataError = root.DataError || root.Error,

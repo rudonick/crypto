@@ -55,10 +55,15 @@
      */ // <editor-fold defaultstate="collapsed">
 
     var root = this;
-    var rootCrypto = root.crypto || root.msCrypto;
+    var rootCrypto = root.crypto || root.msCrypto || require('crypto');
+    
+    if(!rootCrypto) {
+        throw new Error('Global object does not have property сrypto' );
+    }
+    
 
-    var TypeMismatchError = root.TypeMismatchError || Error;
-    var QuotaExceededError = root.QuotaExceededError || Error;
+    var TypeMismatchError = root.Error;
+    var QuotaExceededError = root.Error;
 
     // Initialize mouse and time counters for random generator    
     var randomRing = {

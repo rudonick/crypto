@@ -12,5 +12,5 @@ require('./gostViewer');
 module.exports = {
     CryptoGost: require('./gostCrypto'),
     GostEngine: require('./gostEngine')
-    
+
 }

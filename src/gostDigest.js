@@ -56,7 +56,18 @@
      */ // <editor-fold defaultstate="collapsed">
 
     var root = this;
-    var rootCrypto = root.crypto || root.msCrypto;
+    var rootCrypto;
+    if (root.hasOwnProperty('crypto')) {
+        rootCrypto = root.crypto;
+    } else if(root.hasOwnProperty('msCrypto')) {
+        rootCrypto = root.msCrypto;
+    } else {
+        rootCrypto = require('crypto');
+    }
+    
+    if(!rootCrypto) {
+        throw new Error('Global object does not have property сrypto' );
+    }
 
     var DataError = root.DataError || Error,
             NotSupportedError = root.NotSupportedError || Error;

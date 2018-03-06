@@ -1,11 +1,11 @@
 {
   "name": "crypto-gost",
-  "version": "1.0.3",
+  "version": "1.0.6",
   "description": "Pure Javascript implementation of WebCrypto API interfaces and Public Key  Infrastructure for GOST algorithms (Russian Cryptographic Standards)",
   "main": "dist/CryptoGost.min.js",
   "scripts": {
-    "test": "node test/",
-    "build": "PROD_ENV=1 webpack"
+    "test": "node test/index.js",
+    "build": "PROD_ENV=1 ./node_modules/.bin/webpack --colors --progress --display-error-details"
   },
   "repository": {
     "type": "git",

@@ -28,7 +28,7 @@ module.exports = {
       },
     plugins:PROD ? [
         new webpack.optimize.UglifyJsPlugin({
-            compress:{warnings:false},
+            compress:{warnings:false, drop_console: true},
             comments:false
         })
     ] : [],
