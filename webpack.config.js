@@ -7,7 +7,8 @@ module.exports = {
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: PROD ? 'CryptoGost.min.js' : 'CryptoGost.js',
-        libraryTarget:'umd'
+        libraryTarget:'umd',
+        library:'crypto-gost'
     },
     resolve:{
         extensions:['.js','*']

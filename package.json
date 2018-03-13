@@ -1,6 +1,6 @@
 {
   "name": "crypto-gost",
-  "version": "1.0.6",
+  "version": "1.0.9",
   "description": "Pure Javascript implementation of WebCrypto API interfaces and Public Key  Infrastructure for GOST algorithms (Russian Cryptographic Standards)",
   "main": "dist/CryptoGost.min.js",
   "scripts": {
