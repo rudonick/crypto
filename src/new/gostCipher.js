@@ -4,8 +4,8 @@
  * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
  */
 
-import { GostRandom } from './gostRandom';
 import { NotSupportedError, DataError } from '../utils/errors';
+import { randomSeed } from '../utils/seeds';
 
 /*
  * Initial parameters and common algortithms of GOST 28147-89
@@ -148,17 +148,6 @@ function signed(x) {
 
 function unsigned(x) {
     return x < 0 ? x + 0x100000000 : x;
-}
-
-// Set random values into Uint8Arry
-// Random generator
-function randomSeed(e) {
-    try {
-        const gostRandom = new GostRandom();
-        return gostRandom.getRandomValues(e);
-    } catch (e) {
-        throw new Error('Error occurred during random values generation');
-    }
 }
 
 // Get buffer
