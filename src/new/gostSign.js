@@ -4,7 +4,7 @@
  * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
  */
 
-import { GostDigest } from './_gostDigest';
+import { GostDigest } from './gostDigest';
 import { DataError, NotSupportedError } from '../utils/errors';
 import { getSeed } from '../utils/seeds';
 
