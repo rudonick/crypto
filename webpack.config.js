@@ -1,37 +1,5 @@
-const path = require('path');
-const webpack = require('webpack');
-var PROD = JSON.parse(process.env.PROD_ENV || '0');
+const isProdMode = process.env.NODE_ENV === 'production';
 
-module.exports = {
-    entry: './src/index.js',
-    output: {
-        path: path.resolve(__dirname, 'dist'),
-        filename: PROD ? 'CryptoGost.min.js' : 'CryptoGost.js',
-        libraryTarget:'umd',
-        library:'crypto-gost'
-    },
-    resolve:{
-        extensions:['.js','*']
-    },
-    module: {
-        rules: [
-          {
-            test: /\.js$/,
-            exclude: /(node_modules|bower_components)/,
-            use: {
-              loader: 'babel-loader',
-              options: {
-                presets: ['@babel/preset-env']
-              }
-            }
-          }
-        ]
-      },
-    plugins:PROD ? [
-        new webpack.optimize.UglifyJsPlugin({
-            compress:{warnings:false, drop_console: true},
-            comments:false
-        })
-    ] : [],
-   
-};
+module.exports = isProdMode ?
+  require('./config/webpack.prod') :
+  require('./config/webpack.dev');

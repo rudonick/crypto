@@ -1,16 +1,4 @@
-require('./gostASN1');
-require('./gostCert');
-require('./gostCipher');
-require('./gostCMS');
-require('./gostCoding');
-require('./gostDigest');
-require('./gostKeys');
-require('./gostRandom');
-require('./gostSecurity');
-require('./gostSign');
-require('./gostViewer');
-module.exports = {
-    CryptoGost: require('./gostCrypto'),
-    GostEngine: require('./gostEngine')
+import { gostCrypto as CryptoGost } from './gostCrypto';
+import { gostEngine as GostEngine } from './engine/gostEngineSync';
 
-}
+export { CryptoGost, GostEngine }
