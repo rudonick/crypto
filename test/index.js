@@ -4,5 +4,5 @@ import gostSignTests from './gostSign.test';
 
 /* Running tests */
 gostCipherTests();
-gostDigestTests();
+gostDigestTests(true);
 gostSignTests();
