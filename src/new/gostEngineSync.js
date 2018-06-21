@@ -337,4 +337,4 @@ const gostEngine = {
     }
 };
 
-export { gostEngine as GostEngine };
+export { gostEngine };
