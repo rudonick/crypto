@@ -1,28 +1,36 @@
 {
-  "name": "crypto-gost",
-  "version": "1.0.9",
-  "description": "Pure Javascript implementation of WebCrypto API interfaces and Public Key  Infrastructure for GOST algorithms (Russian Cryptographic Standards)",
-  "main": "dist/CryptoGost.min.js",
+  "name": "@waves/crypto-gost-js",
+  "version": "2.0.0",
+  "description": "Pure Javascript implementation of WebCrypto API interfaces and Public Key Infrastructure for GOST algorithms (Russian Cryptographic Standards)",
+  "main": "dist/CryptoGost.js",
   "scripts": {
-    "test": "node test/index.js",
-    "build": "PROD_ENV=1 ./node_modules/.bin/webpack --colors --progress --display-error-details"
+    "test": "./node_modules/.bin/webpack-dev-server --config config/webpack.test.js --mode development --hot --progress --host 0.0.0.0 --port 8080",
+    "build": "./node_modules/.bin/webpack --config config/webpack.prod.js --colors --progress --display-error-details --mode=production",
+    "serve": "./node_modules/.bin/webpack-dev-server --mode development --hot --progress --host 0.0.0.0 --port 8080"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vostokplatform/crypto.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "GOST",
+    "cryptography"
+  ],
+  "author": "Waves Platform",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/vostokplatform/crypto/issues"
   },
   "homepage": "https://github.com/vostokplatform/crypto#readme",
   "devDependencies": {
-    "@babel/core": "^7.0.0-beta.40",
-    "@babel/preset-env": "^7.0.0-beta.40",
-    "babel-loader": "^8.0.0-beta.0",
-    "webpack": "^3.10.0"
-  },
-  "dependencies": {}
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.4",
+    "babel-preset-env": "^1.7.0",
+    "html-webpack-plugin": "^3.2.0",
+    "uglifyjs-webpack-plugin": "^1.2.5",
+    "webpack": "^4.12.0",
+    "webpack-cli": "^3.0.8",
+    "webpack-dev-server": "^3.1.4",
+    "webpack-merge": "^4.1.3"
+  }
 }
