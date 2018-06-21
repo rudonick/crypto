@@ -10,7 +10,7 @@ module.exports = webpackMerge(commonConfig({ ENV: ENV }), {
 
     devtool: 'eval-source-map',
     mode: 'development',
-    entry: './src/lib-usage.js',
+    entry: './test/index.js',
 
     output: {
         path: helpers.root('dist-dev'),

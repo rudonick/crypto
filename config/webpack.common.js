@@ -5,18 +5,12 @@ const DefinePlugin = require('webpack/lib/DefinePlugin');
 module.exports = function (options) {
 
     const ENV = options.ENV ? options.ENV : 'production';
-    const isProdMode = ENV === 'production';
 
     return {
-
-        entry: './src/index.js',
-
         output: {
-            path: isProdMode ? helpers.root('dist') : helpers.root('dist-dev'),
-            filename: isProdMode ? 'CryptoGost.min.js' : 'CryptoGost.js',
             libraryTarget: 'umd',
             sourceMapFilename: '[file].map',
-            library: 'crypto-gost'
+            library: 'crypto-gost-js'
         },
 
         resolve: {
