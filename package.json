@@ -1,5 +1,5 @@
 {
-  "name": "@waves/crypto-gost-js",
+  "name": "crypto-gost-js",
   "version": "2.0.0",
   "description": "Pure Javascript implementation of WebCrypto API interfaces and Public Key Infrastructure for GOST algorithms (Russian Cryptographic Standards)",
   "main": "dist/CryptoGost.js",
