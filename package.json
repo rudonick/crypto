@@ -2,7 +2,7 @@
   "name": "crypto-gost-js",
   "version": "2.0.0",
   "description": "Pure Javascript implementation of WebCrypto API interfaces and Public Key Infrastructure for GOST algorithms (Russian Cryptographic Standards)",
-  "main": "dist/CryptoGost.js",
+  "main": "dist/CryptoGost.min.js",
   "scripts": {
     "test": "./node_modules/.bin/webpack-dev-server --config config/webpack.test.js --mode development --hot --progress --host 0.0.0.0 --port 8080",
     "build": "./node_modules/.bin/webpack --config config/webpack.prod.js --colors --progress --display-error-details --mode=production",
