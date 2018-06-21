@@ -1,4 +1,4 @@
-import { GostRandom } from "../new/gostRandom";
+import { GostRandom } from '../gostRandom';
 
 // Get random values
 export function getSeed(length) {
