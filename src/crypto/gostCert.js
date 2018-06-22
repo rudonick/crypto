@@ -5,6 +5,10 @@
  */
 
 import { gostCrypto } from './gostCrypto';
+import { gostSecurityInstance } from './gostSecurity';
+import { gostCodingInstance } from './gostCoding';
+import { gostASN1Instance } from './gostASN1';
+import { gostSubtleInstance } from './gostSubtle';
 
 /*
  * Common algorithms
@@ -12,17 +16,17 @@ import { gostCrypto } from './gostCrypto';
  */ // <editor-fold defaultstate="collapsed">
 var CryptoOperationData = ArrayBuffer;
 
-// Crypto subtle
-var subtle = gostCrypto.subtle;
-
 // Coding
-var coding = gostCrypto.coding;
-
-// ASN.1 syntax
-var asn1 = gostCrypto.asn1;
+var coding = gostCodingInstance;
 
 // Providers
-var providers = gostCrypto.security.providers;
+var providers = gostSecurityInstance.providers;
+
+// ASN.1 syntax
+var asn1 = gostASN1Instance;
+
+// Crypto subtle
+var subtle = gostSubtleInstance;
 
 // Expand javascript object
 function expand(r) {
@@ -228,7 +232,7 @@ function extend(Super, Class, propertiesObject, propertiesClass) {
  *
  * @class GostCert
  */
-function GostCert() {
+export function GostCert() {
 }
 
 /**
@@ -1233,10 +1237,4 @@ extend(CertificateTrustPolicy, TrustedCAPolicy, {
  */
 GostCert.prototype.TrustedCAPolicy = TrustedCAPolicy;
 
-/**
- * Provides facilities for handling certificates, CRLs, etc.
- *
- * @memberOf gostCrypto
- * @type GostCert
- */
-gostCrypto.cert = new GostCert();
+export const gostCertInstance = new GostCert();

@@ -1,19 +1,13 @@
-/**
- * @file Implementation Web Crypto interfaces for GOST algorithms
- * @version 1.76
- * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
- */
+import { gostEngine } from '../engine/gostEngineSync';
+import { getCryptoModule } from '../utils/environment';
+import { DataError, NotSupportedError } from '../utils/errors';
+import { gostASN1Instance } from './gostASN1';
 
-import { getCryptoModule } from './utils/environment';
-import { DataError, NotSupportedError } from './utils/errors';
-import { GostRandom } from './gostRandom';
-import { gostEngine } from './engine/gostEngineSync';
 
 class InvalidStateError extends Error {
 }
 
 class InvalidAccessError extends Error {
-
 }
 
 /*
@@ -650,16 +644,8 @@ var CryptoOperationData = ArrayBuffer;
  * </pre>
  * @class FormatedData
  */
-// </editor-fold>
 
-/**
- * The gostCrypto provide general purpose cryptographic functionality for
- * GOST standards including a cryptographically strong pseudo-random number
- * generator seeded with truly random values.
- *
- * @namespace gostCrypto
- */
-export const gostCrypto = {};
+// </editor-fold>
 
 /**
  * The SubtleCrypto class provides low-level cryptographic primitives and algorithms.
@@ -667,7 +653,7 @@ export const gostCrypto = {};
  *
  * @class SubtleCrypto
  */ // <editor-fold>
-function SubtleCrypto() {
+export function SubtleCrypto() {
 }
 
 /**
@@ -787,7 +773,7 @@ SubtleCrypto.prototype.sign = function (algorithm, key, data) // <editor-fold de
         var value = execute(algorithm, 'sign',
           [extractKey('sign', algorithm, key), data]).then(function (data) {
             if (algorithm.procreator === 'SC' && algorithm.mode === 'SIGN') {
-                data = gostCrypto.asn1.GostSignature.encode(data);
+                data = gostASN1Instance.GostSignature.encode(data);
             }
             return data;
         });
@@ -831,7 +817,7 @@ SubtleCrypto.prototype.verify = function (algorithm, key, signature, data) // <e
 
         algorithm = normalize(algorithm, 'verify');
         if (algorithm.procreator === 'SC' && algorithm.mode === 'SIGN') {
-            var obj = gostCrypto.asn1.GostSignature.decode(signature);
+            var obj = gostASN1Instance.GostSignature.decode(signature);
             signature = { r: obj.r, s: obj.s };
         }
         return execute(algorithm, 'verify',
@@ -1067,9 +1053,9 @@ SubtleCrypto.prototype.importKey = function (format, keyData, algorithm, extract
         } else {
             var key;
             if (format === 'pkcs8')
-                key = gostCrypto.asn1.GostPrivateKeyInfo.decode(keyData).object;
+                key = gostASN1Instance.GostPrivateKeyInfo.decode(keyData).object;
             else if (format === 'spki')
-                key = gostCrypto.asn1.GostSubjectPublicKeyInfo.decode(keyData).object;
+                key = gostASN1Instance.GostSubjectPublicKeyInfo.decode(keyData).object;
             else
                 throw new NotSupportedError('Key format not supported');
 
@@ -1179,15 +1165,15 @@ SubtleCrypto.prototype.exportKey = function (format, key) // <editor-fold defaul
                     d.set(new Uint8Array(mask, 0, mask.byteLength), data.byteLength);
                     var buffer = d.buffer;
                     buffer.enclosed = true;
-                    return gostCrypto.asn1.GostPrivateKeyInfo.encode({
+                    return gostASN1Instance.GostPrivateKeyInfo.encode({
                         algorithm: algorithm,
                         buffer: buffer
                     });
                 });
             } else
-                return gostCrypto.asn1.GostPrivateKeyInfo.encode(key);
+                return gostASN1Instance.GostPrivateKeyInfo.encode(key);
         } else if (format === 'spki' && key.algorithm && key.algorithm.id)
-            return gostCrypto.asn1.GostSubjectPublicKeyInfo.encode(key);
+            return gostASN1Instance.GostSubjectPublicKeyInfo.encode(key);
         else
             throw new NotSupportedError('Key format not supported');
     });
@@ -1291,32 +1277,4 @@ SubtleCrypto.prototype.unwrapKey = function (format, wrappedKey, unwrappingKey,
     });
 }; // </editor-fold>
 
-/**
- * The subtle attribute provides an instance of the SubtleCrypto
- * interface which provides low-level cryptographic primitives and
- * algorithms.
- *
- * @memberOf gostCrypto
- * @type SubtleCrypto
- */
-gostCrypto.subtle = new SubtleCrypto();
-
-/**
- * The getRandomValues method generates cryptographically random values.
- *
- * First try to use Web Crypto random genereator. Next make random
- * bytes based on standart Math.random mixed with time and mouse pointer
- *
- * @memberOf gostCrypto
- * @param {(CryptoOperationData)} array Destination buffer for random data
- */
-gostCrypto.getRandomValues = function (array) // <editor-fold defaultstate="collapsed">
-{
-    try {
-        const gostRandom = new GostRandom();
-        return gostRandom.getRandomValues(array);
-    } catch (e) {
-        throw new Error('Error occurred during random values generation');
-    }
-}; // </editor-fold>
-// </editor-fold>
+export const gostSubtleInstance = new SubtleCrypto();

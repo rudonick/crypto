@@ -4,7 +4,11 @@
  * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
  */
 
-import { gostCrypto } from './gostCrypto';
+import { gostSubtleInstance } from './gostSubtle';
+import { gostASN1Instance } from './gostASN1';
+import { gostCodingInstance } from './gostCoding';
+import { gostCertInstance } from './gostCert';
+import { gostSecurityInstance } from './gostSecurity';
 
 /*
  * Common algorithms
@@ -12,11 +16,11 @@ import { gostCrypto } from './gostCrypto';
 
 var CryptoOperationData = ArrayBuffer;
 
-var subtle = gostCrypto.subtle;
-var asn1 = gostCrypto.asn1;
-var coding = gostCrypto.coding;
-var cert = gostCrypto.cert;
-var providers = gostCrypto.security.providers;
+var providers = gostSecurityInstance.providers;
+var coding = gostCodingInstance;
+var asn1 = gostASN1Instance;
+var subtle = gostSubtleInstance;
+var cert = gostCertInstance;
 
 // Expand javascript object
 function expand() {
@@ -1307,10 +1311,4 @@ extend(DataContentInfo, EnvelopedDataContentInfo, {
  */
 GostCMS.prototype.EnvelopedDataContentInfo = EnvelopedDataContentInfo;
 
-/**
- * Implements the Cryptographic Message Syntax as specified in RFC-2630.
- *
- * @memberOf gostCrypto
- * @type GostCMS
- */
-gostCrypto.cms = new GostCMS();
+export const gostCMSInstance = new GostCMS();

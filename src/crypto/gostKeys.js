@@ -4,7 +4,12 @@
  * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
  */
 
-import { gostCrypto } from './gostCrypto';
+import { gostSecurityInstance } from "./gostSecurity";
+import { gostCodingInstance } from "./gostCoding";
+import { gostASN1Instance } from "./gostASN1";
+import { gostSubtleInstance } from "./gostSubtle";
+import { gostCertInstance } from "./gostCert";
+import { gostCMSInstance } from "./gostCMS";
 
 /*
  * Common tools and methods
@@ -12,12 +17,12 @@ import { gostCrypto } from './gostCrypto';
 
 var CryptoOperationData = ArrayBuffer;
 
-var subtle = gostCrypto.subtle;
-var asn1 = gostCrypto.asn1;
-var coding = gostCrypto.coding;
-var providers = gostCrypto.security.providers;
-var cert = gostCrypto.cert;
-var cms = gostCrypto.cms;
+var coding = gostCodingInstance;
+var providers = gostSecurityInstance.providers;
+var asn1 = gostASN1Instance;
+var subtle = gostSubtleInstance;
+var cert = gostCertInstance;
+var cms = gostCMSInstance;
 
 // Expand javascript object
 function expand() {
@@ -199,7 +204,7 @@ function passwordData(derivation, password) {
  *
  * @class GostKeys
  */
-function GostKeys() {
+export function GostKeys() {
 }
 
 /**
@@ -2447,10 +2452,4 @@ extend(Object, KeyStore, {
  */
 GostKeys.prototype.KeyStore = KeyStore;
 
-/**
- * Implements the Key and Certificate Store methods
- *
- * @memberOf gostCrypto
- * @type GostKeys
- */
-gostCrypto.keys = new GostKeys();
+export const gostKeysInstance = new GostKeys();

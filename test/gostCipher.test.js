@@ -6,7 +6,7 @@
  *
  */
 
-import { GostCoding } from '../src/gostCoding';
+import { GostCoding } from '../src/crypto/gostCoding';
 import { GostCipher } from '../src/engine/gostCipher';
 
 const gostCoding = new GostCoding();
