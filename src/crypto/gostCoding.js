@@ -4,8 +4,7 @@
  * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
  */
 
-import { gostCrypto } from './gostCrypto';
-import { DataError } from './utils/errors';
+import { DataError } from '../utils/errors';
 
 /**
  * The Coding interface provides string converting methods: Base64, Hex,
@@ -1174,11 +1173,4 @@ var PEM = {// <editor-fold defaultstate="collapsed">
  */
 GostCoding.prototype.PEM = PEM;
 
-/**
- * Coding algorithms: Base64, Hex, Int16, Chars, BER and PEM
- *
- * @memberOf gostCrypto
- * @type GostCoding
- */
-gostCrypto.coding = new GostCoding();
-
+export const gostCodingInstance = new GostCoding();

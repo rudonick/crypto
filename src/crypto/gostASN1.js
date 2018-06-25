@@ -4,8 +4,9 @@
  * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
  */
 
-import { expand } from './utils/helpers';
-import { gostCrypto } from './gostCrypto';
+import { expand } from '../utils/helpers';
+import { gostSecurityInstance } from './gostSecurity';
+import { gostCodingInstance } from './gostCoding';
 
 /**
  * Service functions
@@ -14,30 +15,10 @@ import { gostCrypto } from './gostCrypto';
 var CryptoOperationData = ArrayBuffer;
 
 // Security parameters
-var algorithms = gostCrypto.security.algorithms;
+const { algorithms, names, identifiers, attributes, parameters } = gostSecurityInstance;
 
-var names = gostCrypto.security.names;
-
-var identifiers = gostCrypto.security.identifiers;
-
-var attributes = gostCrypto.security.attributes;
-
-var parameters = gostCrypto.security.parameters;
-
-// BER coding
-var BER = gostCrypto.coding.BER;
-
-// PEM coding
-var PEM = gostCrypto.coding.PEM;
-
-// Chars coding
-var Chars = gostCrypto.coding.Chars;
-
-// Hex coding;
-var Hex = gostCrypto.coding.Hex;
-
-// Hex coding;
-var Int16 = gostCrypto.coding.Int16;
+// Various coding algorithms
+const { BER, PEM, Chars, Hex, Int16 } = gostCodingInstance;
 
 // Swap bytes in buffer
 function swapBytes(src) {
@@ -5074,10 +5055,4 @@ GostASN1.prototype = {
     PKIResponse: PKIResponse
 };
 
-/**
- * PKCS ASN.1 message syntax and converters
- *
- * @memberOf gostCrypto
- * @type GostASN1
- */
-gostCrypto.asn1 = new GostASN1();
+export const gostASN1Instance  = new GostASN1();

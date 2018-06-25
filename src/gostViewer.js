@@ -6,7 +6,7 @@
  *
  */
 
-import { gostCrypto } from './gostCrypto';
+import { gostCrypto } from './crypto/gostCrypto';
 
 var coding = gostCrypto.coding, names = gostCrypto.security.names, asn1 = gostCrypto.asn1;
 

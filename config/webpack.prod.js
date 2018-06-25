@@ -9,18 +9,22 @@ const ENV = process.env.ENV = process.env.NODE_ENV = 'production';
 
 module.exports = webpackMerge(commonConfig({ ENV: ENV }), {
 
-    entry: './src/index.js',
+    entry: {
+        'CryptoGost': './src/index.js',
+        'CryptoGost.min': './src/index.js',
+    },
+
     devtool: 'source-map',
     mode: 'production',
 
     output: {
-        path: helpers.root('dist'),
-        filename: 'CryptoGost.min.js'
+        path: helpers.root('dist')
     },
 
     optimization: {
         minimizer: [
             new UglifyJsPlugin({
+                include: /\.min\.js$/,
                 cache: true,
                 parallel: true,
                 sourceMap: true,

@@ -4,8 +4,6 @@
  * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
  */
 
-import { gostCrypto } from './gostCrypto';
-
 // <editor-fold defaultstate="collapsed">
 // Expand javascript object
 function expand() {
@@ -1116,18 +1114,12 @@ export function GostSecurity() {
 }
 
 GostSecurity.prototype = {
-    names: names,
-    identifiers: identifiers,
-    algorithms: algorithms,
-    parameters: parameters,
-    attributes: attributes,
-    providers: providers
+    names,
+    identifiers,
+    algorithms,
+    parameters,
+    attributes,
+    providers
 };
 
-/**
- * GOST and common ASN.1 Object and Algorithm Identifiers
- *
- * @memberOf gostCrypto
- * @type GostSecurity
- */
-gostCrypto.security = new GostSecurity();
+export const gostSecurityInstance = new GostSecurity();
