@@ -1,5 +1,4 @@
 import { gostEngine as GostEngine } from './engine/gostEngineSync';
-import { gostCodingInstance as coding } from './crypto/gostCoding';
 
 const defaultGostSignAlgorithm = {
     name: 'GOST R 34.10',
@@ -45,11 +44,9 @@ const CryptoGostAPI = {
 
     verify(publicKey, message, sign) {
         const cipher = GostEngine.getGostSign(defaultGostSignAlgorithm);
-        const decodedPublicKey = coding.Base64.decode(publicKey, true);
-        const decodedSign = coding.Base64.decode(sign, true);
 
         // return boolean
-        return cipher.verify(decodedPublicKey, decodedSign, message);
+        return cipher.verify(publicKey, sign, message);
     }
 };
 
