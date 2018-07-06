@@ -12,6 +12,8 @@ module.exports = webpackMerge(commonConfig({ ENV: ENV }), {
     entry: {
         'CryptoGost': './src/index.js',
         'CryptoGost.min': './src/index.js',
+        'CryptoGost-light': './src/crypto-gost-wrapper.js',
+        'CryptoGost-light.min': './src/crypto-gost-wrapper.js',
     },
 
     devtool: 'source-map',
