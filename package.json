@@ -11,6 +11,7 @@
   "description": "Pure Javascript implementation of WebCrypto API interfaces and Public Key Infrastructure for GOST algorithms (Russian Cryptographic Standards)",
   "main": "./lib",
   "bin": {
+    "gost-export-cryptopro-key": "./bin/export-cryptopro-key.js",
     "gost-export-signalcom-key": "./bin/export-signalcom-key.js"
   },
   "repository": "rudonick/crypto",
@@ -21,6 +22,7 @@
     "Russian Cryptographic Standards",
     "GOST",
     "SignalCom",
+    "CryptoPro",
     "private key",
     "export",
     "ASN1",
