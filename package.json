@@ -1,6 +1,6 @@
 {
   "name": "gostcrypto",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "homepage": "http://gostcrypto.com/",
   "bugs": "https://github.com/rudonick/crypto/issues",
   "license": "Apache-2.0",
