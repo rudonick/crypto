@@ -1,7 +1,7 @@
 language: node_js
 
 node_js:
-  - "8"
+  - "10"
 
 cache:
   directories:
@@ -11,4 +11,4 @@ install:
   - npm install
 
 script:
-  - npm run build
+  - npm run test-build-node

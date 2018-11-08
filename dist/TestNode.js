@@ -91,7 +91,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 16);
+/******/ 	return __webpack_require__(__webpack_require__.s = 23);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -186,7 +186,1157 @@ function randomSeed(e) {
 }
 
 /***/ }),
-/* 2 */,
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.gostCodingInstance = undefined;
+exports.GostCoding = GostCoding;
+
+var _errors = __webpack_require__(0);
+
+/**
+ * The Coding interface provides string converting methods: Base64, Hex,
+ * Int16, Chars, BER and PEM
+ * @class GostCoding
+ *
+ */ // <editor-fold defaultstate="collapsed">
+
+var CryptoOperationData = ArrayBuffer; /**
+                                        * @file Coding algorithms: Base64, Hex, Int16, Chars, BER and PEM
+                                        * @version 1.76
+                                        * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
+                                        */
+
+function buffer(d) {
+    if (d instanceof CryptoOperationData) return d;else if (d && d.buffer && d.buffer instanceof CryptoOperationData) return d.byteOffset === 0 && d.byteLength === d.buffer.byteLength ? d.buffer : new Uint8Array(new Uint8Array(d, d.byteOffset, d.byteLength)).buffer;else throw new _errors.DataError('CryptoOperationData required');
+} // </editor-fold>
+
+function GostCoding() {}
+
+/**
+ * BASE64 conversion
+ *
+ * @class GostCoding.Base64
+ */
+var Base64 = { // <editor-fold defaultstate="collapsed">
+    /**
+     * Base64.decode convert BASE64 string s to CryptoOperationData
+     *
+     * @memberOf GostCoding.Base64
+     * @param {String} s BASE64 encoded string value
+     * @returns {CryptoOperationData} Binary decoded data
+     */
+    decode: function decode(s) {
+        s = s.replace(/[^A-Za-z0-9\+\/]/g, '');
+        var n = s.length,
+            k = n * 3 + 1 >> 2,
+            r = new Uint8Array(k);
+
+        for (var m3, m4, u24 = 0, j = 0, i = 0; i < n; i++) {
+            m4 = i & 3;
+            var c = s.charCodeAt(i);
+
+            c = c > 64 && c < 91 ? c - 65 : c > 96 && c < 123 ? c - 71 : c > 47 && c < 58 ? c + 4 : c === 43 ? 62 : c === 47 ? 63 : 0;
+
+            u24 |= c << 18 - 6 * m4;
+            if (m4 === 3 || n - i === 1) {
+                for (m3 = 0; m3 < 3 && j < k; m3++, j++) {
+                    r[j] = u24 >>> (16 >>> m3 & 24) & 255;
+                }
+                u24 = 0;
+            }
+        }
+        return r.buffer;
+    },
+    /**
+     * Base64.encode(data) convert CryptoOperationData data to BASE64 string
+     *
+     * @memberOf GostCoding.Base64
+     * @param {CryptoOperationData} data Bynary data for encoding
+     * @returns {String} BASE64 encoded data
+     */
+    encode: function encode(data) {
+        var slen = 8,
+            d = new Uint8Array(buffer(data));
+        var m3 = 2,
+            s = '';
+        for (var n = d.length, u24 = 0, i = 0; i < n; i++) {
+            m3 = i % 3;
+            if (i > 0 && i * 4 / 3 % (12 * slen) === 0) s += '\r\n';
+            u24 |= d[i] << (16 >>> m3 & 24);
+            if (m3 === 2 || n - i === 1) {
+                for (var j = 18; j >= 0; j -= 6) {
+                    var c = u24 >>> j & 63;
+                    c = c < 26 ? c + 65 : c < 52 ? c + 71 : c < 62 ? c - 4 : c === 62 ? 43 : c === 63 ? 47 : 65;
+                    s += String.fromCharCode(c);
+                }
+                u24 = 0;
+            }
+        }
+        return s.substr(0, s.length - 2 + m3) + (m3 === 2 ? '' : m3 === 1 ? '=' : '==');
+    } // </editor-fold>
+};
+
+/**
+ * BASE64 conversion
+ *
+ * @memberOf GostCoding
+ * @insnance
+ * @type GostCoding.Base64
+ */
+GostCoding.prototype.Base64 = Base64;
+
+/**
+ * Text string conversion <br>
+ * Methods support charsets: ascii, win1251, utf8, utf16 (ucs2, unicode), utf32 (ucs4)
+ *
+ * @class GostCoding.Chars
+ */
+var Chars = function () {
+    // <editor-fold defaultstate="collapsed">
+
+    var _win1251_ = {
+        0x402: 0x80,
+        0x403: 0x81,
+        0x201A: 0x82,
+        0x453: 0x83,
+        0x201E: 0x84,
+        0x2026: 0x85,
+        0x2020: 0x86,
+        0x2021: 0x87,
+        0x20AC: 0x88,
+        0x2030: 0x89,
+        0x409: 0x8A,
+        0x2039: 0x8B,
+        0x40A: 0x8C,
+        0x40C: 0x8D,
+        0x40B: 0x8E,
+        0x40f: 0x8f,
+        0x452: 0x90,
+        0x2018: 0x91,
+        0x2019: 0x92,
+        0x201C: 0x93,
+        0x201D: 0x94,
+        0x2022: 0x95,
+        0x2013: 0x96,
+        0x2014: 0x97,
+        0x2122: 0x99,
+        0x459: 0x9A,
+        0x203A: 0x9B,
+        0x45A: 0x9C,
+        0x45C: 0x9D,
+        0x45B: 0x9E,
+        0x45f: 0x9f,
+        0xA0: 0xA0,
+        0x40E: 0xA1,
+        0x45E: 0xA2,
+        0x408: 0xA3,
+        0xA4: 0xA4,
+        0x490: 0xA5,
+        0xA6: 0xA6,
+        0xA7: 0xA7,
+        0x401: 0xA8,
+        0xA9: 0xA9,
+        0x404: 0xAA,
+        0xAB: 0xAB,
+        0xAC: 0xAC,
+        0xAD: 0xAD,
+        0xAE: 0xAE,
+        0x407: 0xAf,
+        0xB0: 0xB0,
+        0xB1: 0xB1,
+        0x406: 0xB2,
+        0x456: 0xB3,
+        0x491: 0xB4,
+        0xB5: 0xB5,
+        0xB6: 0xB6,
+        0xB7: 0xB7,
+        0x451: 0xB8,
+        0x2116: 0xB9,
+        0x454: 0xBA,
+        0xBB: 0xBB,
+        0x458: 0xBC,
+        0x405: 0xBD,
+        0x455: 0xBE,
+        0x457: 0xBf
+    };
+    var _win1251back_ = {};
+    for (var from in _win1251_) {
+        var to = _win1251_[from];
+        _win1251back_[to] = from;
+    }
+
+    return {
+        /**
+         * Chars.decode(s, charset) convert string s with defined charset to CryptoOperationData
+         *
+         * @memberOf GostCoding.Chars
+         * @param {string} s Javascript string
+         * @param {string} charset Charset, default 'win1251'
+         * @returns {CryptoOperationData} Decoded binary data
+         */
+        decode: function decode(s, charset) {
+            charset = (charset || 'win1251').toLowerCase().replace('-', '');
+            var r = [];
+            for (var i = 0, j = s.length; i < j; i++) {
+                var c = s.charCodeAt(i);
+                if (charset === 'utf8') {
+                    if (c < 0x80) {
+                        r.push(c);
+                    } else if (c < 0x800) {
+                        r.push(0xc0 + (c >>> 6));
+                        r.push(0x80 + (c & 63));
+                    } else if (c < 0x10000) {
+                        r.push(0xe0 + (c >>> 12));
+                        r.push(0x80 + (c >>> 6 & 63));
+                        r.push(0x80 + (c & 63));
+                    } else if (c < 0x200000) {
+                        r.push(0xf0 + (c >>> 18));
+                        r.push(0x80 + (c >>> 12 & 63));
+                        r.push(0x80 + (c >>> 6 & 63));
+                        r.push(0x80 + (c & 63));
+                    } else if (c < 0x4000000) {
+                        r.push(0xf8 + (c >>> 24));
+                        r.push(0x80 + (c >>> 18 & 63));
+                        r.push(0x80 + (c >>> 12 & 63));
+                        r.push(0x80 + (c >>> 6 & 63));
+                        r.push(0x80 + (c & 63));
+                    } else {
+                        r.push(0xfc + (c >>> 30));
+                        r.push(0x80 + (c >>> 24 & 63));
+                        r.push(0x80 + (c >>> 18 & 63));
+                        r.push(0x80 + (c >>> 12 & 63));
+                        r.push(0x80 + (c >>> 6 & 63));
+                        r.push(0x80 + (c & 63));
+                    }
+                } else if (charset === 'unicode' || charset === 'ucs2' || charset === 'utf16') {
+                    if (c < 0xD800 || c >= 0xE000 && c <= 0x10000) {
+                        r.push(c >>> 8);
+                        r.push(c & 0xff);
+                    } else if (c >= 0x10000 && c < 0x110000) {
+                        c -= 0x10000;
+                        var first = ((0xffc00 & c) >> 10) + 0xD800;
+                        var second = (0x3ff & c) + 0xDC00;
+                        r.push(first >>> 8);
+                        r.push(first & 0xff);
+                        r.push(second >>> 8);
+                        r.push(second & 0xff);
+                    }
+                } else if (charset === 'utf32' || charset === 'ucs4') {
+                    r.push(c >>> 24 & 0xff);
+                    r.push(c >>> 16 & 0xff);
+                    r.push(c >>> 8 & 0xff);
+                    r.push(c & 0xff);
+                } else if (charset === 'win1251') {
+                    if (c >= 0x80) {
+                        if (c >= 0x410 && c < 0x450) // А..Яа..я
+                            c -= 0x350;else c = _win1251_[c] || 0;
+                    }
+                    r.push(c);
+                } else r.push(c & 0xff);
+            }
+            return new Uint8Array(r).buffer;
+        },
+        /**
+         * Chars.encode(data, charset) convert CryptoOperationData data to string with defined charset
+         *
+         * @memberOf GostCoding.Chars
+         * @param {CryptoOperationData} data Binary data
+         * @param {string} charset Charset, default win1251
+         * @returns {string} Encoded javascript string
+         */
+        encode: function encode(data, charset) {
+            charset = (charset || 'win1251').toLowerCase().replace('-', '');
+            var r = [],
+                d = new Uint8Array(buffer(data));
+            for (var i = 0, n = d.length; i < n; i++) {
+                var c = d[i];
+                if (charset === 'utf8') {
+                    c = c >= 0xfc && c < 0xfe && i + 5 < n ? // six bytes
+                    (c - 0xfc) * 1073741824 + (d[++i] - 0x80 << 24) + (d[++i] - 0x80 << 18) + (d[++i] - 0x80 << 12) + (d[++i] - 0x80 << 6) + d[++i] - 0x80 : c >> 0xf8 && c < 0xfc && i + 4 < n ? // five bytes
+                    (c - 0xf8 << 24) + (d[++i] - 0x80 << 18) + (d[++i] - 0x80 << 12) + (d[++i] - 0x80 << 6) + d[++i] - 0x80 : c >> 0xf0 && c < 0xf8 && i + 3 < n ? // four bytes
+                    (c - 0xf0 << 18) + (d[++i] - 0x80 << 12) + (d[++i] - 0x80 << 6) + d[++i] - 0x80 : c >= 0xe0 && c < 0xf0 && i + 2 < n ? // three bytes
+                    (c - 0xe0 << 12) + (d[++i] - 0x80 << 6) + d[++i] - 0x80 : c >= 0xc0 && c < 0xe0 && i + 1 < n ? // two bytes
+                    (c - 0xc0 << 6) + d[++i] - 0x80 : c; // one byte
+                } else if (charset === 'unicode' || charset === 'ucs2' || charset === 'utf16') {
+                    c = (c << 8) + d[++i];
+                    if (c >= 0xD800 && c < 0xE000) {
+                        var first = c - 0xD800 << 10;
+                        c = d[++i];
+                        c = (c << 8) + d[++i];
+                        var second = c - 0xDC00;
+                        c = first + second + 0x10000;
+                    }
+                } else if (charset === 'utf32' || charset === 'ucs4') {
+                    c = (c << 8) + d[++i];
+                    c = (c << 8) + d[++i];
+                    c = (c << 8) + d[++i];
+                } else if (charset === 'win1251') {
+                    if (c >= 0x80) {
+                        if (c >= 0xC0 && c < 0x100) c += 0x350; // А..Яа..я
+                        else c = _win1251back_[c] || 0;
+                    }
+                }
+                r.push(String.fromCharCode(c));
+            }
+            return r.join('');
+        }
+    }; // </editor-fold>
+}();
+
+/**
+ * Text string conversion
+ *
+ * @memberOf GostCoding
+ * @insnance
+ * @type GostCoding.Chars
+ */
+GostCoding.prototype.Chars = Chars;
+
+/**
+ * HEX conversion
+ *
+ * @class GostCoding.Hex
+ */
+var Hex = { // <editor-fold defaultstate="collapsed">
+    /**
+     * Hex.decode(s, endean) convert HEX string s to CryptoOperationData in endean mode
+     *
+     * @memberOf GostCoding.Hex
+     * @param {string} s Hex encoded string
+     * @param {boolean} endean Little or Big Endean, default Little
+     * @returns {CryptoOperationData} Decoded binary data
+     */
+    decode: function decode(s, endean) {
+        s = s.replace(/[^A-fa-f0-9]/g, '');
+        var n = Math.ceil(s.length / 2),
+            r = new Uint8Array(n);
+        s = (s.length % 2 > 0 ? '0' : '') + s;
+        if (endean && (typeof endean !== 'string' || endean.toLowerCase().indexOf('little') < 0)) for (var i = 0; i < n; i++) {
+            r[i] = parseInt(s.substr((n - i - 1) * 2, 2), 16);
+        } else for (var i = 0; i < n; i++) {
+            r[i] = parseInt(s.substr(i * 2, 2), 16);
+        }return r.buffer;
+    },
+    /**
+     * Hex.encode(data, endean) convert CryptoOperationData data to HEX string in endean mode
+     *
+     * @memberOf GostCoding.Hex
+     * @param {CryptoOperationData} data Binary data
+     * @param {boolean} endean Little/Big Endean, default Little
+     * @returns {string} Hex decoded string
+     */
+    encode: function encode(data, endean) {
+        var s = [],
+            d = new Uint8Array(buffer(data)),
+            n = d.length;
+        if (endean && (typeof endean !== 'string' || endean.toLowerCase().indexOf('little') < 0)) for (var i = 0; i < n; i++) {
+            var j = n - i - 1;
+            s[j] = (j > 0 && j % 32 === 0 ? '\r\n' : '') + ('00' + d[i].toString(16)).slice(-2);
+        } else for (var i = 0; i < n; i++) {
+            s[i] = (i > 0 && i % 32 === 0 ? '\r\n' : '') + ('00' + d[i].toString(16)).slice(-2);
+        }return s.join('');
+    } // </editor-fold>
+};
+
+/**
+ *  HEX conversion
+ * @memberOf GostCoding
+ * @insnance
+ * @type GostCoding.Hex
+ */
+GostCoding.prototype.Hex = Hex;
+
+/**
+ * String hex-encoded integer conversion
+ *
+ * @class GostCoding.Int16
+ */
+var Int16 = { // <editor-fold defaultstate="collapsed">
+    /**
+     * Int16.decode(s) convert hex big insteger s to CryptoOperationData
+     *
+     * @memberOf GostCoding.Int16
+     * @param {string} s Int16 string
+     * @returns {CryptoOperationData} Decoded binary data
+     */
+    decode: function decode(s) {
+        s = (s || '').replace(/[^\-A-fa-f0-9]/g, '');
+        if (s.length === 0) s = '0';
+        // Signature
+        var neg = false;
+        if (s.charAt(0) === '-') {
+            neg = true;
+            s = s.substring(1);
+        }
+        // Align 2 chars
+        while (s.charAt(0) === '0' && s.length > 1) {
+            s = s.substring(1);
+        }s = (s.length % 2 > 0 ? '0' : '') + s;
+        // Padding for singanuture
+        // '800000' - 'ffffff' - for positive
+        // '800001' - 'ffffff' - for negative
+        if (!neg && !/^[0-7]/.test(s) || neg && !/^[0-7]|8[0]+$/.test(s)) s = '00' + s;
+        // Convert hex
+        var n = s.length / 2,
+            r = new Uint8Array(n),
+            t = 0;
+        for (var i = n - 1; i >= 0; --i) {
+            var c = parseInt(s.substr(i * 2, 2), 16);
+            if (neg && c + t > 0) {
+                c = 256 - c - t;
+                t = 1;
+            }
+            r[i] = c;
+        }
+        return r.buffer;
+    },
+    /**
+     * Int16.encode(data) convert CryptoOperationData data to big integer hex string
+     *
+     * @memberOf GostCoding.Int16
+     * @param {CryptoOperationData} data Binary data
+     * @returns {string} Int16 encoded string
+     */
+    encode: function encode(data) {
+        var d = new Uint8Array(buffer(data)),
+            n = d.length;
+        if (d.length === 0) return '0x00';
+        var s = [],
+            neg = d[0] > 0x7f,
+            t = 0;
+        for (var i = n - 1; i >= 0; --i) {
+            var v = d[i];
+            if (neg && v + t > 0) {
+                v = 256 - v - t;
+                t = 1;
+            }
+            s[i] = ('00' + v.toString(16)).slice(-2);
+        }
+        s = s.join('');
+        while (s.charAt(0) === '0') {
+            s = s.substring(1);
+        }return (neg ? '-' : '') + '0x' + s;
+    } // </editor-fold>
+};
+
+/**
+ * String hex-encoded integer conversion
+ * @memberOf GostCoding
+ * @insnance
+ * @type GostCoding.Int16
+ */
+GostCoding.prototype.Int16 = Int16;
+
+/**
+ * BER, DER, CER conversion
+ *
+ * @class GostCoding.BER
+ */
+var BER = function () {
+    // <editor-fold defaultstate="collapsed">
+
+    // Predefenition block
+    function encodeBER(source, format, onlyContent) {
+        // Correct primitive type
+        var object = source.object;
+        if (object === undefined) object = source;
+
+        // Determinate tagClass
+        var tagClass = source.tagClass = source.tagClass || 0; // Universial default
+
+        // Determinate tagNumber. Use only for Universal class
+        if (tagClass === 0) {
+            var tagNumber = source.tagNumber;
+            if (typeof tagNumber === 'undefined') {
+                if (typeof object === 'string') {
+                    if (object === '') // NULL
+                        tagNumber = 0x05;else if (/^\-?0x[0-9a-fA-F]+$/.test(object)) // INTEGER
+                        tagNumber = 0x02;else if (/^(\d+\.)+\d+$/.test(object)) // OID
+                        tagNumber = 0x06;else if (/^[01]+$/.test(object)) // BIT STRING
+                        tagNumber = 0x03;else if (/^(true|false)$/.test(object)) // BOOLEAN
+                        tagNumber = 0x01;else if (/^[0-9a-fA-F]+$/.test(object)) // OCTET STRING
+                        tagNumber = 0x04;else tagNumber = 0x13; // Printable string (later can be changed to UTF8String)
+                } else if (typeof object === 'number') {
+                    // INTEGER
+                    tagNumber = 0x02;
+                } else if (typeof object === 'boolean') {
+                    // BOOLEAN
+                    tagNumber = 0x01;
+                } else if (object instanceof Array) {
+                    // SEQUENCE
+                    tagNumber = 0x10;
+                } else if (object instanceof Date) {
+                    // GeneralizedTime
+                    tagNumber = 0x18;
+                } else if (object instanceof CryptoOperationData || object && object.buffer instanceof CryptoOperationData) {
+                    tagNumber = 0x04;
+                } else throw new _errors.DataError('Unrecognized type for ' + object);
+            }
+        }
+
+        // Determinate constructed
+        var tagConstructed = source.tagConstructed;
+        if (typeof tagConstructed === 'undefined') tagConstructed = source.tagConstructed = object instanceof Array;
+
+        // Create content
+        var content;
+        if (object instanceof CryptoOperationData || object && object.buffer instanceof CryptoOperationData) {
+            // Direct
+            content = new Uint8Array(buffer(object));
+            if (tagNumber === 0x03) {
+                // BITSTRING
+                // Set unused bits
+                var a = new Uint8Array(buffer(content));
+                content = new Uint8Array(a.length + 1);
+                content[0] = 0; // No unused bits
+                content.set(a, 1);
+            }
+        } else if (tagConstructed) {
+            // Sub items coding
+            if (object instanceof Array) {
+                var bytelen = 0,
+                    ba = [],
+                    offset = 0;
+                for (var i = 0, n = object.length; i < n; i++) {
+                    ba[i] = encodeBER(object[i], format);
+                    bytelen += ba[i].length;
+                }
+                if (tagNumber === 0x11) ba.sort(function (a, b) {
+                    // Sort order for SET components
+                    for (var i = 0, n = Math.min(a.length, b.length); i < n; i++) {
+                        var r = a[i] - b[i];
+                        if (r !== 0) return r;
+                    }
+                    return a.length - b.length;
+                });
+                if (format === 'CER') {
+                    // final for CER 00 00
+                    ba[n] = new Uint8Array(2);
+                    bytelen += 2;
+                }
+                content = new Uint8Array(bytelen);
+                for (var i = 0, n = ba.length; i < n; i++) {
+                    content.set(ba[i], offset);
+                    offset = offset + ba[i].length;
+                }
+            } else throw new _errors.DataError('Constracted block can\'t be primitive');
+        } else {
+            switch (tagNumber) {
+                // 0x00: // EOC
+                case 0x01:
+                    // BOOLEAN
+                    content = new Uint8Array(1);
+                    content[0] = object ? 0xff : 0;
+                    break;
+                case 0x02: // INTEGER
+                case 0x0a:
+                    // ENUMIRATED
+                    content = Int16.decode(typeof object === 'number' ? object.toString(16) : object);
+                    break;
+                case 0x03:
+                    // BIT STRING
+                    if (typeof object === 'string') {
+                        var unusedBits = 7 - (object.length + 7) % 8;
+                        var n = Math.ceil(object.length / 8);
+                        content = new Uint8Array(n + 1);
+                        content[0] = unusedBits;
+                        for (var i = 0; i < n; i++) {
+                            var c = 0;
+                            for (var j = 0; j < 8; j++) {
+                                var k = i * 8 + j;
+                                c = (c << 1) + (k < object.length ? object.charAt(k) === '1' ? 1 : 0 : 0);
+                            }
+                            content[i + 1] = c;
+                        }
+                    }
+                    break;
+                case 0x04:
+                    content = Hex.decode(typeof object === 'number' ? object.toString(16) : object);
+                    break;
+                // case 0x05: // NULL
+                case 0x06:
+                    // OBJECT IDENTIFIER
+                    var a = object.match(/\d+/g),
+                        r = [];
+                    for (var i = 1; i < a.length; i++) {
+                        var n = +a[i],
+                            r1 = [];
+                        if (i === 1) n = n + a[0] * 40;
+                        do {
+                            r1.push(n & 0x7F);
+                            n = n >>> 7;
+                        } while (n);
+                        // reverse order
+                        for (j = r1.length - 1; j >= 0; --j) {
+                            r.push(r1[j] + (j === 0 ? 0x00 : 0x80));
+                        }
+                    }
+                    content = new Uint8Array(r);
+                    break;
+                // case 0x07: // ObjectDescriptor
+                // case 0x08: // EXTERNAL
+                // case 0x09: // REAL
+                // case 0x0A: // ENUMERATED
+                // case 0x0B: // EMBEDDED PDV
+                case 0x0C:
+                    // UTF8String
+                    content = Chars.decode(object, 'utf8');
+                    break;
+                // case 0x10: // SEQUENCE
+                // case 0x11: // SET
+                case 0x12: // NumericString
+                case 0x16: // IA5String // ASCII
+                case 0x13: // PrintableString // ASCII subset
+                case 0x14: // TeletexString // aka T61String
+                case 0x15: // VideotexString
+                case 0x19: // GraphicString
+                case 0x1A: // VisibleString // ASCII subset
+                case 0x1B:
+                    // GeneralString
+                    // Reflect on character encoding
+                    for (var i = 0, n = object.length; i < n; i++) {
+                        if (object.charCodeAt(i) > 255) tagNumber = 0x0C;
+                    }if (tagNumber === 0x0C) content = Chars.decode(object, 'utf8');else content = Chars.decode(object, 'ascii');
+                    break;
+                case 0x17: // UTCTime
+                case 0x18:
+                    // GeneralizedTime
+                    var result = object.original;
+                    if (!result) {
+                        var date = new Date(object);
+                        date.setMinutes(date.getMinutes() + date.getTimezoneOffset()); // to UTC
+                        var ms = tagNumber === 0x18 ? date.getMilliseconds().toString() : ''; // Milliseconds, remove trailing zeros
+                        while (ms.length > 0 && ms.charAt(ms.length - 1) === '0') {
+                            ms = ms.substring(0, ms.length - 1);
+                        }if (ms.length > 0) ms = '.' + ms;
+                        result = (tagNumber === 0x17 ? date.getYear().toString().slice(-2) : date.getFullYear().toString()) + ('00' + (date.getMonth() + 1)).slice(-2) + ('00' + date.getDate()).slice(-2) + ('00' + date.getHours()).slice(-2) + ('00' + date.getMinutes()).slice(-2) + ('00' + date.getSeconds()).slice(-2) + ms + 'Z';
+                    }
+                    content = Chars.decode(result, 'ascii');
+                    break;
+                case 0x1C:
+                    // UniversalString
+                    content = Chars.decode(object, 'utf32');
+                    break;
+                case 0x1E:
+                    // BMPString
+                    content = Chars.decode(object, 'utf16');
+                    break;
+            }
+        }
+
+        if (!content) content = new Uint8Array(0);
+        if (content instanceof CryptoOperationData) content = new Uint8Array(content);
+
+        if (!tagConstructed && format === 'CER') {
+            // Encoding CER-form for string types
+            var k;
+            switch (tagNumber) {
+                case 0x03:
+                    // BIT_STRING
+                    k = 1; // ingnore unused bit for bit string
+                case 0x04: // OCTET_STRING
+                case 0x0C: // UTF8String
+                case 0x12: // NumericString
+                case 0x13: // PrintableString
+                case 0x14: // TeletexString
+                case 0x15: // VideotexString
+                case 0x16: // IA5String
+                case 0x19: // GraphicString
+                case 0x1A: // VisibleString
+                case 0x1B: // GeneralString
+                case 0x1C: // UniversalString
+                case 0x1E:
+                    // BMPString
+                    k = k || 0;
+                    // Split content on 1000 octet len parts
+                    var size = 1000;
+                    var bytelen = 0,
+                        ba = [],
+                        offset = 0;
+                    for (var i = k, n = content.length; i < n; i += size - k) {
+                        ba[i] = encodeBER({
+                            object: new Unit8Array(content.buffer, i, Math.min(size - k, n - i)),
+                            tagNumber: tagNumber,
+                            tagClass: 0,
+                            tagConstructed: false
+                        }, format);
+                        bytelen += ba[i].length;
+                    }
+                    ba[n] = new Uint8Array(2); // final for CER 00 00
+                    bytelen += 2;
+                    content = new Uint8Array(bytelen);
+                    for (var i = 0, n = ba.length; i < n; i++) {
+                        content.set(ba[i], offset);
+                        offset = offset + ba[i].length;
+                    }
+            }
+        }
+
+        // Restore tagNumber for all classes
+        if (tagClass === 0) source.tagNumber = tagNumber;else source.tagNumber = tagNumber = source.tagNumber || 0;
+        source.content = content;
+
+        if (onlyContent) return content;
+
+        // Create header
+        // tagNumber
+        var ha = [],
+            first = tagClass === 3 ? 0xC0 : tagClass === 2 ? 0x80 : tagClass === 1 ? 0x40 : 0x00;
+        if (tagConstructed) first |= 0x20;
+        if (tagNumber < 0x1F) {
+            first |= tagNumber & 0x1F;
+            ha.push(first);
+        } else {
+            first |= 0x1F;
+            ha.push(first);
+            var n = tagNumber,
+                ha1 = [];
+            do {
+                ha1.push(n & 0x7F);
+                n = n >>> 7;
+            } while (n);
+            // reverse order
+            for (var j = ha1.length - 1; j >= 0; --j) {
+                ha.push(ha1[j] + (j === 0 ? 0x00 : 0x80));
+            }
+        }
+        // Length
+        if (tagConstructed && format === 'CER') {
+            ha.push(0x80);
+        } else {
+            var len = content.length;
+            if (len > 0x7F) {
+                var l2 = len,
+                    ha2 = [];
+                do {
+                    ha2.push(l2 & 0xff);
+                    l2 = l2 >>> 8;
+                } while (l2);
+                ha.push(ha2.length + 0x80); // reverse order
+                for (var j = ha2.length - 1; j >= 0; --j) {
+                    ha.push(ha2[j]);
+                }
+            } else {
+                // simple len
+                ha.push(len);
+            }
+        }
+        var header = source.header = new Uint8Array(ha);
+
+        // Result - complete buffer
+        var block = new Uint8Array(header.length + content.length);
+        block.set(header, 0);
+        block.set(content, header.length);
+        return block;
+    }
+
+    function decodeBER(source, offset) {
+
+        // start pos
+        var pos = offset || 0,
+            start = pos;
+        var tagNumber, tagClass, tagConstructed, content, header, buffer, sub, len;
+
+        if (source.object) {
+            // Ready from source
+            tagNumber = source.tagNumber;
+            tagClass = source.tagClass;
+            tagConstructed = source.tagConstructed;
+            content = source.content;
+            header = source.header;
+            buffer = source.object instanceof CryptoOperationData ? new Uint8Array(source.object) : null;
+            sub = source.object instanceof Array ? source.object : null;
+            len = buffer && buffer.length || null;
+        } else {
+            // Decode header
+            var d = source;
+
+            // Read tag
+            var buf = d[pos++];
+            tagNumber = buf & 0x1f;
+            tagClass = buf >> 6;
+            tagConstructed = (buf & 0x20) !== 0;
+            if (tagNumber === 0x1f) {
+                // long tag
+                tagNumber = 0;
+                do {
+                    if (tagNumber > 0x1fffffffffff80) throw new _errors.DataError('Convertor not supported tag number more then (2^53 - 1) at position ' + offset);
+                    buf = d[pos++];
+                    tagNumber = (tagNumber << 7) + (buf & 0x7f);
+                } while (buf & 0x80);
+            }
+
+            // Read len
+            buf = d[pos++];
+            len = buf & 0x7f;
+            if (len !== buf) {
+                if (len > 6) // no reason to use Int10, as it would be a huge buffer anyways
+                    throw new _errors.DataError('Length over 48 bits not supported at position ' + offset);
+                if (len === 0) len = null; // undefined
+                else {
+                        buf = 0;
+                        for (var i = 0; i < len; ++i) {
+                            buf = (buf << 8) + d[pos++];
+                        }len = buf;
+                    }
+            }
+
+            start = pos;
+            sub = null;
+
+            if (tagConstructed) {
+                // must have valid content
+                sub = [];
+                if (len !== null) {
+                    // definite length
+                    var end = start + len;
+                    while (pos < end) {
+                        var s = decodeBER(d, pos);
+                        sub.push(s);
+                        pos += s.header.length + s.content.length;
+                    }
+                    if (pos !== end) throw new _errors.DataError('Content size is not correct for container starting at offset ' + start);
+                } else {
+                    // undefined length
+                    try {
+                        for (;;) {
+                            var s = decodeBER(d, pos);
+                            pos += s.header.length + s.content.length;
+                            if (s.tagClass === 0x00 && s.tagNumber === 0x00) break;
+                            sub.push(s);
+                        }
+                        len = pos - start;
+                    } catch (e) {
+                        throw new _errors.DataError('Exception ' + e + ' while decoding undefined length content at offset ' + start);
+                    }
+                }
+            }
+
+            // Header and content
+            header = new Uint8Array(d.buffer, offset, start - offset);
+            content = new Uint8Array(d.buffer, start, len);
+            buffer = content;
+        }
+
+        // Constructed types - check for string concationation
+        if (sub !== null && tagClass === 0) {
+            var k;
+            switch (tagNumber) {
+                case 0x03:
+                    // BIT_STRING
+                    k = 1; // ingnore unused bit for bit string
+                case 0x04: // OCTET_STRING
+                case 0x0C: // UTF8String
+                case 0x12: // NumericString
+                case 0x13: // PrintableString
+                case 0x14: // TeletexString
+                case 0x15: // VideotexString
+                case 0x16: // IA5String
+                case 0x19: // GraphicString
+                case 0x1A: // VisibleString
+                case 0x1B: // GeneralString
+                case 0x1C: // UniversalString
+                case 0x1E:
+                    // BMPString
+                    k = k || 0;
+                    // Concatination
+                    if (sub.length === 0) throw new _errors.DataError('No constructed encoding content of string type at offset ' + start);
+                    len = k;
+                    for (var i = 0, n = sub.length; i < n; i++) {
+                        var s = sub[i];
+                        if (s.tagClass !== tagClass || s.tagNumber !== tagNumber || s.tagConstructed) throw new _errors.DataError('Invalid constructed encoding of string type at offset ' + start);
+                        len += s.content.length - k;
+                    }
+                    buffer = new Uint8Array(len);
+                    for (var i = 0, n = sub.length, j = k; i < n; i++) {
+                        var s = sub[i];
+                        if (k > 0) buffer.set(s.content.subarray(1), j);else buffer.set(s.content, j);
+                        j += s.content.length - k;
+                    }
+                    tagConstructed = false; // follow not required
+                    sub = null;
+                    break;
+            }
+        }
+        // Primitive types
+        var object = '';
+        if (sub === null) {
+            if (len === null) throw new _errors.DataError('Invalid tag with undefined length at offset ' + start);
+
+            if (tagClass === 0) {
+                switch (tagNumber) {
+                    case 0x01:
+                        // BOOLEAN
+                        object = buffer[0] !== 0;
+                        break;
+                    case 0x02: // INTEGER
+                    case 0x0a:
+                        // ENUMIRATED
+                        if (len > 6) {
+                            object = Int16.encode(buffer);
+                        } else {
+                            var v = buffer[0];
+                            if (buffer[0] > 0x7f) v = v - 256;
+                            for (var i = 1; i < len; i++) {
+                                v = v * 256 + buffer[i];
+                            }object = v;
+                        }
+                        break;
+                    case 0x03:
+                        // BIT_STRING
+                        if (len > 5) {
+                            // Content buffer
+                            object = new Uint8Array(buffer.subarray(1)).buffer;
+                        } else {
+                            // Max bit mask only for 32 bit
+                            var unusedBit = buffer[0],
+                                skip = unusedBit,
+                                s = [];
+                            for (var i = len - 1; i >= 1; --i) {
+                                var b = buffer[i];
+                                for (var j = skip; j < 8; ++j) {
+                                    s.push(b >> j & 1 ? '1' : '0');
+                                }skip = 0;
+                            }
+                            object = s.reverse().join('');
+                        }
+                        break;
+                    case 0x04:
+                        // OCTET_STRING
+                        object = new Uint8Array(buffer).buffer;
+                        break;
+                    //  case 0x05: // NULL
+                    case 0x06:
+                        // OBJECT_IDENTIFIER
+                        var s = '',
+                            n = 0,
+                            bits = 0;
+                        for (var i = 0; i < len; ++i) {
+                            var v = buffer[i];
+                            n = (n << 7) + (v & 0x7F);
+                            bits += 7;
+                            if (!(v & 0x80)) {
+                                // finished
+                                if (s === '') {
+                                    var m = n < 80 ? n < 40 ? 0 : 1 : 2;
+                                    s = m + "." + (n - m * 40);
+                                } else s += "." + n.toString();
+                                n = 0;
+                                bits = 0;
+                            }
+                        }
+                        if (bits > 0) throw new _errors.DataError('Incompleted OID at offset ' + start);
+                        object = s;
+                        break;
+                    //case 0x07: // ObjectDescriptor
+                    //case 0x08: // EXTERNAL
+                    //case 0x09: // REAL
+                    //case 0x0A: // ENUMERATED
+                    //case 0x0B: // EMBEDDED_PDV
+                    case 0x10: // SEQUENCE
+                    case 0x11:
+                        // SET
+                        object = [];
+                        break;
+                    case 0x0C:
+                        // UTF8String
+                        object = Chars.encode(buffer, 'utf8');
+                        break;
+                    case 0x12: // NumericString
+                    case 0x13: // PrintableString
+                    case 0x14: // TeletexString
+                    case 0x15: // VideotexString
+                    case 0x16: // IA5String
+                    case 0x19: // GraphicString
+                    case 0x1A: // VisibleString
+                    case 0x1B:
+                        // GeneralString
+                        object = Chars.encode(buffer, 'ascii');
+                        break;
+                    case 0x1C:
+                        // UniversalString
+                        object = Chars.encode(buffer, 'utf32');
+                        break;
+                    case 0x1E:
+                        // BMPString
+                        object = Chars.encode(buffer, 'utf16');
+                        break;
+                    case 0x17: // UTCTime
+                    case 0x18:
+                        // GeneralizedTime
+                        var shortYear = tagNumber === 0x17;
+                        var s = Chars.encode(buffer, 'ascii'),
+                            m = (shortYear ? /^(\d\d)(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])([01]\d|2[0-3])(?:([0-5]\d)(?:([0-5]\d)(?:[.,](\d{1,3}))?)?)?(Z|[-+](?:[0]\d|1[0-2])([0-5]\d)?)?$/ : /^(\d\d\d\d)(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])([01]\d|2[0-3])(?:([0-5]\d)(?:([0-5]\d)(?:[.,](\d{1,3}))?)?)?(Z|[-+](?:[0]\d|1[0-2])([0-5]\d)?)?$/).exec(s);
+                        if (!m) throw new _errors.DataError('Unrecognized time format "' + s + '" at offset ' + start);
+                        if (shortYear) {
+                            // Where YY is greater than or equal to 50, the year SHALL be interpreted as 19YY; and
+                            // Where YY is less than 50, the year SHALL be interpreted as 20YY
+                            m[1] = +m[1];
+                            m[1] += m[1] < 50 ? 2000 : 1900;
+                        }
+                        var dt = new Date(m[1], +m[2] - 1, +m[3], +(m[4] || '0'), +(m[5] || '0'), +(m[6] || '0'), +(m[7] || '0')),
+                            tz = dt.getTimezoneOffset();
+                        if (m[8] || tagNumber === 0x17) {
+                            if (m[8].toUpperCase() !== 'Z' && m[9]) {
+                                tz = tz + parseInt(m[9]);
+                            }
+                            dt.setMinutes(dt.getMinutes() - tz);
+                        }
+                        dt.original = s;
+                        object = dt;
+                        break;
+                }
+            } else // OCTET_STRING
+                object = new Uint8Array(buffer).buffer;
+        } else object = sub;
+
+        // result
+        return {
+            tagConstructed: tagConstructed,
+            tagClass: tagClass,
+            tagNumber: tagNumber,
+            header: header,
+            content: content,
+            object: object
+        };
+    }
+
+    return {
+        /**
+         * BER.decode(object, format) convert javascript object to ASN.1 format CryptoOperationData<br><br>
+         * If object has members tagNumber, tagClass and tagConstructed
+         * it is clear define encoding rules. Else method use defaul rules:
+         * <ul>
+         *   <li>Empty string or null - NULL</li>
+         *   <li>String starts with '0x' and has 0-9 and a-f characters - INTEGER</li>
+         *   <li>String like d.d.d.d (d - set of digits) - OBJECT IDENTIFIER</li>
+         *   <li>String with characters 0 and 1 - BIT STRING</li>
+         *   <li>Strings 'true' or 'false' - BOOLEAN</li>
+         *   <li>String has only 0-9 and a-f characters - OCTET STRING</li>
+         *   <li>String has only characters with code 0-255 - PrintableString</li>
+         *   <li>Other strings - UTF8String</li>
+         *   <li>Number - INTEGER</li>
+         *   <li>Date - GeneralizedTime</li>
+         *   <li>Boolean - SEQUENCE</li>
+         *   <li>CryptoOperationData - OCTET STRING</li>
+         * </ul>
+         * SEQUENCE or SET arrays recursively encoded for each item.<br>
+         * OCTET STRING and BIT STRING can presents as array with one item.
+         * It means encapsulates encoding for child element.<br>
+         *
+         * If CONTEXT or APPLICATION classes item presents as array with one
+         * item we use EXPLICIT encoding for element, else IMPLICIT encoding.<br>
+         *
+         * @memberOf GostCoding.BER
+         * @param {Object} object Object to encoding
+         * @param {string} format Encoding rule: 'DER' or 'CER', default 'DER'
+         * @param {boolean} onlyContent Encode content only, without header
+         * @returns {CryptoOperationData} BER encoded data
+         */
+        encode: function encode(object, format, onlyContent) {
+            return encodeBER(object, format, onlyContent).buffer;
+        },
+        /**
+         * BER.encode(data) convert ASN.1 format CryptoOperationData data to javascript object<br><br>
+         *
+         * Conversion rules to javascript object:
+         *  <ul>
+         *      <li>BOOLEAN - Boolean object</li>
+         *      <li>INTEGER, ENUMIRATED - Integer object if len <= 6 (48 bits) else Int16 encoded string</li>
+         *      <li>BIT STRING - Integer object if len <= 5 (w/o unsedBit octet - 32 bits) else String like '10111100' or  Array with one item in case of incapsulates encoding</li>
+         *      <li>OCTET STRING - Hex encoded string or Array with one item in case of incapsulates encoding</li>
+         *      <li>OBJECT IDENTIFIER - String with object identifier</li>
+         *      <li>SEQUENCE, SET - Array of encoded items</li>
+         *      <li>UTF8String, NumericString, PrintableString, TeletexString, VideotexString,
+         *          IA5String, GraphicString, VisibleString, GeneralString, UniversalString,
+         *          BMPString - encoded String</li>
+         *      <li>UTCTime, GeneralizedTime - Date</li>
+         *  </ul>
+         * @memberOf GostCoding.BER
+         * @param {(CryptoOperationData|GostCoding.BER)} data Binary data to decode
+         * @returns {Object} Javascript object with result of decoding
+         */
+        decode: function decode(data) {
+            return decodeBER(data.object ? data : new Uint8Array(buffer(data)), 0);
+        }
+    }; // </editor-fold>
+}();
+
+/**
+ * BER, DER, CER conversion
+ * @memberOf GostCoding
+ * @insnance
+ * @type GostCoding.BER
+ */
+GostCoding.prototype.BER = BER;
+
+/**
+ * PEM conversion
+ * @class GostCoding.PEM
+ */
+var PEM = { // <editor-fold defaultstate="collapsed">
+    /**
+     * PEM.encode(data, name) encode CryptoOperationData to PEM format with name label
+     *
+     * @memberOf GostCoding.PEM
+     * @param {(Object|CryptoOperationData)} data Java script object or BER-encoded binary data
+     * @param {string} name Name of PEM object: 'certificate', 'private key' etc.
+     * @returns {string} Encoded object
+     */
+    encode: function encode(data, name) {
+        return (name ? '-----BEGIN ' + name.toUpperCase() + '-----\r\n' : '') + Base64.encode(data instanceof CryptoOperationData ? data : BER.encode(data)) + (name ? '\r\n-----END ' + name.toUpperCase() + '-----' : '');
+    },
+    /**
+     * PEM.decode(s, name, deep) decode PEM format s labeled name to CryptoOperationData or javascript object in according to deep parameter
+     *
+     * @memberOf GostCoding.PEM
+     * @param {string} s PEM encoded string
+     * @param {string} name Name of PEM object: 'certificate', 'private key' etc.
+     * @param {boolean} deep If true method do BER-decoding, else only BASE64 decoding
+     * @param {integer} index Index of decoded value
+     * @returns {(Object|CryptoOperationData)} Decoded javascript object if deep=true, else CryptoOperationData for father BER decoding
+     */
+    decode: function decode(s, name, deep, index) {
+        // Try clear base64
+        var re1 = /([A-Za-z0-9\+\/\s\=]+)/g,
+            valid = re1.exec(s);
+        if (valid[1].length !== s.length) valid = false;
+        if (!valid && name) {
+            // Try with the name
+            var re2 = new RegExp('-----\\s?BEGIN ' + name.toUpperCase() + '-----([A-Za-z0-9\\+\\/\\s\\=]+)-----\\s?END ' + name.toUpperCase() + '-----', 'g');
+            valid = re2.exec(s);
+        }
+        if (!valid) {
+            // Try with some name
+            var re3 = new RegExp('-----\\s?BEGIN [A-Z0-9\\s]+' + '-----([A-Za-z0-9\\+\\/\\s\\=]+)-----\\s?END ' + '[A-Z0-9\\s]+-----', 'g');
+            valid = re3.exec(s);
+        }
+        var r = valid && valid[1 + (index || 0)];
+        if (!r) throw new _errors.DataError('Not valid PEM format');
+        var out = Base64.decode(r);
+        if (deep) out = BER.decode(out);
+        return out;
+    } // </editor-fold>
+};
+
+/**
+ * PEM conversion
+ * @memberOf GostCoding
+ * @insnance
+ * @type GostCoding.PEM
+ */
+GostCoding.prototype.PEM = PEM;
+
+var gostCodingInstance = exports.gostCodingInstance = new GostCoding();
+
+/***/ }),
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -5412,349 +6562,7 @@ function GostSign(algorithm) // <editor-fold defaultstate="collapsed">
 } // </editor-fold>
 
 /***/ }),
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.gostEngine = undefined;
-
-var _gostCipher = __webpack_require__(4);
-
-var _gostDigest = __webpack_require__(3);
-
-var _gostSign = __webpack_require__(9);
-
-var _errors = __webpack_require__(0);
-
-/*
- * Engine definition base on normalized algorithm identifier
- *
- */ // <editor-fold defaultstate="collapsed">
-
-// Define engine
-/**
- * @file GOST 34.10-2012 signature function with 1024/512 bits digest
- * @version 1.76
- * @copyright 2014-2016, Rudolf Nickolaev. All rights reserved.
- */
-
-function defineEngine(method, algorithm) {
-    if (!algorithm) throw new (SyntaxError || Error)('Algorithm not defined');
-
-    if (!algorithm.name) throw new (SyntaxError || Error)('Algorithm name not defined');
-
-    var name = algorithm.name,
-        mode = algorithm.mode;
-    if ((name === 'GOST 28147' || name === 'GOST R 34.12' || name === 'RC2') && (method === 'generateKey' || mode === 'MAC' && (method === 'sign' || method === 'verify') || (mode === 'KW' || mode === 'MASK') && (method === 'wrapKey' || method === 'unwrapKey') || (!mode || mode === 'ES') && (method === 'encrypt' || method === 'decrypt'))) {
-        return 'GostCipher';
-    } else if ((name === 'GOST R 34.11' || name === 'SHA') && (method === 'digest' || mode === 'HMAC' && (method === 'sign' || method === 'verify' || method === 'generateKey') || (mode === 'KDF' || mode === 'PBKDF2' || mode === 'PFXKDF' || mode === 'CPKDF') && (method === 'deriveKey' || method === 'deriveBits' || method === 'generateKey'))) {
-        return 'GostDigest';
-    } else if (name === 'GOST R 34.10' && (method === 'generateKey' || (!mode || mode === 'SIGN') && (method === 'sign' || method === 'verify') || mode === 'MASK' && (method === 'wrapKey' || method === 'unwrapKey') || mode === 'DH' && (method === 'deriveKey' || method === 'deriveBits'))) {
-        return 'GostSign';
-    } else throw new _errors.NotSupportedError('Algorithm ' + name + '-' + mode + ' is not valid for ' + method);
-} // </editor-fold>
-
-/**
- * Object enables usage GOST cryptographic algorithms in the main JS thread.
- *
- * Object provide interface to GOST low-level cryptogric classes:
- *  <ul>
- *      <li>GostCipher - implementation of GOST 28147, GOST R 34.12, GOST R 34.13 Encryption algorithms. Reference {@link http://tools.ietf.org/html/rfc5830}</li>
- *      <li>GostDigest - implementation of GOST R 34.11 Hash Function algorithms. References {@link http://tools.ietf.org/html/rfc5831} and {@link http://tools.ietf.org/html/rfc6986}</li>
- *      <li>GostSign - implementation of GOST R 34.10 Digital Signature algorithms. References {@link http://tools.ietf.org/html/rfc5832} and {@link http://tools.ietf.org/html/rfc7091}</li>
- *  </ul>
- * @namespace gostEngine
- */
-var gostEngine = {
-    /**
-     * gostEngine.execute(algorithm, method, args) Entry point to execution
-     * all low-level GOST cryptographic methods
-     *
-     *  <ul>
-     *      <li>Determine the appropriate engine for a given execution method</li>
-     *      <li>Create cipher object for determineted engine</li>
-     *      <li>Execute method of cipher with given args</li>
-     *  </ul>
-     *
-     * @memberOf gostEngine
-     * @param {AlgorithmIndentifier} algorithm Algorithm identifier
-     * @param {string} method Crypto method for execution
-     * @param {Array} args Method arguments (keys, data, additional parameters)
-     * @returns {(CryptoOperationData|Key|KeyPair|boolean)} Result of method execution
-     */
-    execute: function execute(algorithm, method, args) {
-        // Define engine for GOST algorithms
-        var engine = defineEngine(method, algorithm);
-        // Create cipher
-        var cipher = this['get' + engine](algorithm);
-        // Execute method
-        return cipher[method].apply(cipher, args);
-    },
-    /**
-     * gostEngine.getGostCipher(algorithm) returns GOST 28147 / GOST R 34.12 cipher instance<br><br>
-     *
-     * GOST 28147-89 / GOST R 34.12-15 Encryption Algorithm<br><br>
-     * When keys and initialization vectors are converted to/from byte arrays,
-     * little-endian byte order is assumed.<br><br>
-     *
-     * Normalized algorithm identifier common parameters:
-     *
-     *  <ul>
-     *      <li><b>name</b> Algorithm name 'GOST 28147' or 'GOST R 34.12'</li>
-     *      <li><b>version</b> Algorithm version, number
-     *          <ul>
-     *              <li><b>1989</b> Current version of standard</li>
-     *              <li><b>2015</b> New draft version of standard</li>
-     *          </ul>
-     *      </li>
-     *      <li><b>length</b> Block length
-     *          <ul>
-     *              <li><b>64</b> 64 bits length (default)</li>
-     *              <li><b>128</b> 128 bits length (only for version 2015)</li>
-     *          </ul>
-     *      </li>
-     *      <li><b>mode</b> Algorithm mode, string
-     *          <ul>
-     *              <li><b>ES</b> Encryption mode (default)</li>
-     *              <li><b>MAC</b> "imitovstavka" (MAC) mode</li>
-     *              <li><b>KW</b> Key wrapping mode</li>
-     *              <li><b>MASK</b> Key mask mode</li>
-     *          </ul>
-     *      </li>
-     *      <li><b>sBox</b> Paramset sBox for GOST 28147-89, string. Used only if version = 1989</li>
-     *  </ul>
-     *
-     * Supported algorithms, modes and parameters:
-     *
-     *  <ul>
-     *      <li>Encript/Decrypt mode (ES)
-     *          <ul>
-     *              <li><b>block</b> Block mode, string. Default ECB</li>
-     *              <li><b>keyMeshing</b> Key meshing mode, string. Default NO</li>
-     *              <li><b>padding</b> Padding mode, string. Default NO for CFB and CTR modes, or ZERO for others</li>
-     *              <li><b>iv</b> {@link CryptoOperationData} Initial vector with length of block. Default - zero block</li>
-     *          </ul>
-     *      </li>
-     *      <li>Sign/Verify mode (MAC)
-     *          <ul>
-     *              <li><b>macLength</b> Length of mac in bits (default - 32 bits)</li>
-     *              <li><b>iv</b> {@link CryptoOperationData} Initial vector with length of block. Default - zero block</li>
-     *          </ul>
-     *      </li>
-     *      <li>Wrap/Unwrap key mode (KW)
-     *          <ul>
-     *              <li><b>keyWrapping</b> Mode of keywrapping, string. Default NO - standard GOST key wrapping</li>
-     *              <li><b>ukm</b> {@link CryptoOperationData} User key material. Default - random generated value</li>
-     *          </ul>
-     *      </li>
-     *      <li>Wrap/Unwrap key mode (MASK)</li>
-     *  </ul>
-     *
-     * Supported paramters values:
-     *
-     *  <ul>
-     *      <li>Block modes (parameter 'block')
-     *          <ul>
-     *              <li><b>ECB</b> "prostaya zamena" (ECB) mode (default)</li>
-     *              <li><b>CFB</b> "gammirovanie s obratnoj svyaziyu" (64-bit CFB) mode</li>
-     *              <li><b>CTR</b> "gammirovanie" (counter) mode</li>
-     *              <li><b>CBC</b> Cipher-Block-Chaining (CBC) mode</li>
-     *          </ul>
-     *      </li>
-     *      <li>Key meshing modes (parameter 'keyMeshing')
-     *          <ul>
-     *              <li><b>NO</b> No key wrapping (default)</li>
-     *              <li><b>CP</b> CryptoPor Key key meshing</li>
-     *          </ul>
-     *      </li>
-     *      <li>Padding modes (parameter 'padding')
-     *          <ul>
-     *              <li><b>NO</b> No padding only for CFB and CTR modes</li>
-     *              <li><b>PKCS5</b> PKCS#5 padding mode</li>
-     *              <li><b>ZERO</b> Zero bits padding mode</li>
-     *              <li><b>RANDOM</b> Random bits padding mode</li>
-     *          </ul>
-     *      </li>
-     *      <li>Wrapping key modes (parameter 'keyWrapping')
-     *          <ul>
-     *              <li><b>NO</b> Ref. rfc4357 6.1 GOST 28147-89 Key wrapping</li>
-     *              <li><b>CP</b> CryptoPro Key wrapping mode</li>
-     *              <li><b>SC</b> SignalCom Key wrapping mode</li>
-     *          </ul>
-     *      </li>
-     *  </ul>
-     *
-     * @memberOf gostEngine
-     * @param {AlgorithmIndentifier} algorithm Algorithm identifier
-     * @returns {GostCipher} Instance of GostCipher
-     */
-    getGostCipher: function getGostCipher(algorithm) {
-        return new _gostCipher.GostCipher(algorithm);
-    },
-    /**
-     * gostEngine.getGostDigest(algorithm) returns GOST R 34.11 cipher instance<br><br>
-     *
-     * Normalized algorithm identifier common parameters:
-     *
-     *  <ul>
-     *      <li><b>name</b> Algorithm name 'GOST R 34.11'</li>
-     *      <li><b>version</b> Algorithm version
-     *          <ul>
-     *              <li><b>1994</b> old-style 256 bits digest based on GOST 28147-89</li>
-     *              <li><b>2012</b> 256 ro 512 bits digest algorithm "Streebog" GOST R 34.11-2012 (default)</li>
-     *          </ul>
-     *      </li>
-     *      <li><b>length</b> Digest length
-     *          <ul>
-     *              <li><b>256</b> 256 bits digest</li>
-     *              <li><b>512</b> 512 bits digest, valid only for algorithm "Streebog"</li>
-     *          </ul>
-     *      </li>
-     *      <li><b>mode</b> Algorithm mode
-     *          <ul>
-     *              <li><b>HASH</b> simple digest mode (default)</li>
-     *              <li><b>HMAC</b> HMAC algorithm based on GOST R 34.11</li>
-     *              <li><b>KDF</b> Derive bits for KEK deversification</li>
-     *              <li><b>PBKDF2</b> Password based key dirivation algorithms PBKDF2 (based on HMAC)</li>
-     *              <li><b>PFXKDF</b> PFX key dirivation algorithms PFXKDF</li>
-     *              <li><b>CPKDF</b> CryptoPro Password based key dirivation algorithms</li>
-     *          </ul>
-     *      </li>
-     *      <li><b>sBox</b> Paramset sBox for GOST 28147-89. Used only if version = 1994</li>
-     *  </ul>
-     *
-     * Supported algorithms, modes and parameters:
-     *
-     *  <ul>
-     *      <li>Digest HASH mode (default)</li>
-     *      <li>Sign/Verify HMAC modes parameters depends on version and length
-     *          <ul>
-     *              <li><b>version: 1994</b> HMAC parameters (B = 32, L = 32)</li>
-     *              <li><b>version: 2012, length: 256</b> HMAC parameters (B = 64, L = 32)</li>
-     *              <li><b>version: 2012, length: 512</b> HMAC parameters  (B = 64, L = 64)</li>
-     *          </ul>
-     *      </li>
-     *      <li>DeriveBits/DeriveKey KDF mode
-     *          <ul>
-     *              <li><b>context</b> {@link CryptoOperationData} Context of the key derivation</li>
-     *              <li><b>label</b> {@link CryptoOperationData} Label that identifies the purpose for the derived keying material</li>
-     *          </ul>
-     *      </li>
-     *      <li>DeriveBits/DeriveKey PBKDF2 mode
-     *          <ul>
-     *              <li><b>salt</b> {@link CryptoOperationData} Random salt as input for HMAC algorithm</li>
-     *              <li><b>iterations</b> Iteration count. GOST recomended value 1000 (default) or 2000</li>
-     *          </ul>
-     *      </li>
-     *      <li>DeriveBits/DeriveKey PFXKDF mode
-     *          <ul>
-     *              <li><b>salt</b> {@link CryptoOperationData} Random salt as input for HMAC algorithm</li>
-     *              <li><b>iterations</b> Iteration count. GOST recomended value 1000 (default) or 2000</li>
-     *              <li><b>diversifier</b> Deversifier, ID=1 - key material for performing encryption or decryption,
-     *              ID=2 - IV (Initial Value) for encryption or decryption, ID=3 - integrity key for MACing</li>
-     *          </ul>
-     *      </li>
-     *      <li>DeriveBits/DeriveKey CPKDF mode
-     *          <ul>
-     *              <li><b>salt</b> {@link CryptoOperationData} Random salt as input for HMAC algorithm</li>
-     *              <li><b>iterations</b> Iteration count. GOST recomended value 1000 (default) or 2000</li>
-     *          </ul>
-     *      </li>
-     *  </ul>
-     *
-     * @memberOf gostEngine
-     * @param {AlgorithmIndentifier} algorithm Algorithm identifier
-     * @returns {GostDigest} Instance of GostDigest
-     */
-    getGostDigest: function getGostDigest(algorithm) {
-        return new _gostDigest.GostDigest(algorithm);
-    },
-    /**
-     * gostEngine.getGostSign(algorithm) returns GOST R 34.10 cipher instance<br><br>
-     *
-     * Normalized algorithm identifier common parameters:
-     *
-     *  <ul>
-     *      <li><b>name</b> Algorithm name 'GOST R 34.10'</li>
-     *      <li><b>version</b> Algorithm version
-     *          <ul>
-     *              <li><b>1994</b> - Old-style GOST R 34.10-94 ExpMod algorithm with GOST R 34.11-94 hash</li>
-     *              <li><b>2001</b> - GOST R 34.10-2001 Eliptic curve algorithm with old GOST R 34.11-94 hash</li>
-     *              <li><b>2012</b> - GOST R 34.10-2012 Eliptic curve algorithm with GOST R 34.11-12 hash, default mode</li>
-     *          </ul>
-     *      </li>
-     *      <li><b>length</b> Length of hash and signature. Key length == hash length for EC algorithms and 2 * hash length for ExpMod algorithm
-     *          <ul>
-     *              <li><b>GOST R 34.10-256</b> - 256 bits digest, default mode</li>
-     *              <li><b>GOST R 34.10-512</b> - 512 bits digest only for GOST R 34.11-2012 hash</li>
-     *          </ul>
-     *      </li>
-     *      <li><b>mode</b> Algorithm mode
-     *          <ul>
-     *              <li><b>SIGN</b> Digital signature mode (default)</li>
-     *              <li><b>DH</b> Diffie-Hellman key generation and key agreement mode</li>
-     *              <li><b>MASK</b> Key mask mode</li>
-     *          </ul>
-     *      </li>
-     *      <li><b>sBox</b> Paramset sBox for GOST 34.11-94. Used only if version = 1994 or 2001</li>
-     *  </ul>
-     *
-     * Supported algorithms, modes and parameters:
-     *
-     *  <ul>
-     *      <li>Sign/Verify mode (SIGN)</li>
-     *      <li>Wrap/Unwrap mode (MASK)</li>
-     *      <li>DeriveKey/DeriveBits mode (DH)
-     *          <ul>
-     *              <li>{@link CryptoOperationData} <b>ukm</b> User key material. Default - random generated value</li>
-     *              <li>{@link CryptoOperationData} <b>public</b> The peer's EC public key data</li>
-     *          </ul>
-     *      </li>
-     *      <li>GenerateKey mode (SIGN and DH and MASK) version = 1994
-     *          <ul>
-     *              <li><b>namedParam</b> Paramset for key generation algorithm. If specified no additianal parameters required</li>
-     *          </ul>
-     *          Additional parameters, if namedParam not specified
-     *          <ul>
-     *              <li><b>modulusLength</b> Bit length of p (512 or 1024 bits). Default = 1024</li>
-     *              <li><b>p</b> {@link CryptoOperationData} Modulus, prime number, 2^(t-1)<p<2^t</li>
-     *              <li><b>q</b> {@link CryptoOperationData} Order of cyclic group, prime number, 2^254<q<2^256, q is a factor of p-1</li>
-     *              <li><b>a</b> {@link CryptoOperationData} Generator, integer, 1<a<p-1, at that aq (mod p) = 1</li>
-     *          </ul>
-     *      </li>
-     *      <li>GenerateKey mode (SIGN and DH and MASK) version = 2001 or 2012
-     *          <ul>
-     *              <li><b>namedCurve</b> Paramset for key generation algorithm. If specified no additianal parameters required</li>
-     *          </ul>
-     *          Additional EC parameters, if namedCurve not specified
-     *          <ul>
-     *              <li><b>p</b> {@link CryptoOperationData} Prime number - elliptic curve modulus</li>
-     *              <li><b>a</b> {@link CryptoOperationData} Coefficients a of the elliptic curve E</li>
-     *              <li><b>b</b> {@link CryptoOperationData} Coefficients b of the elliptic curve E</li>
-     *              <li><b>q</b> {@link CryptoOperationData} Prime number - order of cyclic group</li>
-     *              <li><b>x</b> {@link CryptoOperationData} Base point p x-coordinate</li>
-     *              <li><b>y</b> {@link CryptoOperationData} Base point p y-coordinate</li>
-     *          </ul>
-     *      </li>
-     *  </ul>
-     *
-     * @memberOf gostEngine
-     * @param {AlgorithmIndentifier} algorithm Algorithm identifier
-     * @returns {GostSign} Instance of GostSign
-     */
-    getGostSign: function getGostSign(algorithm) {
-        return new _gostSign.GostSign(algorithm);
-    }
-};
-
-exports.gostEngine = gostEngine;
-
-/***/ }),
+/* 10 */,
 /* 11 */,
 /* 12 */
 /***/ (function(module, exports) {
@@ -5765,7 +6573,11 @@ module.exports = require("crypto");
 /* 13 */,
 /* 14 */,
 /* 15 */,
-/* 16 */
+/* 16 */,
+/* 17 */,
+/* 18 */,
+/* 19 */,
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5775,58 +6587,995 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _gostEngineSync = __webpack_require__(10);
+exports.default = function () {
+    // GOST R 34.10 tests
+    var tests = 0,
+        i = 0;
+    println('GOST R 34.10-94 TEST', true);
 
-var defaultGostSignAlgorithm = {
-    name: 'GOST R 34.10',
-    version: 2012,
-    mode: 'SIGN',
-    length: 256,
-    procreator: 'CP',
-    keySize: 32,
-    namedCurve: 'S-256-A',
-    hash: {
-        name: 'GOST R 34.11',
-        version: 2012,
-        mode: 'HASH',
-        length: 256,
-        procreator: 'CP',
-        keySize: 32
-    },
-    id: 'id-tc26-gost3410-12-256'
-};
+    tests += perform(++i, {
+        name: 'GOST R 34.10',
+        version: 1994,
+        namedParam: 'S-TEST',
+        ukm: '90F3A564439242F5186EBB224C8E223811B7105C64E4F5390807E6362DF4C72A'
+    }, '3534454132454236443134453437313943363345374143423445413631454230', '3036314538303830343630454235324435324234314132373832433138443046', 'ee1902a40692d273edc1b5adc55f91128e35f9d165fa9901caf00d27018ba6df324519c11a6e272526589cd6e6a2eddaafe1c3081259be9fcee667a2701f4352', '3F0DD5D4400D47C08E4CE505FF7434B6DBF729592E37C74856DAB85115A609553E5F895E276D81D2D52C0763270A458157B784C57ABDBD807BC44FD43A32AC06');
 
-var CryptoGostAPI = {
-    hash: function hash(byteArray) {
-        // GOST R 34.11-12-256 algorithm
-        var cipher = _gostEngineSync.gostEngine.getGostDigest({
+    println();
+    println('TOTAL ' + (tests ? tests + ' ERRORS' : 'OK'));
+    println();
+
+    var tests2 = 0;
+    i = 0;
+    println('GOST R 34.10-2012 TEST', true);
+
+    tests2 += perform(++i, {
+        name: 'GOST R 34.10',
+        namedCurve: 'S-256-TEST',
+        ukm: '77105C9B20BCD3122823C8CF6FCC7B956DE33814E95B7FE64FED924594DCEAB3'
+    }, '2DFBC1B372D89A1188C09C52E0EEC61FCE52032AB1022E8E67ECE6672B043EE5', '7A929ADE789BB9BE10ED359DD39A72C11B60961F49397EEE1D19CE9891EC3B28', '26F1B489D6701DD185C8413A977B3CBBAF64D1C593D26627DFFB101A87FF77DA7F2B49E270DB6D90D8595BEC458B50C58585BA1D4E9B788F6689DBD8E56FD80B', '01456C64BA4642A1653C235A98A60249BCD6D3F746B631DF928014F6C5BF9C4041AA28D2F1AB148280CD9ED56FEDA41974053554A42767B83AD043FD39DC0493');
+
+    tests2 += perform(++i, {
+        name: 'GOST R 34.10',
+        namedCurve: 'T-512-TEST',
+        ukm: '359E7F4B1410FEACC570456C6801496946312120B39D019D455986E364F365886748ED7A44B3E794434006011842286212273A6D14CF70EA3AF71BB1AE679F1'
+    }, '3754F3CFACC9E0615C4F4A7C4D8DAB531B09B6F9C170C533A71D147035B0C5917184EE536593F4414339976C647C5D5A407ADEDB1D560C4FC6777D2972075B8C', 'BA6048AADAE241BA40936D47756D7C93091A0E8514669700EE7508E508B102072E8123B2200A0563322DAD2827E2714A2636B7BFD18AADFC62967821FA18DD4', '37C7C90CD40B0F5621DC3AC1B751CFA0E2634FA0503B3D52639F5D7FB72AFD61EA199441D943FFE7F0C70A2759A3CDB84C114E1F9339FDF27F35ECA93677BEEC115DC5BC96760C7B48598D8AB9E740D4C4A85A65BE33C1815B5C320C854621DD5A515856D13314AF69BC5B924C8B4DDFF75C45415C1D9DD9DD33612CD530EFE1', '1081B394696FFE8E6585E7A9362D26B6325F56778AADBC081C0BFBE933D52FF5823CE288E8C4F362526080DF7F70CE406A6EEB1F56919CB92A9853BDE73E5B4A2F86FA60A081091A23DD795E1E3C689EE512A3C82EE0DCC2643C78EEA8FCACD35492558486B20F1C9EC197C90699850260C93BCBCD9C5C3317E19344E173AE36');
+
+    // Free random generator
+    tests2 += perform(++i, {
+        name: 'GOST R 34.10',
+        namedCurve: 'S-256-TEST'
+    }, '2DFBC1B372D89A1188C09C52E0EEC61FCE52032AB1022E8E67ECE6672B043EE5', '7A929ADE789BB9BE10ED359DD39A72C11B60961F49397EEE1D19CE9891EC3B28', '26F1B489D6701DD185C8413A977B3CBBAF64D1C593D26627DFFB101A87FF77DA7F2B49E270DB6D90D8595BEC458B50C58585BA1D4E9B788F6689DBD8E56FD80B');
+
+    // Free key & random generator
+    tests2 += perform(++i, {
+        name: 'GOST R 34.10',
+        namedCurve: 'S-256-TEST'
+    }, '2DFBC1B372D89A1188C09C52E0EEC61FCE52032AB1022E8E67ECE6672B043EE5');
+
+    // GostDigest-94-with-Gost-3410-2001
+    tests2 += perform(++i, {
+        name: 'GOST R 34.10',
+        namedCurve: 'S-256-TEST',
+        hash: {
             name: 'GOST R 34.11',
-            length: 256,
-            version: 2012
-        });
+            version: 1994
+        }
+    }, gostCoding.Chars.decode('Suppose the original message has length = 50 bytes'));
 
-        // returns byte array
-        return cipher['digest'](byteArray);
-    },
-    sign: function sign(privateKey, data) {
-        // using algorithm : GostDigest-2012-with-Gost-3410-2012
+    // GostDigest-2012-with-Gost-3410-2012
+    tests2 += perform(++i, {
+        name: 'GOST R 34.10',
+        namedCurve: 'T-512-TEST',
+        hash: {
+            name: 'GOST R 34.11'
+        }
+    }, gostCoding.Chars.decode('Се ветри, Стрибожи внуци, веютъ с моря стрелами на храбрыя плъкы Игоревы'));
 
-        var cipher = _gostEngineSync.gostEngine.getGostSign(defaultGostSignAlgorithm);
+    // Derive key
+    println();
+    println('Key exchange scenario');
+    performDerive(++i, {
+        name: 'GOST R 34.10',
+        namedCurve: 'S-256-TEST',
+        mode: 'DH',
+        ukm: '77105C9B20BCD312'
+    });
+    performDerive(++i, {
+        name: 'GOST R 34.10',
+        namedCurve: 'X-256-A',
+        mode: 'DH',
+        ukm: '77105C9B20BCD312',
+        hash: {
+            name: 'GOST R 34.11'
+        }
+    });
+    performDerive(++i, {
+        name: 'GOST R 34.10',
+        namedCurve: 'X-256-A',
+        mode: 'DH',
+        ukm: '77105C9B20BCD312',
+        hash: {
+            name: 'GOST R 34.11',
+            version: 1994
+        }
+    });
 
-        // returns byte array
-        return cipher.sign(privateKey, data);
-    },
-    verify: function verify(publicKey, message, sign) {
-        var cipher = _gostEngineSync.gostEngine.getGostSign(defaultGostSignAlgorithm);
+    println();
 
-        // return boolean
-        return cipher.verify(publicKey, sign, message);
-    }
+    println('TOTAL ' + (tests2 ? tests2 + ' ERRORS' : 'OK'));
+    println();
+
+    return tests + tests2;
 };
 
-exports.default = CryptoGostAPI;
+var _gostCoding = __webpack_require__(2);
+
+var _gostSign = __webpack_require__(9);
+
+/**
+ * Copyright (c) 2014, Rudolf Nickolaev.
+ * All rights reserved.
+ *
+ * Tests for GOST 34.12 signature.
+ *
+ */
+
+var gostCoding = new _gostCoding.GostCoding();
+
+/* ========== Tests ========== */
+
+function println(s, h) {
+    if (typeof importScripts !== 'undefined') {
+        var tag = h ? 'h3' : 'span';
+        if (typeof postMessage !== 'undefined') {
+            postMessage({ log: '<' + tag + '>' + (s || '&nbsp') + '</' + tag + '>' });
+        } else {
+            console.log(s, h);
+        }
+    } else {
+        if (typeof document !== 'undefined') {
+            var el = document.createElement(h ? 'h3' : 'div');
+            el.innerHTML = s || '&nbsp';
+            (document.getElementById('output') || document.body).appendChild(el);
+        }
+        if (typeof console !== 'undefined') console.log((s || '') + (h ? '' : '\n'));
+    }
+}
+
+function perform(id, algorithm, message, privateKey, publicKey, output) {
+    var Hex = gostCoding.Hex;
+    if (algorithm.ukm) algorithm.ukm = Hex.decode(algorithm.ukm, true);else output = false;
+
+    var cipher = new _gostSign.GostSign(algorithm);
+    var result = 'Test ' + ' ' + ('0' + id).slice(-2) + ' ' + (cipher.name + ' ' + new Array(61).join('.')).substring(0, 60) + ' ';
+    var data = typeof message === 'string' ? Hex.decode(message, true) : message;
+
+    if (!privateKey) {
+        var keyPair = cipher.generateKey();
+        privateKey = keyPair.privateKey;
+        publicKey = keyPair.publicKey;
+        output = false;
+    } else {
+        privateKey = Hex.decode(privateKey, true);
+        publicKey = Hex.decode(publicKey, true);
+    }
+
+    try {
+        var start, signed, verified;
+        start = new Date().getTime();
+        var out = Hex.encode(cipher.sign(privateKey, data), true);
+        var test = 0 + (output && out.replace(/[^\-A-Fa-f0-9]/g, '').toLowerCase() !== output.toLowerCase());
+        if (!test) {
+            signed = new Date().getTime();
+            test = 0 + !cipher.verify(publicKey, Hex.decode(out, true), data);
+            verified = new Date().getTime();
+            if (!test) result += 'PASSED Sign ' + (signed - start) / 1000 + ' sec, Verify ' + (verified - signed) / 1000 + ' sec';else result += 'FAILED - Verify return (false)';
+        } else result += 'FAILED - Sign expected ' + output.toLowerCase() + " got " + out.toLowerCase();
+    } catch (e) {
+        result += 'FAILED - Throw error: ' + e.message;
+    }
+
+    println(result);
+    return test;
+}
+
+function performDerive(id, algorithm) {
+    var ukm = algorithm.ukm;
+    delete algorithm.ukm;
+    var cipher = new _gostSign.GostSign(algorithm);
+    var result = 'Test ' + ' ' + ('0' + id).slice(-2) + ' ' + (cipher.name + ' ' + new Array(61).join('.')).substring(0, 60) + ' ';
+    var keyPair1 = cipher.generateKey(),
+        keyPair2 = cipher.generateKey(),
+        privateKey1 = keyPair1.privateKey,
+        publicKey1 = keyPair1.publicKey,
+        privateKey2 = keyPair2.privateKey,
+        publicKey2 = keyPair2.publicKey;
+
+    try {
+        if (ukm) algorithm.ukm = gostCoding.Hex.decode(ukm);
+
+        var start = new Date().getTime();
+        algorithm.public = publicKey2;
+        cipher = new _gostSign.GostSign(algorithm);
+        var kek1 = gostCoding.Hex.encode(cipher.deriveKey(privateKey1));
+        var finish = new Date().getTime();
+
+        algorithm.public = publicKey1;
+        cipher = new _gostSign.GostSign(algorithm);
+        var kek2 = gostCoding.Hex.encode(cipher.deriveKey(privateKey2));
+
+        var test = 0 + (kek1 !== kek2);
+        if (!test) result += 'PASSED DeriveKey ' + (finish - start) / 1000 + ' sec';else result += 'PASSED DeriveKey - one side got ' + kek1 + ' but other side got ' + kek2;
+    } catch (e) {
+        result += 'FAILED - Throw error: ' + e.message;
+    }
+    println(result);
+    return test;
+}
+
+;
+
+var pk = '34BF9806FD77DF19F2BD0E3085FF53C1E18C3B58A0CD82BDA7466D9CC259FA23';
+var maskdb = '5d6f4f794c0f584718252fb2d9ffffe6d2adc4c86616466fe032ed28790e6af6';
+var mkdb = '\
+2208cd6bc96a009f05175f635bee6cc09c78260b9b7eee1e070d346462e6881b\
+bf572f436df5716b1212a9fba3d022db4aed0a18530ae6c62d9bdd206479805c\
+e652c17bc9cc07dcdce25cba19276285f6c54dfa940ab55473bde2d8338eaaed\
+c59cdd808619f75296db91e016b588c0650686ff6929258a76d5ca7ba91b7fa8\
+7f41b2deb535a66b489a5485ac68971e00658836ce358dcda04b358621ebf08c\
+e062b671d84a30706495ee2ed7d0f0a6a3e171a9daba04b582c3b7113905053a\
+5b9254c7e08bea27cb66e19699db55444f1e1f1b5a3b7db7cbcc04728e225e67\
+ab8099dc82b1';
+var kek = '7c34bf4e03d0bc120768164f355cf6180b32851e2ad6fc22b386bbea17fa1d5f1789eb95';
+
+//var sign0 = 'EE92016C722C08F2FED0310E7D1C8D4EFD7224F52E53C3499E8A5392A2F41D04575BE6077F8E4008B3C3CCEC2EAC3BEC0AA0AA2AF6EFCB1D3906F2426D0394C2';
+//var pubkey =  '51cd2d8d96c67e0cf1ee74319cf89043c5f30ba34b68c8fc2284b5ef9e574eea0783c50ea37a2d3f2e222c038980ab0a182fe38945911e9513dfa6b1e87df63a';
+
+var sign0 = '575BE6077F8E4008B3C3CCEC2EAC3BEC0AA0AA2AF6EFCB1D3906F2426D0394C2EE92016C722C08F2FED0310E7D1C8D4EFD7224F52E53C3499E8A5392A2F41D04';
+var pubkey = '0783c50ea37a2d3f2e222c038980ab0a182fe38945911e9513dfa6b1e87df63a51cd2d8d96c67e0cf1ee74319cf89043c5f30ba34b68c8fc2284b5ef9e574eea';
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+exports.default = function (performance) {
+    // GOST R 34.11-94 tests
+    var tests = 0,
+        i = 0;
+    println('GOST R 34.11-94 TEST', true);
+
+    var cipher = new _gostDigest.GostDigest({ name: 'GOST R 34.11', version: 1994 });
+
+    tests += perform(cipher, ++i, gostCoding.Chars.decode(''), '981e5f3ca30c841487830f84fb433e13ac1101569b9c13584ac483234cd656c0');
+    tests += perform(cipher, ++i, gostCoding.Chars.decode('This is message, length=32 bytes'), '2cefc2f7b7bdc514e18ea57fa74ff357e7fa17d652c75f69cb1be7893ede48eb');
+    tests += perform(cipher, ++i, gostCoding.Chars.decode('Suppose the original message has length = 50 bytes'), 'c3730c5cbccacf915ac292676f21e8bd4ef75331d9405e5f1a61dc3130a65011');
+    tests += perform(cipher, ++i, gostCoding.Chars.decode('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'), '73b70a39497de53a6e08c67b6d4db853540f03e9389299d9b0156ef7e85d0f61');
+    println();
+
+    cipher = new _gostDigest.GostDigest({ name: 'GOST R 34.11', version: 1994, sBox: 'D-TEST' });
+
+    tests += perform(cipher, ++i, gostCoding.Chars.decode(''), 'ce85b99cc46752fffee35cab9a7b0278abb4c2d2055cff685af4912c49490f8d');
+    tests += perform(cipher, ++i, gostCoding.Chars.decode('This is message, length=32 bytes'), 'b1c466d37519b82e8319819ff32595e047a28cb6f83eff1c6916a815a637fffa');
+    tests += perform(cipher, ++i, gostCoding.Chars.decode('Suppose the original message has length = 50 bytes'), '471aba57a60a770d3a76130635c1fbea4ef14de51f78b4ae57dd893b62f55208');
+    tests += perform(cipher, ++i, gostCoding.Chars.decode('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'), '95c1af627c356496d80274330b2cff6a10c67b5f597087202f94d06d2338cf8e');
+    println();
+
+    println('PBKDF2 tests');
+    cipher = new _gostDigest.GostDigest({
+        name: 'GOST R 34.11',
+        version: 1994,
+        mode: 'PBKDF2',
+        salt: gostCoding.Chars.decode('salt'),
+        iterations: 1
+    });
+    tests += perform(cipher, ++i, gostCoding.Chars.decode('password'), '7314e7c04fb2e662c543674253f68bd0b73445d07f241bed872882da21662d58', 'deriveKey');
+    cipher = new _gostDigest.GostDigest({
+        name: 'GOST R 34.11',
+        version: 1994,
+        mode: 'PBKDF2',
+        salt: gostCoding.Chars.decode('salt'),
+        iterations: 2
+    });
+    tests += perform(cipher, ++i, gostCoding.Chars.decode('password'), '990dfa2bd965639ba48b07b792775df79f2db34fef25f274378872fed7ed1bb3', 'deriveKey');
+    cipher = new _gostDigest.GostDigest({
+        name: 'GOST R 34.11',
+        version: 1994,
+        mode: 'PBKDF2',
+        salt: gostCoding.Chars.decode('salt'),
+        iterations: 1000
+    });
+    tests += perform(cipher, ++i, gostCoding.Chars.decode('password'), '2b6e0a5cc2103274dd3353fb86e4983c6451f8025a51cd9ddfd33361c6cb572b', 'deriveKey');
+    println();
+
+    if (performance) {
+
+        println('PBKDF2 4096 iterations tests');
+        cipher = new _gostDigest.GostDigest({
+            name: 'GOST R 34.11',
+            version: 1994,
+            mode: 'PBKDF2',
+            salt: gostCoding.Chars.decode('salt'),
+            iterations: 4096
+        });
+        tests += perform(cipher, ++i, gostCoding.Chars.decode('password'), '1f1829a94bdff5be10d0aeb36af498e7a97467f3b31116a5a7c1afff9deadafe', 'deriveKey');
+
+        cipher = new _gostDigest.GostDigest({
+            name: 'GOST R 34.11',
+            version: 1994,
+            mode: 'PBKDF2',
+            salt: gostCoding.Chars.decode('saltSALTsaltSALTsaltSALTsaltSALTsalt'),
+            iterations: 4096
+        });
+        tests += perform(cipher, ++i, gostCoding.Chars.decode('passwordPASSWORDpassword'), '788358c69cb2dbe251a7bb17d5f4241f265a792a35becde8d56f326b49c85047b7638acb4764b1fd', 'deriveBits', 320);
+
+        cipher = new _gostDigest.GostDigest({
+            name: 'GOST R 34.11',
+            version: 1994,
+            mode: 'PBKDF2',
+            salt: gostCoding.Chars.decode('sa\0lt'),
+            iterations: 4096
+        });
+        tests += perform(cipher, ++i, gostCoding.Chars.decode('pass\0word'), '43e06c5590b08c0225242373127edf9c8e9c3291', 'deriveBits', 160);
+
+        println();
+
+        cipher = new _gostDigest.GostDigest({ name: 'GOST R 34.11', version: 1994 });
+        println('Million "a" TEST');
+        var million_a = new Array(1000001).join('a');
+        tests += perform(cipher, ++i, gostCoding.Chars.decode(million_a), '8693287aa62f9478f7cb312ec0866b6c4e4a0f11160441e8f4ffcd2715dd554f');
+        println();
+    }
+    println('TOTAL ' + (tests ? tests + ' ERRORS' : 'OK'));
+    println();
+
+    // GOST R 34.11-2012 tests
+    var tests2 = 0;
+    i = 0;
+    println('GOST R 34.11-2012 TEST', true);
+
+    cipher = new _gostDigest.GostDigest();
+    tests2 += perform(cipher, ++i, gostCoding.Chars.decode('012345678901234567890123456789012345678901234567890123456789012'), '9d151eefd8590b89daa6ba6cb74af9275dd051026bb149a452fd84e5e57b5500');
+    tests2 += perform(cipher, ++i, gostCoding.Chars.decode('Се ветри, Стрибожи внуци, веютъ с моря стрелами на храбрыя плъкы Игоревы'), '9dd2fe4e90409e5da87f53976d7405b0c0cac628fc669a741d50063c557e8f50');
+    tests2 += perform(cipher, ++i, new Uint8Array(0), '3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb');
+    tests2 += perform(cipher, ++i, new Uint8Array([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]), 'df1fda9ce83191390537358031db2ecaa6aa54cd0eda241dc107105e13636b95');
+    println();
+
+    cipher = new _gostDigest.GostDigest({
+        name: 'GOST R 34.11', version: 2012, mode: 'KDF', context: gostCoding.Hex.decode('af21434145656378'),
+        label: gostCoding.Hex.decode('26bdb878')
+    });
+    tests += perform(cipher, ++i, gostCoding.Hex.decode('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'), 'a1aa5f7de402d7b3d323f2991c8d4534013137010a83754fd0af6d7cd4922ed9', 'deriveKey');
+    cipher = new _gostDigest.GostDigest({
+        name: 'GOST R 34.11', version: 2012, mode: 'KDF', context: gostCoding.Hex.decode('af21434145656378'),
+        label: gostCoding.Hex.decode('26bdb878')
+    });
+    tests += perform(cipher, ++i, gostCoding.Hex.decode('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'), '22b6837845c6bef65ea71672b265831086d3c76aebe6dae91cad51d83f79d16b074c9330599d7f8d712fca54392f4ddde93751206b3584c8f43f9e6dc51531f9', 'deriveBits', 512);
+    println();
+
+    println('HMAC/PBKDF2 tests');
+    cipher = new _gostDigest.GostDigest({ name: 'GOST R 34.11', mode: 'HMAC' });
+    tests += perform(cipher, ++i, gostCoding.Hex.decode('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'), 'a1aa5f7de402d7b3d323f2991c8d4534013137010a83754fd0af6d7cd4922ed9', 'sign', gostCoding.Hex.decode('0126bdb87800af214341456563780100'));
+    cipher = new _gostDigest.GostDigest({ name: 'GOST R 34.11', length: 512, mode: 'HMAC' });
+    tests += perform(cipher, ++i, gostCoding.Hex.decode('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'), 'a59bab22ecae19c65fbde6e5f4e9f5d8549d31f037f9df9b905500e171923a773d5f1530f2ed7e964cb2eedc29e9ad2f3afe93b2814f79f5000ffc0366c251e6', 'sign', gostCoding.Hex.decode('0126bdb87800af214341456563780100'));
+    cipher = new _gostDigest.GostDigest({
+        name: 'GOST R 34.11',
+        mode: 'PBKDF2',
+        salt: gostCoding.Chars.decode('salt'),
+        iterations: 1000
+    });
+    tests += perform(cipher, ++i, gostCoding.Chars.decode('password'), 'c5f66589be62e183038e5dee22ea3d7a32afb314abd9970dc8f66858d1a924f4', 'deriveKey');
+    cipher = new _gostDigest.GostDigest({
+        name: 'GOST R 34.11',
+        length: 512,
+        procreator: 'VN',
+        mode: 'PBKDF2',
+        salt: gostCoding.Chars.decode('salt'),
+        iterations: 1
+    });
+    tests += perform(cipher, ++i, gostCoding.Chars.decode('password'), 'bcd19a1c423a63e72e47ef0f56566c726745d96ac1a1c127b2edadb45fb45b307aca15999e91f640f4818f68af716e30fd543c52026bbb295d100eb471339f46', 'deriveBits', 512);
+    cipher = new _gostDigest.GostDigest({
+        name: 'GOST R 34.11',
+        length: 512,
+        procreator: 'VN',
+        mode: 'PBKDF2',
+        salt: gostCoding.Chars.decode('salt'),
+        iterations: 2
+    });
+    tests += perform(cipher, ++i, gostCoding.Chars.decode('password'), '088fec3b0f1ffaf0615eb267de92907fd4e0bb89d2f5ef9d4111a80e3cbf231af07ba3ce96065395f8f1a7505f9781f97e99a26b8314907dbf3510bc3ca2000c', 'deriveBits', 512);
+    println();
+
+    cipher = new _gostDigest.GostDigest({ name: 'GOST R 34.11', length: 512 });
+
+    tests2 += perform(cipher, ++i, gostCoding.Chars.decode('012345678901234567890123456789012345678901234567890123456789012'), '1b54d01a4af5b9d5cc3d86d68d285462b19abc2475222f35c085122be4ba1ffa00ad30f8767b3a82384c6574f024c311e2a481332b08ef7f41797891c1646f48');
+    tests2 += perform(cipher, ++i, gostCoding.Chars.decode('Се ветри, Стрибожи внуци, веютъ с моря стрелами на храбрыя плъкы Игоревы'), '1e88e62226bfca6f9994f1f2d51569e0daf8475a3b0fe61a5300eee46d961376035fe83549ada2b8620fcd7c496ce5b33f0cb9dddc2b6460143b03dabac9fb28');
+    tests2 += perform(cipher, ++i, new Uint8Array(0), '8e945da209aa869f0455928529bcae4679e9873ab707b55315f56ceb98bef0a7362f715528356ee83cda5f2aac4c6ad2ba3a715c1bcd81cb8e9f90bf4c1c1a8a');
+    tests2 += perform(cipher, ++i, new Uint8Array([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]), 'b0fd29ac1b0df441769ff3fdb8dc564df67721d6ac06fb28ceffb7bbaa7948c6c014ac999235b58cb26fb60fb112a145d7b4ade9ae566bf2611402c552d20db7');
+    println();
+
+    if (performance) {
+
+        println('PBKDF2 4096 iterations tests');
+        cipher = new _gostDigest.GostDigest({
+            name: 'GOST R 34.11',
+            mode: 'PBKDF2',
+            salt: gostCoding.Chars.decode('salt'),
+            iterations: 4096
+        });
+        tests += perform(cipher, ++i, gostCoding.Chars.decode('password'), 'd744dc35ddfe10c7679af205ceb6492fb3680f861db598ee8110b30e3a0f3cb4', 'deriveKey');
+
+        cipher = new _gostDigest.GostDigest({
+            name: 'GOST R 34.11',
+            mode: 'PBKDF2',
+            salt: gostCoding.Chars.decode('saltSALTsaltSALTsaltSALTsaltSALTsalt'),
+            iterations: 4096
+        });
+        tests += perform(cipher, ++i, gostCoding.Chars.decode('passwordPASSWORDpassword'), '8452d34400e6404864f12206a2ac3f932fe7fe55026b1dd8f21a645cf340cbf0cca377e603024e82', 'deriveBits', 320);
+
+        cipher = new _gostDigest.GostDigest({
+            name: 'GOST R 34.11',
+            mode: 'PBKDF2',
+            salt: gostCoding.Chars.decode('sa\0lt'),
+            iterations: 4096
+        });
+        tests += perform(cipher, ++i, gostCoding.Chars.decode('pass\0word'), '5023f9b3cc41e5aa491ea3e9eb65b6c01ffbeb63', 'deriveBits', 160);
+
+        cipher = new _gostDigest.GostDigest({
+            name: 'GOST R 34.11',
+            length: 512,
+            procreator: 'VN',
+            mode: 'PBKDF2',
+            salt: gostCoding.Chars.decode('salt'),
+            iterations: 4096
+        });
+        tests += perform(cipher, ++i, gostCoding.Chars.decode('password'), '596f63971eae970a4eac9c18bff42ec52b936c1ccac6d17caa308afe12d4ff31943180ce02e42956524e991392c4bddeb7077edc1d2abf52eaf72b9e32a8c605', 'deriveBits', 512);
+
+        cipher = new _gostDigest.GostDigest({
+            name: 'GOST R 34.11',
+            length: 512,
+            procreator: 'VN',
+            mode: 'PBKDF2',
+            salt: gostCoding.Chars.decode('saltSALTsaltSALTsaltSALTsaltSALTsalt'),
+            iterations: 4096
+        });
+        tests += perform(cipher, ++i, gostCoding.Chars.decode('passwordPASSWORDpassword'), 'e457ee6126f07c09be004ba512adc90c611c2b3fa11141c21196dae5a48a50d83ccf163233f014fb6ade71695bf37159e9062443b75dac911fa7a181d24c4ed2a910499d72aba93284c78dbc1acba2789bd8ef50b5052f33ec6e2491f4f74eda05723864', 'deriveBits', 800);
+
+        cipher = new _gostDigest.GostDigest({
+            name: 'GOST R 34.11',
+            length: 512,
+            procreator: 'VN',
+            mode: 'PBKDF2',
+            salt: gostCoding.Chars.decode('sa\0lt'),
+            iterations: 4096
+        });
+        tests += perform(cipher, ++i, gostCoding.Chars.decode('pass\0word'), 'eed92e8d76e18d6a632f2da65c9b2859af555c3335ea30095989dea14d9d093114668e329deb034cc1565c3d731de0b5ca11acbdf85ab9eaab15295df05b9805', 'deriveBits', 512);
+
+        println();
+
+        cipher = new _gostDigest.GostDigest();
+        println('Million "a" TEST');
+        var million_a = gostCoding.Chars.decode(new Array(1000001).join('a'));
+        tests += perform(cipher, ++i, million_a, '841af1a0b2f92a800fb1b7e4aabc8e48763153c448a0fc57c90ba830e130f152');
+        cipher = new _gostDigest.GostDigest({ name: 'GOST R 34.11', length: '512' });
+        tests += perform(cipher, ++i, million_a, 'd396a40b126b1f324465bfa7aa159859ab33fac02dcdd4515ad231206396a266d0102367e4c544ef47d2294064e1a25342d0cd25ae3d904b45abb1425ae41095');
+        println();
+    }
+
+    println('TOTAL ' + (tests2 ? tests2 + ' ERRORS' : 'OK'));
+    println();
+
+    // SHA-1 tests
+    var tests3 = 0;
+    i = 0;
+    println('SHA-1 TEST', true);
+
+    var cipher = new _gostDigest.GostDigest({ name: 'SHA', version: 1 });
+    tests3 += perform(cipher, ++i, gostCoding.Chars.decode('abc'), 'a9993e364706816aba3e25717850C26c9cd0d89d');
+    tests3 += perform(cipher, ++i, gostCoding.Chars.decode('abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq'), '84983e441c3bd26ebaae4aa1f95129e5e54670f1');
+
+    tests3 += perform(cipher, ++i, gostCoding.Chars.decode(new Array(11).join('0123456701234567012345670123456701234567012345670123456701234567')), 'dea356a2cddd90c7a7ecedc5ebb563934f460452');
+
+    println();
+
+    println('PBKDF2 tests');
+    cipher = new _gostDigest.GostDigest({
+        name: 'SHA',
+        version: 1,
+        mode: 'PBKDF2',
+        salt: gostCoding.Chars.decode('salt'),
+        iterations: 1
+    });
+    tests3 += perform(cipher, ++i, gostCoding.Chars.decode('password'), '0c60c80f961f0e71f3a9b524af6012062fe037a6', 'deriveKey');
+    cipher = new _gostDigest.GostDigest({
+        name: 'SHA',
+        version: 1,
+        mode: 'PBKDF2',
+        salt: gostCoding.Chars.decode('salt'),
+        iterations: 2
+    });
+    tests3 += perform(cipher, ++i, gostCoding.Chars.decode('password'), 'ea6c014dc72d6f8ccd1ed92ace1d41f0d8de8957', 'deriveKey');
+    cipher = new _gostDigest.GostDigest({
+        name: 'SHA',
+        version: 1,
+        mode: 'PFXKDF',
+        salt: gostCoding.Hex.decode('0A58CF64530D823F'),
+        iterations: 1
+    });
+    tests3 += perform(cipher, ++i, gostCoding.Hex.decode('0073006D006500670000'), '8aaae6297b6cb04642ab5b077851284eb7128f1a2a7fbca3', 'deriveBits', 192);
+    cipher = new _gostDigest.GostDigest({
+        name: 'SHA',
+        version: 1,
+        mode: 'PFXKDF',
+        salt: gostCoding.Hex.decode('0A58CF64530D823F'),
+        iterations: 1,
+        diversifier: 2
+    });
+    tests3 += perform(cipher, ++i, gostCoding.Hex.decode('0073006D006500670000'), '79993dfe048d3b76', 'deriveBits', 64);
+    cipher = new _gostDigest.GostDigest({
+        name: 'SHA',
+        version: 1,
+        mode: 'PFXKDF',
+        salt: gostCoding.Hex.decode('3D83C0E4546AC140'),
+        iterations: 1,
+        diversifier: 3
+    });
+    tests3 += perform(cipher, ++i, gostCoding.Hex.decode('0073006D006500670000'), '8D967D88F6CAA9D714800AB3D48051D63F73A312', 'deriveBits', 160);
+    cipher = new _gostDigest.GostDigest({
+        name: 'SHA',
+        version: 1,
+        mode: 'PFXKDF',
+        salt: gostCoding.Hex.decode('05DEC959ACFF72F7'),
+        iterations: 1000,
+        diversifier: 1
+    });
+    tests3 += perform(cipher, ++i, gostCoding.Hex.decode('007100750065006500670000'), 'ED2034E36328830FF09DF1E1A07DD357185DAC0D4F9EB3D4', 'deriveBits', 192);
+    println();
+
+    if (performance) {
+        println('PBKDF2 4096 iterations tests');
+        cipher = new _gostDigest.GostDigest({
+            name: 'SHA',
+            version: 1,
+            mode: 'PBKDF2',
+            salt: gostCoding.Chars.decode('salt'),
+            iterations: 4096
+        });
+        tests3 += perform(cipher, ++i, gostCoding.Chars.decode('password'), '4b007901b765489abead49d926f721d065a429c1', 'deriveKey');
+        cipher = new _gostDigest.GostDigest({
+            name: 'SHA',
+            version: 1,
+            mode: 'PBKDF2',
+            salt: gostCoding.Chars.decode('saltSALTsaltSALTsaltSALTsaltSALTsalt'),
+            iterations: 4096
+        });
+        tests3 += perform(cipher, ++i, gostCoding.Chars.decode('passwordPASSWORDpassword'), '3d2eec4fe41c849b80c8d83662c0e44a8b291a964cf2f07038', 'deriveBits', 200);
+        cipher = new _gostDigest.GostDigest({
+            name: 'SHA',
+            version: 1,
+            mode: 'PBKDF2',
+            salt: gostCoding.Chars.decode('sa\0lt'),
+            iterations: 4096
+        });
+        tests3 += perform(cipher, ++i, gostCoding.Chars.decode('pass\0word'), '56fa6aa75548099dcc37d7f03425e0c3', 'deriveBits', 128);
+        println();
+
+        println('Million "a" TEST');
+        var million_a = new Array(1000001).join('a');
+        tests3 += perform(cipher, ++i, gostCoding.Chars.decode(million_a), '34aa973cd4c4daa4f61eeb2bdbad27316534016f');
+        println();
+    }
+
+    println('TOTAL ' + (tests3 ? tests3 + ' ERRORS' : 'OK'));
+    println();
+
+    return tests + tests2;
+};
+
+var _gostCoding = __webpack_require__(2);
+
+var _gostDigest = __webpack_require__(3);
+
+/**
+ * Copyright (c) 2014, Rudolf Nickolaev.
+ * All rights reserved.
+ *
+ * Tests for GOST R 34.11-2012 hash function with 512/256 bits digest.
+ *
+ */
+
+var gostCoding = new _gostCoding.GostCoding();
+
+/* ========== Tests ========== */
+
+function println(s, h) {
+    if (typeof importScripts !== 'undefined') {
+        var tag = h ? 'h3' : 'div';
+        if (typeof postMessage !== 'undefined') {
+            postMessage({ log: '<' + tag + '>' + (s || '&nbsp') + '</' + tag + '>' });
+        } else {
+            console.log(s, h);
+        }
+    } else {
+        if (typeof document !== 'undefined') {
+            var el = document.createElement(h ? 'h3' : 'div');
+            el.innerHTML = s || '&nbsp';
+            (document.getElementById('output') || document.body).appendChild(el);
+        }
+        if (typeof console !== 'undefined') console.log((s || '') + (h ? '' : '\n'));
+    }
+}
+
+function perform(cipher, id, array, digest, method, param) {
+    var start, finish, out, r, test;
+
+    start = new Date().getTime();
+    r = 'Test ' + ' ' + ('0' + id).slice(-2) + ' ' + (cipher.name + ' ' + new Array(61).join('.')).substring(0, 60) + ' ';
+    try {
+        method = method || 'digest';
+        out = gostCoding.Hex.encode(cipher[method](array, param));
+        finish = new Date().getTime();
+        out = out.replace(/[^\-A-Fa-f0-9]/g, '').toLowerCase();
+        test = 0 + (out !== digest.toLowerCase());
+        if (test) r += 'FAILED: Expected ' + digest + " got " + out;else r += 'PASSED ' + (finish - start) / 1000 + ' sec';
+    } catch (e) {
+        r += 'FAILED - Throw error: ' + e.message;
+    }
+
+    println(r);
+    return test;
+}
+
+;
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+exports.default = function () {
+    var input1 = "0000000000000000";
+    var output1 = "1b0bbc32cebcab42";
+    var input2 = "bc350e71aac5f5c2";
+    var output2 = "d35ab653493b49f5";
+    var input3 = "bc350e71aa11345709acde";
+    var output3 = "8824c124c4fd14301fb1e8";
+    var input4 = "000102030405060708090a0b0c0d0e0fff0102030405060708090a0b0c0d0e0f";
+    var output4 = "29b7083e0a6d955ca0ec5b04fdb4ea41949f1dd2efdf17baffc1780b031f3934";
+
+    var TestSBox = new Uint8Array([0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF, 0xF, 0xE, 0xD, 0xC, 0xB, 0xA, 0x9, 0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1, 0x0, 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF, 0xF, 0xE, 0xD, 0xC, 0xB, 0xA, 0x9, 0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1, 0x0, 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF, 0xF, 0xE, 0xD, 0xC, 0xB, 0xA, 0x9, 0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1, 0x0, 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF, 0xF, 0xE, 0xD, 0xC, 0xB, 0xA, 0x9, 0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1, 0x0]);
+
+    // Basic chiper mode tests
+    var tests = 0,
+        i = 0;
+    println('GOST 28147-89/GOST R 34.12-2015 TEST', true);
+
+    tests += perform(++i, { name: 'GOST 28147', sBox: 'D-TEST' }, '546d203368656c326973652073736e62206167796967747473656865202c3d73', input1, output1);
+    tests += perform(++i, { name: 'GOST 28147', block: 'CBC', iv: '1234567890abcdef', sBox: 'D-TEST' }, '00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF', input2, output2);
+    tests += perform(++i, { name: 'GOST 28147', block: 'CTR', iv: '1234567890abcdef', sBox: 'D-TEST' }, '0011223344556677889900112233445566778899001122334455667788990011', input3, output3);
+    tests += perform(++i, { name: 'GOST 28147', block: 'CFB', iv: 'aafd12f659cae634', sBox: 'D-TEST' }, 'aafd12f659cae63489b479e5076ddec2f06cb58faafd12f659cae63489b479e5', input4, output4);
+
+    // Tests with parameters, set S-box.
+    tests += perform(++i, { name: 'GOST 28147', sBox: 'D-TEST' }, '546d203368656c326973652073736e62206167796967747473656865202c3d73', input1, output1); // default parameter S-box set to D-TEST
+    tests += perform(++i, { name: 'GOST 28147', block: 'CFB', iv: '1234567890abcdef', sBox: 'D-TEST' }, '546d203368656c326973652073736e62206167796967747473656865202c3d73', '0000000000000000', 'b587f7a0814c911d'); //type S-box
+    tests += perform(++i, { name: 'GOST 28147', block: 'CFB', iv: '1234567890abcdef', sBox: 'E-TEST' }, '546d203368656c326973652073736e62206167796967747473656865202c3d73', '0000000000000000', 'e8287f53f991d52b');
+    tests += perform(++i, { name: 'GOST 28147', block: 'CFB', shiftBits: 64, iv: '1234567890abcdef', sBox: 'E-A' }, '546d203368656c326973652073736e62206167796967747473656865202c3d73', '0000000000000000', 'c41009dba22ebe35');
+    tests += perform(++i, { name: 'GOST 28147', block: 'CFB', iv: '1234567890abcdef', sBox: 'E-B', shiftBits: 8 }, '546d203368656c326973652073736e62206167796967747473656865202c3d73', '0000000000000000', '80d8723fcd3aba28');
+    tests += perform(++i, { name: 'GOST 28147', block: 'CFB', shiftBits: 8, iv: '1234567890abcdef', sBox: 'E-C' }, '546d203368656c326973652073736e62206167796967747473656865202c3d73', '0000000000000000', '739f6f95068499b5');
+    tests += perform(++i, { name: 'GOST 28147', block: 'CFB', shiftBits: 8, iv: '1234567890abcdef', sBox: 'E-D' }, '546d203368656c326973652073736e62206167796967747473656865202c3d73', '0000000000000000', '4663f720f4340f57');
+    tests += perform(++i, { name: 'GOST 28147', block: 'CFB', shiftBits: 8, iv: '1234567890abcdef', sBox: 'D-A' }, '546d203368656c326973652073736e62206167796967747473656865202c3d73', '0000000000000000', '5bb0a31d218ed564');
+    tests += perform(++i, {
+        name: 'GOST 28147',
+        block: 'CFB',
+        shiftBits: 8,
+        iv: '1234567890abcdef',
+        sBox: TestSBox
+    }, '546d203368656c326973652073736e62206167796967747473656865202c3d73', '0000000000000000', 'c3af96ef788667c5');
+    tests += perform(++i, { name: 'GOST 28147', block: 'CTR', iv: '1234567890abcdef', sBox: 'E-A' }, '4ef72b778f0b0bebeef4f077551cb74a927b470ad7d7f2513454569a247e989d', 'bc350e71aa11345709acde', '1bcc2282707c676fb656dc');
+    tests += perform(++i, { name: 'GOST 28147', block: 'ECB', sBox: 'E-Z' }, '8182838485868788898a8b8c8d8e8f80d1d2d3d4d5d6d7d8d9dadbdcdddedfd0', '0102030405060708f1f2f3f4f5f6f7f8', 'ce5a5ed7e0577a5fd0cc85ce31635b8b');
+
+    var gkeyBytes5 = "6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49";
+    var gkeyBytes6 = "6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49";
+
+    var input5 = "7768617420646f2079612077616e7420666f72206e6f7468696e673f";
+    var input6 = "7768617420646f2079612077616e7420666f72206e6f7468696e673f";
+
+    var output5 = "93468a46";
+    var output6 = "93468a46";
+
+    // MAC
+    println();
+    println('MAC sing/verify');
+    tests += performMac(++i, { name: 'GOST 28147', mode: 'MAC', sBox: 'E-A' }, gkeyBytes5, input5, output5);
+    tests += performMac(++i, { name: 'GOST 28147', mode: 'MAC', sBox: 'E-A' }, gkeyBytes6, input6, output6);
+
+    // Padding
+    println();
+    println('Padding');
+    tests += perform(++i, { name: 'GOST 28147', sBox: 'D-TEST', padding: 'BIT' }, '546d203368656c326973652073736e62206167796967747473656865202c3d73', 'fedcba98765432');
+    tests += perform(++i, { name: 'GOST 28147', sBox: 'D-TEST', padding: 'BIT' }, '546d203368656c326973652073736e62206167796967747473656865202c3d73', 'fedcba9876543210');
+    tests += perform(++i, { name: 'GOST 28147', sBox: 'D-TEST', padding: 'PKCS5P' }, '546d203368656c326973652073736e62206167796967747473656865202c3d73', 'fedcba98765432');
+    tests += perform(++i, { name: 'GOST 28147', sBox: 'D-TEST', padding: 'PKCS5P' }, '546d203368656c326973652073736e62206167796967747473656865202c3d73', 'fedcba9876543210');
+    tests += perform(++i, { name: 'GOST 28147', sBox: 'D-TEST', padding: 'ZERO' }, '546d203368656c326973652073736e62206167796967747473656865202c3d73', 'fedcba9876543210');
+
+    // Key meshing
+    println();
+    println('Key meshing');
+    var input = new Array(10001).join('61'); // hex(a)
+    tests += perform(++i, {
+        name: 'GOST 28147',
+        block: 'CFB',
+        keyMeshing: 'CP',
+        iv: '1234567890abcdef',
+        sBox: 'E-A'
+    }, '4ef72b778f0b0bebeef4f077551cb74a927b470ad7d7f2513454569a247e989d', input);
+    tests += perform(++i, {
+        name: 'GOST 28147',
+        block: 'CBC',
+        keyMeshing: 'CP',
+        iv: '1234567890abcdef',
+        sBox: 'E-A'
+    }, '4ef72b778f0b0bebeef4f077551cb74a927b470ad7d7f2513454569a247e989d', input);
+    tests += perform(++i, {
+        name: 'GOST 28147',
+        block: 'CTR',
+        keyMeshing: 'CP',
+        iv: '1234567890abcdef',
+        sBox: 'E-A'
+    }, '4ef72b778f0b0bebeef4f077551cb74a927b470ad7d7f2513454569a247e989d', input);
+    tests += performMac(++i, {
+        name: 'GOST 28147',
+        mode: 'MAC',
+        keyMeshing: 'CP',
+        iv: '1234567890abcdef',
+        sBox: 'E-A'
+    }, '4ef72b778f0b0bebeef4f077551cb74a927b470ad7d7f2513454569a247e989d', input);
+
+    println();
+    println('Key wrapping');
+    var input = new Array(10001).join('61'); // hex(a)
+    tests += performWrap(++i, { name: 'GOST 28147', mode: 'KW', ukm: '1234567890abcdef', sBox: 'D-TEST' }, // Initial UKM seed
+    'aafd12f659cae63489b479e5076ddec2f06cb58faafd12f659cae63489b479e5', '6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49', 'af502015229a831dc82b4d32dc00173f5d43d921e5e09cc09ce947c777414397022a90c7');
+    tests += performWrap(++i, { name: 'GOST 28147', mode: 'KW', ukm: '1234567890abcdef', sBox: 'E-A' }, // E-A
+    'aafd12f659cae63489b479e5076ddec2f06cb58faafd12f659cae63489b479e5', '6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49');
+
+    tests += performWrap(++i, { name: 'GOST 28147', sBox: 'D-TEST', ukm: '1234567890abcdef', keyWrapping: 'CP' }, // CryptoPro.
+    'aafd12f659cae63489b479e5076ddec2f06cb58faafd12f659cae63489b479e5', '6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49', '16256f060dd3b3d8734a9fcc9ab4c3d04e777dc5c46a2f4c3e411e3597a5bfc32b41e492');
+
+    tests += performWrap(++i, {
+        name: 'GOST 28147',
+        mode: 'KW',
+        keyWrapping: 'CP',
+        ukm: '1234567890abcdef',
+        sBox: 'E-A'
+    }, // CryptoPro E-A
+    'aafd12f659cae63489b479e5076ddec2f06cb58faafd12f659cae63489b479e5', '6d145dc993f4019e104280df6fcd8cd8e01e101e4c113d7ec4f469ce6dcd9e49');
+
+    tests += performWrap(++i, { name: 'GOST 28147', mode: 'KW', keyWrapping: 'SC', sBox: 'E-SC' }, '2208cd6bc96a' + '009f05175f635bee6cc09c78260b9b7eee1e070d346462e6881bbf572f436df5' + '716b1212a9fba3d022db4aed0a18530ae6c62d9bdd206479805ce652c17bc9cc' + '07dcdce25cba19276285f6c54dfa940ab55473bde2d8338eaaedc59cdd808619' + 'f75296db91e016b588c0650686ff6929258a76d5ca7ba91b7fa87f41b2deb535' + 'a66b489a5485ac68971e00658836ce358dcda04b358621ebf08ce062b671d84a' + '30706495ee2ed7d0f0a6a3e171a9daba04b582c3b7113905053a5b9254c7e08b' + 'ea27cb66e19699db55444f1e1f1b5a3b7db7cbcc04728e225e67ab8099dc82b1' + // mk.db3
+    '5d6f4f794c0f584718252fb2d9ffffe6d2adc4c86616466fe032ed28790e6af6', // masks.db3
+    '5a7145b0ee4c080e0fcf689e5222c25876ac9d2b25a68fb3357eea8f849d6272', '7c34bf4e03d0bc120768164f355cf6180b32851e2ad6fc22b386bbea17fa1d5f1789eb95'); // kek.opq
+
+    // Tests for new GOST 2015
+    println();
+    println('GOST R 34.12-2015/64bits');
+    var key64 = 'ffeeddccbbaa99887766554433221100f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff';
+    var inp64 = '92def06b3c130a59db54c704f8189d204a98fb2e67a8024c8912409b17b57e41';
+    tests += perform(++i, { name: 'GOST R 34.12', version: 2015 }, key64, 'fedcba9876543210', '4ee901e5c2d8ca3d');
+    tests += perform(++i, { name: 'GOST R 34.12', version: 2015, block: 'ECB' }, key64, inp64, '2b073f0494f372a0de70e715d3556e4811d8d9e9eacfbc1e7c68260996c67efb');
+    tests += perform(++i, { name: 'GOST R 34.12', version: 2015, block: 'CTR', iv: '12345678' }, key64, inp64, '4e98110c97b7b93c3e250d93d6e85d69136d868807b2dbef568eb680ab52a12d');
+    tests += perform(++i, {
+        name: 'GOST R 34.12',
+        version: 2015,
+        block: 'CBC',
+        iv: '1234567890abcdef234567890abcdef134567890abcdef12'
+    }, key64, inp64, '96d1b05eea683919aff76129abb937b95058b4a1c4bc001920b78b1a7cd7e667');
+    tests += perform(++i, {
+        name: 'GOST R 34.12',
+        version: 2015,
+        block: 'CFB',
+        iv: '1234567890abcdef234567890abcdef1'
+    }, key64, inp64, 'db37e0e266903c830d46644c1f9a089c24bdd2035315d38bbcc0321421075505');
+    tests += perform(++i, {
+        name: 'GOST R 34.12',
+        version: 2015,
+        block: 'OFB',
+        iv: '1234567890abcdef234567890abcdef1'
+    }, key64, inp64, 'db37e0e266903c830d46644c1f9a089ca0f83062430e327ec824efb8bd4fdb05');
+    tests += performMac(++i, { name: 'GOST R 34.12', version: 2015, mode: 'MAC' }, key64, inp64, '154e7210');
+
+    println();
+    println('GOST R 34.12-2015/128bits');
+    var key128 = '8899aabbccddeeff0011223344556677fedcba98765432100123456789abcdef';
+    var inp128 = '1122334455667700ffeeddccbbaa998800112233445566778899aabbcceeff0a112233445566778899aabbcceeff0a002233445566778899aabbcceeff0a0011';
+    tests += perform(++i, { name: 'GOST R 34.12', version: 2015, length: 128 }, key128, '1122334455667700ffeeddccbbaa9988', '7f679d90bebc24305a468d42b9d4edcd');
+    tests += perform(++i, { name: 'GOST R 34.12', version: 2015, length: 128 }, key128, inp128, '7f679d90bebc24305a468d42b9d4edcdb429912c6e0032f9285452d76718d08bf0ca33549d247ceef3f5a5313bd4b157d0b09ccde830b9eb3a02c4c5aa8ada98');
+    tests += perform(++i, {
+        name: 'GOST R 34.12',
+        version: 2015,
+        length: 128,
+        block: 'CTR',
+        iv: '1234567890abcef0'
+    }, key128, inp128, 'f195d8bec10ed1dbd57b5fa240bda1b885eee733f6a13e5df33ce4b33c45dee4a5eae88be6356ed3d5e877f13564a3a5cb91fab1f20cbab6d1c6d15820bdba73');
+    tests += perform(++i, {
+        name: 'GOST R 34.12', version: 2015, length: 128, block: 'OFB',
+        iv: '1234567890abcef0a1b2c3d4e5f0011223344556677889901213141516171819'
+    }, key128, inp128, '81800a59b1842b24ff1f795e897abd95ed5b47a7048cfab48fb521369d9326bf66a257ac3ca0b8b1c80fe7fc10288a13203ebbc066138660a0292243f6903150');
+    tests += perform(++i, {
+        name: 'GOST R 34.12', version: 2015, length: 128, block: 'CBC',
+        iv: '1234567890abcef0a1b2c3d4e5f0011223344556677889901213141516171819'
+    }, key128, inp128, '689972d4a085fa4d90e52e3d6d7dcc272826e661b478eca6af1e8e448d5ea5acfe7babf1e91999e85640e8b0f49d90d0167688065a895c631a2d9a1560b63970');
+    tests += perform(++i, {
+        name: 'GOST R 34.12', version: 2015, length: 128, block: 'CFB',
+        iv: '1234567890abcef0a1b2c3d4e5f0011223344556677889901213141516171819'
+    }, key128, inp128, '81800a59b1842b24ff1f795e897abd95ed5b47a7048cfab48fb521369d9326bf79f2a8eb5cc68d38842d264e97a238b54ffebecd4e922de6c75bd9dd44fbf4d1');
+    tests += performMac(++i, { name: 'GOST R 34.12', version: 2015, length: 128, mode: 'MAC' }, key128, inp128, '336f4d296059fbe3');
+
+    println();
+    println('RC2');
+    tests += perform(++i, {
+        name: 'RC2',
+        version: 1,
+        length: 63
+    }, '0000000000000000', '0000000000000000', 'ebb773f993278eff');
+    tests += perform(++i, {
+        name: 'RC2',
+        version: 1,
+        length: 64
+    }, 'ffffffffffffffff', 'ffffffffffffffff', '278b27e42e2f0d49');
+    tests += perform(++i, {
+        name: 'RC2',
+        version: 1,
+        length: 64
+    }, '3000000000000000', '1000000000000001', '30649edf9be7d2c2');
+    tests += perform(++i, { name: 'RC2', version: 1, length: 64 }, '88', '0000000000000000', '61a8a244adacccf0');
+    tests += perform(++i, {
+        name: 'RC2',
+        version: 1,
+        length: 64
+    }, '88bca90e90875a', '0000000000000000', '6ccf4308974c267f');
+    tests += perform(++i, {
+        name: 'RC2',
+        version: 1,
+        length: 64
+    }, '88bca90e90875a7f0f79c384627bafb2', '0000000000000000', '1a807d272bbe5db1');
+    tests += perform(++i, {
+        name: 'RC2',
+        version: 1,
+        length: 128
+    }, '88bca90e90875a7f0f79c384627bafb2', '0000000000000000', '2269552ab0f85ca6');
+    tests += perform(++i, {
+        name: 'RC2',
+        version: 1,
+        length: 129
+    }, '88bca90e90875a7f0f79c384627bafb216f80a6f85920584c42fceb0be255daf1e', '0000000000000000', '5b78d3a43dfff1f1');
+    println();
+
+    println('TOTAL ' + (tests ? tests + ' ERRORS' : 'OK'));
+    println();
+
+    return tests;
+};
+
+var _gostCoding = __webpack_require__(2);
+
+var _gostCipher = __webpack_require__(4);
+
+/**
+ * Copyright (c) 2015, Rudolf Nickolaev.
+ * All rights reserved.
+ *
+ * GOST 28147-89 Encryption Algorithm
+ *
+ */
+
+var gostCoding = new _gostCoding.GostCoding();
+
+function println(s, h) {
+    if (typeof importScripts !== 'undefined') {
+        var tag = h ? 'h3' : 'div';
+        if (typeof postMessage !== 'undefined') {
+            postMessage({ log: '<' + tag + '>' + (s || '&nbsp') + '</' + tag + '>' });
+        } else {
+            console.log(s, h);
+        }
+    } else {
+        if (typeof document !== 'undefined') {
+            var el = document.createElement(h ? 'h3' : 'div');
+            el.innerHTML = s || '&nbsp';
+            (document.getElementById('output') || document.body).appendChild(el);
+        }
+        if (typeof console !== 'undefined') console.log((s || '') + (h ? '' : '\n'));
+    }
+}
+
+function perform(id, algorithm, key, input, output) {
+    var Hex = gostCoding.Hex;
+    if (algorithm.iv) algorithm.iv = Hex.decode(algorithm.iv);
+
+    var cipher = new _gostCipher.GostCipher(algorithm);
+    var result = 'Test ' + ' ' + ('0' + id).slice(-2) + ' ' + (cipher.name + ' ' + new Array(61).join('.')).substring(0, 60) + ' ';
+    try {
+        var out = Hex.encode(cipher.encrypt(Hex.decode(key), Hex.decode(input)));
+        var test = 0 + (output && out.replace(/[^\-A-Fa-f0-9]/g, '').toLowerCase() !== output.toLowerCase());
+        if (!test) {
+            var out = Hex.encode(cipher.decrypt(Hex.decode(key), Hex.decode(out)));
+            test = 0 + (out.replace(/[^\-A-Fa-f0-9]/g, '').toLowerCase() !== input.toLowerCase());
+            if (!test) result += 'PASSED';else result += 'FAILED - Decrypt expected ' + input + " got " + out;
+        } else result += 'FAILED - Encrypt expected ' + output + " got " + out;
+    } catch (e) {
+        result += 'FAILED - Throw error: ' + e.message;
+    }
+    println(result);
+    return test;
+}
+
+function performMac(id, algorithm, key, input, output) {
+    var Hex = gostCoding.Hex;
+    if (algorithm.iv) algorithm.iv = Hex.decode(algorithm.iv);
+
+    var cipher = new _gostCipher.GostCipher(algorithm);
+    var result = 'Test ' + ' ' + ('0' + id).slice(-2) + ' ' + (cipher.name + ' ' + new Array(61).join('.')).substring(0, 60) + ' ';
+    try {
+        var out = Hex.encode(cipher.sign(Hex.decode(key), Hex.decode(input)));
+        var test = 0 + (output && out.replace(/[^\-A-Fa-f0-9]/g, '').toLowerCase() !== output.toLowerCase());
+        if (!test) {
+            var res = cipher.verify(Hex.decode(key), Hex.decode(out), Hex.decode(input));
+            test = 0 + !res;
+            if (!test) result += 'PASSED';else result += 'FAILED - Verify return (false)';
+        } else result += 'FAILED - Sign expected ' + output + " got " + out;
+    } catch (e) {
+        result += 'FAILED - Throw error: ' + e.message;
+    }
+    println(result);
+    return test;
+}
+
+function performWrap(id, algorithm, key, input, output) {
+    var Hex = gostCoding.Hex;
+    if (algorithm.ukm) algorithm.ukm = Hex.decode(algorithm.ukm);
+
+    var cipher = new _gostCipher.GostCipher(algorithm);
+    var result = 'Test ' + ' ' + ('0' + id).slice(-2) + ' ' + (cipher.name + ' ' + new Array(61).join('.')).substring(0, 60) + ' ';
+    try {
+        var out = Hex.encode(cipher.wrapKey(Hex.decode(key), Hex.decode(input)));
+        var test = 0 + (output && out.replace(/[^\-A-Fa-f0-9]/g, '').toLowerCase() !== output.toLowerCase());
+        if (!test) {
+            var out = Hex.encode(cipher.unwrapKey(Hex.decode(key), Hex.decode(out)));
+            test = 0 + (out.replace(/[^\-A-Fa-f0-9]/g, '').toLowerCase() !== input.toLowerCase());
+            if (!test) result += 'PASSED';else result += 'FAILED - Unwrap key expected ' + input + " got " + out;
+        } else result += 'FAILED - Wrap key expected ' + output + " got " + out;
+    } catch (e) {
+        result += 'FAILED - Throw error: ' + e.message;
+    }
+    println(result);
+    return test;
+}
+
+/**
+ * Test cases
+ *
+ * @returns {number} of tests
+ */
+;
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _gostCipher = __webpack_require__(22);
+
+var _gostCipher2 = _interopRequireDefault(_gostCipher);
+
+var _gostDigest = __webpack_require__(21);
+
+var _gostDigest2 = _interopRequireDefault(_gostDigest);
+
+var _gostSign = __webpack_require__(20);
+
+var _gostSign2 = _interopRequireDefault(_gostSign);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/* Running tests */
+(0, _gostCipher2.default)();
+(0, _gostDigest2.default)(true);
+(0, _gostSign2.default)();
 
 /***/ })
 /******/ ]);
 });
-//# sourceMappingURL=CryptoGost-light.js.map
+//# sourceMappingURL=TestNode.js.map

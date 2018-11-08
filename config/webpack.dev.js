@@ -7,7 +7,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ENV = process.env.ENV = process.env.NODE_ENV = 'development';
 
 module.exports = webpackMerge(commonConfig({ ENV: ENV }), {
-
+    target: 'node',
     devtool: 'eval-source-map',
     mode: 'development',
     entry: './src/lib-usage.js',

@@ -6,4 +6,16 @@ function root(args) {
     return path.join.apply(path, [_root].concat(args));
 }
 
-exports.root = root;
+function getCliArgValue (argName) {
+    const argIndex = process.argv.indexOf(argName)
+    if (argIndex >= 0) {
+        return process.argv[argIndex + 1]
+    } else {
+        return null
+    }
+}
+
+module.exports = {
+    root,
+    getCliArgValue
+}

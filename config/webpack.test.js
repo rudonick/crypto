@@ -5,9 +5,17 @@ const helpers = require('./helpers');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const ENV = process.env.ENV = process.env.NODE_ENV = 'development';
+const DEFAULT_WEBPACK_TARGET = 'web';
+
+function getTargetProperty() {
+    let target = helpers.getCliArgValue('--target') || DEFAULT_WEBPACK_TARGET;
+    console.log(`Webpack target: ${target}\n`);
+    return {
+        target
+    }
+}
 
 module.exports = webpackMerge(commonConfig({ ENV: ENV }), {
-
     devtool: 'eval-source-map',
     mode: 'development',
     entry: './test/index.js',
@@ -36,4 +44,4 @@ module.exports = webpackMerge(commonConfig({ ENV: ENV }), {
             template: 'index.html'
         })
     ]
-});
+},getTargetProperty());
